@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useActionState, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,14 @@ export default function OnboardingPage() {
 
   const [state, formAction, pending] = useActionState(completeOnboardingAction, {
     error: null,
+    success: false,
   });
+
+  useEffect(() => {
+    if (state.success) {
+      window.location.href = "/dashboard";
+    }
+  }, [state.success]);
 
   const stepIndex = STEPS.indexOf(step);
   const progressPercent = ((stepIndex + 1) / STEPS.length) * 100;

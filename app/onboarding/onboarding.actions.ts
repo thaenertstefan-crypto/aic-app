@@ -1,11 +1,10 @@
 "use server";
 
-import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
 
 export type OnboardingState = {
   error: string | null;
+  success: boolean;
 };
 
 const RECIPE_MAP: Record<string, string> = {
@@ -24,13 +23,13 @@ export async function completeOnboardingAction(
   const name = formData.get("name") as string;
 
   if (!reason || !confidenceBaseline || !name) {
-    return { error: "Bitte fülle alle Felder aus." };
+    return { error: "Bitte fülle alle Felder aus.", success: false };
   }
 
   const activeRecipeId = RECIPE_MAP[reason];
 
   if (!activeRecipeId) {
-    return { error: "Ungültige Auswahl. Bitte versuche es erneut." };
+    return { error: "Ungültige Auswahl. Bitte versuche es erneut.", success: false };
   }
 
   const supabase = await createClient();
@@ -40,7 +39,7 @@ export async function completeOnboardingAction(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Nicht angemeldet. Bitte melde dich erneut an." };
+    return { error: "Nicht angemeldet. Bitte melde dich erneut an.", success: false };
   }
 
   const { error } = await supabase
@@ -54,8 +53,8 @@ export async function completeOnboardingAction(
     });
 
   if (error) {
-    return { error: error.message };
+    return { error: error.message, success: false };
   }
 
-  redirect("/dashboard");
+  return { error: null, success: true };
 }
