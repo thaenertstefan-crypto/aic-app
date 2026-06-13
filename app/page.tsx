@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { PageHeader } from "@/components/brand/page-header";
 import { Button } from "@/components/ui/button";
@@ -19,10 +20,14 @@ export default function Home() {
           />
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button size="lg">Erste Schritte</Button>
-            <Button variant="outline" size="lg">
-              Mehr erfahren
-            </Button>
+            <Link href="/signup">
+              <Button size="lg">Erste Schritte</Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="outline" size="lg">
+                Mehr erfahren
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
