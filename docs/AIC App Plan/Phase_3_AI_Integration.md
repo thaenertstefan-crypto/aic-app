@@ -6,6 +6,9 @@
 >
 > Voraussetzung: Phase 2 abgeschlossen (insbesondere Recipe #1 mit 7-Tage-Journal)
 
+> ⚠️ **Next.js 16 Hinweis:** In den Route Handlers unten greift ihr über `lib/supabase/server.ts` auf den Supabase Server Client zu, der intern `cookies()` nutzt. In Next.js 16 ist `cookies()` async - das sollte bereits in `lib/supabase/server.ts` aus Phase 1 korrekt mit `await` umgesetzt sein. Solange ihr diese Helper-Funktion verwendet, müsst ihr in den Route Handlers selbst nichts weiter anpassen.
+
+
 ---
 
 ## Schritt 3.1: Anthropic SDK einrichten

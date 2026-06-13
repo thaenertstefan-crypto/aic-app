@@ -118,6 +118,9 @@ Create the recipe system foundation for this Next.js app:
    recipe.
 
 Mobile-first, warm and encouraging tone.
+
+Note: This project uses Next.js 16 - in app/(app)/recipes/[slug]/page.tsx, 
+`params` is a Promise and must be awaited (e.g. `const { slug } = await params`).
 ```
 
 ---

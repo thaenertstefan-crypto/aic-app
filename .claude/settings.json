@@ -1,0 +1,13 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
+    "ANTHROPIC_AUTH_TOKEN": "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",
+    "ANTHROPIC_API_KEY": "",
+    "ANTHROPIC_MODEL": "deepseek/deepseek-v4-flash",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "deepseek/deepseek-v4-flash",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek/deepseek-v4-flash",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "deepseek/deepseek-v4-flash",
+    "ANTHROPIC_SMALL_FAST_MODEL": "deepseek/deepseek-v4-flash",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "deepseek/deepseek-v4-flash"
+  }
+}

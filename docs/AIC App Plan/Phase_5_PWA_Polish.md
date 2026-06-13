@@ -20,10 +20,10 @@ Du brauchst App-Icons in mehreren Größen. Am einfachsten:
 ### Claude Code Prompt
 
 ```
-Set up PWA support for this Next.js 14 App Router project:
+Set up PWA support for this Next.js 16 App Router project:
 
 1. Install next-pwa (or if there are known compatibility issues with 
-   Next.js 14 App Router, use the manual approach: create a 
+   Next.js 16 App Router, use the manual approach: create a 
    public/manifest.json and register a service worker manually - choose 
    whichever is more stable and explain your choice)
 

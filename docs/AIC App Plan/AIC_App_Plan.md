@@ -126,7 +126,7 @@ Der AI Coach ist das Herzstück der App-Differenzierung. Er wird durch Claude AP
 
 **Warum diese Kombination?**
 
-- **Next.js 14 (App Router)**: Optimal für Claude Code – klare Datei-Struktur, Server Actions, API Routes direkt in der App
+- **Next.js 16 (App Router)**: Optimal für Claude Code – klare Datei-Struktur, Server Actions, API Routes direkt in der App
 - **Supabase**: All-in-One Backend (DB + Auth + Storage + Realtime) – perfekt für Solo-Dev, exzellente DX
 - **Anthropic API**: Der AI Coach ist eine Kernfunktion, nicht ein Add-on
 - **TailwindCSS + shadcn/ui**: Schnell, konsistent, gut dokumentiert
@@ -135,7 +135,7 @@ Der AI Coach ist das Herzstück der App-Differenzierung. Er wird durch Claude AP
 ### Full Tech Stack
 
 ```
-Frontend:       Next.js 14 (App Router)
+Frontend:       Next.js 16 (App Router)
 Styling:        TailwindCSS + shadcn/ui
 State:          Zustand (leichtgewichtig) + React Query (Server State)
 Auth:           Supabase Auth (Email + Google/Apple optional)
@@ -370,7 +370,7 @@ CREATE TABLE daily_checkins (
 **Woche 1 – Setup & Auth:**
 ```
 Claude Code Prompt-Sequenz:
-1. "Create a Next.js 14 project with Supabase auth, TailwindCSS and shadcn/ui. 
+1. "Create a Next.js 16 project with Supabase auth, TailwindCSS and shadcn/ui. 
    Set up email auth with login and signup pages."
 
 2. "Create the Supabase schema for profiles, user_recipe_progress, and daily_checkins 
@@ -492,7 +492,7 @@ Statt komplexer Sub-Agent-Frameworks: **Strukturierte System Prompts pro Task**.
 ```markdown
 # .claude/CLAUDE.md
 ## AIC App Context
-- Next.js 14 App Router with Supabase
+- Next.js 16 App Router with Supabase
 - All DB calls go through /lib/supabase/
 - All AI calls go through /lib/anthropic/
 - Mobile-first design (375px min-width)
@@ -589,7 +589,7 @@ ANTHROPIC_API_KEY=...
 "I'm building the Anti Imposter Club app - a self-development companion 
 that turns workbook exercises into interactive guided modules. 
 
-Tech stack: Next.js 14 App Router, Supabase (auth + db), TailwindCSS, shadcn/ui.
+Tech stack: Next.js 16 App Router, Supabase (auth + db), TailwindCSS, shadcn/ui.
 
 Please set up:
 1. Supabase client (browser + server)

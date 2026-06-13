@@ -6,6 +6,10 @@
 
 ---
 
+> ⚠️ **Next.js 16 Hinweis:** `create-next-app@latest` installiert aktuell Next.js 16.x. Der App Router, Server Components, Server Actions und die Ordnerstruktur unten funktionieren weiterhin wie beschrieben. Wichtigster Unterschied: `cookies()`, `headers()`, `params` und `searchParams` sind in Next.js 16 **asynchron** (müssen `await`ed werden). Die Prompts unten berücksichtigen das bereits bzw. enthalten entsprechende Hinweise. Node.js 20.9+ wird vorausgesetzt (siehe Phase 0).
+
+---
+
 ## Schritt 1.1: Next.js Projekt initialisieren
 
 ### Manuell (Terminal, im geklonten Repo-Ordner)
@@ -46,7 +50,7 @@ context, so future sessions stay consistent:
 
 - This is the "Anti Imposter Club" app - a self-development companion 
   turning workbook exercises into interactive guided modules
-- Tech stack: Next.js 14 App Router, Supabase (auth + db), TailwindCSS, 
+- Tech stack: Next.js 16 App Router, Supabase (auth + db), TailwindCSS, 
   shadcn/ui, Anthropic API
 - All DB calls go through lib/supabase/ (client.ts for browser, server.ts 
   for server components)
@@ -58,6 +62,10 @@ context, so future sessions stay consistent:
   to render
 - Recipe step components live in components/recipes/steps/[RecipeName].tsx
 - Journal template components live in components/journal/templates/
+- This project runs on Next.js 16: `cookies()`, `headers()`, `params`, and 
+  `searchParams` are async and must be awaited (e.g. 
+  `const { slug } = await params`). Always use this convention for new 
+  pages, layouts, and route handlers.
 ```
 
 ### Commit
@@ -87,7 +95,7 @@ Ab jetzt: **jeder Push auf `main` deployt automatisch.** Du kannst das im Hinter
 ### Claude Code Prompt
 
 ```
-Initialize shadcn/ui in this Next.js 14 App Router project. 
+Initialize shadcn/ui in this Next.js 16 App Router project. 
 Use the default style, slate as base color, and CSS variables for theming.
 After setup, install these components: button, input, card, badge, 
 progress, dialog, tabs, textarea, label, avatar, separator.
@@ -165,7 +173,7 @@ ANTHROPIC_API_KEY=dein-anthropic-key
 ### Claude Code Prompt
 
 ```
-Set up Supabase client integration for this Next.js 14 App Router project:
+Set up Supabase client integration for this Next.js 16 App Router project:
 
 1. Install @supabase/supabase-js and @supabase/ssr
 2. Create lib/supabase/client.ts for browser-side Supabase client
@@ -174,6 +182,9 @@ Set up Supabase client integration for this Next.js 14 App Router project:
 5. Use environment variables NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 Follow the official Supabase Next.js App Router SSR pattern.
+Note: This project uses Next.js 16, where cookies() is async. Use the 
+current Supabase SSR pattern that awaits cookies() (await cookies()) in 
+lib/supabase/server.ts and middleware.ts.
 ```
 
 ---
@@ -253,7 +264,7 @@ Im Supabase Dashboard unter **Authentication → Providers**:
 ### Claude Code Prompt
 
 ```
-Create authentication pages for this Next.js 14 App Router app using Supabase Auth:
+Create authentication pages for this Next.js 16 App Router app using Supabase Auth:
 
 1. Create app/(auth)/login/page.tsx - email/password login form using shadcn/ui 
    components (Card, Input, Button, Label). On success, redirect to /dashboard.
@@ -276,7 +287,7 @@ encouraging tone in microcopy (e.g. "Welcome back" instead of "Login").
 ### Claude Code Prompt
 
 ```
-Set up the protected app structure for this Next.js 14 project:
+Set up the protected app structure for this Next.js 16 project:
 
 1. Create app/(app)/layout.tsx as a Server Component that:
    - Checks if user is authenticated via Supabase server client
@@ -299,6 +310,9 @@ Set up the protected app structure for this Next.js 14 project:
    active route, and be hidden on the (auth) routes.
 
 Mobile-first: design for a 375px viewport, the nav bar should be thumb-friendly.
+
+Note: This project uses Next.js 16 - any access to cookies() (via the 
+Supabase server client) must be awaited.
 ```
 
 ---

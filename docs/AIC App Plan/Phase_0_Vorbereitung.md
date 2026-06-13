@@ -40,7 +40,7 @@
 
 ### Node.js
 1. Prüfen, ob bereits installiert: Terminal/PowerShell öffnen, `node -v` eingeben
-2. Falls nicht vorhanden oder Version < 18: [nodejs.org](https://nodejs.org) → LTS-Version installieren
+2. Falls nicht vorhanden oder Version < 20.9: [nodejs.org](https://nodejs.org) → LTS-Version installieren (Next.js 16 benötigt mind. Node.js 20.9)
 
 ### Git
 1. Prüfen: `git --version`
