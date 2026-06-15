@@ -15,6 +15,7 @@ import { RECIPES, getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { StatCard } from "@/components/ui/stat-card";
 
 import { MoodCheckin } from "./mood-checkin";
 
@@ -386,28 +387,3 @@ function RecipeCard({
   );
 }
 
-function StatCard({
-  icon: Icon,
-  value,
-  label,
-  accentClass,
-}: {
-  icon: LucideIcon;
-  value: number;
-  label: string;
-  accentClass: string;
-}) {
-  return (
-    <Card size="sm">
-      <CardContent className="flex flex-col items-center gap-1 py-1 text-center">
-        <Icon className={`size-4 ${accentClass}`} />
-        <span className="font-heading text-2xl font-bold tabular-nums text-foreground">
-          {value}
-        </span>
-        <span className="text-[11px] leading-tight text-muted-foreground">
-          {label}
-        </span>
-      </CardContent>
-    </Card>
-  );
-}

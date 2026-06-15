@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { FormError } from "@/components/ui/form-error";
+import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
+import { useFormDraft } from "@/lib/hooks/use-form-draft";
 
 import { saveOverthinkingAction } from "./actions";
 
@@ -183,6 +186,20 @@ export default function OverthinkingWizard() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Offline draft safety net
+  const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
+    useFormDraft<Answers>("overthinking");
+
+  const restoreDraft = () => {
+    if (pendingDraft) {
+      setAnswers({ ...EMPTY_ANSWERS, ...pendingDraft });
+      // Jump to the final step so the restored answers can be completed.
+      setCountdownDone(true);
+      setStep(TOTAL_STEPS);
+    }
+    dismissPendingDraft();
+  };
+
   // ── Answer helpers ──────────────────────────────────────────────
 
   const updateAnswer = (key: keyof Answers, value: string) => {
@@ -258,14 +275,34 @@ export default function OverthinkingWizard() {
     formData.set("new_problem", answers.newProblem);
     formData.set("decision", answers.decision);
 
-    const result = await saveOverthinkingAction({ error: null, success: false }, formData);
+    // No connection — keep the entry as a local draft instead of losing it.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      saveDraft(answers);
+      setSubmitting(false);
+      setError(
+        "Du bist offline – dein Eintrag wurde als Entwurf gesichert. Sobald du wieder online bist, kannst du ihn abschließen.",
+      );
+      return;
+    }
 
-    setSubmitting(false);
+    try {
+      const result = await saveOverthinkingAction({ error: null, success: false }, formData);
 
-    if (result.error) {
-      setError(result.error);
-    } else if (result.success) {
-      setSaved(true);
+      setSubmitting(false);
+
+      if (result.error) {
+        setError(result.error);
+      } else if (result.success) {
+        clearDraft();
+        setSaved(true);
+      }
+    } catch {
+      // Network error mid-request — preserve the entry as a draft.
+      saveDraft(answers);
+      setSubmitting(false);
+      setError(
+        "Speichern fehlgeschlagen – dein Eintrag wurde als Entwurf gesichert. Versuch es später noch einmal.",
+      );
     }
   };
 
@@ -490,6 +527,13 @@ export default function OverthinkingWizard() {
         {/* Progress dots */}
         <ProgressDots current={step} completed={false} />
 
+        {/* Draft restore prompt */}
+        {pendingDraft && (
+          <div className="mt-4">
+            <DraftRestoreBanner onRestore={restoreDraft} onDiscard={clearDraft} />
+          </div>
+        )}
+
         {/* Step header */}
         <p className="mt-4 text-center text-xs font-medium text-muted-foreground">
           Schritt {step} von {TOTAL_STEPS}
@@ -501,14 +545,7 @@ export default function OverthinkingWizard() {
         )}
 
         {/* Error banner */}
-        {error && (
-          <div
-            role="alert"
-            className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          >
-            {error}
-          </div>
-        )}
+        <FormError message={error} className="mt-4" />
 
         {/* Step content */}
         <div

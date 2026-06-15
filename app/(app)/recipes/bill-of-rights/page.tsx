@@ -21,12 +21,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FormError } from "@/components/ui/form-error";
+import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
+import { useFormDraft } from "@/lib/hooks/use-form-draft";
 
 import {
   getBillOfRightsData,
   saveReflectionAction,
   saveRightsAction,
 } from "./actions";
+
+type ReflectionDraft = {
+  prompt1: string;
+  prompt2: string;
+  prompt3: string;
+};
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -228,6 +238,19 @@ export default function BillOfRightsPage() {
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
+  // Offline draft safety net (covers the reflection prompts)
+  const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
+    useFormDraft<ReflectionDraft>("bill-of-rights-reflection");
+
+  const restoreReflectionDraft = () => {
+    if (pendingDraft) {
+      setPrompt1(pendingDraft.prompt1 ?? "");
+      setPrompt2(pendingDraft.prompt2 ?? "");
+      setPrompt3(pendingDraft.prompt3 ?? "");
+    }
+    dismissPendingDraft();
+  };
+
   // ── Load data ─────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -264,20 +287,42 @@ export default function BillOfRightsPage() {
     setSavingReflection(true);
     setError(null);
 
+    const draft: ReflectionDraft = { prompt1, prompt2, prompt3 };
+
     const formData = new FormData();
     formData.set("prompt1", prompt1);
     formData.set("prompt2", prompt2);
     formData.set("prompt3", prompt3);
 
-    const result = await saveReflectionAction({ error: null, success: false }, formData);
+    // No connection — keep the reflection as a local draft instead of losing it.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      saveDraft(draft);
+      setSavingReflection(false);
+      setError(
+        "Du bist offline – deine Reflexion wurde als Entwurf gesichert. Sobald du wieder online bist, kannst du sie speichern.",
+      );
+      return;
+    }
 
-    setSavingReflection(false);
+    try {
+      const result = await saveReflectionAction({ error: null, success: false }, formData);
 
-    if (result.error) {
-      setError(result.error);
-    } else {
-      setProgressStatus("in_progress");
-      showSuccess("Reflexion gespeichert ✓");
+      setSavingReflection(false);
+
+      if (result.error) {
+        setError(result.error);
+      } else {
+        clearDraft();
+        setProgressStatus("in_progress");
+        showSuccess("Reflexion gespeichert ✓");
+      }
+    } catch {
+      // Network error mid-request — preserve the reflection as a draft.
+      saveDraft(draft);
+      setSavingReflection(false);
+      setError(
+        "Speichern fehlgeschlagen – deine Reflexion wurde als Entwurf gesichert. Versuch es später noch einmal.",
+      );
     }
   };
 
@@ -430,8 +475,22 @@ export default function BillOfRightsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-svh flex-col items-center justify-center px-4 py-6">
-        <p className="text-muted-foreground">Lade dein Bill of Rights …</p>
+      <div className="flex min-h-svh flex-col px-4 py-6">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6">
+          <div className="space-y-2">
+            <Skeleton className="mx-auto h-8 w-56" />
+            <Skeleton className="mx-auto h-4 w-72" />
+          </div>
+          <Card>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-4 w-44" />
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+          </Card>
+          <Skeleton className="h-9 w-full" />
+        </div>
       </div>
     );
   }
@@ -544,20 +603,18 @@ export default function BillOfRightsPage() {
         )}
 
         {/* ── Error banner ────────────────────────────────────── */}
-        {error && (
-          <div
-            role="alert"
-            className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          >
-            {error}
-          </div>
-        )}
+        <FormError message={error} />
 
         {/* ── Success message ─────────────────────────────────── */}
         {savedMessage && (
           <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 animate-in fade-in slide-in-from-top-2 duration-300">
             {savedMessage}
           </div>
+        )}
+
+        {/* ── Draft restore prompt ────────────────────────────── */}
+        {pendingDraft && (
+          <DraftRestoreBanner onRestore={restoreReflectionDraft} onDiscard={clearDraft} />
         )}
 
         {/* ── Section: Reflection Form ────────────────────────── */}

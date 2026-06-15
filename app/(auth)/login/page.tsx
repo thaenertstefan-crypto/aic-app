@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FormError } from "@/components/ui/form-error";
 import { loginAction } from "@/app/(auth)/auth.actions";
+import { invalidMessage, clearValidity } from "@/lib/utils/form-validation";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(loginAction, {
@@ -32,14 +34,7 @@ export default function LoginPage() {
 
       <form action={formAction}>
         <CardContent className="flex flex-col gap-4">
-          {state.error && (
-            <div
-              role="alert"
-              className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
-              {state.error}
-            </div>
-          )}
+          <FormError message={state.error} />
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">E-Mail</Label>
@@ -50,6 +45,10 @@ export default function LoginPage() {
               placeholder="mail@beispiel.de"
               autoComplete="email"
               required
+              onInvalid={invalidMessage(
+                "Bitte gib eine gültige E-Mail-Adresse ein.",
+              )}
+              onInput={clearValidity}
             />
           </div>
 
@@ -62,6 +61,8 @@ export default function LoginPage() {
               placeholder="••••••••"
               autoComplete="current-password"
               required
+              onInvalid={invalidMessage("Bitte gib dein Passwort ein.")}
+              onInput={clearValidity}
             />
           </div>
 

@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FormError } from "@/components/ui/form-error";
 import { signupAction } from "@/app/(auth)/auth.actions";
+import { invalidMessage, clearValidity } from "@/lib/utils/form-validation";
 
 export default function SignupPage() {
   const [state, formAction, pending] = useActionState(signupAction, {
@@ -32,14 +34,7 @@ export default function SignupPage() {
 
       <form action={formAction}>
         <CardContent className="flex flex-col gap-4">
-          {state.error && (
-            <div
-              role="alert"
-              className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
-              {state.error}
-            </div>
-          )}
+          <FormError message={state.error} />
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="name">Name</Label>
@@ -50,6 +45,8 @@ export default function SignupPage() {
               placeholder="Dein Name"
               autoComplete="name"
               required
+              onInvalid={invalidMessage("Bitte gib deinen Namen ein.")}
+              onInput={clearValidity}
             />
           </div>
 
@@ -62,6 +59,10 @@ export default function SignupPage() {
               placeholder="mail@beispiel.de"
               autoComplete="email"
               required
+              onInvalid={invalidMessage(
+                "Bitte gib eine gültige E-Mail-Adresse ein.",
+              )}
+              onInput={clearValidity}
             />
           </div>
 
@@ -74,6 +75,11 @@ export default function SignupPage() {
               placeholder="Mindestens 6 Zeichen"
               autoComplete="new-password"
               required
+              minLength={6}
+              onInvalid={invalidMessage(
+                "Dein Passwort sollte mindestens 6 Zeichen lang sein.",
+              )}
+              onInput={clearValidity}
             />
           </div>
 

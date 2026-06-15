@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
-import { PartyPopper, Plus, Trophy } from "lucide-react";
+import { Handshake, PartyPopper, Plus, Trophy } from "lucide-react";
 
 import { PageHeader } from "@/components/brand/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FormError } from "@/components/ui/form-error";
 import {
   Dialog,
   DialogContent,
@@ -68,17 +69,11 @@ export function PromisesCleanser({
       <NewPromiseDialog />
 
       {promises.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
-            <p className="font-heading text-base font-medium text-foreground">
-              Noch kein Promise
-            </p>
-            <p className="max-w-xs text-sm text-muted-foreground">
-              Fang klein an. Ein konkretes Versprechen, das du an den meisten
-              Tagen wirklich halten kannst.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Handshake}
+          title="Noch kein Promise"
+          description="Fang klein an. Ein konkretes Versprechen, das du an den meisten Tagen wirklich halten kannst."
+        />
       ) : (
         <div className="space-y-4">
           {promises.map((promise) => (
@@ -176,7 +171,7 @@ function NewPromiseDialog() {
             </RadioGroup>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          <FormError message={error} />
 
           <CreateSubmitButton />
         </form>

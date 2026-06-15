@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { FormError } from "@/components/ui/form-error";
 
 import { VALUES_BANK } from "@/lib/utils/values-bank";
 
@@ -214,18 +215,12 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
       </header>
 
       {/* ── Shared error banner ── */}
-      {(reflectionState.error ||
-        adjustState.error ||
-        newCycleState.error) && (
-        <div
-          role="alert"
-          className="mb-6 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {reflectionState.error ||
-            adjustState.error ||
-            newCycleState.error}
-        </div>
-      )}
+      <FormError
+        message={
+          reflectionState.error || adjustState.error || newCycleState.error
+        }
+        className="mb-6"
+      />
 
       {/* ── ── ── PHASE 1: Reflection ── ── ── */}
       {currentPhase === "reflection" && (

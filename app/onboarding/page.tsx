@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
+import { FormError } from "@/components/ui/form-error";
 
 import { completeOnboardingAction } from "@/app/onboarding/onboarding.actions";
 
@@ -143,14 +144,7 @@ export default function OnboardingPage() {
         </CardHeader>
 
         <CardContent>
-          {state.error && (
-            <div
-              role="alert"
-              className="mb-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
-              {state.error}
-            </div>
-          )}
+          <FormError message={state.error} className="mb-4" />
 
           {/* Step 1: Reason */}
           {step === "reason" && (

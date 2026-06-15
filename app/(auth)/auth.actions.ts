@@ -8,6 +8,27 @@ export type AuthState = {
   error: string | null;
 };
 
+/** Map common (English) Supabase auth errors to warm German microcopy. */
+function friendlyAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials")) {
+    return "E-Mail oder Passwort stimmt nicht. Versuch es nochmal.";
+  }
+  if (m.includes("already registered") || m.includes("already exists")) {
+    return "Mit dieser E-Mail gibt es schon ein Konto. Magst du dich anmelden?";
+  }
+  if (m.includes("password should be at least")) {
+    return "Dein Passwort sollte mindestens 6 Zeichen lang sein.";
+  }
+  if (m.includes("unable to validate email") || m.includes("invalid email")) {
+    return "Diese E-Mail-Adresse sieht nicht ganz richtig aus.";
+  }
+  if (m.includes("email not confirmed")) {
+    return "Bitte bestätige zuerst deine E-Mail-Adresse über den Link in deinem Postfach.";
+  }
+  return message;
+}
+
 export async function loginAction(
   _prevState: AuthState,
   formData: FormData,
@@ -27,7 +48,7 @@ export async function loginAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: friendlyAuthError(error.message) };
   }
 
   redirect("/dashboard");
@@ -56,7 +77,7 @@ export async function signupAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: friendlyAuthError(error.message) };
   }
 
   redirect("/onboarding");

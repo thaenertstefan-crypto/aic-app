@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
 import { Notebook } from "lucide-react";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { JournalDetailDialog } from "@/components/journal/journal-detail-dialog";
 import {
   getFilterTabs,
@@ -130,22 +129,16 @@ export function JournalHub({ entries }: Props) {
 
           {/* ---- Empty state ---- */}
           {isEmpty && (
-            <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                <Notebook className="size-6 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="font-medium">Noch keine Einträge</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {selectedFilter === "all"
-                    ? "Starte ein Rezept, um deine ersten Reflexionen festzuhalten. Jeder Eintrag ist ein Schritt zu mehr Klarheit."
-                    : `Noch keine Einträge in "${filterLabel}". Starte ein Rezept, um deine ersten Reflexionen zu sammeln.`}
-                </p>
-              </div>
-              <Link href="/recipes" className={buttonVariants({ variant: "default", size: "sm" })}>
-                Zu den Rezepten
-              </Link>
-            </div>
+            <EmptyState
+              icon={Notebook}
+              title="Noch keine Einträge"
+              description={
+                selectedFilter === "all"
+                  ? "Starte ein Rezept, um deine ersten Reflexionen festzuhalten. Jeder Eintrag ist ein Schritt zu mehr Klarheit."
+                  : `Noch keine Einträge in "${filterLabel}". Starte ein Rezept, um deine ersten Reflexionen zu sammeln.`
+              }
+              action={{ href: "/recipes", label: "Zu den Rezepten" }}
+            />
           )}
         </div>
       </Tabs>

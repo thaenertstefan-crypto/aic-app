@@ -5,6 +5,7 @@ import { useActionState, useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FormError } from "@/components/ui/form-error";
 
 import { VALUES_BANK } from "@/lib/utils/values-bank";
 import { saveHypothesisAction } from "../actions";
@@ -92,14 +93,7 @@ export function HypothesisForm({ initialValues }: Props) {
       </div>
 
       {/* Error */}
-      {state.error && (
-        <div
-          role="alert"
-          className="mb-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {state.error}
-        </div>
-      )}
+      <FormError message={state.error} className="mb-4" />
 
       <form onSubmit={handleFormSubmit} action={formAction}>
         {/* Hidden input — value synced via useEffect */}

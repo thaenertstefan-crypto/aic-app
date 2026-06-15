@@ -7,11 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { FormError } from "@/components/ui/form-error";
+import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
+import { useFormDraft } from "@/lib/hooks/use-form-draft";
 
 import {
   saveJournalEntryAction,
+  type JournalActionState,
   type JournalPageData,
 } from "../actions";
+
+type JournalDraft = { happenings: string; response: string };
 
 // ─── Date helpers ───────────────────────────────────────────────────
 
@@ -120,10 +126,55 @@ export function JournalForm({ initialData }: JournalFormProps) {
     }
   }, [todayEntry]);
 
-  // Form action
-  const [state, formAction, pending] = useActionState(saveJournalEntryAction, {
-    error: null,
-  });
+  // Offline draft safety net
+  const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
+    useFormDraft<JournalDraft>("values-journal");
+  // Values pulled from a restored draft. Applied via `defaultValue`, so the
+  // form is remounted with `formKey` whenever a draft is restored.
+  const [restoredDraft, setRestoredDraft] = useState<JournalDraft | null>(null);
+  const [formKey, setFormKey] = useState(0);
+
+  const handleRestoreDraft = () => {
+    if (pendingDraft) {
+      setRestoredDraft(pendingDraft);
+      setFormKey((k) => k + 1);
+      // If a saved entry is showing read-only, switch to the editable form.
+      if (todayEntry) setIsEditing(true);
+    }
+    dismissPendingDraft();
+  };
+
+  // Form action — wraps the server action to fall back to a local draft when
+  // the request can't reach the server (offline or network error).
+  const [state, formAction, pending] = useActionState(
+    async (prev: JournalActionState, formData: FormData) => {
+      const draft: JournalDraft = {
+        happenings: (formData.get("happenings") as string) ?? "",
+        response: (formData.get("response") as string) ?? "",
+      };
+
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        saveDraft(draft);
+        return {
+          error:
+            "Du bist offline – dein Eintrag wurde als Entwurf gesichert und wartet, bis du wieder Verbindung hast.",
+        };
+      }
+
+      try {
+        const result = await saveJournalEntryAction(prev, formData);
+        if (!result.error) clearDraft();
+        return result;
+      } catch {
+        saveDraft(draft);
+        return {
+          error:
+            "Speichern fehlgeschlagen – dein Eintrag wurde als Entwurf gesichert. Versuch es später noch einmal.",
+        };
+      }
+    },
+    { error: null },
+  );
 
   // ─── Render ──────────────────────────────────────────────────────
 
@@ -197,15 +248,15 @@ export function JournalForm({ initialData }: JournalFormProps) {
         </div>
       </div>
 
-      {/* Error banner */}
-      {state.error && (
-        <div
-          role="alert"
-          className="mb-6 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {state.error}
+      {/* Draft restore prompt */}
+      {pendingDraft && (
+        <div className="mb-6">
+          <DraftRestoreBanner onRestore={handleRestoreDraft} onDiscard={clearDraft} />
         </div>
       )}
+
+      {/* Error banner */}
+      <FormError message={state.error} className="mb-6" />
 
       {/* Completion state */}
       {isComplete ? (
@@ -268,7 +319,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
               </Card>
             ) : (
               /* ── Form ── */
-              <form action={formAction} className="space-y-5">
+              <form key={formKey} action={formAction} className="space-y-5">
                 <input type="hidden" name="entry_date" value={testDate} />
 
                 <div className="space-y-2">
@@ -283,7 +334,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
                     id="happenings"
                     name="happenings"
                     placeholder="z. B. ein Gespräch, eine Situation, ein Moment, der hängen geblieben ist …"
-                    defaultValue={todayEntry?.happenings ?? ""}
+                    defaultValue={restoredDraft?.happenings ?? todayEntry?.happenings ?? ""}
                     rows={4}
                     required
                     disabled={pending}
@@ -299,7 +350,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
                     id="response"
                     name="response"
                     placeholder="Hast du was gefühlt, das dich überrascht hat? War da Freude, Frust, Stolz, Verwirrung?"
-                    defaultValue={todayEntry?.response ?? ""}
+                    defaultValue={restoredDraft?.response ?? todayEntry?.response ?? ""}
                     rows={4}
                     required
                     disabled={pending}

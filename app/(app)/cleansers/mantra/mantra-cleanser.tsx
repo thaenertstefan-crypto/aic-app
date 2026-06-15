@@ -6,6 +6,7 @@ import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FormError } from "@/components/ui/form-error";
 
 import { logCleanserCheckinAction, type CleanserCheckinState } from "./actions";
 
@@ -199,9 +200,7 @@ export function MantraCleanser({
             <p className="text-sm text-muted-foreground/70">Heute startest du.</p>
           )}
 
-          {state.error && (
-            <p className="text-sm text-destructive">{state.error}</p>
-          )}
+          <FormError message={state.error} />
         </div>
       </div>
     </div>

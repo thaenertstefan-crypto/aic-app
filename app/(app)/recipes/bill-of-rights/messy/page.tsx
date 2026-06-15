@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FormError } from "@/components/ui/form-error";
 
 import {
   getMessyMoments,
@@ -84,8 +86,22 @@ export default function MessyPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-svh flex-col items-center justify-center px-4 py-6">
-        <p className="text-muted-foreground">Lade Einträge …</p>
+      <div className="flex min-h-svh flex-col px-4 py-6">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8">
+          <div className="space-y-2 text-center">
+            <Skeleton className="mx-auto h-7 w-48" />
+            <Skeleton className="mx-auto h-4 w-64" />
+          </div>
+          <Card>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-4 w-44" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-9 w-full" />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -107,14 +123,7 @@ export default function MessyPage() {
         </div>
 
         {/* Error banner */}
-        {state.error && (
-          <div
-            role="alert"
-            className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          >
-            {state.error}
-          </div>
-        )}
+        <FormError message={state.error} />
 
         {/* ── Form ────────────────────────────────────────────────── */}
         <form className="space-y-5">

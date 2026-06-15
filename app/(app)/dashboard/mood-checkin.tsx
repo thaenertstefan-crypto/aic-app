@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { FormError } from "@/components/ui/form-error";
 
 import { saveMoodCheckinAction, type MoodCheckinState } from "./actions";
 
@@ -88,9 +89,7 @@ export function MoodCheckin({ initialScore }: { initialScore: number | null }) {
           <p className="text-sm text-muted-foreground">{MESSAGES[selected]}</p>
         )}
 
-        {state.error && (
-          <p className="text-sm text-destructive">{state.error}</p>
-        )}
+        <FormError message={state.error} />
       </CardContent>
     </Card>
   );
