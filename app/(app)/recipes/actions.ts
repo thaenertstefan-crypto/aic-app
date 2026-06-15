@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { getRecipeBySlug } from "@/lib/utils/recipes";
+import { getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
 
 export type RecipeActionState = {
   error: string | null;
@@ -60,7 +60,9 @@ export async function startOrContinueRecipeAction(
         return { error: updateError.message };
       }
     }
-    // If already in_progress or completed, just proceed
+
+    // Resume at the step the user last reached, instead of always restarting.
+    redirect(getRecipeStepPath(recipeSlug, existing.current_step ?? 1));
   } else {
     // Create a new progress row
     const { error: insertError } = await supabase

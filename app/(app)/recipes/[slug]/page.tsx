@@ -4,7 +4,7 @@ import { Heart, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getRecipeBySlug } from "@/lib/utils/recipes";
 import { Button } from "@/components/ui/button";
-import { startRecipeAction } from "@/app/(app)/recipes/actions";
+import { StartRecipeButton } from "./start-recipe-button";
 
 export default async function RecipeDetailPage(props: {
   params: Promise<{ slug: string }>;
@@ -119,12 +119,12 @@ export default async function RecipeDetailPage(props: {
         </p>
 
         {/* Start / Continue form */}
-        <form action={startRecipeAction} className="mt-8">
-          <input type="hidden" name="recipeSlug" value={slug} />
-          <Button type="submit" size="lg">
-            {isCompleted ? "Erneut starten" : hasProgress ? "Fortsetzen" : "Starten"}
-          </Button>
-        </form>
+        <StartRecipeButton
+          slug={slug}
+          label={
+            isCompleted ? "Erneut starten" : hasProgress ? "Fortsetzen" : "Starten"
+          }
+        />
       </div>
     </div>
   );

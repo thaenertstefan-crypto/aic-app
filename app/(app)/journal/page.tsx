@@ -10,10 +10,14 @@ export default async function JournalPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // The (app) layout already enforces auth; this is a defensive guard so we
+  // never run the query with an empty user id.
+  if (!user) return null;
+
   const { data: entries } = await supabase
     .from("journal_entries")
     .select("*")
-    .eq("user_id", user?.id ?? "")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   return (

@@ -15,12 +15,16 @@ import {
 } from "@/lib/utils/journal";
 
 type Props = {
-  entry: JournalEntryRow;
+  entry: JournalEntryRow | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
 export function JournalDetailDialog({ entry, open, onOpenChange }: Props) {
+  // Guard: the dialog is always mounted by the parent, but `entry` is null
+  // until the user selects one. Bail out before touching entry.* fields.
+  if (!entry) return null;
+
   const config = getJournalConfig(entry.template_type);
   const Icon = config.icon;
   const sections = getContentSections(entry.template_type, entry.content);

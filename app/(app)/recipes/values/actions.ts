@@ -120,6 +120,30 @@ export async function saveHypothesisAction(
   redirect("/recipes/values/journal");
 }
 
+/**
+ * Fetch the user's previously selected values (Step 1), if any.
+ * Used to pre-fill the hypothesis form when revisiting the step.
+ */
+export async function getHypothesisData(): Promise<string[] | null> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data: hypothesisRow } = await supabase
+    .from("values_hypothesis")
+    .select("values")
+    .eq("user_id", user.id)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return (hypothesisRow?.values as string[]) ?? null;
+}
+
 // ─── Journal (Step 2) ────────────────────────────────────────────────
 
 export type JournalEntry = {

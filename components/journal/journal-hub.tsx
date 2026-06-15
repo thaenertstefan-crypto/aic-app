@@ -152,7 +152,7 @@ export function JournalHub({ entries }: Props) {
 
       {/* ---- Detail dialog ---- */}
       <JournalDetailDialog
-        entry={selectedEntry!}
+        entry={selectedEntry}
         open={!!selectedEntry}
         onOpenChange={(open) => {
           if (!open) setSelectedEntry(null);

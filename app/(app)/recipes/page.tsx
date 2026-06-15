@@ -32,28 +32,30 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Moon,
 };
 
+type ProgressRow = {
+  recipe_slug: string;
+  status: string;
+  current_step: number;
+  cycle_number: number;
+};
+
 type ProgressState = {
   status: string;
   current_step: number;
+  cycle_number: number;
 };
 
 /** Group progress rows by recipe_slug, keeping only the highest cycle_number. */
-function buildProgressMap(
-  rows: Array<{
-    recipe_slug: string;
-    status: string;
-    current_step: number;
-    cycle_number: number;
-  }>,
-): Map<string, ProgressState> {
+function buildProgressMap(rows: ProgressRow[]): Map<string, ProgressState> {
   const map = new Map<string, ProgressState>();
 
   for (const row of rows) {
     const existing = map.get(row.recipe_slug);
-    if (!existing || row.cycle_number > (existing as unknown as { cycle_number: number }).cycle_number) {
+    if (!existing || row.cycle_number > existing.cycle_number) {
       map.set(row.recipe_slug, {
         status: row.status,
         current_step: row.current_step,
+        cycle_number: row.cycle_number,
       });
     }
   }

@@ -16,8 +16,14 @@ export type Recipe = {
   duration: string;
   /** Whether the recipe is currently available to users */
   available: boolean;
-  /** Path to redirect to when starting or continuing this recipe */
+  /** Path to redirect to when starting this recipe (step 1) */
   startPath: string;
+  /**
+   * For multi-step recipes: the path for each step, indexed by
+   * (current_step - 1). Used to resume at the correct step. Single-page
+   * recipes can omit this and rely on startPath.
+   */
+  stepPaths?: readonly string[];
 };
 
 export const RECIPES: readonly Recipe[] = [
@@ -30,6 +36,11 @@ export const RECIPES: readonly Recipe[] = [
     duration: "7–14 Tage",
     available: true,
     startPath: "/recipes/values/hypothesis",
+    stepPaths: [
+      "/recipes/values/hypothesis",
+      "/recipes/values/journal",
+      "/recipes/values/evaluation",
+    ],
   },
   {
     slug: "wants",
@@ -89,4 +100,14 @@ export const RECIPES: readonly Recipe[] = [
  */
 export function getRecipeBySlug(slug: string): Recipe | undefined {
   return RECIPES.find((r) => r.slug === slug);
+}
+
+/**
+ * Resolve the path for a given step of a recipe (1-based).
+ * Falls back to startPath for single-page recipes or out-of-range steps.
+ */
+export function getRecipeStepPath(slug: string, step: number): string {
+  const recipe = getRecipeBySlug(slug);
+  if (!recipe) return `/recipes/${slug}`;
+  return recipe.stepPaths?.[step - 1] ?? recipe.startPath;
 }
