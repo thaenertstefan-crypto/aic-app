@@ -61,3 +61,9 @@ export async function signupAction(
 
   redirect("/onboarding");
 }
+
+export async function signoutAction(): Promise<void> {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/login");
+}

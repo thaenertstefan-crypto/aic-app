@@ -128,3 +128,21 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  /* 4-7-8 breathing cycle (19s): inhale 4s, hold 7s, exhale 8s */
+  @keyframes breathe478 {
+    0% {
+      transform: scale(0.55);
+    }
+    21.05% {
+      transform: scale(1);
+    }
+    57.89% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(0.55);
+    }
+  }
+}
