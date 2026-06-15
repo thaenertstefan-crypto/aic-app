@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,44 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
   const [currentPhase, setCurrentPhase] = useState<
     "reflection" | "adjust" | "complete"
   >(phase);
+
+  // ── AI insights ─────────────────────────────────────────────────
+  // Seed from previously generated insights so a reload doesn't re-call.
+  // While `insights` is null in the adjust phase, the card shows a loading state.
+  const [insights, setInsights] = useState<string | null>(
+    valueEvalEntry?.aiInsights ?? null,
+  );
+  const insightsRequested = useRef(insights !== null);
+
+  // When the user reaches the adjust phase, fetch the AI observations once
+  // (unless we already have them from a previous visit).
+  useEffect(() => {
+    if (currentPhase !== "adjust" || insightsRequested.current) return;
+    insightsRequested.current = true;
+
+    const fallback =
+      "Wir konnten diesmal leider keine Beobachtungen für dich erstellen. Schau einfach selbst noch einmal auf deine Woche zurück.";
+
+    let cancelled = false;
+    fetch("/api/journal-analysis", { method: "POST" })
+      .then(async (res) => {
+        const data = (await res.json()) as { insights?: string; error?: string };
+        // On a rate-limit (or other error), surface the server's message in the
+        // insights card instead of silently showing the generic fallback.
+        if (!res.ok) return data.error ?? fallback;
+        return data.insights ?? fallback;
+      })
+      .then((text) => {
+        if (!cancelled) setInsights(text);
+      })
+      .catch(() => {
+        if (!cancelled) setInsights(fallback);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentPhase]);
 
   // ── Phase 1: Reflection form ────────────────────────────────────
   const [reflectionState, reflectionAction, reflectionPending] = useActionState(
@@ -284,6 +322,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
             </div>
 
             <Button
+              type="submit"
               className="w-full"
               size="lg"
               disabled={reflectionPending}
@@ -299,6 +338,24 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
       {/* ── ── ── PHASE 2: Value Adjustment ── ── ── */}
       {currentPhase === "adjust" && (
         <>
+          {/* AI insights card — gentle observations before adjusting values */}
+          <Card className="mb-8 border-amber-200 dark:border-amber-800">
+            <CardContent className="space-y-3 pt-(--card-spacing)">
+              <h2 className="font-heading text-base font-semibold text-amber-800 dark:text-amber-200">
+                Was uns aufgefallen ist …
+              </h2>
+              {insights === null ? (
+                <p className="text-sm text-muted-foreground">
+                  Wir schauen uns deine Woche an … einen kurzen Moment.
+                </p>
+              ) : (
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                  {insights}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           <p className="mb-6 max-w-prose text-base text-muted-foreground">
             Schau dir deine ursprünglichen Werte an. Welche fühlen sich
             immer noch richtig an? Welche möchtest du anpassen? Du kannst
@@ -617,6 +674,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
           <div className="mt-auto space-y-3">
             <form action={newCycleAction}>
               <Button
+                type="submit"
                 className="w-full"
                 size="lg"
                 disabled={newCyclePending}

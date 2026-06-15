@@ -12,6 +12,8 @@ import {
   Check,
   X,
   Shield,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -218,6 +220,7 @@ export default function BillOfRightsPage() {
 
   // Right builder input
   const [builderText, setBuilderText] = useState("");
+  const [generating, setGenerating] = useState(false);
 
   // Saving states
   const [savingReflection, setSavingReflection] = useState(false);
@@ -322,6 +325,45 @@ export default function BillOfRightsPage() {
     setRights(updated);
     setBuilderText("");
     persistRights(updated);
+  };
+
+  // ── AI suggestion ─────────────────────────────────────────────────
+
+  const RIGHT_PREFIX = "Ich habe das Recht, ";
+
+  const handleGenerateSuggestion = async () => {
+    setGenerating(true);
+    setError(null);
+
+    // The held-back situation, enriched with the inner rule that held them back.
+    const situation = [prompt1.trim(), prompt2.trim()].filter(Boolean).join("\n\n");
+
+    try {
+      const res = await fetch("/api/rights-formulator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ situation, idealReaction: prompt3.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? "Wir konnten gerade keinen Vorschlag erstellen.");
+        return;
+      }
+
+      // The input sits behind a static "Ich habe das Recht," prefix overlay and
+      // stores only the continuation, so strip the prefix before pre-filling.
+      const suggestion: string = data.suggestion ?? "";
+      const continuation = suggestion.startsWith(RIGHT_PREFIX)
+        ? suggestion.slice(RIGHT_PREFIX.length)
+        : suggestion;
+      setBuilderText(continuation);
+    } catch {
+      setError("Wir konnten gerade keinen Vorschlag erstellen. Versuch es noch einmal.");
+    } finally {
+      setGenerating(false);
+    }
   };
 
   // ── Suggestion chips ──────────────────────────────────────────────
@@ -610,6 +652,25 @@ export default function BillOfRightsPage() {
                   }}
                 />
               </div>
+              <Button
+                onClick={handleGenerateSuggestion}
+                disabled={generating || (!prompt1.trim() && !prompt3.trim())}
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Wird formuliert …
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="size-4" />
+                    Vorschlag generieren
+                  </>
+                )}
+              </Button>
               <Button
                 onClick={handleAddRight}
                 disabled={!builderText.trim()}

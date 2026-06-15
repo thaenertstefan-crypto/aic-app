@@ -332,6 +332,7 @@ export type EvaluationEntry = {
 export type ValueEvalEntry = {
   id: string;
   content: { positive_reflection: string; negative_reflection: string };
+  aiInsights: string | null;
 } | null;
 
 export type EvaluationPageData = {
@@ -393,29 +394,27 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
   const hypothesis = (hypothesisRow?.values as string[]) ?? [];
   const hypothesisVersion = (hypothesisRow?.version as number) ?? 1;
 
-  // Fetch daily_value entries scoped to this cycle's started_at date
+  // Fetch the most recent 7 daily_value entries — the current cycle.
+  // Counting the latest 7 by created_at keeps this consistent with the journal
+  // step (which unlocks "Zur Auswertung" once 7 entries exist) and with the
+  // journal-analysis API route, instead of filtering by entry_date >= started_at
+  // (which the test-only back-dating in journal-form.tsx breaks).
   const { data: entries } = await supabase
     .from("journal_entries")
     .select("id, entry_date, content")
     .eq("user_id", user.id)
     .eq("recipe_slug", "values")
     .eq("template_type", "daily_value")
-    .order("entry_date", { ascending: true });
+    .order("created_at", { ascending: false })
+    .limit(7);
 
-  // Scope entries to current cycle by date
-  const startedAtDate = progress?.started_at
-    ? progress.started_at.slice(0, 10)
-    : null;
-  const cycleEntries = startedAtDate
-    ? (entries as EvaluationEntry[]).filter(
-        (e) => e.entry_date >= startedAtDate,
-      )
-    : (entries as EvaluationEntry[]) ?? [];
+  // Show them in chronological order.
+  const cycleEntries = ((entries as EvaluationEntry[]) ?? []).slice().reverse();
 
   // Fetch existing value_eval entry (if any)
   const { data: evalRow } = await supabase
     .from("journal_entries")
-    .select("id, content")
+    .select("id, content, ai_insights")
     .eq("user_id", user.id)
     .eq("recipe_slug", "values")
     .eq("template_type", "value_eval")
@@ -428,6 +427,7 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
           positive_reflection: string;
           negative_reflection: string;
         }) ?? { positive_reflection: "", negative_reflection: "" },
+        aiInsights: (evalRow.ai_insights as string | null) ?? null,
       }
     : null;
 

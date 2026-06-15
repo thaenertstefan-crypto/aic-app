@@ -141,7 +141,9 @@ export default async function RecipesPage() {
                         }
                       >
                         {progress.status === "completed"
-                          ? "Abgeschlossen"
+                          ? recipe.cyclical
+                            ? `Zyklus ${progress.cycle_number}`
+                            : "Abgeschlossen"
                           : "In Arbeit"}
                       </Badge>
                     ) : (

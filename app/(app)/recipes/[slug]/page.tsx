@@ -4,6 +4,7 @@ import { Heart, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getRecipeBySlug } from "@/lib/utils/recipes";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { StartRecipeButton } from "./start-recipe-button";
 
 export default async function RecipeDetailPage(props: {
@@ -84,6 +85,23 @@ export default async function RecipeDetailPage(props: {
   const hasProgress = progress && progress.status !== "not_started";
   const isCompleted = progress?.status === "completed";
 
+  // For the (cyclical) values recipe, surface the user's confirmed values right
+  // here so returning users see them without having to restart the recipe.
+  let confirmedValues: string[] = [];
+  if (slug === "values") {
+    const { data: hypothesis } = await supabase
+      .from("values_hypothesis")
+      .select("values, confirmed")
+      .eq("user_id", user?.id ?? "")
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (hypothesis?.confirmed) {
+      confirmedValues = (hypothesis.values as string[] | null) ?? [];
+    }
+  }
+
   return (
     <div className="px-4 py-6">
       {/* Back link */}
@@ -113,10 +131,44 @@ export default async function RecipeDetailPage(props: {
           Dauer: <span className="text-foreground">{recipe.duration}</span>
         </p>
 
-        {/* Description */}
-        <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-          {recipe.description}
-        </p>
+        {/* Intro — richer multi-paragraph framing, falls back to description */}
+        {recipe.intro ? (
+          <div className="mt-4 space-y-4">
+            {recipe.intro.map((paragraph, i) => (
+              <p
+                key={i}
+                className="text-base leading-relaxed text-muted-foreground"
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            {recipe.description}
+          </p>
+        )}
+
+        {/* Already-discovered values (returning users) */}
+        {confirmedValues.length > 0 && (
+          <Card className="mt-6 border-amber-200 dark:border-amber-800">
+            <CardContent className="space-y-3 pt-(--card-spacing)">
+              <h2 className="font-heading text-base font-semibold text-amber-800 dark:text-amber-200">
+                Deine Werte
+              </h2>
+              <div className="flex flex-wrap gap-1.5">
+                {confirmedValues.map((value) => (
+                  <span
+                    key={value}
+                    className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
+                  >
+                    {value}
+                  </span>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Start / Continue form */}
         <StartRecipeButton

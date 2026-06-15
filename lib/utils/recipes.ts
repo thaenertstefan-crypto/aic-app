@@ -14,6 +14,18 @@ export type Recipe = {
   icon: string;
   /** Estimated duration shown on the card, e.g. "7–14 Tage" */
   duration: string;
+  /**
+   * Longer introduction shown on the recipe's start page (one entry per
+   * paragraph). Explains the background and idea of the recipe. Optional —
+   * pages fall back to `description` when absent.
+   */
+  intro?: readonly string[];
+  /**
+   * True for repeatable recipes that track multiple cycles (e.g. "values").
+   * Drives whether the overview badge counts cycles instead of showing a
+   * final "Abgeschlossen".
+   */
+  cyclical?: boolean;
   /** Whether the recipe is currently available to users */
   available: boolean;
   /** Path to redirect to when starting this recipe (step 1) */
@@ -32,8 +44,13 @@ export const RECIPES: readonly Recipe[] = [
     title: "Deine Werte entdecken",
     description:
       "Finde heraus, was dir wirklich wichtig ist. Ein 7-Tage-Tagebuch, um deine inneren Werte zu erkennen und zu verstehen, was dich antreibt.",
+    intro: [
+      "Deine Werte sind dein innerer Kompass: die Dinge, die dir im Kern wirklich wichtig sind. Sie prägen — oft ganz unbewusst — jede Entscheidung und bestimmen, wie gut du dich mit deinem Leben fühlst. Wer seine Werte kennt, entscheidet leichter und versteht, warum sich manches richtig und manches falsch anfühlt.",
+      "Das Besondere: Deine Werte findest du nicht durch Nachdenken heraus, sondern durch Experimentieren. Du stellst eine erste Vermutung auf, beobachtest dich eine Woche lang im Alltag und passt deine Werte danach an. Test, Auswertung, Verfeinerung — Zyklus für Zyklus wird dein Bild von dir selbst klarer.",
+    ],
     icon: "Heart",
     duration: "7–14 Tage",
+    cyclical: true,
     available: true,
     startPath: "/recipes/values/hypothesis",
     stepPaths: [
