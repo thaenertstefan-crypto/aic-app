@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
+import { getValueLabel } from "@/lib/utils/values-bank";
 
 import {
   saveJournalEntryAction,
@@ -191,7 +192,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
                 key={v}
                 className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
               >
-                {v}
+                {getValueLabel(v)}
               </span>
             ))}
           </CardContent>

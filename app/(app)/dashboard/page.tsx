@@ -5,8 +5,6 @@ import {
   NotebookPen,
   Quote,
   Sparkles,
-  Zap,
-  type LucideIcon,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
@@ -20,35 +18,6 @@ import { StatCard } from "@/components/ui/stat-card";
 import { MoodCheckin } from "./mood-checkin";
 
 type RightItem = { id: string; text: string; active: boolean };
-
-const QUICK_LINKS: {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  iconClass: string;
-}[] = [
-  {
-    href: "/cleansers/mantra",
-    icon: Sparkles,
-    label: "Mantra",
-    iconClass:
-      "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
-  },
-  {
-    href: "/cleansers/promises",
-    icon: Flame,
-    label: "Versprechen",
-    iconClass:
-      "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-  },
-  {
-    href: "/cleansers/confidence",
-    icon: Zap,
-    label: "Confidence",
-    iconClass:
-      "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400",
-  },
-];
 
 /** Day-of-year (1–366), used to pick a stable daily right. */
 function dayOfYear(date: Date): number {
@@ -181,10 +150,12 @@ export default async function DashboardPage() {
   const completedSlugs = new Set(
     progressRows.filter((p) => p.status === "completed").map((p) => p.recipe_slug),
   );
-  // Suggest the first available recipe the user hasn't finished yet.
+  // Suggest the onboarding recipe first; otherwise the first unfinished one.
   const suggestedRecipe = hasActiveRecipe
     ? undefined
-    : RECIPES.find((r) => r.available && !completedSlugs.has(r.slug));
+    : activeRecipe && activeRecipe.available && !completedSlugs.has(activeRecipe.slug)
+      ? activeRecipe
+      : RECIPES.find((r) => r.available && !completedSlugs.has(r.slug));
 
   // --- Heutiges Recht ---
   const activeRights = rights.filter((r) => r.active);
@@ -205,15 +176,15 @@ export default async function DashboardPage() {
         <p className="text-sm capitalize text-muted-foreground">{dateLabel}</p>
       </header>
 
-      {/* Mood check-in */}
-      <MoodCheckin initialScore={todayMood} />
-
-      {/* Aktuelles Recipe */}
+      {/* Aktuelles Recipe — primäre Aktion */}
       <RecipeCard
         active={hasActiveRecipe ? activeRecipe : undefined}
         activeStep={activeProgress?.current_step ?? 1}
         suggested={suggestedRecipe}
       />
+
+      {/* Mood check-in */}
+      <MoodCheckin initialScore={todayMood} />
 
       {/* Heutiges Recht */}
       <Card>
@@ -228,7 +199,7 @@ export default async function DashboardPage() {
           </div>
 
           {todayRight ? (
-            <p className="font-heading text-xl leading-relaxed text-foreground">
+            <p className="font-heading text-lg leading-relaxed text-foreground/90">
               {asAffirmation(todayRight.text)}
             </p>
           ) : (
@@ -270,29 +241,6 @@ export default async function DashboardPage() {
           accentClass="text-amber-600 dark:text-amber-400"
         />
       </div>
-
-      {/* Quick links */}
-      <div className="grid grid-cols-3 gap-3">
-        {QUICK_LINKS.map((link) => {
-          const Icon = link.icon;
-          return (
-            <Link key={link.href} href={link.href} className="block">
-              <Card className="h-full transition-colors hover:bg-muted/50">
-                <CardContent className="flex flex-col items-center gap-2 py-1 text-center">
-                  <div
-                    className={`flex size-10 items-center justify-center rounded-full ${link.iconClass}`}
-                  >
-                    <Icon className="size-5" />
-                  </div>
-                  <span className="text-xs font-medium text-foreground">
-                    {link.label}
-                  </span>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
     </div>
   );
 }
@@ -312,10 +260,10 @@ function RecipeCard({
     const href = getRecipeStepPath(active.slug, activeStep);
 
     return (
-      <Card>
+      <Card className="ring-2 ring-primary/20 shadow-md shadow-primary/5">
         <CardContent className="space-y-3">
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
+            <p className="text-xs font-medium uppercase tracking-wide text-primary">
               Aktuelles Recipe
             </p>
             <p className="font-heading text-lg font-medium text-foreground">
@@ -345,10 +293,10 @@ function RecipeCard({
 
   if (suggested) {
     return (
-      <Card>
+      <Card className="ring-2 ring-primary/20 shadow-md shadow-primary/5">
         <CardContent className="space-y-3">
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
+            <p className="text-xs font-medium uppercase tracking-wide text-primary">
               Empfehlung für dich
             </p>
             <p className="font-heading text-lg font-medium text-foreground">

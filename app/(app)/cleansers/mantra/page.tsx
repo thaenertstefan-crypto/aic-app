@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { computeStreak } from "@/lib/utils/streak";
 
 import { MantraCleanser } from "./mantra-cleanser";
+import { getMantraData } from "./actions";
 
 export default async function MantraCleanserPage() {
   const supabase = await createClient();
@@ -29,5 +30,15 @@ export default async function MantraCleanserPage() {
     streak = computeStreak(dates, doneToday);
   }
 
-  return <MantraCleanser doneToday={doneToday} streak={streak} />;
+  // Mantra + Karten (mit Default-Fallback) zentral über die Action laden.
+  const { mantra, cards } = await getMantraData();
+
+  return (
+    <MantraCleanser
+      doneToday={doneToday}
+      streak={streak}
+      mantra={mantra}
+      cards={cards}
+    />
+  );
 }

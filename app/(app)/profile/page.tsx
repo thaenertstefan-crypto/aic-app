@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/brand/page-header";
+import { getValueLabel } from "@/lib/utils/values-bank";
 
 type RightItem = { id: string; text: string; active: boolean };
 
@@ -139,7 +140,7 @@ export default async function ProfilePage() {
             <div className="flex flex-wrap gap-2">
               {values.map((value) => (
                 <Badge key={value} variant="secondary" className="text-sm">
-                  {value}
+                  {getValueLabel(value)}
                 </Badge>
               ))}
             </div>

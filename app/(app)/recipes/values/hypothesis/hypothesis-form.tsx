@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 
-import { VALUES_BANK } from "@/lib/utils/values-bank";
+import { VALUES_BANK, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
 import { saveHypothesisAction } from "../actions";
 
 const MAX_VALUES = 5;
@@ -50,9 +50,10 @@ export function HypothesisForm({ initialValues }: Props) {
   const addCustomValue = () => {
     const trimmed = customValue.trim();
     if (!trimmed) return;
-    if (selectedValues.includes(trimmed)) return;
+    const customId = `${CUSTOM_PREFIX}${trimmed}`;
+    if (selectedValues.includes(customId)) return;
     if (selectedValues.length >= MAX_VALUES) return;
-    setSelectedValues((prev) => [...prev, trimmed]);
+    setSelectedValues((prev) => [...prev, customId]);
     setCustomValue("");
   };
 
@@ -101,20 +102,20 @@ export function HypothesisForm({ initialValues }: Props) {
 
         {/* Chip grid */}
         <div className="flex flex-wrap gap-2" role="group" aria-label="Werte-Auswahl">
-          {VALUES_BANK.map((value) => {
-            const isSelected = selectedValues.includes(value);
+          {VALUES_BANK.map((item) => {
+            const isSelected = selectedValues.includes(item.id);
             return (
               <button
-                key={value}
+                key={item.id}
                 type="button"
-                onClick={() => toggleValue(value)}
+                onClick={() => toggleValue(item.id)}
                 className={`rounded-full border px-3 py-1 text-sm transition-all duration-150 active:scale-95 ${
                   isSelected
                     ? "border-amber-400 bg-amber-100 font-medium text-amber-800 shadow-sm dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-200"
                     : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:bg-gray-750"
                 }`}
               >
-                {value}
+                {item.de}
               </button>
             );
           })}
@@ -163,12 +164,12 @@ export function HypothesisForm({ initialValues }: Props) {
                   key={v}
                   className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
                 >
-                  {v}
+                  {getValueLabel(v)}
                   <button
                     type="button"
                     onClick={() => toggleValue(v)}
                     className="ml-0.5 inline-flex leading-none hover:text-amber-600 dark:hover:text-amber-400"
-                    aria-label={`${v} entfernen`}
+                    aria-label={`${getValueLabel(v)} entfernen`}
                   >
                     &times;
                   </button>

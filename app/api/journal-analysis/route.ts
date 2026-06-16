@@ -7,6 +7,7 @@ import {
   logUsage,
 } from "@/lib/anthropic/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+import { getValueLabel } from "@/lib/utils/values-bank";
 
 // Warm German fallback shown when the AI call fails for any reason.
 const FALLBACK_INSIGHTS =
@@ -97,7 +98,9 @@ export async function POST() {
       .join("\n\n");
 
     const userMessage = `Aktuelle Werte der Person: ${
-      values.length > 0 ? values.join(", ") : "(noch keine festgelegt)"
+      values.length > 0
+        ? values.map(getValueLabel).join(", ")
+        : "(noch keine festgelegt)"
     }
 
 Die Tagebucheinträge der letzten Woche:

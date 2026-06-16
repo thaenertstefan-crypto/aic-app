@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/ui/form-error";
 
-import { VALUES_BANK } from "@/lib/utils/values-bank";
+import { VALUES_BANK, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
 
 import {
   saveEvalReflectionAction,
@@ -155,7 +155,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
     const trimmed = customReplacement.trim();
     if (!trimmed) return;
     if (pickingIndex !== null) {
-      pickReplacement(pickingIndex, trimmed);
+      pickReplacement(pickingIndex, `${CUSTOM_PREFIX}${trimmed}`);
     }
     setCustomReplacement("");
   };
@@ -167,8 +167,9 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
   const addCustomAdditional = () => {
     const trimmed = customAdditional.trim();
     if (!trimmed) return;
-    if (additionalValues.includes(trimmed)) return;
-    addAdditionalValue(trimmed);
+    const customId = `${CUSTOM_PREFIX}${trimmed}`;
+    if (additionalValues.includes(customId)) return;
+    addAdditionalValue(customId);
     setCustomAdditional("");
   };
 
@@ -367,7 +368,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                 <CardContent className="space-y-3 pt-(--card-spacing)">
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-medium text-foreground">
-                      {value}
+                      {getValueLabel(value)}
                     </span>
                     <div className="flex shrink-0 gap-1">
                       <button
@@ -409,19 +410,21 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                       {/* Value bank chips (filtered) */}
                       <div className="flex flex-wrap gap-1.5">
                         {VALUES_BANK.filter(
-                          (v) => !allSelectedValues.includes(v) || v === replacements[index],
+                          (v) =>
+                            !allSelectedValues.includes(v.id) ||
+                            v.id === replacements[index],
                         ).map((v) => (
                           <button
-                            key={v}
+                            key={v.id}
                             type="button"
-                            onClick={() => pickReplacement(index, v)}
+                            onClick={() => pickReplacement(index, v.id)}
                             className={`rounded-full border px-2.5 py-1 text-xs transition-all active:scale-95 ${
-                              replacements[index] === v
+                              replacements[index] === v.id
                                 ? "border-amber-400 bg-amber-100 font-medium text-amber-800 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-200"
                                 : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-600"
                             }`}
                           >
-                            {v}
+                            {v.de}
                           </button>
                         ))}
                       </div>
@@ -473,7 +476,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                           Ersatz:
                         </span>
                         <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-                          {replacements[index]}
+                          {getValueLabel(replacements[index]!)}
                         </span>
                         <button
                           type="button"
@@ -502,15 +505,15 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
             {/* Value bank chips for additional values (filtered) */}
             <div className="flex flex-wrap gap-1.5">
               {VALUES_BANK.filter(
-                (v) => !allSelectedValues.includes(v),
+                (v) => !allSelectedValues.includes(v.id),
               ).map((v) => (
                 <button
-                  key={v}
+                  key={v.id}
                   type="button"
-                  onClick={() => addAdditionalValue(v)}
+                  onClick={() => addAdditionalValue(v.id)}
                   className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-700 transition-all hover:border-amber-300 hover:bg-amber-50 active:scale-95 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-amber-600 dark:hover:bg-amber-900/20"
                 >
-                  + {v}
+                  + {v.de}
                 </button>
               ))}
             </div>
@@ -566,12 +569,12 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                         key={`kept-${v}`}
                         className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
                       >
-                        {v}
+                        {getValueLabel(v)}
                         <button
                           type="button"
                           onClick={() => toggleKeep(i)}
                           className="ml-0.5 inline-flex leading-none hover:text-amber-600 dark:hover:text-amber-400"
-                          aria-label={`${v} entfernen`}
+                          aria-label={`${getValueLabel(v)} entfernen`}
                         >
                           &times;
                         </button>
@@ -583,7 +586,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                     key={`replacement-${v}`}
                     className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
                   >
-                    {v}
+                    {getValueLabel(v!)}
                   </span>
                 ))}
                 {additionalValues.map((v) => (
@@ -591,12 +594,12 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                     key={`additional-${v}`}
                     className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-200"
                   >
-                    {v}
+                    {getValueLabel(v)}
                     <button
                       type="button"
                       onClick={() => removeAdditionalValue(v)}
                       className="ml-0.5 inline-flex leading-none hover:text-purple-600 dark:hover:text-purple-400"
-                      aria-label={`${v} entfernen`}
+                      aria-label={`${getValueLabel(v)} entfernen`}
                     >
                       &times;
                     </button>
@@ -647,7 +650,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                       key={v}
                       className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
                     >
-                      {v}
+                      {getValueLabel(v)}
                     </span>
                   ))}
                   {/* Fallback: show DB values on re-entry if local state is empty */}
@@ -657,7 +660,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                         key={v}
                         className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
                       >
-                        {v}
+                        {getValueLabel(v)}
                       </span>
                     ))}
                 </div>

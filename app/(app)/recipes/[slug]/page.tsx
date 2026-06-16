@@ -3,6 +3,7 @@ import { Heart, ArrowLeft } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getRecipeBySlug } from "@/lib/utils/recipes";
+import { getValueLabel } from "@/lib/utils/values-bank";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StartRecipeButton } from "./start-recipe-button";
@@ -162,7 +163,7 @@ export default async function RecipeDetailPage(props: {
                     key={value}
                     className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
                   >
-                    {value}
+                    {getValueLabel(value)}
                   </span>
                 ))}
               </div>
