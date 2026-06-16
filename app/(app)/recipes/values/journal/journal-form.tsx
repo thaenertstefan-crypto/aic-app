@@ -84,19 +84,6 @@ export function JournalForm({ initialData }: JournalFormProps) {
   const { hypothesis, entries, startedAt, currentStep } = initialData;
   const todayKey = getTodayKey();
 
-  const existingDailyEntries = entries; // already scoped to template_type 'daily_value'
-  // 🧪 TEST ONLY — remove before shipping
-  // Back-dates each new entry by the number of existing entries so the
-  // one-entry-per-day restriction is bypassed during development testing.
-  const testDate = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() - existingDailyEntries.length);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${dd}`;
-  })();
-
   // Build entry lookup by date
   const entryByDate = new Map<string, { id: string; happenings: string; response: string }>();
   for (const e of entries) {
@@ -115,7 +102,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
   const isComplete = entryCount >= 7 && currentStep >= 3;
 
   // Today's entry
-  const todayEntry = entryByDate.get(testDate) ?? null;
+  const todayEntry = entryByDate.get(todayKey) ?? null;
   const [isEditing, setIsEditing] = useState(false);
   const [encouragement] = useState(randomEncouragement);
 
@@ -320,7 +307,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
             ) : (
               /* ── Form ── */
               <form key={formKey} action={formAction} className="space-y-5">
-                <input type="hidden" name="entry_date" value={testDate} />
+                <input type="hidden" name="entry_date" value={todayKey} />
 
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">{encouragement}</p>

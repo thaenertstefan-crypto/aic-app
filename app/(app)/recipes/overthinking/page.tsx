@@ -219,9 +219,9 @@ export default function OverthinkingWizard() {
   const getStepLabel = (s: number): string => {
     switch (s) {
       case 2: return "Was ist dein Problem (an der Oberfläche)?";
-      case 3: return `Warum ${answers.step2.toLowerCase()}?`;
-      case 4: return `Warum ${answers.step3.toLowerCase()}?`;
-      case 5: return `Warum ${answers.step4.toLowerCase()}?`;
+      case 3: return "Und warum ist das so?";
+      case 4: return "Warum noch? Geh eine Ebene tiefer.";
+      case 5: return "Und was steckt ganz unten dahinter?";
       default: return "";
     }
   };
