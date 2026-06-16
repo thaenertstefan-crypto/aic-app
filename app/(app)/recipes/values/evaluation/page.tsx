@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { getEvaluationData } from "../actions";
 import { EvaluationForm } from "./evaluation-form";
 
@@ -10,5 +11,10 @@ export default async function EvaluationPage() {
     redirect("/recipes/values/journal");
   }
 
-  return <EvaluationForm initialData={data} />;
+  return (
+    <div className="flex min-h-svh flex-col">
+      <SubPageHeader backHref="/recipes/values" title="Auswertung" />
+      <EvaluationForm initialData={data} />
+    </div>
+  );
 }

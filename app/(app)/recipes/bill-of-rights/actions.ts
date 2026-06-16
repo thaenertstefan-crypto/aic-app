@@ -18,6 +18,7 @@ export type RightsData = {
     status: string;
     current_step: number;
   } | null;
+  introSeen: boolean;
 };
 
 // ─── Get all data for the page ─────────────────────────────────────────
@@ -62,12 +63,23 @@ export async function getBillOfRightsData(): Promise<{
     .limit(1)
     .maybeSingle();
 
+  // Intro "schon gesehen?" — gilt pro Slug, sobald irgendeine Zeile intro_seen=true hat.
+  const { data: introRow } = await supabase
+    .from("user_recipe_progress")
+    .select("intro_seen")
+    .eq("user_id", user.id)
+    .eq("recipe_slug", "bill-of-rights")
+    .eq("intro_seen", true)
+    .limit(1)
+    .maybeSingle();
+
   return {
     error: null,
     data: {
       journalEntry: entry?.content as RightsData["journalEntry"],
       rights: (bor?.rights as { id: string; text: string; active: boolean }[]) ?? null,
       progress: progress ? { status: progress.status, current_step: progress.current_step } : null,
+      introSeen: Boolean(introRow),
     },
   };
 }

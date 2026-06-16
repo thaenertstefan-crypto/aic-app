@@ -24,13 +24,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormError } from "@/components/ui/form-error";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
+import { SubPageHeader } from "@/components/layout/sub-page-header";
+import { RecipeIntro } from "@/components/recipes/recipe-intro";
+import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
+import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 
+import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
 import {
   getBillOfRightsData,
   saveReflectionAction,
   saveRightsAction,
 } from "./actions";
+
+const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
 
 type ReflectionDraft = {
   prompt1: string;
@@ -228,6 +235,10 @@ export default function BillOfRightsPage() {
   const [rights, setRights] = useState<Right[]>([]);
   const [progressStatus, setProgressStatus] = useState<string | null>(null);
 
+  // Hybrid-Intro (Schritt 6.10)
+  const [introSeen, setIntroSeen] = useState(true);
+  const [introDismissed, setIntroDismissed] = useState(false);
+
   // Right builder input
   const [builderText, setBuilderText] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -268,6 +279,7 @@ export default function BillOfRightsPage() {
         if (result.data.progress) {
           setProgressStatus(result.data.progress.status);
         }
+        setIntroSeen(result.data.introSeen);
       }
       setLoading(false);
     }
@@ -475,8 +487,9 @@ export default function BillOfRightsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-svh flex-col px-4 py-6">
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6">
+      <div className="flex min-h-svh flex-col">
+        <SubPageHeader backHref="/recipes" title="Bill of Rights" />
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
           <div className="space-y-2">
             <Skeleton className="mx-auto h-8 w-56" />
             <Skeleton className="mx-auto h-4 w-72" />
@@ -495,12 +508,35 @@ export default function BillOfRightsPage() {
     );
   }
 
+  // ── Intro-Sequenz (erster Besuch) ─────────────────────────────────
+
+  const handleIntroSeen = () => {
+    setIntroDismissed(true);
+    void markRecipeIntroSeenAction("bill-of-rights");
+  };
+
+  if (!introSeen && !introDismissed && INTRO_CARDS.length > 0) {
+    return (
+      <div className="flex min-h-svh flex-col">
+        <SubPageHeader backHref="/recipes" title="Bill of Rights" />
+        <div className="flex flex-1 flex-col justify-center">
+          <RecipeIntro
+            cards={INTRO_CARDS}
+            onComplete={handleIntroSeen}
+            onSkip={handleIntroSeen}
+          />
+        </div>
+      </div>
+    );
+  }
+
   // ── Completion screen ─────────────────────────────────────────────
 
   if (isCompleted && rights.length > 0) {
     return (
-      <div className="flex min-h-svh flex-col px-4 py-6">
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col">
+      <div className="flex min-h-svh flex-col">
+        <SubPageHeader backHref="/recipes" title="Bill of Rights" />
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-6">
           {/* Header */}
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="flex size-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
@@ -564,16 +600,17 @@ export default function BillOfRightsPage() {
   // ── Main view ─────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-svh flex-col px-4 py-6">
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8">
-        {/* ── Header ──────────────────────────────────────────── */}
+    <div className="flex min-h-svh flex-col">
+      <SubPageHeader backHref="/recipes" title="Bill of Rights" />
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-4 py-6">
+        {/* ── "Worum geht's?"-Collapsible (Wiederkehrer) ──────── */}
+        {INTRO_CARDS.length > 0 && <RecipeIntroCollapsible cards={INTRO_CARDS} />}
+
+        {/* ── Intro ───────────────────────────────────────────── */}
         <div className="flex flex-col items-center gap-3 text-center">
           <div className="flex size-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
             <Shield className="size-6 text-amber-600 dark:text-amber-400" />
           </div>
-          <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-            Dein Bill of Rights
-          </h1>
           <p className="text-sm leading-relaxed text-muted-foreground">
             Innere Regeln prägen unser Verhalten – oft unbewusst. Dieses Rezept hilft dir, deine
             persönlichen Grundrechte zu entdecken und bewusst neu zu formulieren. Rechte, die dich

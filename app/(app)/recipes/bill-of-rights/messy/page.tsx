@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormError } from "@/components/ui/form-error";
+import { SubPageHeader } from "@/components/layout/sub-page-header";
 
 import {
   getMessyMoments,
@@ -86,8 +87,9 @@ export default function MessyPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-svh flex-col px-4 py-6">
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8">
+      <div className="flex min-h-svh flex-col">
+        <SubPageHeader backHref="/recipes/bill-of-rights" title="Messy Moment" />
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-4 py-6">
           <div className="space-y-2 text-center">
             <Skeleton className="mx-auto h-7 w-48" />
             <Skeleton className="mx-auto h-4 w-64" />
@@ -109,13 +111,11 @@ export default function MessyPage() {
   // ── Render ────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-svh flex-col px-4 py-6">
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8">
-        {/* Header */}
+    <div className="flex min-h-svh flex-col">
+      <SubPageHeader backHref="/recipes/bill-of-rights" title="Messy Moment" />
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-4 py-6">
+        {/* Intro */}
         <div className="flex flex-col gap-3 text-center">
-          <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-            Messy Moment
-          </h1>
           <p className="text-sm leading-relaxed text-muted-foreground">
             Momente, in denen du nicht nach deinen eigenen Regeln gehandelt hast – das passiert.
             Hier kannst du sie reflektieren, ohne dich zu verurteilen.

@@ -68,12 +68,9 @@ export function HypothesisForm({ initialValues }: Props) {
   const isFull = selectedValues.length === MAX_VALUES;
 
   return (
-    <div className="flex min-h-svh flex-col px-4 py-6">
+    <div className="flex flex-1 flex-col px-4 py-6">
       {/* Header */}
-      <header className="mb-2 space-y-2">
-        <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Deine Werte entdecken
-        </h1>
+      <header className="mb-2">
         <p className="max-w-prose text-lg text-muted-foreground">
           Wähl 5 Werte aus, die sich gerade jetzt echt für dich anfühlen — nicht
           zu viel nachdenken, einfach fühlen.

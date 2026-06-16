@@ -3,9 +3,14 @@ import { Heart, ArrowLeft } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getRecipeBySlug } from "@/lib/utils/recipes";
+import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { getValueLabel } from "@/lib/utils/values-bank";
+import { getJournalData } from "@/app/(app)/recipes/values/actions";
+import { hasSeenRecipeIntro } from "@/app/(app)/recipes/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ValuesStepOverview } from "@/components/recipes/values-step-overview";
+import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { StartRecipeButton } from "./start-recipe-button";
 
 export default async function RecipeDetailPage(props: {
@@ -86,9 +91,19 @@ export default async function RecipeDetailPage(props: {
   const hasProgress = progress && progress.status !== "not_started";
   const isCompleted = progress?.status === "completed";
 
+  // Hybrid-Intro (Schritt 6.10): beim ersten Mal Sequenz, danach Collapsible.
+  // cards ist nur für Rezepte mit hinterlegter Intro gesetzt (aktuell "values").
+  const introCards = getRecipeIntro(slug);
+  const introSeen = await hasSeenRecipeIntro(slug);
+
   // For the (cyclical) values recipe, surface the user's confirmed values right
   // here so returning users see them without having to restart the recipe.
   let confirmedValues: string[] = [];
+  // Step overview state for the values recipe (computed from existing helpers).
+  let hypothesisDone = false;
+  let journalCount = 0;
+  let journalDone = false;
+  let evaluationDone = false;
   if (slug === "values") {
     const { data: hypothesis } = await supabase
       .from("values_hypothesis")
@@ -101,9 +116,18 @@ export default async function RecipeDetailPage(props: {
     if (hypothesis?.confirmed) {
       confirmedValues = (hypothesis.values as string[] | null) ?? [];
     }
+
+    // Derive the three sub-step states from the existing journal helper plus the
+    // already-fetched progress row — no new data logic.
+    const journalData = await getJournalData();
+    hypothesisDone = (journalData.hypothesis?.length ?? 0) > 0;
+    journalCount = journalData.entries.length;
+    journalDone = journalCount >= 7;
+    evaluationDone = progress?.status === "completed";
   }
 
   return (
+    <RecipeIntroGate slug={slug} cards={introCards} introSeen={introSeen}>
     <div className="px-4 py-6">
       {/* Back link */}
       <Link
@@ -171,6 +195,18 @@ export default async function RecipeDetailPage(props: {
           </Card>
         )}
 
+        {/* Step overview — values recipe only */}
+        {slug === "values" && (
+          <div className="mt-6">
+            <ValuesStepOverview
+              hypothesisDone={hypothesisDone}
+              journalCount={journalCount}
+              journalDone={journalDone}
+              evaluationDone={evaluationDone}
+            />
+          </div>
+        )}
+
         {/* Start / Continue form */}
         <StartRecipeButton
           slug={slug}
@@ -180,5 +216,6 @@ export default async function RecipeDetailPage(props: {
         />
       </div>
     </div>
+    </RecipeIntroGate>
   );
 }
