@@ -17,6 +17,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { CtaGlow } from "@/components/ui/cta-glow";
 import { ReframeAnimation } from "@/components/auth/reframe-animation";
+import { DashboardReveal } from "@/components/dashboard/dashboard-reveal";
 
 import { MoodCheckin } from "./mood-checkin";
 
@@ -171,6 +172,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 p-4">
+      <DashboardReveal>
       {/* Greeting */}
       <header className="space-y-1">
         <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
@@ -242,6 +244,7 @@ export default async function DashboardPage() {
           label="Mantra"
         />
       </div>
+      </DashboardReveal>
     </div>
   );
 }

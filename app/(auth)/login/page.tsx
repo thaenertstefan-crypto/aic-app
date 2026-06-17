@@ -17,12 +17,12 @@ import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { loginAction } from "@/app/(auth)/auth.actions";
 import { invalidMessage, clearValidity } from "@/lib/utils/form-validation";
-import { INTRO_ZOOM_KEY } from "@/components/ui/intro-zoom";
+import { POST_LOGIN_KEY } from "@/components/dashboard/dashboard-reveal";
 
-/** Markiert die nächste Dashboard-Anzeige für den einmaligen Rein-Zoom. */
-function markIntroZoom() {
+/** Markiert den nächsten Dashboard-Aufruf für das gestaffelte Einblenden. */
+function markPostLogin() {
   try {
-    sessionStorage.setItem(INTRO_ZOOM_KEY, String(Date.now()));
+    sessionStorage.setItem(POST_LOGIN_KEY, String(Date.now()));
   } catch {
     // sessionStorage nicht verfügbar (z. B. privater Modus) — egal.
   }
@@ -42,7 +42,7 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
 
-      <form action={formAction} onSubmit={markIntroZoom}>
+      <form action={formAction} onSubmit={markPostLogin}>
         <CardContent className="flex flex-col gap-4">
           <FormError message={state.error} />
 

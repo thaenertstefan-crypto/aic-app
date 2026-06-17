@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { OfflineBanner } from "@/components/offline/offline-banner";
 import { AppBackdrop } from "@/components/ui/app-backdrop";
-import { IntroZoom } from "@/components/ui/intro-zoom";
 
 export default async function AppLayout({
   children,
@@ -37,9 +36,7 @@ export default async function AppLayout({
     >
       <AppBackdrop />
       <OfflineBanner />
-      <IntroZoom className="flex flex-1 flex-col">
-        <main className="flex-1">{children}</main>
-      </IntroZoom>
+      <main className="flex-1">{children}</main>
       <BottomNav />
     </div>
   );

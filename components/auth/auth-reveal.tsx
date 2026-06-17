@@ -52,7 +52,7 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   // Reduced-Motion: zugänglicher Fallback ohne Overlay/Gating.
   if (reduced) {
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-dvh flex-col">
         <div className="relative isolate overflow-hidden">{hero}</div>
         <div className="flex flex-1 items-center justify-center px-4 py-12">
           <div className="w-full max-w-sm">{children}</div>
@@ -62,9 +62,9 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   }
 
   return (
-    <div className="relative min-h-svh overflow-hidden">
+    <div className="relative min-h-dvh overflow-hidden">
       {/* Karten-Panel: zoomt von hinten nach vorne herein, sobald aufgedeckt. */}
-      <div className="flex min-h-svh items-center justify-center px-4 py-12">
+      <div className="flex min-h-dvh items-center justify-center px-4 py-12">
         <div
           className={cn(
             "w-full max-w-sm transition-[transform,opacity] duration-700 ease-out",
@@ -85,7 +85,7 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
         className={cn(
           "absolute inset-0 z-20 isolate flex flex-col overflow-hidden",
           "bg-linear-to-br from-secondary via-accent/60 to-background",
-          "transition-[transform,opacity] duration-700 ease-out",
+          "transition-[transform,opacity] duration-1000 ease-out",
           revealed
             ? "pointer-events-none -translate-y-full opacity-0"
             : "translate-y-0 opacity-100",
