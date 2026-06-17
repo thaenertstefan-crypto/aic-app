@@ -17,6 +17,16 @@ import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { signupAction } from "@/app/(auth)/auth.actions";
 import { invalidMessage, clearValidity } from "@/lib/utils/form-validation";
+import { INTRO_ZOOM_KEY } from "@/components/ui/intro-zoom";
+
+/** Markiert die nächste Dashboard-Anzeige für den einmaligen Rein-Zoom. */
+function markIntroZoom() {
+  try {
+    sessionStorage.setItem(INTRO_ZOOM_KEY, String(Date.now()));
+  } catch {
+    // sessionStorage nicht verfügbar (z. B. privater Modus) — egal.
+  }
+}
 
 export default function SignupPage() {
   const [state, formAction, pending] = useActionState(signupAction, {
@@ -33,7 +43,7 @@ export default function SignupPage() {
         </CardDescription>
       </CardHeader>
 
-      <form action={formAction}>
+      <form action={formAction} onSubmit={markIntroZoom}>
         <CardContent className="flex flex-col gap-4">
           <FormError message={state.error} />
 

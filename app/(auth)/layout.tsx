@@ -1,5 +1,6 @@
 import { Logo } from "@/components/brand/logo";
 import { BrandPanel } from "@/components/auth/brand-panel";
+import { AuthReveal } from "@/components/auth/auth-reveal";
 
 export default function AuthLayout({
   children,
@@ -7,22 +8,25 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-svh flex-col md:flex-row">
-      {/* Brand-Region: auf Mobile kompakt oben, ab md linke Spalte */}
-      <div className="relative md:w-1/2">
-        <Logo
-          size="default"
-          className="absolute left-6 top-6 z-10 md:left-10 md:top-8"
-        />
-        <BrandPanel className="pt-20 md:flex md:min-h-svh md:flex-col md:justify-center md:pt-0" />
-      </div>
+    <AuthReveal
+      hero={
+        <>
+          {/* Logo oben, mit Abstand zur Notch/Statusleiste */}
+          <div
+            className="px-6 pt-6 md:px-10 md:pt-8"
+            style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}
+          >
+            <Logo size="default" />
+          </div>
 
-      {/* Form-Region: auf Mobile unten, ab md rechte Spalte */}
-      <div className="flex min-h-svh flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-700">
-          {children}
-        </div>
-      </div>
-    </div>
+          {/* Headline / Subline / Reframe mittig im Hero */}
+          <div className="flex flex-1 items-center">
+            <BrandPanel className="bg-none" />
+          </div>
+        </>
+      }
+    >
+      {children}
+    </AuthReveal>
   );
 }
