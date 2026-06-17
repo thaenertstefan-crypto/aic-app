@@ -31,18 +31,12 @@ export default async function AppLayout({
 
   return (
     <div
-      className="min-h-svh"
+      className="flex min-h-dvh flex-col"
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
       <AppBackdrop />
       <OfflineBanner />
-      <main
-        style={{
-          paddingBottom: "calc(4rem + env(safe-area-inset-bottom, 0px))",
-        }}
-      >
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
       <BottomNav />
     </div>
   );
