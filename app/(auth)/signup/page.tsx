@@ -26,9 +26,10 @@ export default function SignupPage() {
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle>Los geht&apos;s</CardTitle>
+        <CardTitle>Werde Teil des Clubs</CardTitle>
         <CardDescription>
-          Erstelle dein Konto und starte deine Reise zu mehr Selbstvertrauen.
+          Erstelle dein Konto — der erste Schritt raus aus dem
+          Hochstapler-Gefühl.
         </CardDescription>
       </CardHeader>
 
@@ -84,8 +85,12 @@ export default function SignupPage() {
           </div>
 
           <Button type="submit" disabled={pending} className="mt-1 w-full">
-            {pending ? "Wird registriert …" : "Konto erstellen"}
+            {pending ? "Wird registriert …" : "Dem Club beitreten"}
           </Button>
+
+          <p className="text-center text-xs text-muted-foreground">
+            Kostenlos starten · Kein Schnickschnack · Jederzeit kündbar
+          </p>
         </CardContent>
       </form>
 

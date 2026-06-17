@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState, useTransition } from "reac
 import { useRouter } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 
+import { CleanserIntroSection } from "@/components/cleansers/cleanser-intro-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -522,6 +523,10 @@ export function MantraCleanser({
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-8 px-4 py-10">
       <div className="flex w-full max-w-md flex-col items-center gap-8">
+        <div className="w-full">
+          <CleanserIntroSection slug="mantra" />
+        </div>
+
         <p className="text-center text-sm text-muted-foreground/80">
           Mach dieses Cleanser zu deinem — Mantra und Karten kannst du anpassen.
         </p>

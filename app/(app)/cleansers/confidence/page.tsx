@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 
 import { PageHeader } from "@/components/brand/page-header";
+import { CleanserIntroSection } from "@/components/cleansers/cleanser-intro-section";
 import { Button } from "@/components/ui/button";
 
 type TextExercise = {
@@ -193,6 +194,8 @@ export default function ConfidenceCleanserPage() {
         title="Show Stopper Confidence"
         description="Fünf kleine Tricks für mehr Präsenz im Moment — tipp dich durch und probier sie aus."
       />
+
+      <CleanserIntroSection slug="confidence" />
 
       <div className="space-y-3">
         {EXERCISES.map((exercise, index) => (

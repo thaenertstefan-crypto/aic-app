@@ -8,6 +8,8 @@ import {
   Trash2,
   ChevronUp,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Pencil,
   Check,
   X,
@@ -38,6 +40,8 @@ import {
 } from "./actions";
 
 const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
+
+const TOTAL_STEPS = 3;
 
 type ReflectionDraft = {
   prompt1: string;
@@ -224,9 +228,39 @@ function ManifestoItem({
   );
 }
 
+// ─── Progress Dots ──────────────────────────────────────────────────────
+
+function ProgressDots({ current, completed }: { current: number; completed: boolean }) {
+  return (
+    <div className="flex items-center justify-center gap-2" role="group" aria-label="Fortschritt">
+      {Array.from({ length: TOTAL_STEPS }, (_, i) => {
+        const step = i + 1;
+        const isActive = step === current;
+        const isDone = completed || step < current;
+        return (
+          <div
+            key={step}
+            className={`size-2.5 rounded-full transition-all duration-500 ${
+              isDone
+                ? "bg-amber-500 dark:bg-amber-400"
+                : isActive
+                  ? "bg-amber-500/70 dark:bg-amber-400/70 ring-2 ring-amber-500/30 dark:ring-amber-400/30"
+                  : "bg-muted-foreground/20"
+            }`}
+            aria-label={`Schritt ${step}${isDone ? " – erledigt" : isActive ? " – aktuell" : ""}`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Main Page ──────────────────────────────────────────────────────────
 
 export default function BillOfRightsPage() {
+  // Step flow (Gerüst): 1 Reflexion · 2 Right Builder · 3 Manifest
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+
   // Data
   const [loading, setLoading] = useState(true);
   const [prompt1, setPrompt1] = useState("");
@@ -327,6 +361,8 @@ export default function BillOfRightsPage() {
         clearDraft();
         setProgressStatus("in_progress");
         showSuccess("Reflexion gespeichert ✓");
+        // Sanft in den Right Builder weiterleiten.
+        setStep(2);
       }
     } catch {
       // Network error mid-request — preserve the reflection as a draft.
@@ -483,6 +519,11 @@ export default function BillOfRightsPage() {
   const activeRights = rights.filter((r) => r.active);
   const isCompleted = progressStatus === "completed";
 
+  // ── Step navigation ───────────────────────────────────────────────
+
+  const goNext = () => setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s));
+  const goBack = () => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s));
+
   // ── Loading state ─────────────────────────────────────────────────
 
   if (loading) {
@@ -536,7 +577,7 @@ export default function BillOfRightsPage() {
     return (
       <div className="flex min-h-svh flex-col">
         <SubPageHeader backHref="/recipes" title="Bill of Rights" />
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-6">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-6 animate-in fade-in duration-500">
           {/* Header */}
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="flex size-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
@@ -578,6 +619,25 @@ export default function BillOfRightsPage() {
             ))}
           </div>
 
+          {/* Messy Moment CTA – wiederkehrender Einstieg in der fertigen Ansicht */}
+          <Card className="mt-8 border-amber-200/50 bg-amber-50/30 dark:border-amber-800/30 dark:bg-amber-950/10">
+            <CardContent className="space-y-3 pt-(--card-spacing) text-center">
+              <p className="text-sm font-medium text-foreground">
+                Es ist mal wieder messy geworden?
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Nicht nach deinen eigenen Rechten gehandelt? Reflektiere hier, was passiert ist –
+                ohne Druck, ohne Urteil.
+              </p>
+              <Button
+                className="w-full gap-2"
+                render={<Link href="/recipes/bill-of-rights/messy" />}
+              >
+                Hier reflektieren &rarr;
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Actions */}
           <div className="mt-8 flex w-full flex-col gap-3">
             <Button
@@ -618,26 +678,13 @@ export default function BillOfRightsPage() {
           </p>
         </div>
 
-        {/* Progress indicator */}
-        {progressStatus && progressStatus !== "not_started" && (
-          <div className="flex items-center justify-center gap-2">
-            <div className="flex gap-1">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className={`size-2.5 rounded-full transition-all ${
-                    activeRights.length >= i
-                      ? "bg-amber-500 dark:bg-amber-400"
-                      : "bg-muted-foreground/20"
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {activeRights.length} von 3 Rechten{activeRights.length >= 3 ? " – geschafft! 🎉" : ""}
-            </span>
-          </div>
-        )}
+        {/* Step indicator */}
+        <div>
+          <ProgressDots current={step} completed={false} />
+          <p className="mt-2 text-center text-xs font-medium text-muted-foreground">
+            Schritt {step} von {TOTAL_STEPS}
+          </p>
+        </div>
 
         {/* ── Error banner ────────────────────────────────────── */}
         <FormError message={error} />
@@ -649,12 +696,18 @@ export default function BillOfRightsPage() {
           </div>
         )}
 
-        {/* ── Draft restore prompt ────────────────────────────── */}
-        {pendingDraft && (
+        {/* ── Draft restore prompt (nur Schritt 1 – betrifft die Reflexion) ── */}
+        {step === 1 && pendingDraft && (
           <DraftRestoreBanner onRestore={restoreReflectionDraft} onDiscard={clearDraft} />
         )}
 
-        {/* ── Section: Reflection Form ────────────────────────── */}
+        {/* ── Schritt-Inhalt (keyed: sanfter Übergang bei Schrittwechsel) ── */}
+        <div
+          key={step}
+          className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
+        >
+        {/* ── Step 1: Reflection Form ─────────────────────────── */}
+        {step === 1 && (
         <Card>
           <CardContent className="space-y-4 pt-(--card-spacing)">
             <h2 className="font-heading text-lg font-semibold text-foreground">
@@ -715,8 +768,10 @@ export default function BillOfRightsPage() {
             </Button>
           </CardContent>
         </Card>
+        )}
 
-        {/* ── Section: Right Builder ──────────────────────────── */}
+        {/* ── Step 2: Right Builder ───────────────────────────── */}
+        {step === 2 && (
         <Card>
           <CardContent className="space-y-4 pt-(--card-spacing)">
             <h2 className="font-heading text-lg font-semibold text-foreground">
@@ -798,9 +853,10 @@ export default function BillOfRightsPage() {
             )}
           </CardContent>
         </Card>
+        )}
 
-        {/* ── Section: Rights List (Manifesto) ──────────────────── */}
-        {rights.length > 0 && (
+        {/* ── Step 3: Rights List (Manifesto) ───────────────────── */}
+        {step === 3 && rights.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-heading text-lg font-semibold text-foreground">
@@ -829,25 +885,24 @@ export default function BillOfRightsPage() {
             </div>
           </div>
         )}
+        </div>
 
-        {/* ── Messy Moment CTA ──────────────────────────────────────── */}
-        <Card className="border-amber-200/50 bg-amber-50/30 dark:border-amber-800/30 dark:bg-amber-950/10">
-          <CardContent className="space-y-3 pt-(--card-spacing) text-center">
-            <p className="text-sm font-medium text-foreground">
-              Es ist mal wieder messy geworden?
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Nicht nach deinen eigenen Rechten gehandelt? Reflektiere hier, was passiert ist –
-              ohne Druck, ohne Urteil.
-            </p>
-            <Button
-              className="w-full gap-2"
-              render={<Link href="/recipes/bill-of-rights/messy" />}
-            >
-              Hier reflektieren &rarr;
+        {/* ── Bottom navigation ─────────────────────────────────── */}
+        <div className="mt-auto flex items-center justify-between gap-3 pt-8">
+          <Button variant="outline" onClick={goBack} disabled={step === 1} className="gap-1">
+            <ChevronLeft className="size-4" />
+            Zurück
+          </Button>
+
+          {step < TOTAL_STEPS ? (
+            <Button onClick={goNext} className="gap-1">
+              Weiter
+              <ChevronRight className="size-4" />
             </Button>
-          </CardContent>
-        </Card>
+          ) : (
+            <div />
+          )}
+        </div>
 
         {/* ── Bottom spacing ────────────────────────────────────── */}
         <div className="h-8" />

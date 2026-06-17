@@ -26,9 +26,9 @@ export default function LoginPage() {
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle>Willkommen zurück</CardTitle>
+        <CardTitle>Zurück in den Club</CardTitle>
         <CardDescription>
-          Schön, dass du wieder da bist. Melde dich an, um weiterzumachen.
+          Schön, dass du wieder da bist. Melde dich an und mach weiter.
         </CardDescription>
       </CardHeader>
 
@@ -78,7 +78,7 @@ export default function LoginPage() {
           href="/signup"
           className="ml-1 font-medium text-primary underline-offset-4 hover:underline"
         >
-          Jetzt registrieren
+          Dem Club beitreten
         </Link>
       </CardFooter>
     </Card>

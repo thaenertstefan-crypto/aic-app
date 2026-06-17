@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Handshake, PartyPopper, Plus, Trophy } from "lucide-react";
 
 import { PageHeader } from "@/components/brand/page-header";
+import { CleanserIntroSection } from "@/components/cleansers/cleanser-intro-section";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FormError } from "@/components/ui/form-error";
@@ -65,6 +66,8 @@ export function PromisesCleanser({
         title="Versprechen an dich selbst"
         description="Kleine, konkrete Versprechen — Tag für Tag gehalten. So beweist du dir, dass du dich auf dich verlassen kannst."
       />
+
+      <CleanserIntroSection slug="promises" />
 
       <NewPromiseDialog />
 
