@@ -32,9 +32,7 @@ type Answers = {
   step4: string;
   step5: string;
   whatIfWrong: string;
-  whatItWouldMean: string;
-  currentProblem: string;
-  newProblem: string;
+  reframedProblem: string;
   decision: string;
 };
 
@@ -44,23 +42,28 @@ const EMPTY_ANSWERS: Answers = {
   step4: "",
   step5: "",
   whatIfWrong: "",
-  whatItWouldMean: "",
-  currentProblem: "",
-  newProblem: "",
+  reframedProblem: "",
   decision: "",
 };
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 8;
+
+// Fixe Einleitung vor der KI-Challenger-Frage in Schritt 6 (Perspektivwechsel).
+const CHALLENGE_INTRO =
+  "Verstehe … Ich möchte dich gerne challengen: Was, wenn du falsch liegst? Gibt es eine Perspektive, die du noch nicht gesehen hast?";
 
 // ─── Step Labels ──────────────────────────────────────────────────────
 
 const STEP_HEADERS = [
   "",
-  "Stopp. Atme durch.",
+  "Atme durch.",
   "Kommen wir zur Sache.",
   "Geh noch tiefer.",
   "Noch eine Ebene tiefer.",
-  "Der letzte Schritt – die Wende.",
+  "Die tiefste Ebene.",
+  "Perspektivwechsel.",
+  "Reframing.",
+  "Deine Entscheidung.",
 ];
 
 // ─── Progress Dots ────────────────────────────────────────────────────
@@ -120,6 +123,7 @@ function CountdownCircle({
   duration: number;
   onComplete: () => void;
 }) {
+  const [started, setStarted] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1
   const startRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -143,11 +147,12 @@ function CountdownCircle({
   );
 
   useEffect(() => {
+    if (!started) return;
     rafRef.current = requestAnimationFrame(animate);
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [animate]);
+  }, [started, animate]);
 
   const radius = 56;
   const circumference = 2 * Math.PI * radius;
@@ -155,7 +160,13 @@ function CountdownCircle({
   const remaining = Math.ceil(duration * (1 - progress));
 
   return (
-    <div className="relative flex items-center justify-center">
+    <button
+      type="button"
+      onClick={() => setStarted(true)}
+      disabled={started}
+      aria-label={started ? "Countdown läuft" : "Countdown starten"}
+      className="relative flex items-center justify-center rounded-full outline-none transition-transform focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 enabled:cursor-pointer enabled:hover:scale-[1.03] enabled:active:scale-95"
+    >
       <svg width="140" height="140" className="-rotate-90">
         <circle
           cx="70"
@@ -179,10 +190,14 @@ function CountdownCircle({
           className="text-primary transition-[stroke-dashoffset] duration-300"
         />
       </svg>
-      <span className="absolute text-3xl font-bold tabular-nums text-primary">
-        {remaining}
+      <span className="absolute font-bold tabular-nums text-primary">
+        {started ? (
+          <span className="text-3xl">{remaining}</span>
+        ) : (
+          <span className="text-xl font-semibold">Start</span>
+        )}
       </span>
-    </div>
+    </button>
   );
 }
 
@@ -192,6 +207,9 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState<Answers>(EMPTY_ANSWERS);
   const [countdownDone, setCountdownDone] = useState(false);
+  // KI-formulierte "Warum?"-Fragen für Schritte 3–5 (statischer Fallback: getStepLabel).
+  const [generatedQuestions, setGeneratedQuestions] = useState<Record<number, string>>({});
+  const [questionLoading, setQuestionLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -251,15 +269,75 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
   const canGoNext = (): boolean => {
     if (step === 1) return countdownDone;
+    // Während die KI-Frage für diesen Schritt noch lädt, kein Weiter
+    // (verhindert u. a. das Überspringen des Schimmers in Schritt 6).
+    if (questionLoading && step >= 3 && step <= 6 && !generatedQuestions[step]) {
+      return false;
+    }
     const key = getStepAnswerKey(step);
     return key ? answers[key].trim().length > 0 : true;
+  };
+
+  // Lässt die KI die maßgeschneiderte Frage für einen Schritt formulieren:
+  // Schritte 3–5 → nächste, tiefere "Warum?"-Frage; Schritt 6 → positive
+  // Challenger-Frage. Fehler/Offline werden still verschluckt — dann greift der
+  // statische Fallback in renderStepContent.
+  const generateForStep = async (target: number) => {
+    const problem = answers.step2.trim();
+    if (!problem) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+
+    const isChallenger = target === 6;
+    const whyChain: string[] = [];
+    if (isChallenger) {
+      // Challenger nutzt den vollständigen Warum-Verlauf.
+      if (answers.step3.trim()) whyChain.push(answers.step3.trim());
+      if (answers.step4.trim()) whyChain.push(answers.step4.trim());
+      if (answers.step5.trim()) whyChain.push(answers.step5.trim());
+    } else {
+      if (target >= 4 && answers.step3.trim()) whyChain.push(answers.step3.trim());
+      if (target >= 5 && answers.step4.trim()) whyChain.push(answers.step4.trim());
+    }
+
+    setQuestionLoading(true);
+    // Veraltete Frage für diesen Schritt verwerfen, damit der Schimmer greift.
+    setGeneratedQuestions((prev) => {
+      const next = { ...prev };
+      delete next[target];
+      return next;
+    });
+
+    try {
+      const res = await fetch("/api/overthinking-question", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          problem,
+          whyChain,
+          mode: isChallenger ? "challenger" : "why",
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.question) {
+        setGeneratedQuestions((prev) => ({ ...prev, [target]: data.question }));
+      }
+    } catch {
+      // Stiller Fallback auf die statische Frage.
+    } finally {
+      setQuestionLoading(false);
+    }
   };
 
   const goNext = () => {
     if (!canGoNext()) return;
     setError(null);
     if (step < TOTAL_STEPS) {
-      setStep((s) => s + 1);
+      const target = step + 1;
+      // Schritte 3–5: "Warum?"-Leiter; Schritt 6: Challenger-Frage.
+      if (target >= 3 && target <= 6) {
+        void generateForStep(target);
+      }
+      setStep(target);
     }
   };
 
@@ -283,9 +361,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
     formData.set("problem", answers.step2);
     formData.set("why_levels", JSON.stringify([answers.step3, answers.step4, answers.step5]));
     formData.set("what_if_wrong", answers.whatIfWrong);
-    formData.set("what_it_would_mean", answers.whatItWouldMean);
-    formData.set("current_problem", answers.currentProblem);
-    formData.set("new_problem", answers.newProblem);
+    formData.set("reframed_problem", answers.reframedProblem);
     formData.set("decision", answers.decision);
 
     // No connection — keep the entry as a local draft instead of losing it.
@@ -346,8 +422,11 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
       case 4:
       case 5: {
         const ancestors = getLadderAncestors(step);
-        const label = getStepLabel(step);
+        // Schritt 2 bleibt statisch; ab Schritt 3 die KI-Frage (Fallback: statisch).
+        const label = step >= 3 ? generatedQuestions[step] ?? getStepLabel(step) : getStepLabel(step);
         const key = getStepAnswerKey(step)!;
+        // Während die KI-Frage noch lädt, einen Schimmer statt Frage + Textfeld zeigen.
+        const showQuestionLoading = step >= 3 && questionLoading && !generatedQuestions[step];
 
         return (
           <div className="flex w-full flex-col gap-5">
@@ -360,112 +439,148 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
               </Card>
             )}
 
-            <div className="space-y-3">
-              <Label htmlFor={`step-${step}`} className="text-base font-medium leading-relaxed">
-                {label}
+            {showQuestionLoading ? (
+              <div className="space-y-3" aria-busy="true">
+                <div className="space-y-2">
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Ich überlege, wie ich am besten weiterfrage …
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <Label htmlFor={`step-${step}`} className="text-base font-medium leading-relaxed">
+                  {label}
+                </Label>
+                <Textarea
+                  id={`step-${step}`}
+                  value={answers[key]}
+                  onChange={(e) => updateAnswer(key, e.target.value)}
+                  placeholder={
+                    step === 2
+                      ? "Was beschäftigt dich? Was geht dir immer wieder durch den Kopf?"
+                      : "Schreib, was dir in den Sinn kommt – ganz ohne Bewertung."
+                  }
+                  rows={4}
+                  className="min-h-[120px] resize-y"
+                />
+                {answers[key].length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Nur ein paar Stichwörter reichen. Es muss kein perfekter Satz sein.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      case 6: {
+        // Schritt 6 – Perspektivwechsel: fixe Einleitung + KI-Challenger-Frage.
+        const showChallengerLoading = questionLoading && !generatedQuestions[6];
+        const challenger = generatedQuestions[6];
+
+        if (showChallengerLoading) {
+          return (
+            <div className="flex w-full flex-col gap-3" aria-busy="true">
+              <div className="space-y-2">
+                <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Einen Moment – ich denke über eine andere Perspektive nach …
+              </p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="flex w-full flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="space-y-2">
+              <Label htmlFor="what-if-wrong" className="text-base font-medium leading-relaxed">
+                {CHALLENGE_INTRO}
+                {challenger && (
+                  <span className="mt-1 block font-semibold text-primary">{challenger}</span>
+                )}
               </Label>
               <Textarea
-                id={`step-${step}`}
-                value={answers[key]}
-                onChange={(e) => updateAnswer(key, e.target.value)}
-                placeholder={
-                  step === 2
-                    ? "Was beschäftigt dich? Was geht dir immer wieder durch den Kopf?"
-                    : "Schreib, was dir in den Sinn kommt – ganz ohne Bewertung."
-                }
+                id="what-if-wrong"
+                value={answers.whatIfWrong}
+                onChange={(e) => updateAnswer("whatIfWrong", e.target.value)}
+                placeholder="Schreib, was dir dazu in den Sinn kommt – ganz ohne Bewertung."
                 rows={4}
                 className="min-h-[120px] resize-y"
               />
-              {answers[key].length === 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Nur ein paar Stichwörter reichen. Es muss kein perfekter Satz sein.
-                </p>
-              )}
             </div>
           </div>
         );
       }
 
-      case 6:
+      case 7:
+        // Schritt 7 – Reframing: Antwort aus Schritt 6 als Kontext, dann die
+        // Reframing-Frage mit dem ursprünglichen Problem darunter.
         return (
-          <div className="flex w-full flex-col gap-6">
-            {/* Reframe questions */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="what-if-wrong" className="text-sm font-medium">
-                  Was, wenn du falsch liegst?
-                </Label>
-                <Textarea
-                  id="what-if-wrong"
-                  value={answers.whatIfWrong}
-                  onChange={(e) => updateAnswer("whatIfWrong", e.target.value)}
-                  placeholder="Gibt es eine andere Perspektive, die du noch nicht gesehen hast?"
-                  rows={3}
-                  className="min-h-[80px] resize-y"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="what-it-would-mean" className="text-sm font-medium">
-                  Was würde es bedeuten, wenn du falsch liegst?
-                </Label>
-                <Textarea
-                  id="what-it-would-mean"
-                  value={answers.whatItWouldMean}
-                  onChange={(e) => updateAnswer("whatItWouldMean", e.target.value)}
-                  placeholder="Was würde sich dann ändern? Wie würde sich deine Sichtweise verschieben?"
-                  rows={3}
-                  className="min-h-[80px] resize-y"
-                />
-              </div>
-            </div>
+          <div className="flex w-full flex-col gap-5">
+            {/* Antwort aus Schritt 6 */}
+            {answers.whatIfWrong.trim() && (
+              <Card size="sm" className="border-muted">
+                <CardContent className="space-y-1 pt-(--card-spacing)">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Deine Antwort von eben
+                  </p>
+                  <p className="text-sm italic text-muted-foreground">
+                    {answers.whatIfWrong}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Comparison */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="current-problem" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Aktuelles Problem
-                </Label>
-                <p className="text-xs text-muted-foreground/70">(wenn du nichts änderst)</p>
-                <Textarea
-                  id="current-problem"
-                  value={answers.currentProblem}
-                  onChange={(e) => updateAnswer("currentProblem", e.target.value)}
-                  placeholder={answers.step2 || "Was passiert, wenn alles so bleibt?"}
-                  rows={3}
-                  className="min-h-[80px] resize-y"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-problem" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Neues Problem
-                </Label>
-                <p className="text-xs text-muted-foreground/70">(wenn du handelst)</p>
-                <Textarea
-                  id="new-problem"
-                  value={answers.newProblem}
-                  onChange={(e) => updateAnswer("newProblem", e.target.value)}
-                  placeholder="Welche neue Herausforderung entsteht, wenn du etwas veränderst?"
-                  rows={3}
-                  className="min-h-[80px] resize-y"
-                />
-              </div>
-            </div>
-
-            {/* Decision */}
-            <div className="space-y-2">
-              <Label htmlFor="decision" className="text-base font-medium">
-                Deine Entscheidung
+            <div className="space-y-3">
+              <Label htmlFor="reframed-problem" className="text-base font-medium leading-relaxed">
+                Was würde das für dein ursprüngliches Problem bedeuten, wenn du falsch liegst?
               </Label>
+
+              {/* Ursprüngliches Problem */}
+              <div className="rounded-md border border-muted bg-muted/30 px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Dein ursprüngliches Problem
+                </p>
+                <p className="text-sm italic text-muted-foreground">
+                  {answers.step2 || "—"}
+                </p>
+              </div>
+
               <Textarea
-                id="decision"
-                value={answers.decision}
-                onChange={(e) => updateAnswer("decision", e.target.value)}
-                placeholder="Was ist dein nächster Schritt – auch wenn er klein ist?"
-                rows={3}
-                className="min-h-[80px] resize-y"
-                required
+                id="reframed-problem"
+                value={answers.reframedProblem}
+                onChange={(e) => updateAnswer("reframedProblem", e.target.value)}
+                placeholder="Wie würde sich dein Problem auflösen oder verkleinern?"
+                rows={4}
+                className="min-h-[120px] resize-y"
               />
             </div>
+          </div>
+        );
+
+      case 8:
+        // Schritt 8 – Deine Entscheidung.
+        return (
+          <div className="flex w-full flex-col gap-2">
+            <Label htmlFor="decision" className="text-base font-medium leading-relaxed">
+              Deine Entscheidung
+            </Label>
+            <Textarea
+              id="decision"
+              value={answers.decision}
+              onChange={(e) => updateAnswer("decision", e.target.value)}
+              placeholder="Was ist dein nächster Schritt – auch wenn er klein ist?"
+              rows={4}
+              className="min-h-[120px] resize-y"
+              required
+            />
           </div>
         );
 
@@ -554,6 +669,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
                 setStep(1);
                 setAnswers(EMPTY_ANSWERS);
                 setCountdownDone(false);
+                setGeneratedQuestions({});
+                setQuestionLoading(false);
                 setSaved(false);
                 setError(null);
               }}

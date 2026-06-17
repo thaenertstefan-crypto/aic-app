@@ -47,15 +47,15 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
   overthinking: [
     {
       title: "Kennst du das?",
-      body: "Dein Kopf malt ein Worst-Case-Szenario nach dem anderen, die Brust wird eng, und du kommst keinen Schritt voran. Eine echte Gedankenspirale.",
+      body: "Ein böser Gedanke schießt dir in den Kopf. Einfach so aus dem Nichts. Deine Brust wird eng, dein Kopf malt ein Worst-Case-Szenario nach dem anderen, du starrst wie versteinert in die Leere und kommst in eine Gedankenspirale, die niemals enden zu scheint. In solchen Momenten hilft eine simple Wahrheit:",
     },
     {
-      title: "Die Idee dahinter",
-      body: "Hier hilft eine simple Wahrheit: Dein Unterbewusstsein kann Realität und Fiktion nicht unterscheiden. Die Horror-Filme in deinem Kopf fühlen sich echt an — sind es aber fast nie. Wie Matthew McConaughey mal sinngemäß sagte: „Ich hatte viele Krisen in meinem Leben. Die meisten sind nie passiert.“",
+      title: "Nicht alles, was Du denkst, ist Realität.",
+      body: "Während Dein Unterbewusstsein ein Meister darin ist, Worst-Case-Szenarios auszumalen, hat es ein entscheidenes Manko. Dein Unterbewusstsein kann Realität und Fiktion nicht unterscheiden. Sprich, die Horror-Filme in deinem Kopf fühlen sich echt an — sind es aber fast nie. Wie Matthew McConaughey mal sinngemäß sagte: „I have had many crises in my life. Most of them never happened.“",
     },
     {
       title: "Was dich erwartet",
-      body: "In wenigen Schritten brichst du die Spirale: erst ein bewusster Stopp, dann gräbst du dich mit ein paar ehrlichen „Warum?“-Fragen zur Wurzel durch, und am Ende triffst du eine klare, faktenbasierte Entscheidung. Dauert nur ein paar Minuten.",
+      body: "Die Folgende Übung soll Dir dabei helfen, aus Deinen Gedankenspiralen auszubrechen. Ziel ist es zuerst durch ein sogenanntes Pattern Interrupt dein Unterbewusstsein bei seiner kreativen Schwarzmalerei zu unterbrechen indem du von 5 runterzählts oder laut „Stop“ sagst (ja das meine ich ernst). Dann gräbst du dich mit ein paar ehrlichen „Warum?“-Fragen zur Wurzel des Problems durch, das Dich bedrückt und Deine Gedankenspirale ausgelöst hat. Am Ende der Frage-Runde solltest Du Dir dann selber die echten Fakten hinsichtlich des Problems auf den Tisch gelegt haben und kannst somit eine klare Entscheidung treffen, wie Du mit dem Problem umgehst - und zwar gemessen daran, was das Problem wirklich ist, nicht gemessen daran was Dein Unterbewusstsein dir vormacht. Bist Du bereit?",
     },
   ],
 };

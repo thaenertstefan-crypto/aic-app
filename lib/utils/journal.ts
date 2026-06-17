@@ -205,27 +205,39 @@ function formatOverthinking(
     ? (whyLevels as string[]).join("\n")
     : "";
 
-  return [
+  const sections: ContentSection[] = [
     { label: "Das Problem", value: stringField(content, "problem") },
-    ...(whyText ? [{ label: "Warum-Ebenen", value: whyText }] : []),
-    {
-      label: "Was wäre, wenn du falsch liegst?",
-      value: stringField(content, "what_if_wrong"),
-    },
-    {
-      label: "Was würde das bedeuten?",
-      value: stringField(content, "what_it_would_mean"),
-    },
-    {
-      label: "Das aktuelle Problem",
-      value: stringField(content, "current_problem"),
-    },
-    {
-      label: "Das neue Problem",
-      value: stringField(content, "new_problem"),
-    },
-    { label: "Deine Entscheidung", value: stringField(content, "decision") },
   ];
+
+  if (whyText) sections.push({ label: "Warum-Ebenen", value: whyText });
+
+  const whatIfWrong = stringField(content, "what_if_wrong");
+  if (whatIfWrong) {
+    sections.push({ label: "Was wäre, wenn du falsch liegst?", value: whatIfWrong });
+  }
+
+  const whatItWouldMean = stringField(content, "what_it_would_mean");
+  if (whatItWouldMean) {
+    sections.push({ label: "Was würde das bedeuten?", value: whatItWouldMean });
+  }
+
+  const reframedProblem = stringField(content, "reframed_problem");
+  if (reframedProblem) {
+    sections.push({
+      label: "Was mit deinem Problem passiert, wenn du falsch liegst",
+      value: reframedProblem,
+    });
+  }
+
+  // Rückwärtskompatibel: ältere Einträge mit dem alten Vergleichsblock.
+  const currentProblem = stringField(content, "current_problem");
+  if (currentProblem) sections.push({ label: "Das aktuelle Problem", value: currentProblem });
+  const newProblem = stringField(content, "new_problem");
+  if (newProblem) sections.push({ label: "Das neue Problem", value: newProblem });
+
+  sections.push({ label: "Deine Entscheidung", value: stringField(content, "decision") });
+
+  return sections;
 }
 
 /* ------------------------------------------------------------------ */

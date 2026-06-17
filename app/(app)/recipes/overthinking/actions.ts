@@ -28,9 +28,7 @@ export async function saveOverthinkingAction(
   const problem = formData.get("problem") as string | null;
   const whyLevelsRaw = formData.get("why_levels") as string | null;
   const whatIfWrong = formData.get("what_if_wrong") as string | null;
-  const whatItWouldMean = formData.get("what_it_would_mean") as string | null;
-  const currentProblem = formData.get("current_problem") as string | null;
-  const newProblem = formData.get("new_problem") as string | null;
+  const reframedProblem = formData.get("reframed_problem") as string | null;
   const decision = formData.get("decision") as string | null;
 
   if (!problem) {
@@ -51,9 +49,7 @@ export async function saveOverthinkingAction(
     problem,
     why_levels: whyLevels,
     what_if_wrong: whatIfWrong ?? "",
-    what_it_would_mean: whatItWouldMean ?? "",
-    current_problem: currentProblem ?? "",
-    new_problem: newProblem ?? "",
+    reframed_problem: reframedProblem ?? "",
     decision,
   };
 
@@ -91,7 +87,7 @@ export async function saveOverthinkingAction(
     }
   }
 
-  // Mark progress as completed with current_step = 6
+  // Mark progress as completed with current_step = 8
   const { data: progress } = await supabase
     .from("user_recipe_progress")
     .select("id")
@@ -105,7 +101,7 @@ export async function saveOverthinkingAction(
     const { error: updateError } = await supabase
       .from("user_recipe_progress")
       .update({
-        current_step: 6,
+        current_step: 8,
         status: "completed",
         completed_at: new Date().toISOString(),
       })
@@ -121,7 +117,7 @@ export async function saveOverthinkingAction(
       .insert({
         user_id: user.id,
         recipe_slug: "overthinking",
-        current_step: 6,
+        current_step: 8,
         status: "completed",
         started_at: new Date().toISOString(),
         completed_at: new Date().toISOString(),

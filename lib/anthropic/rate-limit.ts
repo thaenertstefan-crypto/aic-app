@@ -6,6 +6,8 @@ import type { createClient } from "@/lib/supabase/server";
 // numbers live in one place next to the helpers that enforce them.
 export const JOURNAL_ANALYSIS_LIMIT = 10;
 export const RIGHTS_FORMULATOR_LIMIT = 20;
+// ~3 Fragen pro Durchlauf des Overthinking-Wizards, großzügig für Re-Runs.
+export const OVERTHINKING_QUESTION_LIMIT = 40;
 
 // Friendly German message returned with a 429 when a cap is hit.
 export const RATE_LIMIT_MESSAGE =
