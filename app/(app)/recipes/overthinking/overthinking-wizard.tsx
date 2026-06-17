@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,8 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
 import { ReframeAnimation } from "@/components/auth/reframe-animation";
+import { CompletionCelebration } from "@/components/ui/completion-celebration";
+import { Reveal } from "@/components/ui/reveal";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 
@@ -500,10 +502,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
     return (
       <div className="flex min-h-svh flex-col items-center justify-center px-4 py-6 text-center">
         <div className="mx-auto flex max-w-md flex-col items-center gap-6">
-          {/* Icon */}
-          <div className="flex size-16 items-center justify-center rounded-full bg-success/15">
-            <CheckCircle2 className="size-8 text-success" />
-          </div>
+          {/* Icon mit ruhigem Feier-Moment */}
+          <CompletionCelebration />
 
           <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
             Geschafft.
@@ -514,17 +514,19 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
             war mutig – nimm diesen Moment mit.
           </p>
 
-          {/* Reframe als ruhiger Schlusspunkt */}
-          <ReframeAnimation
-            size="compact"
-            align="center"
-            pairs={[
-              {
-                critic: "Ich muss erst alles zu Ende denken",
-                reframe: "Ich darf entscheiden und loslassen",
-              },
-            ]}
-          />
+          {/* Reframe als ruhiger Schlusspunkt — erscheint nach dem Icon */}
+          <Reveal delay={0.4} className="w-full">
+            <ReframeAnimation
+              size="compact"
+              align="center"
+              pairs={[
+                {
+                  critic: "Ich muss erst alles zu Ende denken",
+                  reframe: "Ich darf entscheiden und loslassen",
+                },
+              ]}
+            />
+          </Reveal>
 
           {/* Decision highlight */}
           {answers.decision && (

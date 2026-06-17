@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
-  CheckCircle2,
   Plus,
   Trash2,
   ChevronUp,
@@ -30,6 +29,8 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
 import { ReframeAnimation } from "@/components/auth/reframe-animation";
+import { CompletionCelebration } from "@/components/ui/completion-celebration";
+import { Reveal } from "@/components/ui/reveal";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 
@@ -581,9 +582,8 @@ export default function BillOfRightsPage() {
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-6 animate-in fade-in duration-500">
           {/* Header */}
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="flex size-16 items-center justify-center rounded-full bg-success/15">
-              <CheckCircle2 className="size-8 text-success" />
-            </div>
+            {/* Icon mit ruhigem Feier-Moment */}
+            <CompletionCelebration />
             <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
               Dein Bill of Rights
             </h1>
@@ -592,17 +592,19 @@ export default function BillOfRightsPage() {
               Grundrechte formuliert. Sie stehen dir immer zur Seite, wenn du sie brauchst.
             </p>
 
-            {/* Reframe als ruhiger Schlusspunkt */}
-            <ReframeAnimation
-              size="compact"
-              align="center"
-              pairs={[
-                {
-                  critic: "Ich muss es allen recht machen",
-                  reframe: "Ich darf für mich einstehen",
-                },
-              ]}
-            />
+            {/* Reframe als ruhiger Schlusspunkt — erscheint nach dem Icon */}
+            <Reveal delay={0.4} className="w-full">
+              <ReframeAnimation
+                size="compact"
+                align="center"
+                pairs={[
+                  {
+                    critic: "Ich muss es allen recht machen",
+                    reframe: "Ich darf für mich einstehen",
+                  },
+                ]}
+              />
+            </Reveal>
           </div>
 
           {/* Manifesto */}

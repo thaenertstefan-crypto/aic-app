@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/ui/stat-card";
 import { GlassPanel } from "@/components/ui/glass-panel";
+import { CtaGlow } from "@/components/ui/cta-glow";
 import { ReframeAnimation } from "@/components/auth/reframe-animation";
 
 import { MoodCheckin } from "./mood-checkin";
@@ -284,10 +285,12 @@ function RecipeCard({
           <p className="text-sm text-muted-foreground">Du bist mittendrin.</p>
         )}
 
-        <Button className="w-full" render={<Link href={href} />}>
-          Weitermachen
-          <ArrowRight />
-        </Button>
+        <CtaGlow>
+          <Button className="w-full" render={<Link href={href} />}>
+            Weitermachen
+            <ArrowRight />
+          </Button>
+        </CtaGlow>
       </GlassPanel>
     );
   }
@@ -306,10 +309,12 @@ function RecipeCard({
             {suggested.description}
           </p>
         </div>
-        <Button className="w-full" render={<Link href={suggested.startPath} />}>
-          Jetzt starten
-          <ArrowRight />
-        </Button>
+        <CtaGlow>
+          <Button className="w-full" render={<Link href={suggested.startPath} />}>
+            Jetzt starten
+            <ArrowRight />
+          </Button>
+        </CtaGlow>
       </GlassPanel>
     );
   }
