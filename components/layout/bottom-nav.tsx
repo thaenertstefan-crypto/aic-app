@@ -69,9 +69,17 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/70 backdrop-blur-xl"
+      className="fixed inset-x-0 bottom-0 z-50 border-t"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
+      {/* Glass background on a separate, absolutely-positioned layer. Putting
+          backdrop-filter directly on the fixed <nav> triggers a WebKit/iOS bug
+          where the bar anchors to the content bottom instead of the viewport on
+          short, non-scrolling pages. An absolute (non-fixed) layer avoids it. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-background/70 backdrop-blur-xl"
+      />
       <ul className="relative mx-auto flex h-16 max-w-lg items-center justify-around">
         {navItems.map(({ label, href, icon: Icon }, i) => {
           const isActive = i === activeIndex;
