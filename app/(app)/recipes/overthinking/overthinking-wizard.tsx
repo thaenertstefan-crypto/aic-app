@@ -13,6 +13,7 @@ import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
+import { ReframeAnimation } from "@/components/auth/reframe-animation";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 
@@ -74,9 +75,9 @@ function ProgressDots({ current, completed }: { current: number; completed: bool
             key={step}
             className={`size-2.5 rounded-full transition-all duration-500 ${
               isDone
-                ? "bg-amber-500 dark:bg-amber-400"
+                ? "bg-primary"
                 : isActive
-                  ? "bg-amber-500/70 dark:bg-amber-400/70 ring-2 ring-amber-500/30 dark:ring-amber-400/30"
+                  ? "bg-primary/70 ring-2 ring-primary/30"
                   : "bg-muted-foreground/20"
             }`}
             aria-label={`Schritt ${step}${isDone ? " – erledigt" : isActive ? " – aktuell" : ""}`}
@@ -96,7 +97,7 @@ function Ladder({ ancestors }: { ancestors: { label: string; value: string }[] }
     <div className="w-full space-y-1.5">
       {ancestors.map((a, i) => (
         <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-          <span className="mt-0.5 shrink-0 text-amber-500/60 dark:text-amber-400/60">
+          <span className="mt-0.5 shrink-0 text-primary/60">
             {i === 0 ? "●" : "↳"}
           </span>
           <span className="italic line-clamp-1">
@@ -173,10 +174,10 @@ function CountdownCircle({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className="text-amber-500 dark:text-amber-400 transition-[stroke-dashoffset] duration-300"
+          className="text-primary transition-[stroke-dashoffset] duration-300"
         />
       </svg>
-      <span className="absolute text-3xl font-bold tabular-nums text-amber-600 dark:text-amber-300">
+      <span className="absolute text-3xl font-bold tabular-nums text-primary">
         {remaining}
       </span>
     </div>
@@ -324,7 +325,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
         return (
           <div className="flex flex-col items-center gap-8 text-center">
             <p className="text-xl font-medium leading-relaxed text-foreground sm:text-2xl">
-              Sag laut <span className="font-bold text-amber-600 dark:text-amber-400">"Stop!"</span>{" "}
+              Sag laut <span className="font-bold text-primary">"Stop!"</span>{" "}
               oder zähl rückwärts von 5
             </p>
 
@@ -500,8 +501,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
       <div className="flex min-h-svh flex-col items-center justify-center px-4 py-6 text-center">
         <div className="mx-auto flex max-w-md flex-col items-center gap-6">
           {/* Icon */}
-          <div className="flex size-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-            <CheckCircle2 className="size-8 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex size-16 items-center justify-center rounded-full bg-success/15">
+            <CheckCircle2 className="size-8 text-success" />
           </div>
 
           <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
@@ -513,11 +514,23 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
             war mutig – nimm diesen Moment mit.
           </p>
 
+          {/* Reframe als ruhiger Schlusspunkt */}
+          <ReframeAnimation
+            size="compact"
+            align="center"
+            pairs={[
+              {
+                critic: "Ich muss erst alles zu Ende denken",
+                reframe: "Ich darf entscheiden und loslassen",
+              },
+            ]}
+          />
+
           {/* Decision highlight */}
           {answers.decision && (
-            <Card className="w-full border-amber-200 dark:border-amber-800">
+            <Card className="w-full border-primary/30">
               <CardContent className="space-y-2 pt-(--card-spacing)">
-                <p className="text-xs font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                <p className="text-xs font-medium uppercase tracking-wide text-primary">
                   Deine Entscheidung
                 </p>
                 <p className="whitespace-pre-wrap text-left text-base leading-relaxed text-foreground">

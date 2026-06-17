@@ -205,7 +205,7 @@ function CelebrationDialog({
     <Dialog open={milestone !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader className="items-center text-center">
-          <div className="flex size-14 items-center justify-center rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+          <div className="flex size-14 items-center justify-center rounded-full bg-celebrate/15 text-celebrate">
             {milestone === 30 ? (
               <Trophy className="size-7" />
             ) : (

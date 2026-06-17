@@ -107,7 +107,7 @@ export function PromiseCard({
             className={cn(
               "size-5 shrink-0 self-center",
               optimistic.streak > 0
-                ? "text-orange-500"
+                ? "text-celebrate"
                 : "text-muted-foreground/40",
             )}
           />
@@ -190,10 +190,10 @@ function StreakGrid({
           key={cell.date}
           className={cn(
             "size-3.5 rounded-[3px] transition-colors",
-            cell.done && "bg-orange-500",
+            cell.done && "bg-celebrate",
             !cell.done && cell.isFuture && "bg-muted/50",
             !cell.done && !cell.isFuture && "border border-muted-foreground/25",
-            cell.isToday && "ring-2 ring-orange-400 ring-offset-1 ring-offset-background",
+            cell.isToday && "ring-2 ring-celebrate ring-offset-1 ring-offset-background",
           )}
         />
       ))}

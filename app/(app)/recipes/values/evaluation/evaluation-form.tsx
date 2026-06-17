@@ -239,10 +239,10 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
             {entries.map((entry, i) => (
               <details
                 key={entry.id}
-                className="group rounded-lg border border-border bg-card transition-colors open:border-amber-200 dark:open:border-amber-800"
+                className="group rounded-lg border border-border bg-card transition-colors open:border-primary/30"
               >
                 <summary className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm font-medium text-foreground">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
                     {i + 1}
                   </span>
                   <span>{formatDateDE(entry.entry_date)}</span>
@@ -335,9 +335,9 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
       {currentPhase === "adjust" && (
         <>
           {/* AI insights card — gentle observations before adjusting values */}
-          <Card className="mb-8 border-amber-200 dark:border-amber-800">
+          <Card className="mb-8 border-primary/30">
             <CardContent className="space-y-3 pt-(--card-spacing)">
-              <h2 className="font-heading text-base font-semibold text-amber-800 dark:text-amber-200">
+              <h2 className="font-heading text-base font-semibold text-primary">
                 Was uns aufgefallen ist …
               </h2>
               {insights === null ? (
@@ -378,7 +378,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                         }}
                         className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
                           isKept[index]
-                            ? "bg-amber-100 text-amber-800 shadow-sm dark:bg-amber-900/30 dark:text-amber-200"
+                            ? "bg-primary/15 text-primary shadow-sm"
                             : "bg-muted text-muted-foreground hover:bg-muted/80"
                         }`}
                       >
@@ -420,8 +420,8 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                             onClick={() => pickReplacement(index, v.id)}
                             className={`rounded-full border px-2.5 py-1 text-xs transition-all active:scale-95 ${
                               replacements[index] === v.id
-                                ? "border-amber-400 bg-amber-100 font-medium text-amber-800 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-200"
-                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-600"
+                                ? "border-primary bg-primary/15 font-medium text-primary"
+                                : "border-border bg-card text-foreground hover:border-muted-foreground/40 hover:bg-muted"
                             }`}
                           >
                             {v.de}
@@ -475,7 +475,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                         <span className="text-xs text-muted-foreground">
                           Ersatz:
                         </span>
-                        <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                        <span className="inline-flex rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
                           {getValueLabel(replacements[index]!)}
                         </span>
                         <button
@@ -511,7 +511,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                   key={v.id}
                   type="button"
                   onClick={() => addAdditionalValue(v.id)}
-                  className="rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-700 transition-all hover:border-amber-300 hover:bg-amber-50 active:scale-95 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-amber-600 dark:hover:bg-amber-900/20"
+                  className="rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground transition-all hover:border-primary hover:bg-primary/15 active:scale-95"
                 >
                   + {v.de}
                 </button>
@@ -567,13 +567,13 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                     isKept[i] && (
                       <span
                         key={`kept-${v}`}
-                        className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
+                        className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary"
                       >
                         {getValueLabel(v)}
                         <button
                           type="button"
                           onClick={() => toggleKeep(i)}
-                          className="ml-0.5 inline-flex leading-none hover:text-amber-600 dark:hover:text-amber-400"
+                          className="ml-0.5 inline-flex leading-none hover:text-primary"
                           aria-label={`${getValueLabel(v)} entfernen`}
                         >
                           &times;
@@ -584,7 +584,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                 {replacements.filter(Boolean).map((v) => (
                   <span
                     key={`replacement-${v}`}
-                    className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
+                    className="inline-flex rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary"
                   >
                     {getValueLabel(v!)}
                   </span>
@@ -592,13 +592,13 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                 {additionalValues.map((v) => (
                   <span
                     key={`additional-${v}`}
-                    className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-200"
+                    className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground"
                   >
                     {getValueLabel(v)}
                     <button
                       type="button"
                       onClick={() => removeAdditionalValue(v)}
-                      className="ml-0.5 inline-flex leading-none hover:text-purple-600 dark:hover:text-purple-400"
+                      className="ml-0.5 inline-flex leading-none hover:text-foreground"
                       aria-label={`${getValueLabel(v)} entfernen`}
                     >
                       &times;
@@ -626,10 +626,10 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
       {/* ── ── ── PHASE 3: Complete ── ── ── */}
       {currentPhase === "complete" && (
         <>
-          <Card className="mb-8 border-amber-200 dark:border-amber-800">
+          <Card className="mb-8 border-primary/30">
             <CardContent className="space-y-4 pt-(--card-spacing)">
               <p className="text-center text-2xl">🎉</p>
-              <p className="text-center font-heading text-lg font-semibold text-amber-800 dark:text-amber-200">
+              <p className="text-center font-heading text-lg font-semibold text-primary">
                 Erster Zyklus geschafft!
               </p>
               <p className="text-center text-sm text-muted-foreground">
@@ -648,7 +648,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                   {finalValues.map((v) => (
                     <span
                       key={v}
-                      className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
+                      className="inline-flex rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary"
                     >
                       {getValueLabel(v)}
                     </span>
@@ -658,7 +658,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                     hypothesis.map((v) => (
                       <span
                         key={v}
-                        className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
+                        className="inline-flex rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary"
                       >
                         {getValueLabel(v)}
                       </span>

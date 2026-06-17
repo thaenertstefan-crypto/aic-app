@@ -128,7 +128,7 @@ export default async function ProfilePage() {
       <Card>
         <CardContent className="space-y-3">
           <div className="flex items-center gap-2">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
               <Sparkles className="size-4" />
             </div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
@@ -166,7 +166,7 @@ export default async function ProfilePage() {
       <Card>
         <CardContent className="space-y-3">
           <div className="flex items-center gap-2">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-cleanser-confidence/15 text-cleanser-confidence">
               <Shield className="size-4" />
             </div>
             <div className="min-w-0">
@@ -204,19 +204,19 @@ export default async function ProfilePage() {
           icon={CheckCircle2}
           value={recipesCompleted}
           label="Recipes abgeschlossen"
-          accentClass="text-emerald-600 dark:text-emerald-400"
+          accentClass="text-success"
         />
         <StatCard
           icon={Flame}
           value={longestPromiseStreak}
           label="Längste Versprechen-Serie"
-          accentClass="text-orange-600 dark:text-orange-400"
+          accentClass="text-celebrate"
         />
         <StatCard
           icon={CalendarDays}
           value={daysSinceJoining}
           label="Tage dabei"
-          accentClass="text-violet-600 dark:text-violet-400"
+          accentClass="text-cleanser-confidence"
         />
       </div>
 

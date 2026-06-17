@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 // Served by Next at /manifest.webmanifest; the <link rel="manifest"> tag is
 // auto-injected. Colors mirror the design tokens in app/globals.css
-// (--background: oklch(0.97 0.025 65) → warm cream).
+// (--background: #1B1726 → "Dusk Membership" dark palette).
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Anti Imposter Club",
@@ -10,8 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Dein Begleiter für mehr Selbstbewusstsein",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#FAF2E6",
-    theme_color: "#FAF2E6",
+    background_color: "#1B1726",
+    theme_color: "#1B1726",
     icons: [
       {
         src: "/icons/web-app-manifest-192x192.png",

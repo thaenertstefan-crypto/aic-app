@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, Lock, ChevronRight } from "lucide-react";
 
+import { GlassPanel } from "@/components/ui/glass-panel";
 import { cn } from "@/lib/utils";
 
 interface ValuesStepOverviewProps {
@@ -87,16 +88,18 @@ export function ValuesStepOverview({
   ];
 
   return (
-    <section className="space-y-3">
-      <h2 className="font-heading text-lg font-semibold text-foreground">
-        So läuft&apos;s ab
-      </h2>
-      <ol className="space-y-2">
-        {steps.map((step) => (
-          <StepRow key={step.n} step={step} />
-        ))}
-      </ol>
-    </section>
+    <GlassPanel>
+      <section className="space-y-3">
+        <h2 className="font-heading text-lg font-semibold text-foreground">
+          So läuft&apos;s ab
+        </h2>
+        <ol className="space-y-2">
+          {steps.map((step) => (
+            <StepRow key={step.n} step={step} />
+          ))}
+        </ol>
+      </section>
+    </GlassPanel>
   );
 }
 
@@ -106,11 +109,11 @@ function StepBadge({ status, label }: { status: StepStatus; label: string }) {
       className={cn(
         "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
         status === "done" &&
-          "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+          "bg-success/15 text-success",
         status === "current" &&
-          "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200",
+          "bg-primary/15 text-primary",
         status === "open" &&
-          "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200",
+          "bg-primary/15 text-primary",
         status === "locked" && "bg-muted text-muted-foreground",
       )}
     >
@@ -122,7 +125,7 @@ function StepBadge({ status, label }: { status: StepStatus; label: string }) {
 function StepIndicator({ step }: { step: Step }) {
   if (step.status === "done") {
     return (
-      <CheckCircle2 className="size-6 shrink-0 text-emerald-600 dark:text-emerald-400" />
+      <CheckCircle2 className="size-6 shrink-0 text-success" />
     );
   }
   if (step.status === "locked") {
@@ -134,7 +137,7 @@ function StepIndicator({ step }: { step: Step }) {
       className={cn(
         "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
         step.status === "current"
-          ? "bg-amber-500 text-amber-950 dark:bg-amber-400"
+          ? "bg-primary text-primary-foreground"
           : "bg-muted text-muted-foreground",
       )}
     >
@@ -151,8 +154,8 @@ function StepRow({ step }: { step: Step }) {
       className={cn(
         "flex items-start gap-3 rounded-lg border-l-4 px-4 py-3 transition-colors",
         step.status === "current" &&
-          "border-amber-500 bg-amber-50/50 dark:border-amber-400 dark:bg-amber-950/20",
-        step.status === "done" && "border-emerald-500/60 bg-muted/30",
+          "border-primary bg-primary/10",
+        step.status === "done" && "border-success/60 bg-muted/30",
         step.status === "open" && "border-muted-foreground/20 bg-muted/30",
         step.status === "locked" && "border-muted-foreground/20 bg-muted/30 opacity-60",
         accessible && "hover:bg-muted/60",

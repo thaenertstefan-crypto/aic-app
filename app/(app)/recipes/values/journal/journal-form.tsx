@@ -187,7 +187,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
             {hypothesis.map((v) => (
               <span
                 key={v}
-                className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
+                className="inline-flex rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary"
               >
                 {getValueLabel(v)}
               </span>
@@ -213,9 +213,9 @@ export function JournalForm({ initialData }: JournalFormProps) {
                   className={`flex size-9 items-center justify-center rounded-full text-sm font-semibold transition-all duration-200
                     ${
                       hasEntry
-                        ? "bg-amber-400 text-amber-900 shadow-sm dark:bg-amber-500 dark:text-amber-950"
+                        ? "bg-primary text-primary-foreground shadow-sm"
                         : isActive
-                          ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-background bg-muted text-muted-foreground"
+                          ? "ring-2 ring-primary ring-offset-2 ring-offset-background bg-muted text-muted-foreground"
                           : "bg-muted text-muted-foreground"
                     }
                     ${isToday && !hasEntry ? "animate-pulse" : ""}
@@ -246,9 +246,9 @@ export function JournalForm({ initialData }: JournalFormProps) {
       {/* Completion state */}
       {isComplete ? (
         <div className="mt-4 space-y-6">
-          <Card className="border-amber-200 dark:border-amber-800">
+          <Card className="border-primary/30">
             <CardContent className="space-y-3 pt-(--card-spacing)">
-              <p className="text-center text-lg font-semibold text-amber-800 dark:text-amber-200">
+              <p className="text-center text-lg font-semibold text-primary">
                 🎉 7 Tage voll!
               </p>
               <p className="text-center text-sm text-muted-foreground">

@@ -24,8 +24,8 @@ const CLEANSERS: Cleanser[] = [
     title: "Ich bin nicht für jeden",
     description: "Ein Mantra für den Moment — 30 Sekunden Durchatmen.",
     iconClass:
-      "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
-    accentClass: "text-amber-600 dark:text-amber-400",
+      "bg-primary/15 text-primary",
+    accentClass: "text-primary",
   },
   {
     href: "/cleansers/promises",
@@ -33,8 +33,8 @@ const CLEANSERS: Cleanser[] = [
     title: "Versprechen an dich selbst",
     description: "Kleine Versprechen halten — Tag für Tag, Serie für Serie.",
     iconClass:
-      "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-    accentClass: "text-orange-600 dark:text-orange-400",
+      "bg-celebrate/15 text-celebrate",
+    accentClass: "text-celebrate",
   },
   {
     href: "/cleansers/confidence",
@@ -42,8 +42,8 @@ const CLEANSERS: Cleanser[] = [
     title: "Show Stopper Confidence",
     description: "Fünf Tricks für mehr Präsenz — plus eine Atemübung.",
     iconClass:
-      "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400",
-    accentClass: "text-violet-600 dark:text-violet-400",
+      "bg-cleanser-confidence/15 text-cleanser-confidence",
+    accentClass: "text-cleanser-confidence",
   },
 ];
 

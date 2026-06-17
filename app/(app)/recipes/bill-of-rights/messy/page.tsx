@@ -216,7 +216,7 @@ export default function MessyPage() {
                         {formatDateDE(entry.entry_date)}
                       </span>
                       {entry.content.guilt_type && (
-                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+                        <span className="inline-flex items-center rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">
                           Schuld: {guiltLabel(entry.content.guilt_type)}
                         </span>
                       )}

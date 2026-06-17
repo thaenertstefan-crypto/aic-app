@@ -29,6 +29,7 @@ import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
+import { ReframeAnimation } from "@/components/auth/reframe-animation";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 
@@ -118,13 +119,13 @@ function ManifestoItem({
     <div
       className={`group relative rounded-lg border-l-4 px-4 py-3 transition-all ${
         right.active
-          ? "border-amber-500 bg-amber-50/50 dark:border-amber-400 dark:bg-amber-950/20"
+          ? "border-primary bg-primary/10"
           : "border-muted-foreground/20 bg-muted/30 opacity-60"
       }`}
     >
       {editing ? (
         <div className="flex items-start gap-2">
-          <span className="mt-2 shrink-0 font-heading text-lg font-bold text-amber-600 dark:text-amber-400">
+          <span className="mt-2 shrink-0 font-heading text-lg font-bold text-primary">
             {index + 1}.
           </span>
           <div className="flex-1 space-y-2">
@@ -156,7 +157,7 @@ function ManifestoItem({
           <span
             className={`mt-0.5 shrink-0 font-heading text-lg font-bold ${
               right.active
-                ? "text-amber-600 dark:text-amber-400"
+                ? "text-primary"
                 : "text-muted-foreground"
             }`}
           >
@@ -242,9 +243,9 @@ function ProgressDots({ current, completed }: { current: number; completed: bool
             key={step}
             className={`size-2.5 rounded-full transition-all duration-500 ${
               isDone
-                ? "bg-amber-500 dark:bg-amber-400"
+                ? "bg-primary"
                 : isActive
-                  ? "bg-amber-500/70 dark:bg-amber-400/70 ring-2 ring-amber-500/30 dark:ring-amber-400/30"
+                  ? "bg-primary/70 ring-2 ring-primary/30"
                   : "bg-muted-foreground/20"
             }`}
             aria-label={`Schritt ${step}${isDone ? " – erledigt" : isActive ? " – aktuell" : ""}`}
@@ -580,8 +581,8 @@ export default function BillOfRightsPage() {
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-6 animate-in fade-in duration-500">
           {/* Header */}
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="flex size-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-              <CheckCircle2 className="size-8 text-emerald-600 dark:text-emerald-400" />
+            <div className="flex size-16 items-center justify-center rounded-full bg-success/15">
+              <CheckCircle2 className="size-8 text-success" />
             </div>
             <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
               Dein Bill of Rights
@@ -590,6 +591,18 @@ export default function BillOfRightsPage() {
               Du hast {rights.length} persönliche{/* eslint-disable-next-line react/jsx-no-comment-textnodes */ /* eslint-disable-next-line */}
               Grundrechte formuliert. Sie stehen dir immer zur Seite, wenn du sie brauchst.
             </p>
+
+            {/* Reframe als ruhiger Schlusspunkt */}
+            <ReframeAnimation
+              size="compact"
+              align="center"
+              pairs={[
+                {
+                  critic: "Ich muss es allen recht machen",
+                  reframe: "Ich darf für mich einstehen",
+                },
+              ]}
+            />
           </div>
 
           {/* Manifesto */}
@@ -599,12 +612,12 @@ export default function BillOfRightsPage() {
                 key={right.id}
                 className={`rounded-lg border-l-4 px-4 py-3 ${
                   right.active
-                    ? "border-amber-500 bg-amber-50/50 dark:border-amber-400 dark:bg-amber-950/20"
+                    ? "border-primary bg-primary/10"
                     : "border-muted-foreground/20 bg-muted/30 opacity-60"
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 shrink-0 font-heading text-lg font-bold text-amber-600 dark:text-amber-400">
+                  <span className="mt-0.5 shrink-0 font-heading text-lg font-bold text-primary">
                     {i + 1}.
                   </span>
                   <p
@@ -620,7 +633,7 @@ export default function BillOfRightsPage() {
           </div>
 
           {/* Messy Moment CTA – wiederkehrender Einstieg in der fertigen Ansicht */}
-          <Card className="mt-8 border-amber-200/50 bg-amber-50/30 dark:border-amber-800/30 dark:bg-amber-950/10">
+          <Card className="mt-8 border-primary/30 bg-primary/10">
             <CardContent className="space-y-3 pt-(--card-spacing) text-center">
               <p className="text-sm font-medium text-foreground">
                 Es ist mal wieder messy geworden?
@@ -668,8 +681,8 @@ export default function BillOfRightsPage() {
 
         {/* ── Intro ───────────────────────────────────────────── */}
         <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-            <Shield className="size-6 text-amber-600 dark:text-amber-400" />
+          <div className="flex size-12 items-center justify-center rounded-full bg-primary/15">
+            <Shield className="size-6 text-primary" />
           </div>
           <p className="text-sm leading-relaxed text-muted-foreground">
             Innere Regeln prägen unser Verhalten – oft unbewusst. Dieses Rezept hilft dir, deine
@@ -691,7 +704,7 @@ export default function BillOfRightsPage() {
 
         {/* ── Success message ─────────────────────────────────── */}
         {savedMessage && (
-          <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="rounded-lg bg-success/15 px-3 py-2 text-sm text-success animate-in fade-in slide-in-from-top-2 duration-300">
             {savedMessage}
           </div>
         )}
@@ -843,7 +856,7 @@ export default function BillOfRightsPage() {
                       key={example}
                       type="button"
                       onClick={() => handleAddSuggestion(example)}
-                      className="cursor-pointer rounded-full border border-dashed border-muted-foreground/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-500 dark:hover:text-amber-400"
+                      className="cursor-pointer rounded-full border border-dashed border-muted-foreground/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                     >
                       {example}
                     </button>

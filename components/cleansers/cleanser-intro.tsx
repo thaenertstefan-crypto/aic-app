@@ -20,7 +20,7 @@ export function CleanserIntro({ intro, defaultOpen = false }: CleanserIntroProps
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <Card className="border-amber-200/60 dark:border-amber-800/60">
+    <Card className="border-primary/30">
       <CardContent className="pt-(--card-spacing)">
         <button
           type="button"
@@ -28,7 +28,7 @@ export function CleanserIntro({ intro, defaultOpen = false }: CleanserIntroProps
           aria-expanded={open}
           className="flex w-full items-center gap-2 text-left"
         >
-          <Info className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <Info className="size-4 shrink-0 text-primary" />
           <span className="flex-1 font-heading text-sm font-semibold text-foreground">
             {intro.title}
           </span>

@@ -69,7 +69,7 @@ function MantraBlock({ mantra }: { mantra: string }) {
   }
 
   return (
-    <Card className="w-full border-amber-200/60 bg-card dark:border-amber-800/50">
+    <Card className="w-full border-primary/30 bg-card">
       <CardContent className="flex min-h-[40svh] flex-col items-center justify-center gap-4 py-6 text-center">
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
           Dein Mantra
@@ -422,7 +422,7 @@ function SituationCarousel({ situations }: { situations: MantraCardData[] }) {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                  <p className="text-xs font-medium uppercase tracking-wide text-primary">
                     Der Reframe
                   </p>
                   <p className="text-base leading-relaxed text-foreground">
@@ -468,7 +468,7 @@ function SituationCarousel({ situations }: { situations: MantraCardData[] }) {
               aria-current={i === active}
               onClick={() => scrollTo(i)}
               className={`size-2 rounded-full transition-colors ${
-                i === active ? "bg-amber-500" : "bg-muted-foreground/30"
+                i === active ? "bg-primary" : "bg-muted-foreground/30"
               }`}
             />
           ))}
@@ -546,7 +546,7 @@ export function MantraCleanser({
               className="w-full gap-2"
               disabled
             >
-              <Check className="text-amber-600 dark:text-amber-400" />
+              <Check className="text-primary" />
               Schon erledigt heute
             </Button>
           ) : (

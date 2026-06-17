@@ -1,6 +1,6 @@
 // Anti Imposter Club service worker.
 // Bump CACHE to invalidate the precache on the next deploy.
-const CACHE = "aic-cache-v1";
+const CACHE = "aic-cache-v2";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [
   OFFLINE_URL,

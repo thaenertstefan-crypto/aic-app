@@ -26,9 +26,9 @@ function ProgressDots({ total, current }: { total: number; current: number }) {
             key={i}
             className={`size-2.5 rounded-full transition-all duration-500 ${
               isDone
-                ? "bg-amber-500 dark:bg-amber-400"
+                ? "bg-primary"
                 : isActive
-                  ? "bg-amber-500/70 dark:bg-amber-400/70 ring-2 ring-amber-500/30 dark:ring-amber-400/30"
+                  ? "bg-primary/70 ring-2 ring-primary/30"
                   : "bg-muted-foreground/20"
             }`}
             aria-label={`Karte ${i + 1}${isDone ? " – gelesen" : isActive ? " – aktuell" : ""}`}
@@ -68,7 +68,7 @@ export function RecipeIntro({ cards, onComplete, onSkip }: RecipeIntroProps) {
 
       <Card
         key={index}
-        className="border-amber-200/60 dark:border-amber-800/60 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
+        className="border-primary/30 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
       >
         <CardContent className="flex flex-col gap-3 pt-(--card-spacing)">
           <h2 className="font-heading text-xl font-semibold text-foreground">

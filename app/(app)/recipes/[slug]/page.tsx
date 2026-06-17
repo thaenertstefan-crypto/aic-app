@@ -176,16 +176,16 @@ export default async function RecipeDetailPage(props: {
 
         {/* Already-discovered values (returning users) */}
         {confirmedValues.length > 0 && (
-          <Card className="mt-6 border-amber-200 dark:border-amber-800">
+          <Card className="mt-6 border-primary/30">
             <CardContent className="space-y-3 pt-(--card-spacing)">
-              <h2 className="font-heading text-base font-semibold text-amber-800 dark:text-amber-200">
+              <h2 className="font-heading text-base font-semibold text-primary">
                 Deine Werte
               </h2>
               <div className="flex flex-wrap gap-1.5">
                 {confirmedValues.map((value) => (
                   <span
                     key={value}
-                    className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
+                    className="inline-flex rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary"
                   >
                     {getValueLabel(value)}
                   </span>

@@ -82,7 +82,7 @@ export function HypothesisForm({ initialValues }: Props) {
         <span
           className={`inline-block rounded-full px-3 py-1 text-sm font-medium transition-colors ${
             isFull
-              ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
+              ? "bg-primary/15 text-primary"
               : "bg-muted text-muted-foreground"
           }`}
         >
@@ -108,8 +108,8 @@ export function HypothesisForm({ initialValues }: Props) {
                 onClick={() => toggleValue(item.id)}
                 className={`rounded-full border px-3 py-1 text-sm transition-all duration-150 active:scale-95 ${
                   isSelected
-                    ? "border-amber-400 bg-amber-100 font-medium text-amber-800 shadow-sm dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-200"
-                    : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:bg-gray-750"
+                    ? "border-primary bg-primary/15 font-medium text-primary shadow-sm"
+                    : "border-border bg-card text-foreground hover:border-muted-foreground/40 hover:bg-muted"
                 }`}
               >
                 {item.de}
@@ -159,13 +159,13 @@ export function HypothesisForm({ initialValues }: Props) {
               {selectedValues.map((v) => (
                 <span
                   key={v}
-                  className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200"
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary"
                 >
                   {getValueLabel(v)}
                   <button
                     type="button"
                     onClick={() => toggleValue(v)}
-                    className="ml-0.5 inline-flex leading-none hover:text-amber-600 dark:hover:text-amber-400"
+                    className="ml-0.5 inline-flex leading-none hover:text-primary"
                     aria-label={`${getValueLabel(v)} entfernen`}
                   >
                     &times;

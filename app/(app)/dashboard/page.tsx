@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/ui/stat-card";
+import { GlassPanel } from "@/components/ui/glass-panel";
+import { ReframeAnimation } from "@/components/auth/reframe-animation";
 
 import { MoodCheckin } from "./mood-checkin";
 
@@ -174,6 +176,7 @@ export default async function DashboardPage() {
           {greetingName ? `Hey ${greetingName}!` : "Hey!"}
         </h1>
         <p className="text-sm capitalize text-muted-foreground">{dateLabel}</p>
+        <ReframeAnimation size="compact" intervalMs={4500} className="pt-2" />
       </header>
 
       {/* Aktuelles Recipe — primäre Aktion */}
@@ -190,7 +193,7 @@ export default async function DashboardPage() {
       <Card>
         <CardContent className="space-y-3">
           <div className="flex items-center gap-2">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
               <Quote className="size-4" />
             </div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
@@ -232,13 +235,13 @@ export default async function DashboardPage() {
           icon={Flame}
           value={promiseStreak}
           label="Versprechen"
-          accentClass="text-orange-600 dark:text-orange-400"
+          accentClass="text-celebrate"
         />
         <StatCard
           icon={Sparkles}
           value={mantraStreak}
           label="Mantra"
-          accentClass="text-amber-600 dark:text-amber-400"
+          accentClass="text-primary"
         />
       </div>
     </div>
@@ -260,58 +263,54 @@ function RecipeCard({
     const href = getRecipeStepPath(active.slug, activeStep);
 
     return (
-      <Card className="ring-2 ring-primary/20 shadow-md shadow-primary/5">
-        <CardContent className="space-y-3">
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-primary">
-              Aktuelles Recipe
-            </p>
-            <p className="font-heading text-lg font-medium text-foreground">
-              {active.title}
+      <GlassPanel contentClassName="space-y-3">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-primary">
+            Aktuelles Recipe
+          </p>
+          <p className="font-heading text-lg font-medium text-foreground">
+            {active.title}
+          </p>
+        </div>
+
+        {totalSteps > 1 ? (
+          <div className="space-y-1.5">
+            <Progress value={(clampedStep / totalSteps) * 100} />
+            <p className="text-xs text-muted-foreground">
+              Schritt {clampedStep} von {totalSteps}
             </p>
           </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Du bist mittendrin.</p>
+        )}
 
-          {totalSteps > 1 ? (
-            <div className="space-y-1.5">
-              <Progress value={(clampedStep / totalSteps) * 100} />
-              <p className="text-xs text-muted-foreground">
-                Schritt {clampedStep} von {totalSteps}
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Du bist mittendrin.</p>
-          )}
-
-          <Button className="w-full" render={<Link href={href} />}>
-            Weitermachen
-            <ArrowRight />
-          </Button>
-        </CardContent>
-      </Card>
+        <Button className="w-full" render={<Link href={href} />}>
+          Weitermachen
+          <ArrowRight />
+        </Button>
+      </GlassPanel>
     );
   }
 
   if (suggested) {
     return (
-      <Card className="ring-2 ring-primary/20 shadow-md shadow-primary/5">
-        <CardContent className="space-y-3">
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-primary">
-              Empfehlung für dich
-            </p>
-            <p className="font-heading text-lg font-medium text-foreground">
-              {suggested.title}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {suggested.description}
-            </p>
-          </div>
-          <Button className="w-full" render={<Link href={suggested.startPath} />}>
-            Jetzt starten
-            <ArrowRight />
-          </Button>
-        </CardContent>
-      </Card>
+      <GlassPanel contentClassName="space-y-3">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-primary">
+            Empfehlung für dich
+          </p>
+          <p className="font-heading text-lg font-medium text-foreground">
+            {suggested.title}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {suggested.description}
+          </p>
+        </div>
+        <Button className="w-full" render={<Link href={suggested.startPath} />}>
+          Jetzt starten
+          <ArrowRight />
+        </Button>
+      </GlassPanel>
     );
   }
 

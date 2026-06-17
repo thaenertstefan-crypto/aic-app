@@ -52,9 +52,9 @@ function ExerciseCard({
   children: ReactNode;
 }) {
   return (
-    <details className="group rounded-xl border border-border bg-card transition-colors open:border-violet-200 dark:open:border-violet-800">
+    <details className="group rounded-xl border border-border bg-card transition-colors open:border-cleanser-confidence/30">
       <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-semibold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-cleanser-confidence/15 text-sm font-semibold text-cleanser-confidence">
           {number}
         </span>
         <span className="min-w-0 flex-1">
@@ -151,7 +151,7 @@ function BreathingExercise() {
                 }
               : undefined
           }
-          className="flex size-40 items-center justify-center rounded-full bg-violet-200/70 text-center text-violet-700 dark:bg-violet-500/20 dark:text-violet-300"
+          className="flex size-40 items-center justify-center rounded-full bg-cleanser-confidence/20 text-center text-cleanser-confidence"
         >
           <span className="font-heading text-lg font-medium">
             {done ? "Geschafft!" : running ? PHASE_LABEL[phase] : "Bereit?"}
