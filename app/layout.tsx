@@ -25,7 +25,10 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "AIC",
-    statusBarStyle: "default",
+    // "black-translucent" lets the web content (incl. the fixed AppBackdrop)
+    // extend full-bleed under the status bar so the ambient blobs render behind
+    // the clock/wifi instead of a flat aubergine band.
+    statusBarStyle: "black-translucent",
   },
   icons: {
     apple: "/icons/web-app-manifest-192x192.png",
@@ -34,6 +37,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#1B1726",
+  // Let content flow into the safe areas (notch) so env(safe-area-inset-*) works.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

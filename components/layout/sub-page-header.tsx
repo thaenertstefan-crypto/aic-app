@@ -9,7 +9,17 @@ interface SubPageHeaderProps {
 
 export function SubPageHeader({ backHref, title, subtitle }: SubPageHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background">
+    <header
+      className="sticky top-0 z-40 border-b bg-background/70 backdrop-blur-xl"
+      // Bridge the safe-area top inset: the negative margin cancels the layout's
+      // safe-area padding so the glass bar fills up to the very top edge (under
+      // the notch, ambient blobs showing through), while the matching padding
+      // keeps the back arrow + title below the status bar.
+      style={{
+        marginTop: "calc(env(safe-area-inset-top, 0px) * -1)",
+        paddingTop: "env(safe-area-inset-top, 0px)",
+      }}
+    >
       <div className="mx-auto flex max-w-lg items-center gap-2 px-4 py-3">
         <Link
           href={backHref}

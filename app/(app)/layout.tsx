@@ -30,7 +30,10 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-svh">
+    <div
+      className="min-h-svh"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
       <AppBackdrop />
       <OfflineBanner />
       <main className="pb-16">{children}</main>
