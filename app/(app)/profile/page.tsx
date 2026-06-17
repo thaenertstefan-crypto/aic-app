@@ -106,7 +106,7 @@ export default async function ProfilePage() {
       />
 
       {/* User info */}
-      <Card>
+      <Card variant="glass">
         <CardContent className="flex items-center gap-3">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-lg font-bold text-primary">
             {initial}
@@ -125,7 +125,7 @@ export default async function ProfilePage() {
       </Card>
 
       {/* Meine Werte */}
-      <Card>
+      <Card variant="glass">
         <CardContent className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
@@ -163,7 +163,7 @@ export default async function ProfilePage() {
       </Card>
 
       {/* Mein Bill of Rights */}
-      <Card>
+      <Card variant="glass">
         <CardContent className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-cleanser-confidence/15 text-cleanser-confidence">
@@ -195,28 +195,24 @@ export default async function ProfilePage() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
         <StatCard
-          icon={NotebookPen}
+          icon={<NotebookPen className="size-4 text-primary" />}
           value={journalCount}
           label="Tagebucheinträge"
-          accentClass="text-primary"
         />
         <StatCard
-          icon={CheckCircle2}
+          icon={<CheckCircle2 className="size-4 text-success" />}
           value={recipesCompleted}
           label="Recipes abgeschlossen"
-          accentClass="text-success"
         />
         <StatCard
-          icon={Flame}
+          icon={<Flame className="size-4 text-celebrate" />}
           value={longestPromiseStreak}
           label="Längste Versprechen-Serie"
-          accentClass="text-celebrate"
         />
         <StatCard
-          icon={CalendarDays}
+          icon={<CalendarDays className="size-4 text-cleanser-confidence" />}
           value={daysSinceJoining}
           label="Tage dabei"
-          accentClass="text-cleanser-confidence"
         />
       </div>
 

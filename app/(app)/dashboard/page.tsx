@@ -191,7 +191,7 @@ export default async function DashboardPage() {
       <MoodCheckin initialScore={todayMood} />
 
       {/* Heutiges Recht */}
-      <Card>
+      <Card variant="glass">
         <CardContent className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
@@ -227,22 +227,19 @@ export default async function DashboardPage() {
       {/* Streaks */}
       <div className="grid grid-cols-3 gap-3">
         <StatCard
-          icon={NotebookPen}
+          icon={<NotebookPen className="size-4 text-primary" />}
           value={journalStreak}
           label="Tagebuch"
-          accentClass="text-primary"
         />
         <StatCard
-          icon={Flame}
+          icon={<Flame className="size-4 text-celebrate" />}
           value={promiseStreak}
           label="Versprechen"
-          accentClass="text-celebrate"
         />
         <StatCard
-          icon={Sparkles}
+          icon={<Sparkles className="size-4 text-primary" />}
           value={mantraStreak}
           label="Mantra"
-          accentClass="text-primary"
         />
       </div>
     </div>
@@ -321,7 +318,7 @@ function RecipeCard({
 
   // Everything done / nothing to suggest → gentle pointer to the recipe list.
   return (
-    <Card>
+    <Card variant="glass">
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
           Schön, dass du dranbleibst! Stöbere durch die Rezepte für deinen

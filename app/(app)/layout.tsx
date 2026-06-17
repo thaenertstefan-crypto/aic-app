@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { OfflineBanner } from "@/components/offline/offline-banner";
+import { AppBackdrop } from "@/components/ui/app-backdrop";
 
 export default async function AppLayout({
   children,
@@ -30,6 +31,7 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-svh">
+      <AppBackdrop />
       <OfflineBanner />
       <main className="pb-16">{children}</main>
       <BottomNav />

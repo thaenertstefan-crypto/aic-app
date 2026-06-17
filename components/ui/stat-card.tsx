@@ -1,25 +1,19 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import gsap from "gsap";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 
 interface StatCardProps {
-  icon: LucideIcon;
+  icon: ReactNode;
   value: number | string;
   label: string;
-  accentClass?: string;
 }
 
-export function StatCard({
-  icon: Icon,
-  value,
-  label,
-  accentClass = "text-primary",
-}: StatCardProps) {
+export function StatCard({ icon, value, label }: StatCardProps) {
   const reduced = useReducedMotion();
   const valueRef = useRef<HTMLSpanElement>(null);
 
@@ -49,9 +43,9 @@ export function StatCard({
   }, [value, reduced]);
 
   return (
-    <Card size="sm">
+    <Card size="sm" variant="glass">
       <CardContent className="flex flex-col items-center gap-1 py-1 text-center">
-        <Icon className={`size-4 ${accentClass}`} />
+        {icon}
         <span
           ref={valueRef}
           className="font-heading text-2xl font-bold tabular-nums text-foreground"

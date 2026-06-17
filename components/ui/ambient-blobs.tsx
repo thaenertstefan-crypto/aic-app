@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  * GSAP animation is started.
  */
 
-type Blob = {
+export type Blob = {
   /** Token-based fill color. */
   color: string;
   /** Tailwind classes for size and resting position within the container. */
@@ -56,9 +56,12 @@ const BLOBS: Blob[] = [
 type AmbientBlobsProps = {
   /** Size/positioning of the container, supplied by the calling surface. */
   className?: string;
+  /** Blob set to render. Defaults to the card-hero tuning above; the app-wide
+   *  backdrop passes a larger, viewport-tuned set. */
+  blobs?: Blob[];
 };
 
-export function AmbientBlobs({ className }: AmbientBlobsProps) {
+export function AmbientBlobs({ className, blobs = BLOBS }: AmbientBlobsProps) {
   const reduced = useReducedMotion();
   const blobRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -67,7 +70,7 @@ export function AmbientBlobs({ className }: AmbientBlobsProps) {
 
     const tweens = blobRefs.current.map((el, i) => {
       if (!el) return null;
-      const blob = BLOBS[i];
+      const blob = blobs[i];
       return gsap.to(el, {
         x: blob.x,
         y: blob.y,
@@ -81,7 +84,7 @@ export function AmbientBlobs({ className }: AmbientBlobsProps) {
     return () => {
       tweens.forEach((tween) => tween?.kill());
     };
-  }, [reduced]);
+  }, [reduced, blobs]);
 
   return (
     <div
@@ -91,7 +94,7 @@ export function AmbientBlobs({ className }: AmbientBlobsProps) {
         className,
       )}
     >
-      {BLOBS.map((blob, i) => (
+      {blobs.map((blob, i) => (
         <div
           key={i}
           ref={(el) => {

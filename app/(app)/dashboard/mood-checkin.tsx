@@ -49,7 +49,7 @@ export function MoodCheckin({ initialScore }: { initialScore: number | null }) {
   }, [state.success, router]);
 
   return (
-    <Card>
+    <Card variant="glass">
       <CardContent className="space-y-4">
         <div className="space-y-1">
           <p className="font-heading text-lg font-medium text-foreground">
