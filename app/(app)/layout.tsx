@@ -36,7 +36,13 @@ export default async function AppLayout({
     >
       <AppBackdrop />
       <OfflineBanner />
-      <main className="pb-16">{children}</main>
+      <main
+        style={{
+          paddingBottom: "calc(4rem + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
+        {children}
+      </main>
       <BottomNav />
     </div>
   );

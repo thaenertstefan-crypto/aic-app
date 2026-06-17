@@ -10,7 +10,7 @@ interface SubPageHeaderProps {
 export function SubPageHeader({ backHref, title, subtitle }: SubPageHeaderProps) {
   return (
     <header
-      className="sticky top-0 z-40 border-b bg-background/70 backdrop-blur-xl"
+      className="sticky top-0 z-40 border-b backdrop-blur-xl"
       // Bridge the safe-area top inset: the negative margin cancels the layout's
       // safe-area padding so the glass bar fills up to the very top edge (under
       // the notch, ambient blobs showing through), while the matching padding
