@@ -3,7 +3,6 @@ import { ArrowRight, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CtaGlow } from "@/components/ui/cta-glow";
 import { FocusQuestion } from "@/components/dashboard/focus-question";
 import { Crossfade } from "@/components/dashboard/crossfade";
 
@@ -56,7 +55,7 @@ export function DailyFocus({
 
       <Crossfade token={tier} className="space-y-3">
         {primary ? (
-          <Card className="border border-primary">
+          <Card variant="glass" className="border border-primary">
             <CardContent className="space-y-3">
               <div className="space-y-1">
                 <p className="font-heading text-lg font-medium text-foreground">
@@ -66,12 +65,10 @@ export function DailyFocus({
                   {primary.subtitle}
                 </p>
               </div>
-              <CtaGlow>
-                <Button className="w-full" render={<Link href={primary.href} />}>
-                  {primary.cta}
-                  <ArrowRight />
-                </Button>
-              </CtaGlow>
+              <Button className="w-full" render={<Link href={primary.href} />}>
+                {primary.cta}
+                <ArrowRight />
+              </Button>
             </CardContent>
           </Card>
         ) : (
