@@ -1,23 +1,20 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  Flame,
-  NotebookPen,
-  Quote,
-  Sparkles,
-} from "lucide-react";
+import { Flame, NotebookPen, Quote, Sparkles } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { computeStreak } from "@/lib/utils/streak";
 import { RECIPES, getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
+import { moodTier } from "@/lib/utils/mood";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { StatCard } from "@/components/ui/stat-card";
-import { GlassPanel } from "@/components/ui/glass-panel";
-import { CtaGlow } from "@/components/ui/cta-glow";
 import { ReframeAnimation } from "@/components/auth/reframe-animation";
 import { DashboardReveal } from "@/components/dashboard/dashboard-reveal";
+import {
+  DailyFocus,
+  type Destination,
+  type PrimaryRecommendation,
+} from "@/components/dashboard/daily-focus";
 
 import { MoodCheckin } from "./mood-checkin";
 
@@ -170,6 +167,99 @@ export default async function DashboardPage() {
 
   const greetingName = name?.trim();
 
+  // --- Stimmungsbasierter Fokus (DailyFocus) ---
+  // Continuity-Empfehlung: das, was die alte RecipeCard gezeigt hätte.
+  const continuityRecipe = hasActiveRecipe ? activeRecipe : suggestedRecipe;
+
+  // Werte-Fortschritt immer ermitteln (unabhängig vom aktiven Recipe), damit
+  // der "Werte reflektieren"-Eintrag den richtigen Schritt/Badge zeigt.
+  const valuesProgress = progressRows.find(
+    (p) => p.recipe_slug === "values" && p.status !== "completed",
+  );
+  const valuesTotalSteps = getRecipeBySlug("values")?.stepPaths?.length ?? 3;
+  const valuesBadge = valuesProgress
+    ? `Schritt ${Math.min(Math.max(valuesProgress.current_step ?? 1, 1), valuesTotalSteps)} von ${valuesTotalSteps}`
+    : undefined;
+  const valuesHref = valuesProgress
+    ? getRecipeStepPath("values", valuesProgress.current_step ?? 1)
+    : "/recipes/values/hypothesis";
+
+  const tier = moodTier(todayMood);
+
+  let primary: PrimaryRecommendation | null = null;
+  let fallbackMessage: string | undefined;
+
+  if (tier === "low") {
+    primary = {
+      key: "mantra",
+      title: "Ich bin nicht für jeden",
+      subtitle: "30 Sekunden Mantra-Pause",
+      cta: "Kurz durchatmen",
+      href: "/cleansers/mantra",
+    };
+  } else if (continuityRecipe) {
+    primary = {
+      key: continuityRecipe.slug,
+      title: continuityRecipe.title,
+      subtitle:
+        continuityRecipe.slug === "values" && valuesBadge
+          ? valuesBadge
+          : hasActiveRecipe
+            ? "Du bist mittendrin."
+            : continuityRecipe.description,
+      cta: hasActiveRecipe ? "Weitermachen" : "Jetzt starten",
+      href: hasActiveRecipe
+        ? getRecipeStepPath(continuityRecipe.slug, activeProgress?.current_step ?? 1)
+        : continuityRecipe.startPath,
+    };
+  } else {
+    fallbackMessage =
+      "Schön, dass du dranbleibst! Stöbere durch die Rezepte für deinen nächsten Schritt.";
+  }
+
+  // Die Frage ergibt nur Sinn, wenn heute wirklich eingecheckt wurde — vorher
+  // (todayMood === null) zeigen wir die Primary-Card trotzdem (sinnvoller
+  // Default), aber noch keine Frage-Zeile. Deckt sich mit dem MESSAGES-Verhalten
+  // in mood-checkin.tsx.
+  const showQuestion = todayMood !== null && primary !== null;
+
+  // Feste Liste aller sechs Anlaufstellen (handgeschriebene Ich-Sätze, daher
+  // bewusst nicht aus RECIPES generiert) minus der aktuellen Primary-Empfehlung.
+  const ALL_DESTINATIONS: Destination[] = [
+    {
+      key: "values",
+      sentence: "Ich würde gern meine Werte reflektieren",
+      href: valuesHref,
+      badge: valuesBadge,
+    },
+    {
+      key: "overthinking",
+      sentence: "Ich bin schon wieder am Overthinken",
+      href: "/recipes/overthinking",
+    },
+    {
+      key: "bor",
+      sentence: "Ich brauch ein Reminder, was ich mir erlauben darf",
+      href: "/recipes/bill-of-rights",
+    },
+    {
+      key: "mantra",
+      sentence: "Ich fühl mich grad nicht gut genug",
+      href: "/cleansers/mantra",
+    },
+    {
+      key: "promises",
+      sentence: "Ich will mein Versprechen an mich selbst einlösen",
+      href: "/cleansers/promises",
+    },
+    {
+      key: "confidence",
+      sentence: "Ich brauch 'n schnellen Confidence-Boost",
+      href: "/cleansers/confidence",
+    },
+  ];
+  const alternatives = ALL_DESTINATIONS.filter((d) => d.key !== primary?.key);
+
   return (
     <div className="space-y-6 p-4">
       <DashboardReveal>
@@ -182,15 +272,17 @@ export default async function DashboardPage() {
         <ReframeAnimation size="compact" intervalMs={4500} className="pt-2" />
       </header>
 
-      {/* Aktuelles Recipe — primäre Aktion */}
-      <RecipeCard
-        active={hasActiveRecipe ? activeRecipe : undefined}
-        activeStep={activeProgress?.current_step ?? 1}
-        suggested={suggestedRecipe}
-      />
-
-      {/* Mood check-in */}
+      {/* Mood check-in — bestimmt den Fokus, deshalb vor der Empfehlung */}
       <MoodCheckin initialScore={todayMood} />
+
+      {/* Stimmungsbasierter Tages-Fokus */}
+      <DailyFocus
+        tier={tier}
+        primary={primary}
+        fallbackMessage={fallbackMessage}
+        showQuestion={showQuestion}
+        alternatives={alternatives}
+      />
 
       {/* Heutiges Recht */}
       <Card variant="glass">
@@ -246,96 +338,6 @@ export default async function DashboardPage() {
       </div>
       </DashboardReveal>
     </div>
-  );
-}
-
-function RecipeCard({
-  active,
-  activeStep,
-  suggested,
-}: {
-  active: ReturnType<typeof getRecipeBySlug> | undefined;
-  activeStep: number;
-  suggested: ReturnType<typeof getRecipeBySlug> | undefined;
-}) {
-  if (active) {
-    const totalSteps = active.stepPaths?.length ?? 0;
-    const clampedStep = Math.min(Math.max(activeStep, 1), totalSteps || 1);
-    const href = getRecipeStepPath(active.slug, activeStep);
-
-    return (
-      <GlassPanel contentClassName="space-y-3">
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-primary">
-            Aktuelles Recipe
-          </p>
-          <p className="font-heading text-lg font-medium text-foreground">
-            {active.title}
-          </p>
-        </div>
-
-        {totalSteps > 1 ? (
-          <div className="space-y-1.5">
-            <Progress value={(clampedStep / totalSteps) * 100} />
-            <p className="text-xs text-muted-foreground">
-              Schritt {clampedStep} von {totalSteps}
-            </p>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">Du bist mittendrin.</p>
-        )}
-
-        <CtaGlow>
-          <Button className="w-full" render={<Link href={href} />}>
-            Weitermachen
-            <ArrowRight />
-          </Button>
-        </CtaGlow>
-      </GlassPanel>
-    );
-  }
-
-  if (suggested) {
-    return (
-      <GlassPanel contentClassName="space-y-3">
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-primary">
-            Empfehlung für dich
-          </p>
-          <p className="font-heading text-lg font-medium text-foreground">
-            {suggested.title}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {suggested.description}
-          </p>
-        </div>
-        <CtaGlow>
-          <Button className="w-full" render={<Link href={suggested.startPath} />}>
-            Jetzt starten
-            <ArrowRight />
-          </Button>
-        </CtaGlow>
-      </GlassPanel>
-    );
-  }
-
-  // Everything done / nothing to suggest → gentle pointer to the recipe list.
-  return (
-    <Card variant="glass">
-      <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          Schön, dass du dranbleibst! Stöbere durch die Rezepte für deinen
-          nächsten Schritt.
-        </p>
-        <Button
-          variant="outline"
-          className="w-full"
-          render={<Link href="/recipes" />}
-        >
-          Rezepte ansehen
-        </Button>
-      </CardContent>
-    </Card>
   );
 }
 

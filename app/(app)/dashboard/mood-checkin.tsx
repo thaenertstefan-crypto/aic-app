@@ -5,16 +5,18 @@ import { useRouter } from "next/navigation";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
+import { MoodAvatar } from "@/components/dashboard/mood-avatar";
+import {
+  MOOD_FACES,
+  MOOD_LABELS,
+  MOOD_PULSE_SECONDS,
+} from "@/lib/utils/mood";
 
 import { saveMoodCheckinAction, type MoodCheckinState } from "./actions";
 
-const MOODS: { score: number; emoji: string; label: string }[] = [
-  { score: 1, emoji: "😞", label: "Sehr schwer" },
-  { score: 2, emoji: "😕", label: "Eher schwer" },
-  { score: 3, emoji: "😐", label: "Geht so" },
-  { score: 4, emoji: "🙂", label: "Gut" },
-  { score: 5, emoji: "😄", label: "Richtig gut" },
-];
+const MOODS: { score: number; label: string }[] = Object.entries(
+  MOOD_LABELS,
+).map(([score, label]) => ({ score: Number(score), label }));
 
 // Encouraging, judgment-free message per score — low scores get warmth, not pity.
 const MESSAGES: Record<number, string> = {
@@ -60,6 +62,13 @@ export function MoodCheckin({ initialScore }: { initialScore: number | null }) {
           </p>
         </div>
 
+        <div className="flex justify-center">
+          <MoodAvatar
+            face={MOOD_FACES[selected ?? 3]}
+            pulseSeconds={MOOD_PULSE_SECONDS[selected ?? 3]}
+          />
+        </div>
+
         <form action={formAction} className="flex justify-between gap-2">
           {MOODS.map((mood) => {
             const isActive = selected === mood.score;
@@ -69,17 +78,16 @@ export function MoodCheckin({ initialScore }: { initialScore: number | null }) {
                 type="submit"
                 name="mood_score"
                 value={mood.score}
-                aria-label={mood.label}
                 aria-pressed={isActive}
                 onClick={() => setSelected(mood.score)}
                 disabled={isPending}
-                className={`flex flex-1 items-center justify-center rounded-xl border py-2.5 text-2xl transition-all disabled:opacity-60 ${
+                className={`flex flex-1 items-center justify-center rounded-xl border px-1 py-2 text-center text-xs leading-tight font-medium transition-all disabled:opacity-60 ${
                   isActive
                     ? "border-primary bg-primary/10 scale-105"
                     : "border-border bg-card hover:bg-muted/50"
                 }`}
               >
-                <span aria-hidden>{mood.emoji}</span>
+                {mood.label}
               </button>
             );
           })}

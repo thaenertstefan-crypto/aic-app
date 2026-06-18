@@ -141,6 +141,17 @@
 }
 
 @layer utilities {
+  /* Gentle "breathing" pulse for the mood avatar; duration is set inline. */
+  @keyframes mood-breathe {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.06);
+    }
+  }
+
   /* 4-7-8 breathing cycle (19s): inhale 4s, hold 7s, exhale 8s */
   @keyframes breathe478 {
     0% {
