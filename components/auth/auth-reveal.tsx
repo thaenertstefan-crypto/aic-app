@@ -33,8 +33,9 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   const [revealed, setRevealed] = useState(false);
   const reduced = useReducedMotion();
   const touchStartY = useRef<number | null>(null);
-  // Das hochblickende Karten-Maskottchen gibt es nur auf der Login-Seite.
-  const isLogin = usePathname() === "/login";
+  // Das hochblickende Karten-Maskottchen erscheint auf Login + Signup.
+  const pathname = usePathname();
+  const showCardMascot = pathname === "/login" || pathname === "/signup";
 
   function handleTouchStart(e: React.TouchEvent) {
     touchStartY.current = e.touches[0]?.clientY ?? null;
@@ -65,7 +66,7 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
         <div className="flex flex-1 items-center justify-center px-4 py-12">
           <div className="w-full max-w-sm">{children}</div>
         </div>
-        {isLogin && (
+        {showCardMascot && (
           <MascotPeek
             from="bottom"
             size="lg"
@@ -104,7 +105,7 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
             hoch zur Login-Karte. Positioniert relativ zum Vollbild-Root (wird
             unten geclippt → nur die Augen sind sichtbar). Mountet erst beim
             Aufdecken, damit die Slide-up-Animation spielt. */}
-        {isLogin && revealed && (
+        {showCardMascot && revealed && (
           <MascotPeek
             from="bottom"
             size="lg"
