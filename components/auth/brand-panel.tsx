@@ -3,6 +3,7 @@ import {
   ReframeAnimation,
   type ReframePair,
 } from "@/components/auth/reframe-animation";
+import { MascotPeek } from "@/components/brand/mascot-peek";
 
 const DEFAULT_HEADLINE = "Willkommen im Club, den niemand zugibt zu brauchen.";
 const DEFAULT_SUBLINE =
@@ -40,6 +41,7 @@ export function BrandPanel({
       />
 
       <div className="flex flex-col gap-6 p-8 sm:p-10">
+        <MascotPeek from="right" size="lg" className="self-end" />
         <h1 className="font-heading text-4xl font-semibold leading-tight text-balance text-foreground md:text-5xl">
           {headline}
         </h1>

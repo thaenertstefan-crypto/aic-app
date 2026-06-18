@@ -18,6 +18,7 @@ import { FormError } from "@/components/ui/form-error";
 import { loginAction } from "@/app/(auth)/auth.actions";
 import { invalidMessage, clearValidity } from "@/lib/utils/form-validation";
 import { POST_LOGIN_KEY } from "@/components/dashboard/dashboard-reveal";
+import { MascotPeek } from "@/components/brand/mascot-peek";
 
 /** Markiert den nächsten Dashboard-Aufruf für das gestaffelte Einblenden. */
 function markPostLogin() {
@@ -36,6 +37,9 @@ export default function LoginPage() {
   return (
     <Card size="sm">
       <CardHeader>
+        <div className="flex justify-end">
+          <MascotPeek from="right" size="sm" expression="smile" pulseSeconds={3} />
+        </div>
         <CardTitle>Zurück in den Club</CardTitle>
         <CardDescription>
           Schön, dass du wieder da bist. Melde dich an und mach weiter.
