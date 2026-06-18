@@ -3,7 +3,6 @@ import { ArrowRight, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { GlassPanel } from "@/components/ui/glass-panel";
 import { CtaGlow } from "@/components/ui/cta-glow";
 import { FocusQuestion } from "@/components/dashboard/focus-question";
 import { Crossfade } from "@/components/dashboard/crossfade";
@@ -57,24 +56,24 @@ export function DailyFocus({
 
       <Crossfade token={tier} className="space-y-3">
         {primary ? (
-          <GlassPanel
-            className="border-primary"
-            contentClassName="space-y-3"
-            withBlobs={false}
-          >
-            <div className="space-y-1">
-              <p className="font-heading text-lg font-medium text-foreground">
-                {primary.title}
-              </p>
-              <p className="text-sm text-muted-foreground">{primary.subtitle}</p>
-            </div>
-            <CtaGlow>
-              <Button className="w-full" render={<Link href={primary.href} />}>
-                {primary.cta}
-                <ArrowRight />
-              </Button>
-            </CtaGlow>
-          </GlassPanel>
+          <Card className="border border-primary">
+            <CardContent className="space-y-3">
+              <div className="space-y-1">
+                <p className="font-heading text-lg font-medium text-foreground">
+                  {primary.title}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {primary.subtitle}
+                </p>
+              </div>
+              <CtaGlow>
+                <Button className="w-full" render={<Link href={primary.href} />}>
+                  {primary.cta}
+                  <ArrowRight />
+                </Button>
+              </CtaGlow>
+            </CardContent>
+          </Card>
         ) : (
           <Card variant="glass">
             <CardContent className="space-y-3">

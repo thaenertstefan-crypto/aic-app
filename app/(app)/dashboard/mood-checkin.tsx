@@ -21,7 +21,7 @@ const MOODS: { score: number; label: string }[] = Object.entries(
 const MESSAGES: Record<number, string> = {
   1: "Schwere Tage gehören dazu. Schön, dass du trotzdem hier bist. 🤍",
   2: "Auch zähe Tage dürfen sein. Sei heute sanft mit dir.",
-  3: "Mittendrin ist völlig okay. Ein Schritt nach dem anderen.",
+  3: "Schön, in deiner Mitte zu sein — aus dieser Ruhe heraus kann der Tag wachsen. 🌿",
   4: "Schön, dass es heute gut läuft. Genieß diesen Moment.",
   5: "Wunderbar — nimm den Schwung mit in den Tag! ✨",
 };
@@ -45,8 +45,9 @@ export function MoodCheckin({
     INITIAL_STATE,
   );
 
-  // Optimistic selection: highlight the tapped mood immediately.
-  const [selected, setSelected] = useState<number | null>(initialScore);
+  // Optimistic selection: highlight the tapped mood immediately. Ohne Check-in
+  // heute starten wir auf „Im Gleichgewicht" (Score 3) als ruhiger Default.
+  const [selected, setSelected] = useState<number | null>(initialScore ?? 3);
 
   return (
     <Card variant="glass">
@@ -60,7 +61,7 @@ export function MoodCheckin({
           </p>
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center pb-2">
           <MoodAvatar
             face={MOOD_FACES[selected ?? 3]}
             pulseSeconds={MOOD_PULSE_SECONDS[selected ?? 3]}
@@ -97,7 +98,9 @@ export function MoodCheckin({
         </form>
 
         {selected !== null && (
-          <p className="text-sm text-muted-foreground">{MESSAGES[selected]}</p>
+          <p className="pt-2 text-sm text-muted-foreground">
+            {MESSAGES[selected]}
+          </p>
         )}
 
         <FormError message={state.error} />
