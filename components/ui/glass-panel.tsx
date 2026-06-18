@@ -8,6 +8,9 @@ type GlassPanelProps = {
   className?: string;
   /** Content layer (sits above the blobs) — e.g. "space-y-3". */
   contentClassName?: string;
+  /** Drifting ambient blobs behind the content. Default `true`; set `false` for
+   *  compact cards where the large blob edges read as a visible seam. */
+  withBlobs?: boolean;
   children: React.ReactNode;
 };
 
@@ -26,6 +29,7 @@ type GlassPanelProps = {
 export function GlassPanel({
   className,
   contentClassName,
+  withBlobs = true,
   children,
 }: GlassPanelProps) {
   return (
@@ -35,7 +39,7 @@ export function GlassPanel({
         className,
       )}
     >
-      <AmbientBlobs />
+      {withBlobs && <AmbientBlobs />}
       <div className={cn("relative z-10", contentClassName)}>{children}</div>
     </div>
   );

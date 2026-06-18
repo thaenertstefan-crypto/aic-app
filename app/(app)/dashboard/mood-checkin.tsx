@@ -69,7 +69,7 @@ export function MoodCheckin({
 
         <form
           action={formAction}
-          className="-mx-1 flex gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="-mx-1 -my-1 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {MOODS.map((mood) => {
             const isActive = selected === mood.score;

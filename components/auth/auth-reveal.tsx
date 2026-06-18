@@ -39,14 +39,18 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   function handleTouchEnd(e: React.TouchEvent) {
     if (touchStartY.current === null) return;
     const endY = e.changedTouches[0]?.clientY ?? touchStartY.current;
-    if (touchStartY.current - endY > SWIPE_THRESHOLD) {
+    const delta = touchStartY.current - endY;
+    if (delta > SWIPE_THRESHOLD) {
       setRevealed(true);
+    } else if (delta < -SWIPE_THRESHOLD) {
+      setRevealed(false);
     }
     touchStartY.current = null;
   }
 
   function handleWheel(e: React.WheelEvent) {
     if (e.deltaY > 0) setRevealed(true);
+    else if (e.deltaY < 0) setRevealed(false);
   }
 
   // Reduced-Motion: zugänglicher Fallback ohne Overlay/Gating.
@@ -62,7 +66,12 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   }
 
   return (
-    <div className="relative min-h-dvh overflow-hidden">
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onWheel={handleWheel}
+      className="relative min-h-dvh overflow-hidden"
+    >
       {/* Karten-Panel: zoomt von hinten nach vorne herein, sobald aufgedeckt. */}
       <div className="flex min-h-dvh items-center justify-center px-4 py-12">
         <div
@@ -79,9 +88,6 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
 
       {/* Hero-Panel: liegt darüber und schiebt beim Aufdecken nach oben weg. */}
       <div
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onWheel={handleWheel}
         className={cn(
           "absolute inset-0 z-20 isolate flex flex-col overflow-hidden",
           "bg-linear-to-br from-secondary via-accent/60 to-background",

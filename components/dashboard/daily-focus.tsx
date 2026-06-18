@@ -57,7 +57,11 @@ export function DailyFocus({
 
       <Crossfade token={tier} className="space-y-3">
         {primary ? (
-          <GlassPanel className="border-primary" contentClassName="space-y-3">
+          <GlassPanel
+            className="border-primary"
+            contentClassName="space-y-3"
+            withBlobs={false}
+          >
             <div className="space-y-1">
               <p className="font-heading text-lg font-medium text-foreground">
                 {primary.title}
