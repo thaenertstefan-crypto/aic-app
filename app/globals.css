@@ -152,6 +152,20 @@
     }
   }
 
+  /* Soft glow pulse for the mood avatar's aura (opacity + slight scale), so the
+     halo "breathes" with the blob; duration is set inline to match the mood. */
+  @keyframes mood-glow {
+    0%,
+    100% {
+      opacity: 0.38;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(1.1);
+    }
+  }
+
   /* 4-7-8 breathing cycle (19s): inhale 4s, hold 7s, exhale 8s */
   @keyframes breathe478 {
     0% {

@@ -4,19 +4,15 @@ import { Flame, NotebookPen, Quote, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { computeStreak } from "@/lib/utils/streak";
 import { RECIPES, getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
-import { moodTier } from "@/lib/utils/mood";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
-import { ReframeAnimation } from "@/components/auth/reframe-animation";
 import { DashboardReveal } from "@/components/dashboard/dashboard-reveal";
-import {
-  DailyFocus,
-  type Destination,
-  type PrimaryRecommendation,
+import { DashboardFocus } from "@/components/dashboard/dashboard-focus";
+import type {
+  Destination,
+  PrimaryRecommendation,
 } from "@/components/dashboard/daily-focus";
-
-import { MoodCheckin } from "./mood-checkin";
 
 type RightItem = { id: string; text: string; active: boolean };
 
@@ -184,48 +180,33 @@ export default async function DashboardPage() {
     ? getRecipeStepPath("values", valuesProgress.current_step ?? 1)
     : "/recipes/values/hypothesis";
 
-  const tier = moodTier(todayMood);
+  // "Normale" Empfehlung (recipe-basiert, mood-unabhängig). Der low-Tier-Fall
+  // (Mantra-Pause) und die Frage werden client-seitig in DashboardFocus aus der
+  // live getippten Stimmung abgeleitet — so reagiert die Anzeige sofort.
+  const normalPrimary: PrimaryRecommendation | null = continuityRecipe
+    ? {
+        key: continuityRecipe.slug,
+        title: continuityRecipe.title,
+        subtitle:
+          continuityRecipe.slug === "values" && valuesBadge
+            ? valuesBadge
+            : hasActiveRecipe
+              ? "Du bist mittendrin."
+              : continuityRecipe.description,
+        cta: hasActiveRecipe ? "Weitermachen" : "Jetzt starten",
+        href: hasActiveRecipe
+          ? getRecipeStepPath(continuityRecipe.slug, activeProgress?.current_step ?? 1)
+          : continuityRecipe.startPath,
+      }
+    : null;
 
-  let primary: PrimaryRecommendation | null = null;
-  let fallbackMessage: string | undefined;
-
-  if (tier === "low") {
-    primary = {
-      key: "mantra",
-      title: "Ich bin nicht für jeden",
-      subtitle: "30 Sekunden Mantra-Pause",
-      cta: "Kurz durchatmen",
-      href: "/cleansers/mantra",
-    };
-  } else if (continuityRecipe) {
-    primary = {
-      key: continuityRecipe.slug,
-      title: continuityRecipe.title,
-      subtitle:
-        continuityRecipe.slug === "values" && valuesBadge
-          ? valuesBadge
-          : hasActiveRecipe
-            ? "Du bist mittendrin."
-            : continuityRecipe.description,
-      cta: hasActiveRecipe ? "Weitermachen" : "Jetzt starten",
-      href: hasActiveRecipe
-        ? getRecipeStepPath(continuityRecipe.slug, activeProgress?.current_step ?? 1)
-        : continuityRecipe.startPath,
-    };
-  } else {
-    fallbackMessage =
-      "Schön, dass du dranbleibst! Stöbere durch die Rezepte für deinen nächsten Schritt.";
-  }
-
-  // Die Frage ergibt nur Sinn, wenn heute wirklich eingecheckt wurde — vorher
-  // (todayMood === null) zeigen wir die Primary-Card trotzdem (sinnvoller
-  // Default), aber noch keine Frage-Zeile. Deckt sich mit dem MESSAGES-Verhalten
-  // in mood-checkin.tsx.
-  const showQuestion = todayMood !== null && primary !== null;
+  const fallbackMessage =
+    "Schön, dass du dranbleibst! Stöbere durch die Rezepte für deinen nächsten Schritt.";
 
   // Feste Liste aller sechs Anlaufstellen (handgeschriebene Ich-Sätze, daher
-  // bewusst nicht aus RECIPES generiert) minus der aktuellen Primary-Empfehlung.
-  const ALL_DESTINATIONS: Destination[] = [
+  // bewusst nicht aus RECIPES generiert). DashboardFocus filtert die aktuelle
+  // Primary-Empfehlung client-seitig heraus.
+  const allDestinations: Destination[] = [
     {
       key: "values",
       sentence: "Ich würde gern meine Werte reflektieren",
@@ -258,7 +239,6 @@ export default async function DashboardPage() {
       href: "/cleansers/confidence",
     },
   ];
-  const alternatives = ALL_DESTINATIONS.filter((d) => d.key !== primary?.key);
 
   return (
     <div className="space-y-6 p-4">
@@ -269,19 +249,14 @@ export default async function DashboardPage() {
           {greetingName ? `Hey ${greetingName}!` : "Hey!"}
         </h1>
         <p className="text-sm capitalize text-muted-foreground">{dateLabel}</p>
-        <ReframeAnimation size="compact" intervalMs={4500} className="pt-2" />
       </header>
 
-      {/* Mood check-in — bestimmt den Fokus, deshalb vor der Empfehlung */}
-      <MoodCheckin initialScore={todayMood} />
-
-      {/* Stimmungsbasierter Tages-Fokus */}
-      <DailyFocus
-        tier={tier}
-        primary={primary}
+      {/* Mood check-in + stimmungsbasierter Fokus (client-seitig gekoppelt) */}
+      <DashboardFocus
+        initialScore={todayMood}
+        normalPrimary={normalPrimary}
         fallbackMessage={fallbackMessage}
-        showQuestion={showQuestion}
-        alternatives={alternatives}
+        allDestinations={allDestinations}
       />
 
       {/* Heutiges Recht */}

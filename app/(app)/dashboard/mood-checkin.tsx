@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState, useState } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
@@ -33,22 +32,21 @@ const INITIAL_STATE: MoodCheckinState = {
   score: null,
 };
 
-export function MoodCheckin({ initialScore }: { initialScore: number | null }) {
-  const router = useRouter();
-  const [state, formAction, isPending] = useActionState(
+export function MoodCheckin({
+  initialScore,
+  onSelect,
+}: {
+  initialScore: number | null;
+  /** Bubbles the tapped score up so the focus can react instantly. */
+  onSelect?: (score: number) => void;
+}) {
+  const [state, formAction] = useActionState(
     saveMoodCheckinAction,
     INITIAL_STATE,
   );
 
   // Optimistic selection: highlight the tapped mood immediately.
   const [selected, setSelected] = useState<number | null>(initialScore);
-
-  // Re-sync server data once a check-in is saved (so a reload keeps the choice).
-  useEffect(() => {
-    if (state.success) {
-      router.refresh();
-    }
-  }, [state.success, router]);
 
   return (
     <Card variant="glass">
@@ -69,7 +67,10 @@ export function MoodCheckin({ initialScore }: { initialScore: number | null }) {
           />
         </div>
 
-        <form action={formAction} className="flex justify-between gap-2">
+        <form
+          action={formAction}
+          className="-mx-1 flex gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {MOODS.map((mood) => {
             const isActive = selected === mood.score;
             return (
@@ -79,9 +80,11 @@ export function MoodCheckin({ initialScore }: { initialScore: number | null }) {
                 name="mood_score"
                 value={mood.score}
                 aria-pressed={isActive}
-                onClick={() => setSelected(mood.score)}
-                disabled={isPending}
-                className={`flex flex-1 items-center justify-center rounded-xl border px-1 py-2 text-center text-xs leading-tight font-medium transition-all disabled:opacity-60 ${
+                onClick={() => {
+                  setSelected(mood.score);
+                  onSelect?.(mood.score);
+                }}
+                className={`shrink-0 whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-medium transition-all ${
                   isActive
                     ? "border-primary bg-primary/10 scale-105"
                     : "border-border bg-card hover:bg-muted/50"

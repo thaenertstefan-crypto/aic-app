@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { CtaGlow } from "@/components/ui/cta-glow";
+import { FocusQuestion } from "@/components/dashboard/focus-question";
+import { Crossfade } from "@/components/dashboard/crossfade";
 
 export type Destination = {
   key: string;
@@ -51,67 +53,67 @@ export function DailyFocus({
 
   return (
     <div className="space-y-3">
-      {showQuestion && (
-        <p className="font-heading text-base text-foreground/90">{question}</p>
-      )}
+      <FocusQuestion question={showQuestion ? question : null} />
 
-      {primary ? (
-        <GlassPanel className="border-primary" contentClassName="space-y-3">
-          <div className="space-y-1">
-            <p className="font-heading text-lg font-medium text-foreground">
-              {primary.title}
+      <Crossfade token={tier} className="space-y-3">
+        {primary ? (
+          <GlassPanel className="border-primary" contentClassName="space-y-3">
+            <div className="space-y-1">
+              <p className="font-heading text-lg font-medium text-foreground">
+                {primary.title}
+              </p>
+              <p className="text-sm text-muted-foreground">{primary.subtitle}</p>
+            </div>
+            <CtaGlow>
+              <Button className="w-full" render={<Link href={primary.href} />}>
+                {primary.cta}
+                <ArrowRight />
+              </Button>
+            </CtaGlow>
+          </GlassPanel>
+        ) : (
+          <Card variant="glass">
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">{fallbackMessage}</p>
+              <Button
+                variant="outline"
+                className="w-full"
+                render={<Link href="/recipes" />}
+              >
+                Rezepte ansehen
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {alternatives.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              …oder brauchst du gerade was anderes?
             </p>
-            <p className="text-sm text-muted-foreground">{primary.subtitle}</p>
-          </div>
-          <CtaGlow>
-            <Button className="w-full" render={<Link href={primary.href} />}>
-              {primary.cta}
-              <ArrowRight />
-            </Button>
-          </CtaGlow>
-        </GlassPanel>
-      ) : (
-        <Card variant="glass">
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">{fallbackMessage}</p>
-            <Button
-              variant="outline"
-              className="w-full"
-              render={<Link href="/recipes" />}
-            >
-              Rezepte ansehen
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {alternatives.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">
-            …oder brauchst du gerade was anderes?
-          </p>
-          <ul className="space-y-2">
-            {alternatives.map((destination) => (
-              <li key={destination.key}>
-                <Link
-                  href={destination.href}
-                  className="flex items-center gap-2 rounded-lg border px-3 py-2.5 transition-colors hover:bg-muted/40"
-                >
-                  <span className="text-sm text-foreground/90">
-                    {destination.sentence}
-                  </span>
-                  {destination.badge && (
-                    <span className="text-xs text-muted-foreground">
-                      {destination.badge}
+            <ul className="space-y-2">
+              {alternatives.map((destination) => (
+                <li key={destination.key}>
+                  <Link
+                    href={destination.href}
+                    className="flex items-center gap-2 rounded-lg border px-3 py-2.5 transition-colors hover:bg-muted/40"
+                  >
+                    <span className="text-sm text-foreground/90">
+                      {destination.sentence}
                     </span>
-                  )}
-                  <ChevronRight className="ml-auto size-4 shrink-0 text-muted-foreground" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+                    {destination.badge && (
+                      <span className="text-xs text-muted-foreground">
+                        {destination.badge}
+                      </span>
+                    )}
+                    <ChevronRight className="ml-auto size-4 shrink-0 text-muted-foreground" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </Crossfade>
     </div>
   );
 }
