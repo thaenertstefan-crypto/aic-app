@@ -75,7 +75,7 @@ export function MoodAvatar({
           inset: "-12px",
           background: "var(--primary)",
           borderRadius: BLOB_RADIUS,
-          opacity: 0.45,
+          opacity: 0.28,
           filter: "blur(14px)",
           ...(reduced
             ? {}
@@ -94,11 +94,11 @@ export function MoodAvatar({
         className="absolute inset-0 overflow-hidden"
         style={{
           borderRadius: BLOB_RADIUS,
-          background: "rgba(231,182,94,0.20)",
+          background: "rgba(231,182,94,0.10)",
           border: "1px solid rgba(255,255,255,0.22)",
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
-          boxShadow: "0 0 24px 4px rgba(231,182,94,0.30)",
+          boxShadow: "0 0 20px 2px rgba(231,182,94,0.16)",
           transition: "all 400ms ease",
           ...(reduced
             ? {}

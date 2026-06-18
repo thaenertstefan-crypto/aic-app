@@ -157,11 +157,11 @@
   @keyframes mood-glow {
     0%,
     100% {
-      opacity: 0.38;
+      opacity: 0.22;
       transform: scale(1);
     }
     50% {
-      opacity: 0.6;
+      opacity: 0.38;
       transform: scale(1.1);
     }
   }
