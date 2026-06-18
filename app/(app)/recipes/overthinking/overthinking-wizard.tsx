@@ -15,6 +15,8 @@ import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
 import { ReframeAnimation } from "@/components/auth/reframe-animation";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
+import { OverthinkingCompanion } from "@/components/recipes/overthinking-companion";
+import type { MascotExpression } from "@/components/brand/mascot";
 import { Reveal } from "@/components/ui/reveal";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
@@ -397,6 +399,14 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Step content ────────────────────────────────────────
 
+  function getCompanionExpression(): MascotExpression {
+    const stillThinking =
+      questionLoading && step >= 3 && step <= 6 && !generatedQuestions[step];
+    if (stillThinking) return "thinking";
+    if (step === 6 || step === 7) return "happy";
+    return "smile";
+  }
+
   const renderStepContent = () => {
     switch (step) {
       case 1:
@@ -617,6 +627,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
     return (
       <div className="flex min-h-svh flex-col items-center justify-center px-4 py-6 text-center">
         <div className="mx-auto flex max-w-md flex-col items-center gap-6">
+          <OverthinkingCompanion expression="radiant" />
+
           {/* Icon mit ruhigem Feier-Moment */}
           <CompletionCelebration />
 
@@ -719,6 +731,12 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
         {/* Error banner */}
         <FormError message={error} className="mt-4" />
+
+        {/* Begleiter über dem Schritt-Inhalt; in Schritt 1 atmet er sichtbar aus. */}
+        <OverthinkingCompanion
+          expression={getCompanionExpression()}
+          breathing={step === 1}
+        />
 
         {/* Step content */}
         <div

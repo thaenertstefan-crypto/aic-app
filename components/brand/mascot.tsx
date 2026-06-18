@@ -47,6 +47,7 @@ export function Mascot({
   size = "md",
   gazeX = -1.3,
   gazeY = 0,
+  breathing = false,
   className,
 }: {
   expression: MascotExpression;
@@ -59,6 +60,10 @@ export function Mascot({
   /** Vertikaler Pupillen-Offset. Negative Werte blicken nach oben —
    *  z. B. wenn der Mascot von unten zur Karte hochschaut. */
   gazeY?: number;
+  /** Ausatmen-Choreografie: blendet zwischen Ruhe-Gesicht und Ausatem-Gesicht
+   *  (Augen zu + „O"-Mund) über und senkt dabei kurz den Kopf. Überschreibt das
+   *  statische Gesicht der Expression. */
+  breathing?: boolean;
   className?: string;
 }) {
   const reduced = useReducedMotion();
@@ -66,7 +71,19 @@ export function Mascot({
   const f = FACES[expression];
 
   return (
-    <div className={`relative ${SIZE_CLASSES[size]} ${className ?? ""}`}>
+    <div
+      className={`relative ${SIZE_CLASSES[size]} ${className ?? ""}`}
+      style={
+        breathing && !reduced
+          ? {
+              animationName: "mascot-exhale-dip",
+              animationDuration: `${pulseSeconds}s`,
+              animationTimingFunction: "ease-in-out",
+              animationIterationCount: "infinite",
+            }
+          : undefined
+      }
+    >
       {/* Aura — 1:1 aus mood-avatar.tsx übernommen */}
       <div
         aria-hidden="true"
@@ -120,36 +137,82 @@ export function Mascot({
           <ellipse cx={10} cy={34} rx={7} ry={6} fill={`url(#cheekGlow-${uid})`} opacity={f.cheek} />
           <ellipse cx={54} cy={34} rx={7} ry={6} fill={`url(#cheekGlow-${uid})`} opacity={f.cheek} />
 
-          {f.eyesClosed ? (
+          {breathing ? (
             <>
-              <path d={`M${EYE_X - 5.5},28 Q${EYE_X},24 ${EYE_X + 5.5},28`} stroke="var(--primary-foreground)" strokeWidth={2.6} strokeLinecap="round" fill="none" />
-              <path d={`M${64 - EYE_X - 5.5},28 Q${64 - EYE_X},24 ${64 - EYE_X + 5.5},28`} stroke="var(--primary-foreground)" strokeWidth={2.6} strokeLinecap="round" fill="none" />
-            </>
-          ) : (
-            <>
-              <circle cx={EYE_X} cy={27} r={7} fill={SCLERA} />
-              <circle cx={64 - EYE_X} cy={27} r={7} fill={SCLERA} />
-              <circle cx={EYE_X + f.dx + gazeX} cy={27 + f.dy + gazeY} r={4} fill="var(--primary-foreground)" />
-              <circle cx={64 - EYE_X - f.dx + gazeX} cy={27 + f.dy + gazeY} r={4} fill="var(--primary-foreground)" />
-              <circle cx={EYE_X + f.dx + gazeX - 1.3} cy={27 + f.dy + gazeY - 1.3} r={1.3} fill="white" />
-              <circle cx={64 - EYE_X - f.dx + gazeX - 1.3} cy={27 + f.dy + gazeY - 1.3} r={1.3} fill="white" />
-            </>
-          )}
-
-          {f.mouthOpen ? (
-            <>
-              <defs>
-                <clipPath id={`moodMouthClip-${uid}`}>
-                  <path d={f.mouthD} />
-                </clipPath>
-              </defs>
-              <g transform={`translate(0 ${MOUTH_DY})`}>
-                <path d={f.mouthD} fill="var(--primary-foreground)" stroke="var(--primary-foreground)" strokeWidth={2} strokeLinejoin="round" />
-                <ellipse cx={32} cy={41} rx={3.8} ry={2.2} fill="var(--celebrate)" opacity={0.85} clipPath={`url(#moodMouthClip-${uid})`} />
+              {/* Ruhe-Gesicht: offene Augen + sanftes Lächeln (Einatmen-Phase). */}
+              <g
+                style={
+                  reduced
+                    ? undefined
+                    : {
+                        animationName: "mascot-face-rest",
+                        animationDuration: `${pulseSeconds}s`,
+                        animationTimingFunction: "ease-in-out",
+                        animationIterationCount: "infinite",
+                      }
+                }
+              >
+                <circle cx={EYE_X} cy={27} r={7} fill={SCLERA} />
+                <circle cx={64 - EYE_X} cy={27} r={7} fill={SCLERA} />
+                <circle cx={EYE_X + gazeX} cy={27 + gazeY} r={4} fill="var(--primary-foreground)" />
+                <circle cx={64 - EYE_X + gazeX} cy={27 + gazeY} r={4} fill="var(--primary-foreground)" />
+                <circle cx={EYE_X + gazeX - 1.3} cy={27 + gazeY - 1.3} r={1.3} fill="white" />
+                <circle cx={64 - EYE_X + gazeX - 1.3} cy={27 + gazeY - 1.3} r={1.3} fill="white" />
+                <path d="M23,37 Q32,42.5 41,37" transform={`translate(0 ${MOUTH_DY})`} stroke="var(--primary-foreground)" strokeWidth={3} strokeLinecap="round" fill="none" />
               </g>
+
+              {/* Ausatem-Gesicht: Augen entspannt zu + „O"-Mund. Bei reduced
+                  motion entfällt es ganz (kein Wechsel). */}
+              {!reduced && (
+                <g
+                  style={{
+                    opacity: 0,
+                    animationName: "mascot-face-exhale",
+                    animationDuration: `${pulseSeconds}s`,
+                    animationTimingFunction: "ease-in-out",
+                    animationIterationCount: "infinite",
+                  }}
+                >
+                  <path d={`M${EYE_X - 5},27.5 Q${EYE_X},30.5 ${EYE_X + 5},27.5`} stroke="var(--primary-foreground)" strokeWidth={2.4} strokeLinecap="round" fill="none" />
+                  <path d={`M${64 - EYE_X - 5},27.5 Q${64 - EYE_X},30.5 ${64 - EYE_X + 5},27.5`} stroke="var(--primary-foreground)" strokeWidth={2.4} strokeLinecap="round" fill="none" />
+                  <ellipse cx={32} cy={42} rx={2.8} ry={3.6} stroke="var(--primary-foreground)" strokeWidth={2} fill="none" />
+                </g>
+              )}
             </>
           ) : (
-            <path d={f.mouthD} transform={`translate(0 ${MOUTH_DY})`} stroke="var(--primary-foreground)" strokeWidth={f.mouthWidth} strokeLinecap="round" fill="none" />
+            <>
+              {f.eyesClosed ? (
+                <>
+                  <path d={`M${EYE_X - 5.5},28 Q${EYE_X},24 ${EYE_X + 5.5},28`} stroke="var(--primary-foreground)" strokeWidth={2.6} strokeLinecap="round" fill="none" />
+                  <path d={`M${64 - EYE_X - 5.5},28 Q${64 - EYE_X},24 ${64 - EYE_X + 5.5},28`} stroke="var(--primary-foreground)" strokeWidth={2.6} strokeLinecap="round" fill="none" />
+                </>
+              ) : (
+                <>
+                  <circle cx={EYE_X} cy={27} r={7} fill={SCLERA} />
+                  <circle cx={64 - EYE_X} cy={27} r={7} fill={SCLERA} />
+                  <circle cx={EYE_X + f.dx + gazeX} cy={27 + f.dy + gazeY} r={4} fill="var(--primary-foreground)" />
+                  <circle cx={64 - EYE_X - f.dx + gazeX} cy={27 + f.dy + gazeY} r={4} fill="var(--primary-foreground)" />
+                  <circle cx={EYE_X + f.dx + gazeX - 1.3} cy={27 + f.dy + gazeY - 1.3} r={1.3} fill="white" />
+                  <circle cx={64 - EYE_X - f.dx + gazeX - 1.3} cy={27 + f.dy + gazeY - 1.3} r={1.3} fill="white" />
+                </>
+              )}
+
+              {f.mouthOpen ? (
+                <>
+                  <defs>
+                    <clipPath id={`moodMouthClip-${uid}`}>
+                      <path d={f.mouthD} />
+                    </clipPath>
+                  </defs>
+                  <g transform={`translate(0 ${MOUTH_DY})`}>
+                    <path d={f.mouthD} fill="var(--primary-foreground)" stroke="var(--primary-foreground)" strokeWidth={2} strokeLinejoin="round" />
+                    <ellipse cx={32} cy={41} rx={3.8} ry={2.2} fill="var(--celebrate)" opacity={0.85} clipPath={`url(#moodMouthClip-${uid})`} />
+                  </g>
+                </>
+              ) : (
+                <path d={f.mouthD} transform={`translate(0 ${MOUTH_DY})`} stroke="var(--primary-foreground)" strokeWidth={f.mouthWidth} strokeLinecap="round" fill="none" />
+              )}
+            </>
           )}
         </svg>
       </div>

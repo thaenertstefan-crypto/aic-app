@@ -166,6 +166,54 @@
     }
   }
 
+  /* Exhale choreography for the Mascot's "Atme durch" moment. The rest face and
+     the exhale face (closed eyes + "O" mouth) cross-fade in opposite phase while
+     the head dips — all share one inline duration so they stay in sync. The
+     exhale is "held" around 50–68% for a calm out-breath. */
+  @keyframes mascot-face-rest {
+    0%,
+    35% {
+      opacity: 1;
+    }
+    41%,
+    67% {
+      opacity: 0;
+    }
+    73%,
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes mascot-face-exhale {
+    0%,
+    35% {
+      opacity: 0;
+    }
+    41%,
+    67% {
+      opacity: 1;
+    }
+    73%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes mascot-exhale-dip {
+    0%,
+    35% {
+      transform: translateY(0);
+    }
+    54% {
+      transform: translateY(6%);
+    }
+    73%,
+    100% {
+      transform: translateY(0);
+    }
+  }
+
   /* 4-7-8 breathing cycle (19s): inhale 4s, hold 7s, exhale 8s */
   @keyframes breathe478 {
     0% {
