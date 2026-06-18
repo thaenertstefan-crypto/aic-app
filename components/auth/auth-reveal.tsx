@@ -1,9 +1,11 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 
 import { AmbientBlobs } from "@/components/ui/ambient-blobs";
+import { MascotPeek } from "@/components/brand/mascot-peek";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +33,8 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   const [revealed, setRevealed] = useState(false);
   const reduced = useReducedMotion();
   const touchStartY = useRef<number | null>(null);
+  // Das hochblickende Karten-Maskottchen gibt es nur auf der Login-Seite.
+  const isLogin = usePathname() === "/login";
 
   function handleTouchStart(e: React.TouchEvent) {
     touchStartY.current = e.touches[0]?.clientY ?? null;
@@ -56,11 +60,22 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   // Reduced-Motion: zugänglicher Fallback ohne Overlay/Gating.
   if (reduced) {
     return (
-      <div className="flex min-h-lvh flex-col">
+      <div className="relative flex min-h-lvh flex-col overflow-hidden">
         <div className="relative isolate overflow-hidden">{hero}</div>
         <div className="flex flex-1 items-center justify-center px-4 py-12">
           <div className="w-full max-w-sm">{children}</div>
         </div>
+        {isLogin && (
+          <MascotPeek
+            from="bottom"
+            size="lg"
+            expression="smile"
+            pulseSeconds={3}
+            gazeX={0}
+            gazeY={-3}
+            className="pointer-events-none absolute bottom-0 left-1/2 -ml-16 -mb-14 z-0"
+          />
+        )}
       </div>
     );
   }
@@ -84,6 +99,22 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
         >
           {children}
         </div>
+
+        {/* Maskottchen lugt unten mittig vom Bildschirmrand herein und schaut
+            hoch zur Login-Karte. Positioniert relativ zum Vollbild-Root (wird
+            unten geclippt → nur die Augen sind sichtbar). Mountet erst beim
+            Aufdecken, damit die Slide-up-Animation spielt. */}
+        {isLogin && revealed && (
+          <MascotPeek
+            from="bottom"
+            size="lg"
+            expression="smile"
+            pulseSeconds={3}
+            gazeX={0}
+            gazeY={-3}
+            className="pointer-events-none absolute bottom-0 left-1/2 -ml-16 -mb-14 z-0"
+          />
+        )}
       </div>
 
       {/* Hero-Panel: liegt darüber und schiebt beim Aufdecken nach oben weg. */}

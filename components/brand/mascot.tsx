@@ -46,6 +46,7 @@ export function Mascot({
   pulseSeconds = 3,
   size = "md",
   gazeX = -1.3,
+  gazeY = 0,
   className,
 }: {
   expression: MascotExpression;
@@ -55,6 +56,9 @@ export function Mascot({
    *  z. B. wenn der Mascot von rechts ins Bild kommt und zur Mitte
    *  schaut. Default entspricht exakt dem bisherigen festen Wert. */
   gazeX?: number;
+  /** Vertikaler Pupillen-Offset. Negative Werte blicken nach oben —
+   *  z. B. wenn der Mascot von unten zur Karte hochschaut. */
+  gazeY?: number;
   className?: string;
 }) {
   const reduced = useReducedMotion();
@@ -125,10 +129,10 @@ export function Mascot({
             <>
               <circle cx={EYE_X} cy={27} r={7} fill={SCLERA} />
               <circle cx={64 - EYE_X} cy={27} r={7} fill={SCLERA} />
-              <circle cx={EYE_X + f.dx + gazeX} cy={27 + f.dy} r={4} fill="var(--primary-foreground)" />
-              <circle cx={64 - EYE_X - f.dx + gazeX} cy={27 + f.dy} r={4} fill="var(--primary-foreground)" />
-              <circle cx={EYE_X + f.dx + gazeX - 1.3} cy={27 + f.dy - 1.3} r={1.3} fill="white" />
-              <circle cx={64 - EYE_X - f.dx + gazeX - 1.3} cy={27 + f.dy - 1.3} r={1.3} fill="white" />
+              <circle cx={EYE_X + f.dx + gazeX} cy={27 + f.dy + gazeY} r={4} fill="var(--primary-foreground)" />
+              <circle cx={64 - EYE_X - f.dx + gazeX} cy={27 + f.dy + gazeY} r={4} fill="var(--primary-foreground)" />
+              <circle cx={EYE_X + f.dx + gazeX - 1.3} cy={27 + f.dy + gazeY - 1.3} r={1.3} fill="white" />
+              <circle cx={64 - EYE_X - f.dx + gazeX - 1.3} cy={27 + f.dy + gazeY - 1.3} r={1.3} fill="white" />
             </>
           )}
 

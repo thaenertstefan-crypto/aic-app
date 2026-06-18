@@ -1,6 +1,7 @@
 import { Logo } from "@/components/brand/logo";
 import { BrandPanel } from "@/components/auth/brand-panel";
 import { AuthReveal } from "@/components/auth/auth-reveal";
+import { MascotPeek } from "@/components/brand/mascot-peek";
 
 export default function AuthLayout({
   children,
@@ -23,6 +24,19 @@ export default function AuthLayout({
           <div className="flex flex-1 items-center">
             <BrandPanel className="bg-none" />
           </div>
+
+          {/* Maskottchen lugt von unten rechts halb über den Bildschirmrand
+              herein, gekippt, Blick nach links oben zur Headline. Positioniert
+              relativ zum Vollbild-Hero-Panel (wird dort am Rand geclippt). */}
+          <MascotPeek
+            from="right"
+            size="lg"
+            rotate={-45}
+            gazeX={0}
+            gazeY={-3}
+            expression="curious"
+            className="pointer-events-none absolute bottom-0 right-0 -mb-3 -mr-12 z-10"
+          />
         </>
       }
     >

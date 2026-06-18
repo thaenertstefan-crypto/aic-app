@@ -8,11 +8,15 @@ import { Mascot, type MascotExpression, type MascotSize } from "@/components/bra
 import { cn } from "@/lib/utils";
 
 type MascotPeekProps = {
-  from?: "left" | "right";
+  from?: "left" | "right" | "bottom";
   expression?: MascotExpression;
   size?: MascotSize;
   pulseSeconds?: number;
   gazeX?: number;
+  gazeY?: number;
+  /** Ruhe-Rotation in Grad (gegen den Uhrzeigersinn = negativ). Wird über GSAP
+   *  gefahren, damit sie mit der Slide-in-Animation harmoniert. */
+  rotate?: number;
   className?: string;
 };
 
@@ -31,36 +35,54 @@ export function MascotPeek({
   size = "lg",
   pulseSeconds = 3.4,
   gazeX,
+  gazeY,
+  rotate = 0,
   className,
 }: MascotPeekProps) {
   const reduced = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
-  const resolvedGazeX = gazeX ?? (from === "right" ? -3.5 : 3.5);
+  const resolvedGazeX =
+    gazeX ?? (from === "bottom" ? 0 : from === "right" ? -3.5 : 3.5);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
     if (reduced) {
-      gsap.set(el, { x: 0, opacity: 1 });
+      gsap.set(el, { x: 0, y: 0, opacity: 1, rotation: rotate });
       return;
     }
 
-    const startX = from === "right" ? 90 : -90;
-    const tween = gsap.fromTo(
-      el,
-      { x: startX, opacity: 0 },
-      { x: 0, opacity: 1, duration: 1, ease: "power3.out", delay: 0.3 },
-    );
+    // Startversatz je nach Kante: von rechts/links horizontal, von unten vertikal.
+    const fromVars =
+      from === "bottom"
+        ? { y: 90, opacity: 0, rotation: rotate }
+        : { x: from === "right" ? 90 : -90, opacity: 0, rotation: rotate };
+
+    const tween = gsap.fromTo(el, fromVars, {
+      x: 0,
+      y: 0,
+      opacity: 1,
+      rotation: rotate,
+      duration: 1,
+      ease: "power3.out",
+      delay: 0.3,
+    });
 
     return () => {
       tween.kill();
     };
-  }, [reduced, from]);
+  }, [reduced, from, rotate]);
 
   return (
     <div ref={ref} className={cn("inline-block", className)}>
-      <Mascot expression={expression} pulseSeconds={pulseSeconds} size={size} gazeX={resolvedGazeX} />
+      <Mascot
+        expression={expression}
+        pulseSeconds={pulseSeconds}
+        size={size}
+        gazeX={resolvedGazeX}
+        gazeY={gazeY}
+      />
     </div>
   );
 }
