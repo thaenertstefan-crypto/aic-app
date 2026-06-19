@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +11,7 @@ type RecipeIntroProps = {
   cards: IntroCard[];
   onComplete: () => void;
   onSkip?: () => void;
+  renderMascot?: (index: number) => React.ReactNode;
 };
 
 // ─── Progress Dots (Stil aus dem Overthinking-Wizard) ─────────────────
@@ -46,7 +47,7 @@ function ProgressDots({ total, current }: { total: number; current: number }) {
  * der anderen mit Fortschritts-Punkten; auf der letzten Karte ruft der
  * Primärbutton onComplete. Optionaler "Überspringen"-Link via onSkip.
  */
-export function RecipeIntro({ cards, onComplete, onSkip }: RecipeIntroProps) {
+export function RecipeIntro({ cards, onComplete, onSkip, renderMascot }: RecipeIntroProps) {
   const [index, setIndex] = useState(0);
 
   if (cards.length === 0) return null;
@@ -62,10 +63,19 @@ export function RecipeIntro({ cards, onComplete, onSkip }: RecipeIntroProps) {
     }
   };
 
-  return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-8 px-4 py-8">
-      <ProgressDots total={cards.length} current={index} />
+  const goBack = () => setIndex((i) => Math.max(0, i - 1));
 
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-8">
+
+      {/* Mascot-Slot — nur wenn prop vorhanden */}
+      {renderMascot && (
+        <div className="flex justify-center">
+          {renderMascot(index)}
+        </div>
+      )}
+
+      {/* Karte */}
       <Card
         key={index}
         className="border-primary/30 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
@@ -80,18 +90,38 @@ export function RecipeIntro({ cards, onComplete, onSkip }: RecipeIntroProps) {
         </CardContent>
       </Card>
 
-      <div className="flex flex-col items-center gap-4">
-        <Button size="lg" className="w-full gap-1" onClick={goNext}>
+      {/* Fortschrittspunkte — jetzt UNTER der Karte */}
+      <ProgressDots total={cards.length} current={index} />
+
+      {/* Navigation: Zurück + Weiter nebeneinander */}
+      <div className="flex items-center gap-3">
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={goBack}
+          disabled={index === 0}
+          aria-label="Zurück"
+        >
+          <ChevronLeft className="size-4" />
+        </Button>
+
+        <Button size="lg" className="flex-1 gap-1" onClick={goNext}>
           {isLast ? "Los geht's" : "Weiter"}
           <ChevronRight className="size-4" />
         </Button>
-
-        {onSkip && (
-          <Button variant="link" size="sm" onClick={onSkip} className="text-muted-foreground">
-            Überspringen
-          </Button>
-        )}
       </div>
+
+      {/* Überspringen-Link (optional) */}
+      {onSkip && (
+        <Button
+          variant="link"
+          size="sm"
+          onClick={onSkip}
+          className="self-center text-muted-foreground"
+        >
+          Überspringen
+        </Button>
+      )}
     </div>
   );
 }

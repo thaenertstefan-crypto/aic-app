@@ -214,6 +214,49 @@
     }
   }
 
+  /* ── Overthinking-Intro Animationen (Phase 8) ─────────────────────── */
+
+  /* Karte 1: sanftes Schwanken des überwältigten Kopfes */
+  @keyframes ot-sway {
+    0%, 100% { transform: rotate(-1.4deg); }
+    35%       { transform: rotate(1.1deg);  }
+    70%       { transform: rotate(-0.5deg); }
+  }
+
+  /* Karte 1: Spiralauge – linkes Auge im Uhrzeigersinn */
+  @keyframes spin-cw {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Karte 1: Spiralauge – rechtes Auge gegen den Uhrzeigersinn */
+  @keyframes spin-ccw {
+    to { transform: rotate(-360deg); }
+  }
+
+  /* Karte 2: Kleiner Maler bobbt auf und ab */
+  @keyframes painter-bob {
+    0%, 100% { transform: translateY(0);      }
+    50%       { transform: translateY(-2.5px); }
+  }
+
+  /* Karte 2: Pinselarm schwingt hin und her */
+  @keyframes paint-arm {
+    0%, 100% { transform: rotate(-12deg); }
+    50%       { transform: rotate(10deg);  }
+  }
+
+  /* Karte 2: Erste Horror-Linie erscheint auf der Leinwand */
+  @keyframes scribble-a {
+    0%, 100% { stroke-dashoffset: 26; opacity: 0.2; }
+    55%       { stroke-dashoffset: 0;  opacity: 1;   }
+  }
+
+  /* Karte 2: Zweite Horror-Linie erscheint versetzt */
+  @keyframes scribble-b {
+    0%, 100% { stroke-dashoffset: 18; opacity: 0.15; }
+    60%       { stroke-dashoffset: 0;  opacity: 0.85; }
+  }
+
   /* 4-7-8 breathing cycle (19s): inhale 4s, hold 7s, exhale 8s */
   @keyframes breathe478 {
     0% {

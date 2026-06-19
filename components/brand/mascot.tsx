@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import type { MoodFace } from "@/lib/utils/mood";
@@ -48,6 +48,9 @@ export function Mascot({
   gazeX = -1.3,
   gazeY = 0,
   breathing = false,
+  breathingDelay = 0,
+  overlay,
+  hideFace = false,
   className,
 }: {
   expression: MascotExpression;
@@ -64,6 +67,17 @@ export function Mascot({
    *  (Augen zu + „O"-Mund) über und senkt dabei kurz den Kopf. Überschreibt das
    *  statische Gesicht der Expression. */
   breathing?: boolean;
+  /** Negativer Wert (Sekunden) lässt den Atemzyklus phasenverschoben starten —
+   *  z. B. -4, damit die Bewegung beim Mount sofort sichtbar ist statt erst nach
+   *  dem flachen Einatem-Vorlauf. Default 0 = unverändert. Nur im breathing-Modus. */
+  breathingDelay?: number;
+  /** Optionales SVG-Overlay, im selben 0 0 64 64-Koordinatenraum wie das Gesicht
+   *  gerendert (perfekte Ausrichtung, vom Blob beschnitten). Für Sonder-Mienen
+   *  wie die Intro-Karten (Spiralaugen, Kopf-Fenster). */
+  overlay?: ReactNode;
+  /** Unterdrückt das Standard-Gesicht (Augen/Mund), damit ein Overlay es voll
+   *  ersetzen kann. Greift nur außerhalb des breathing-Modus. */
+  hideFace?: boolean;
   className?: string;
 }) {
   const reduced = useReducedMotion();
@@ -78,6 +92,7 @@ export function Mascot({
           ? {
               animationName: "mascot-exhale-dip",
               animationDuration: `${pulseSeconds}s`,
+              animationDelay: `${breathingDelay}s`,
               animationTimingFunction: "ease-in-out",
               animationIterationCount: "infinite",
             }
@@ -147,6 +162,7 @@ export function Mascot({
                     : {
                         animationName: "mascot-face-rest",
                         animationDuration: `${pulseSeconds}s`,
+                        animationDelay: `${breathingDelay}s`,
                         animationTimingFunction: "ease-in-out",
                         animationIterationCount: "infinite",
                       }
@@ -169,6 +185,7 @@ export function Mascot({
                     opacity: 0,
                     animationName: "mascot-face-exhale",
                     animationDuration: `${pulseSeconds}s`,
+                    animationDelay: `${breathingDelay}s`,
                     animationTimingFunction: "ease-in-out",
                     animationIterationCount: "infinite",
                   }}
@@ -179,7 +196,7 @@ export function Mascot({
                 </g>
               )}
             </>
-          ) : (
+          ) : hideFace ? null : (
             <>
               {f.eyesClosed ? (
                 <>
@@ -214,6 +231,8 @@ export function Mascot({
               )}
             </>
           )}
+
+          {overlay}
         </svg>
       </div>
     </div>
