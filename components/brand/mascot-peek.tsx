@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import gsap from "gsap";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
@@ -17,6 +17,9 @@ type MascotPeekProps = {
   /** Ruhe-Rotation in Grad (gegen den Uhrzeigersinn = negativ). Wird über GSAP
    *  gefahren, damit sie mit der Slide-in-Animation harmoniert. */
   rotate?: number;
+  /** Optionales Overlay, das innerhalb des ge-rotateten Containers liegt — kippt
+   *  und gleitet also mit dem Mascot mit (z. B. ein Notizblock, den er „hält"). */
+  accessory?: ReactNode;
   className?: string;
 };
 
@@ -37,6 +40,7 @@ export function MascotPeek({
   gazeX,
   gazeY,
   rotate = 0,
+  accessory,
   className,
 }: MascotPeekProps) {
   const reduced = useReducedMotion();
@@ -75,7 +79,7 @@ export function MascotPeek({
   }, [reduced, from, rotate]);
 
   return (
-    <div ref={ref} className={cn("inline-block", className)}>
+    <div ref={ref} className={cn("relative inline-block", className)}>
       <Mascot
         expression={expression}
         pulseSeconds={pulseSeconds}
@@ -83,6 +87,7 @@ export function MascotPeek({
         gazeX={resolvedGazeX}
         gazeY={gazeY}
       />
+      {accessory}
     </div>
   );
 }

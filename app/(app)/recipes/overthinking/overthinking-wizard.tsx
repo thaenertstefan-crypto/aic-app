@@ -15,7 +15,10 @@ import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
 import { ReframeAnimation } from "@/components/auth/reframe-animation";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
-import { OverthinkingCompanion } from "@/components/recipes/overthinking-companion";
+import {
+  OverthinkingCompanion,
+  OverthinkingPeekCompanion,
+} from "@/components/recipes/overthinking-companion";
 import type { MascotExpression } from "@/components/brand/mascot";
 import { Reveal } from "@/components/ui/reveal";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
@@ -400,10 +403,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   // ── Render: Step content ────────────────────────────────────────
 
   function getCompanionExpression(): MascotExpression {
-    const stillThinking =
-      questionLoading && step >= 3 && step <= 6 && !generatedQuestions[step];
-    if (stillThinking) return "thinking";
-    if (step === 6 || step === 7) return "happy";
+    if (step === 7) return "happy";
     return "smile";
   }
 
@@ -627,8 +627,6 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
     return (
       <div className="flex min-h-svh flex-col items-center justify-center px-4 py-6 text-center">
         <div className="mx-auto flex max-w-md flex-col items-center gap-6">
-          <OverthinkingCompanion expression="radiant" />
-
           {/* Icon mit ruhigem Feier-Moment */}
           <CompletionCelebration />
 
@@ -698,7 +696,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   // ── Render: Wizard ──────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="relative flex min-h-svh flex-col">
       <SubPageHeader backHref="/recipes" title="Overthinking" />
       <div className="flex flex-1 flex-col px-4 py-6">
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col">
@@ -732,11 +730,19 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
         {/* Error banner */}
         <FormError message={error} className="mt-4" />
 
-        {/* Begleiter über dem Schritt-Inhalt; in Schritt 1 atmet er sichtbar aus. */}
-        <OverthinkingCompanion
-          expression={getCompanionExpression()}
-          breathing={step === 1}
-        />
+        {/* Begleiter je Schritt-Phase:
+            – Schritt 1: keiner (lenkt vom Countdown ab)
+            – Schritt 2-5: Eck-Peek mit Notizblock (unten rechts, s. u.)
+            – Schritt 6-8: zentrierter Top-Begleiter, größer + mit Luft nach oben */}
+        {step >= 6 && (
+          <div className="mt-6">
+            <OverthinkingCompanion expression={getCompanionExpression()} size="md" />
+          </div>
+        )}
+
+        {step >= 2 && step <= 5 && (
+          <OverthinkingPeekCompanion className="pointer-events-none fixed right-0 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] -mr-7 z-10" />
+        )}
 
         {/* Step content */}
         <div
