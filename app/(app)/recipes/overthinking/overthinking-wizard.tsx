@@ -197,10 +197,12 @@ function CountdownCircle({
         />
       </svg>
       <span className="absolute font-bold tabular-nums text-primary">
-        {started ? (
-          <span className="text-3xl">{remaining}</span>
-        ) : (
+        {!started ? (
           <span className="text-xl font-semibold">Start</span>
+        ) : progress >= 1 ? (
+          <span className="text-xl font-semibold">Stopp!</span>
+        ) : (
+          <span className="text-3xl">{remaining}</span>
         )}
       </span>
     </button>
@@ -414,8 +416,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
         return (
           <div className="flex flex-col items-center gap-8 text-center">
             <p className="text-xl font-medium leading-relaxed text-foreground sm:text-2xl">
-              Sag laut <span className="font-bold text-primary">"Stop!"</span>{" "}
-              oder zähl rückwärts von 5
+              Zähle von 5 runter und sage dann laut{" "}
+              <span className="font-bold text-primary">Stopp</span>.
             </p>
 
             <CountdownCircle duration={5} onComplete={() => setCountdownDone(true)} />
@@ -702,8 +704,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
       <SubPageHeader backHref="/recipes" title="Overthinking" />
       <div className="flex flex-1 flex-col px-4 py-6">
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col">
-          {/* "Worum geht's?"-Collapsible (Wiederkehrer) */}
-          {INTRO_CARDS.length > 0 && (
+          {/* "Worum geht's?"-Collapsible — nur in Schritt 1 (Wiederkehrer-Einstieg) */}
+          {step === 1 && INTRO_CARDS.length > 0 && (
             <div className="mb-6">
               <RecipeIntroCollapsible cards={INTRO_CARDS} />
             </div>
@@ -719,31 +721,35 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
           </div>
         )}
 
-        {/* Step header */}
-        <p className="mt-4 text-center text-xs font-medium text-muted-foreground">
-          Schritt {step} von {TOTAL_STEPS}
-        </p>
-        {STEP_HEADERS[step] && (
-          <h2 className="mt-1 text-center font-heading text-lg font-semibold text-foreground">
-            {STEP_HEADERS[step]}
-          </h2>
-        )}
+        {/* Step header — in Schritten 2–5 sitzt der Eck-Begleiter rechts auf
+            Höhe der Überschrift (absolut), nicht mehr am unteren Rand, und
+            verdeckt so weder Weiter-Button noch Textbox. */}
+        <div className="relative">
+          <p className="mt-4 text-center text-xs font-medium text-muted-foreground">
+            Schritt {step} von {TOTAL_STEPS}
+          </p>
+          {STEP_HEADERS[step] && (
+            <h2 className="mt-1 text-center font-heading text-lg font-semibold text-foreground">
+              {STEP_HEADERS[step]}
+            </h2>
+          )}
+
+          {step >= 2 && step <= 5 && (
+            <OverthinkingPeekCompanion className="pointer-events-none absolute right-0 top-1/2 z-10 -mr-7 -translate-y-1/2" />
+          )}
+        </div>
 
         {/* Error banner */}
         <FormError message={error} className="mt-4" />
 
         {/* Begleiter je Schritt-Phase:
             – Schritt 1: keiner (lenkt vom Countdown ab)
-            – Schritt 2-5: Eck-Peek mit Notizblock (unten rechts, s. u.)
+            – Schritt 2-5: Eck-Peek mit Notizblock rechts auf Überschrift-Höhe (s. o.)
             – Schritt 6-8: zentrierter Top-Begleiter, größer + mit Luft nach oben */}
         {step >= 6 && (
           <div className="mt-6">
             <OverthinkingCompanion expression={getCompanionExpression()} size="md" />
           </div>
-        )}
-
-        {step >= 2 && step <= 5 && (
-          <OverthinkingPeekCompanion className="pointer-events-none fixed right-0 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] -mr-7 z-10" />
         )}
 
         {/* Step content */}

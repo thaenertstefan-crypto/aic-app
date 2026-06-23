@@ -67,9 +67,9 @@ function NotepadAccessory() {
   );
 }
 
-/** Eck-Begleiter für die Frage-Schritte (2-5): lugt — wie auf der Auth-Hero
- *  beim Kaltstart — unten rechts halb hinter dem Rand hervor, ~45° gekippt,
- *  Blick nach links oben, und hält einen kleinen Notizblock vor sich.
+/** Eck-Begleiter für die Frage-Schritte (2-5): lugt rechts halb hinter dem Rand
+ *  hervor, ~45° gekippt, und hält einen kleinen Notizblock vor sich. Der Blick
+ *  geht nach links-unten — Richtung Eingabefeld unter der Überschrift.
  *  Positionierung kommt per `className` vom Aufrufer. */
 export function OverthinkingPeekCompanion({ className }: { className?: string }) {
   return (
@@ -77,8 +77,8 @@ export function OverthinkingPeekCompanion({ className }: { className?: string })
       from="right"
       size="lg"
       rotate={-45}
-      gazeX={0}
-      gazeY={-3}
+      gazeX={-2}
+      gazeY={2}
       expression="curious"
       accessory={<NotepadAccessory />}
       className={className}
