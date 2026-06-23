@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 
@@ -17,18 +17,20 @@ export const CROSSFADE_MS = 250;
  * tauschen → neuen Inhalt einblenden. Es ist immer nur ein Inhalt im DOM; alter
  * und neuer Zustand sind nie gleichzeitig mit opacity > 0 sichtbar.
  *
- * Das Einblenden nutzt bewusst ein doppeltes requestAnimationFrame: so ist der
+ * Der Out-Effect hängt bewusst NUR am `token` (einem Primitive), nicht am
+ * `value`: Die Karte übergibt `children` als `value` — neue Objekt-Identität bei
+ * jedem Parent-Render. Stünde `value` in den Dependencies, würde ein Re-Render
+ * mitten in der Überblendung den Timer der Karte neu starten und sie aus dem
+ * Takt mit der Frage (stabiler String-`value`) bringen. Der jeweils neueste
+ * `value` wird stattdessen über eine Ref gelesen und erst beim Swap übernommen.
+ *
+ * Das Einblenden nutzt ein doppeltes requestAnimationFrame: so ist der
  * opacity-0-Zustand des neuen Inhalts garantiert gepaintet, bevor auf opacity-100
- * umgeschaltet wird (sonst „springt" der neue Inhalt ohne Übergang hinein und
- * wirkt wie eine Überlagerung mit dem ausgehenden Fade).
+ * umgeschaltet wird (sonst „springt" der neue Inhalt ohne Übergang hinein).
  *
  * Respektiert `prefers-reduced-motion` (sofortiger Wechsel ohne Animation).
- *
- * @param emptyToken Optionaler Token, der „nichts sichtbar" markiert. Steht
- *   gerade dieser Token, entfällt die Ausblende-Phase und es wird sofort
- *   getauscht (kein 250-ms-Leerlauf, bevor erstmals Inhalt erscheint).
  */
-export function useCrossfade<T>(token: string, value: T, emptyToken?: string) {
+export function useCrossfade<T>(token: string, value: T) {
   const reduced = useReducedMotion();
   const [shown, setShown] = useState<{ token: string; value: T }>({
     token,
@@ -36,20 +38,21 @@ export function useCrossfade<T>(token: string, value: T, emptyToken?: string) {
   });
   const [visible, setVisible] = useState(true);
 
+  // Neuesten value halten, ohne ihn in die Effect-Dependencies aufzunehmen.
+  const latestValue = useRef(value);
+  latestValue.current = value;
+
   // Out → tauschen, sobald sich der Token ändert.
   useEffect(() => {
     if (reduced || token === shown.token) return;
 
-    // Ist gerade nichts sichtbar, entfällt die Ausblende-Phase (sofort tauschen).
-    if (emptyToken !== undefined && shown.token === emptyToken) {
-      setShown({ token, value });
-      return;
-    }
-
     setVisible(false); // läuft post-paint, blendet den sichtbaren Inhalt aus
-    const swap = setTimeout(() => setShown({ token, value }), CROSSFADE_MS);
+    const swap = setTimeout(
+      () => setShown({ token, value: latestValue.current }),
+      CROSSFADE_MS,
+    );
     return () => clearTimeout(swap);
-  }, [token, value, reduced, shown.token, emptyToken]);
+  }, [token, reduced, shown.token]);
 
   // In → neuen Inhalt einblenden, nachdem getauscht (und opacity-0 gepaintet) wurde.
   useEffect(() => {

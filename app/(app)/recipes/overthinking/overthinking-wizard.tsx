@@ -721,10 +721,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
           </div>
         )}
 
-        {/* Step header — in Schritten 2–5 sitzt der Eck-Begleiter rechts auf
-            Höhe der Überschrift (absolut), nicht mehr am unteren Rand, und
-            verdeckt so weder Weiter-Button noch Textbox. */}
-        <div className="relative">
+        {/* Step header */}
+        <div>
           <p className="mt-4 text-center text-xs font-medium text-muted-foreground">
             Schritt {step} von {TOTAL_STEPS}
           </p>
@@ -733,10 +731,6 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
               {STEP_HEADERS[step]}
             </h2>
           )}
-
-          {step >= 2 && step <= 5 && (
-            <OverthinkingPeekCompanion className="pointer-events-none absolute right-0 top-1/2 z-10 -mr-7 -translate-y-1/2" />
-          )}
         </div>
 
         {/* Error banner */}
@@ -744,7 +738,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
         {/* Begleiter je Schritt-Phase:
             – Schritt 1: keiner (lenkt vom Countdown ab)
-            – Schritt 2-5: Eck-Peek mit Notizblock rechts auf Überschrift-Höhe (s. o.)
+            – Schritt 2-5: Eck-Peek mit Notizblock rechts oben im Inhaltsbereich (s. u.)
             – Schritt 6-8: zentrierter Top-Begleiter, größer + mit Luft nach oben */}
         {step >= 6 && (
           <div className="mt-6">
@@ -752,12 +746,19 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
           </div>
         )}
 
-        {/* Step content */}
-        <div
-          key={step}
-          className="mt-8 flex flex-1 flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
-        >
-          {renderStepContent()}
+        {/* Step content — in Schritten 2–5 lugt der Eck-Begleiter rechts oben in
+            den freien Raum zwischen Überschrift und der vertikal zentrierten
+            Frage/Textbox, ohne etwas zu verdecken. */}
+        <div className="relative mt-8 flex flex-1 flex-col">
+          {step >= 2 && step <= 5 && (
+            <OverthinkingPeekCompanion className="pointer-events-none absolute right-0 top-0 z-10 -mr-7" />
+          )}
+          <div
+            key={step}
+            className="flex flex-1 flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
+          >
+            {renderStepContent()}
+          </div>
         </div>
 
         {/* Bottom navigation */}
