@@ -7,13 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
+import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
+import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 
 import { saveGeneratedRightAction } from "../actions";
 
 export default function GenerateRightPage() {
   const [phase, setPhase] = useState<"reflect" | "result">("reflect");
   const [p1, setP1] = useState("");
-  const [p2, setP2] = useState("");
   const [p3, setP3] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,14 +24,13 @@ export default function GenerateRightPage() {
     error: null,
   });
 
-  const canGenerate =
-    (p1.trim() || p2.trim() || p3.trim()).length > 0 && !loading;
+  const canGenerate = (p1.trim() || p3.trim()).length > 0 && !loading;
 
   async function generate() {
     setLoading(true);
     setGenError(null);
     try {
-      const situation = [p1.trim(), p2.trim()].filter(Boolean).join("\n\n");
+      const situation = p1.trim();
       const res = await fetch("/api/rights-formulator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,6 +54,8 @@ export default function GenerateRightPage() {
     <div className="flex min-h-svh flex-col">
       <SubPageHeader backHref="/me/bill-of-rights" title="Vorschlag generieren" />
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
+        <RecipeIntroCollapsible cards={getRecipeIntro("bill-of-rights") ?? []} />
+
         {phase === "reflect" ? (
           <>
             <p className="text-sm text-muted-foreground">Deine inneren Konflikte</p>
@@ -66,19 +68,6 @@ export default function GenerateRightPage() {
                 id="p1"
                 value={p1}
                 onChange={(e) => setP1(e.target.value)}
-                rows={3}
-                className="resize-y"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="p2" className="text-base font-medium">
-                Welche innere Regel hat dich dabei zurückgehalten?
-              </Label>
-              <Textarea
-                id="p2"
-                value={p2}
-                onChange={(e) => setP2(e.target.value)}
                 rows={3}
                 className="resize-y"
               />
@@ -119,7 +108,6 @@ export default function GenerateRightPage() {
             </p>
 
             <input type="hidden" name="prompt1" value={p1} />
-            <input type="hidden" name="prompt2" value={p2} />
             <input type="hidden" name="prompt3" value={p3} />
 
             <Textarea

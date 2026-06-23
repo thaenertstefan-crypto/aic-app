@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
+import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
+import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 
 import { appendRightAction } from "../actions";
 
@@ -19,6 +21,8 @@ export default function AddRightPage() {
     <div className="flex min-h-svh flex-col">
       <SubPageHeader backHref="/me/bill-of-rights" title="Recht hinzufügen" />
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-4 py-6">
+        <RecipeIntroCollapsible cards={getRecipeIntro("bill-of-rights") ?? []} />
+
         <form action={formAction} className="flex flex-1 flex-col gap-5">
           <FormError message={state.error} />
 

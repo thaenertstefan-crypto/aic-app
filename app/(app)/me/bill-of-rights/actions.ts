@@ -67,7 +67,6 @@ export async function saveGeneratedRightAction(
   formData: FormData,
 ): Promise<MeRightsState> {
   const prompt1 = (formData.get("prompt1") as string | null)?.trim() ?? "";
-  const prompt2 = (formData.get("prompt2") as string | null)?.trim() ?? "";
   const prompt3 = (formData.get("prompt3") as string | null)?.trim() ?? "";
   const text = (formData.get("text") as string | null)?.trim() ?? "";
 
@@ -79,7 +78,7 @@ export async function saveGeneratedRightAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Du musst angemeldet sein." };
 
-  const content = { prompt1, prompt2, prompt3 };
+  const content = { prompt1, prompt3 };
 
   // Journaleintrag upserten (ein bill_of_rights-Eintrag pro User) — mit ai_insights.
   const { data: existingEntry } = await supabase
