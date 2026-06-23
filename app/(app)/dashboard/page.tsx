@@ -140,6 +140,12 @@ export default async function DashboardPage() {
     ? getRecipeStepPath("values", valuesProgress.current_step ?? 1)
     : "/recipes/values/hypothesis";
 
+  // Werte-Status (not_started | in_progress | completed) für die dreistufige CTA.
+  const valuesStatus =
+    progressRows.find((p) => p.recipe_slug === "values")?.status ??
+    "not_started";
+  const valuesCompleted = valuesStatus === "completed";
+
   // "Normale" Empfehlung (recipe-basiert, mood-unabhängig). Der low-Tier-Fall
   // (Mantra-Pause) und die Frage werden client-seitig in DashboardFocus aus der
   // live getippten Stimmung abgeleitet — so reagiert die Anzeige sofort.
@@ -153,7 +159,14 @@ export default async function DashboardPage() {
             : hasActiveRecipe
               ? "Du bist mittendrin."
               : continuityRecipe.description,
-        cta: hasActiveRecipe ? "Weitermachen" : "Jetzt starten",
+        cta:
+          continuityRecipe.slug === "values"
+            ? valuesStatus === "in_progress"
+              ? "Setze deine Entdeckungsreise fort"
+              : "Starte deine Werteentdeckung"
+            : hasActiveRecipe
+              ? "Weitermachen"
+              : "Jetzt starten",
         href: hasActiveRecipe
           ? getRecipeStepPath(continuityRecipe.slug, activeProgress?.current_step ?? 1)
           : continuityRecipe.startPath,
@@ -169,8 +182,10 @@ export default async function DashboardPage() {
   const allDestinations: Destination[] = [
     {
       key: "values",
-      sentence: "Ich würde gern meine Werte reflektieren",
-      href: valuesHref,
+      sentence: valuesCompleted
+        ? "Ich würde gern meine Werte ansehen"
+        : "Ich würde gern meine Werte reflektieren",
+      href: valuesCompleted ? "/me/values" : valuesHref,
       badge: valuesBadge,
     },
     {
