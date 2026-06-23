@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Fraunces } from "next/font/google";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -52,6 +53,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <ScrollToTop />
         <ServiceWorkerRegistration />
         {children}
       </body>

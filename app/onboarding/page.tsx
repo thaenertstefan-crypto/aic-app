@@ -18,13 +18,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { FormError } from "@/components/ui/form-error";
 import { Mascot, type MascotExpression } from "@/components/brand/mascot";
+import { Crossfade } from "@/components/dashboard/crossfade";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { ONBOARDING_INTRO } from "@/lib/content/onboarding-intro";
 
 import { completeOnboardingAction } from "@/app/onboarding/onboarding.actions";
 
 type Step =
-  | "welcome"
   | "name"
   | "response"
   | "reason"
@@ -35,7 +35,6 @@ type Step =
   | "intro4";
 
 const STEPS: Step[] = [
-  "welcome",
   "name",
   "response",
   "reason",
@@ -80,7 +79,7 @@ function expressionForStep(step: Step): MascotExpression {
 
 export default function OnboardingPage() {
   const reduced = useReducedMotion();
-  const [step, setStep] = useState<Step>("welcome");
+  const [step, setStep] = useState<Step>("name");
   const [reason, setReason] = useState("");
   const [confidenceBaseline, setConfidenceBaseline] = useState(5);
   const [name, setName] = useState("");
@@ -194,23 +193,16 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Karte */}
+      {/* Karte — Inhalt blendet beim Schrittwechsel sanft über (Token = Step). */}
+      <Crossfade token={step}>
       <Card className="mx-auto w-full max-w-sm">
         <CardHeader>
-          {step === "welcome" && (
+          {step === "name" && (
             <>
               <CardTitle>Willkommen 👋</CardTitle>
               <CardDescription>
                 Willkommen im Anti Imposter Club. Schön, dass du da bist.
                 Verrätst du mir, wie du heißt?
-              </CardDescription>
-            </>
-          )}
-          {step === "name" && (
-            <>
-              <CardTitle>Wie möchtest du genannt werden?</CardTitle>
-              <CardDescription>
-                Sag mir deinen Namen, dann kann es richtig losgehen.
               </CardDescription>
             </>
           )}
@@ -305,6 +297,7 @@ export default function OnboardingPage() {
           )}
         </CardContent>
       </Card>
+      </Crossfade>
 
       {/* Navigation */}
       <div className="mx-auto mt-4 flex w-full max-w-sm flex-col gap-2">
@@ -313,15 +306,13 @@ export default function OnboardingPage() {
           disabled={!canAdvance || (isLast && pending)}
           onClick={goNext}
         >
-          {step === "welcome"
-            ? "Weiter"
-            : step === "name"
-              ? "Los geht's"
-              : isLast
-                ? pending
-                  ? "Wird eingerichtet …"
-                  : "Ich bin bereit"
-                : "Weiter"}
+          {step === "name"
+            ? "Los geht's"
+            : isLast
+              ? pending
+                ? "Wird eingerichtet …"
+                : "Ich bin bereit"
+              : "Weiter"}
         </Button>
 
         {stepIndex > 0 && (

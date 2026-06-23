@@ -19,7 +19,10 @@ export default async function OnboardingLayout({
 
   return (
     <div className="flex min-h-svh flex-col">
-      <div className="flex justify-center pt-8">
+      <div
+        className="flex justify-center pt-8"
+        style={{ paddingTop: "calc(2rem + env(safe-area-inset-top, 0px))" }}
+      >
         <Logo size="lg" />
       </div>
       {children}

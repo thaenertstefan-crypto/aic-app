@@ -8,7 +8,7 @@ import { Mascot, type MascotExpression, type MascotSize } from "@/components/bra
 import { cn } from "@/lib/utils";
 
 type MascotPeekProps = {
-  from?: "left" | "right" | "bottom";
+  from?: "left" | "right" | "bottom" | "top";
   expression?: MascotExpression;
   size?: MascotSize;
   pulseSeconds?: number;
@@ -46,7 +46,12 @@ export function MascotPeek({
   const reduced = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const resolvedGazeX =
-    gazeX ?? (from === "bottom" ? 0 : from === "right" ? -3.5 : 3.5);
+    gazeX ??
+    (from === "bottom" || from === "top"
+      ? 0
+      : from === "right"
+        ? -3.5
+        : 3.5);
 
   useEffect(() => {
     const el = ref.current;
@@ -57,10 +62,10 @@ export function MascotPeek({
       return;
     }
 
-    // Startversatz je nach Kante: von rechts/links horizontal, von unten vertikal.
+    // Startversatz je nach Kante: von rechts/links horizontal, von unten/oben vertikal.
     const fromVars =
-      from === "bottom"
-        ? { y: 90, opacity: 0, rotation: rotate }
+      from === "bottom" || from === "top"
+        ? { y: from === "bottom" ? 90 : -90, opacity: 0, rotation: rotate }
         : { x: from === "right" ? 90 : -90, opacity: 0, rotation: rotate };
 
     const tween = gsap.fromTo(el, fromVars, {

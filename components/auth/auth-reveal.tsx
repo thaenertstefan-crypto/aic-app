@@ -68,13 +68,13 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
         </div>
         {showCardMascot && (
           <MascotPeek
-            from="bottom"
+            from="top"
             size="lg"
             expression="smile"
             pulseSeconds={3}
             gazeX={0}
-            gazeY={-3}
-            className="pointer-events-none absolute bottom-0 left-1/2 -ml-16 -mb-14 z-0"
+            gazeY={3}
+            className="pointer-events-none absolute top-0 left-1/2 -ml-16 -mt-14 z-0"
           />
         )}
       </div>
@@ -101,19 +101,19 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
           {children}
         </div>
 
-        {/* Maskottchen lugt unten mittig vom Bildschirmrand herein und schaut
-            hoch zur Login-Karte. Positioniert relativ zum Vollbild-Root (wird
-            unten geclippt → nur die Augen sind sichtbar). Mountet erst beim
-            Aufdecken, damit die Slide-up-Animation spielt. */}
+        {/* Maskottchen lugt oben mittig vom Bildschirmrand herein und schaut
+            hinunter zur Login-Karte. Positioniert relativ zum Vollbild-Root
+            (wird oben geclippt → nur die Augen sind sichtbar). Mountet erst beim
+            Aufdecken, damit die Slide-down-Animation spielt. */}
         {showCardMascot && revealed && (
           <MascotPeek
-            from="bottom"
+            from="top"
             size="lg"
             expression="smile"
             pulseSeconds={3}
             gazeX={0}
-            gazeY={-3}
-            className="pointer-events-none absolute bottom-0 left-1/2 -ml-16 -mb-14 z-0"
+            gazeY={3}
+            className="pointer-events-none absolute top-0 left-1/2 -ml-16 -mt-14 z-0"
           />
         )}
       </div>

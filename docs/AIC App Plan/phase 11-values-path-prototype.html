@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Werte-Pfad — Kompass + Maskottchen</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#1B1726; --card:#241E33; --gold:#E7B65E; --rose:#C97B84;
+    --lav:#9C7FB0; --muted:#5E5474; --text:#EDE8F5; --dim:#9C93B0; --brd:#342B4A;
+  }
+  body { background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    display:flex; flex-direction:column; align-items:center; padding:20px 16px 52px; }
+
+  h1 { font-size:17px; font-weight:700; color:var(--gold); margin-bottom:3px; }
+  .sub { font-size:12px; color:var(--dim); margin-bottom:14px; text-align:center; }
+
+  /* ── Option tabs ── */
+  .opt-row { display:flex; flex-direction:column; align-items:center; margin-bottom:18px; gap:6px; }
+  .opt-label { font-size:11px; color:var(--muted); letter-spacing:.4px; }
+  .tabs { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+  .tab { background:var(--card); border:1px solid var(--brd); color:var(--dim);
+    font-size:11.5px; padding:5px 13px; border-radius:20px; cursor:pointer; transition:all .2s; }
+  .tab.on { background:rgba(156,127,176,.12); border-color:var(--lav); color:var(--lav); font-weight:600; }
+
+  /* ── Quick-set buttons ── */
+  .ctrl-row { display:flex; gap:6px; margin-bottom:24px; flex-wrap:wrap; justify-content:center; }
+  .btn { background:var(--card); border:1px solid var(--brd); color:var(--dim);
+    font-size:11px; padding:5px 11px; border-radius:20px; cursor:pointer; transition:all .2s; }
+  .btn:hover { border-color:var(--gold); color:var(--gold); }
+
+  /* ── Path wrap ── */
+  .path-wrap { position:relative; width:100%; max-width:340px; }
+  .vline { position:absolute; left:17px; top:18px; bottom:18px;
+    width:2px; background:var(--brd); z-index:1; }
+  .vfill { position:absolute; left:0; top:0; width:100%;
+    background:linear-gradient(to bottom,var(--gold),var(--rose));
+    transition:height .6s cubic-bezier(.4,0,.2,1); }
+
+  /* ── Milestones ── */
+  .milestones { position:relative; z-index:2; }
+  .ms { display:flex; align-items:center; gap:12px;
+    padding-bottom:28px; position:relative; cursor:pointer; }
+  .ms:last-child { padding-bottom:0; }
+  .ms:hover .md { transform:scale(1.08); }
+
+  /* ── Dot ── */
+  .md { width:34px; height:34px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700;
+    transition:all .3s cubic-bezier(.4,0,.2,1); position:relative; z-index:3; }
+  .md-open { background:var(--bg); border:2px solid var(--brd); color:var(--muted); font-size:11px; }
+  .md-cur  { background:var(--bg); border:2.5px solid var(--lav); color:var(--lav); animation:pLav 2.2s infinite; }
+  .md-done { background:var(--gold); border:2px solid var(--gold); color:var(--bg); }
+  @keyframes pLav { 0%,100%{box-shadow:0 0 0 3px rgba(156,127,176,.18)} 50%{box-shadow:0 0 0 9px rgba(156,127,176,.03)} }
+  /* Mascot-A: face replaces dot content */
+  .md-mascot { background:transparent; border:2.5px solid var(--lav); overflow:visible; padding:0; }
+  .md-mascot svg { width:38px; height:38px; margin:-4px -2px; display:block; }
+
+  /* ── Labels ── */
+  .ml-wrap { flex:1; min-width:0; padding-right:72px; }
+  .ml-main { font-size:13px; font-weight:600; transition:color .3s; line-height:1.3; }
+  .ms-open .ml-main { color:var(--muted); }
+  .ms-cur  .ml-main { color:var(--lav); }
+  .ms-done .ml-main { color:var(--text); }
+  .ml-badge { display:inline-block; font-size:10px; padding:1px 7px;
+    border-radius:10px; margin-top:3px; font-weight:600; }
+  .bd { background:rgba(231,182,94,.12); color:var(--gold); }
+  .bc { background:rgba(156,127,176,.12); color:var(--lav); }
+
+  /* ── Compass silhouette (right side) ── */
+  .csil { position:absolute; right:0; top:50%;
+    transform:translateY(calc(-50% - 14px));
+    width:62px; height:56px; pointer-events:none;
+    transition:opacity .4s; }
+  .csil-done { opacity:.2; }
+  .csil-cur  { opacity:1; }
+  .csil-open { opacity:0; }
+
+  /* Delta fade-in: only the NEW compass element animates */
+  @keyframes dIn { from{opacity:0} to{opacity:1} }
+  .dnew { animation:dIn 1s ease forwards; }
+
+  /* ── Mascot B: peeks from below the current compass ── */
+  .mascot-b { position:absolute; right:1px; bottom:-12px;
+    width:28px; height:28px; pointer-events:none;
+    opacity:0; transition:opacity .4s; z-index:10; }
+  .ms-cur .mascot-b.show { opacity:1; }
+
+  /* ── Mascot C: single traveler on the path line ── */
+  #mascot-c { position:absolute; left:-1px; width:36px; height:36px;
+    z-index:10; pointer-events:none; display:none;
+    transition:top .55s cubic-bezier(.34,1.56,.64,1); }
+
+  /* ── Legend ── */
+  .legend { margin-top:28px; display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+  .leg { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--dim); }
+  .ld { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+  .ld-done    { background:var(--gold); }
+  .ld-cur     { background:transparent; border:2px solid var(--lav); }
+  .ld-open    { background:transparent; border:2px solid var(--brd); }
+</style>
+</head>
+<body>
+
+<h1>Deine Werteentdeckung</h1>
+<p class="sub">Kompass baut sich Schritt für Schritt auf — wähle eine Maskottchen-Platzierung</p>
+
+<div class="opt-row">
+  <span class="opt-label">MASKOTTCHEN-PLATZIERUNG</span>
+  <div class="tabs">
+    <button class="tab on" onclick="setM('a')">A — Im Kreispunkt</button>
+    <button class="tab"    onclick="setM('b')">B — Unter dem Kompass</button>
+    <button class="tab"    onclick="setM('c')">C — Wandert mit</button>
+  </div>
+</div>
+
+<div class="ctrl-row">
+  <button class="btn" onclick="setP(0)">Start</button>
+  <button class="btn" onclick="setP(1)">Tag 1</button>
+  <button class="btn" onclick="setP(2)">Tag 2</button>
+  <button class="btn" onclick="setP(3)">Tag 3</button>
+  <button class="btn" onclick="setP(4)">Gipfel ⛰</button>
+  <button class="btn" onclick="setP(6)">Tag 6</button>
+  <button class="btn" onclick="setP(9)">Fertig ✓</button>
+</div>
+
+<div class="path-wrap" id="pw">
+  <div class="vline"><div class="vfill" id="vf"></div></div>
+  <div class="milestones" id="ms"></div>
+  <div id="mascot-c"></div>
+</div>
+
+<div class="legend">
+  <div class="leg"><div class="ld ld-done"></div>Abgeschlossen</div>
+  <div class="leg"><div class="ld ld-cur"></div>Aktuell</div>
+  <div class="leg"><div class="ld ld-open"></div>Noch offen</div>
+</div>
+
+<script>
+// ───────────────────────────────────────────────────────
+// MASCOT SVG  (viewBox 0 0 38 38, ears poke out of dot)
+// ───────────────────────────────────────────────────────
+const MSV = `<svg viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg">
+  <polygon points="8,18 13,5 19,17"  fill="#9C7FB0"/>
+  <polygon points="19,17 25,5 30,18" fill="#9C7FB0"/>
+  <polygon points="10,17 14,9 18,17" fill="#B99EC8"/>
+  <polygon points="20,17 24,9 28,17" fill="#B99EC8"/>
+  <circle cx="19" cy="24" r="14" fill="#9C7FB0"/>
+  <circle cx="13" cy="23" r="5" fill="white" opacity=".93"/>
+  <circle cx="25" cy="23" r="5" fill="white" opacity=".93"/>
+  <circle cx="14" cy="23" r="2.4" fill="#241E33"/>
+  <circle cx="26" cy="23" r="2.4" fill="#241E33"/>
+  <circle cx="15" cy="21" r="1" fill="white"/>
+  <circle cx="27" cy="21" r="1" fill="white"/>
+  <path d="M13 29 Q19 34 25 29" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+  <ellipse cx="8"  cy="28" rx="4" ry="2.5" fill="#E7B65E" opacity=".28"/>
+  <ellipse cx="30" cy="28" rx="4" ry="2.5" fill="#E7B65E" opacity=".28"/>
+</svg>`;
+
+// Small variant for option B (28×28)
+const MSV_SM = `<svg viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg">
+  <polygon points="8,18 13,5 19,17"  fill="#9C7FB0"/>
+  <polygon points="19,17 25,5 30,18" fill="#9C7FB0"/>
+  <polygon points="10,17 14,9 18,17" fill="#B99EC8"/>
+  <polygon points="20,17 24,9 28,17" fill="#B99EC8"/>
+  <circle cx="19" cy="24" r="14" fill="#9C7FB0"/>
+  <circle cx="13" cy="23" r="5" fill="white" opacity=".93"/>
+  <circle cx="25" cy="23" r="5" fill="white" opacity=".93"/>
+  <circle cx="14" cy="23" r="2.4" fill="#241E33"/>
+  <circle cx="26" cy="23" r="2.4" fill="#241E33"/>
+  <circle cx="15" cy="21" r="1" fill="white"/>
+  <circle cx="27" cy="21" r="1" fill="white"/>
+  <path d="M13 29 Q19 34 25 29" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+  <ellipse cx="8"  cy="28" rx="4" ry="2.5" fill="#E7B65E" opacity=".28"/>
+  <ellipse cx="30" cy="28" rx="4" ry="2.5" fill="#E7B65E" opacity=".28"/>
+</svg>`;
+
+// ───────────────────────────────────────────────────────
+// COMPASS — pre-computed geometry
+// ───────────────────────────────────────────────────────
+const G='#E7B65E', R='#C97B84';
+
+const TICKS = [0,45,90,135,180,225,270,315].map(a=>{
+  const r=Math.PI*a/180;
+  return `<line x1="${(30+20.5*Math.sin(r)).toFixed(1)}" y1="${(27-20.5*Math.cos(r)).toFixed(1)}"
+                x2="${(30+18*Math.sin(r)).toFixed(1)}"   y2="${(27-18*Math.cos(r)).toFixed(1)}"
+                stroke="${G}" stroke-width="1" opacity=".32"/>`;
+}).join('');
+
+const PETALS = [0,45,90,135,180,225,270,315].map(a=>{
+  const r=Math.PI*a/180;
+  const tx=(30+13*Math.sin(r)).toFixed(1), ty=(27-13*Math.cos(r)).toFixed(1);
+  const lx=(30+5.5*Math.sin(r+.28)).toFixed(1), ly=(27-5.5*Math.cos(r+.28)).toFixed(1);
+  const rx=(30+5.5*Math.sin(r-.28)).toFixed(1), ry=(27-5.5*Math.cos(r-.28)).toFixed(1);
+  return `<path d="M${tx},${ty} L${lx},${ly} L${rx},${ry} Z" fill="${G}" opacity=".26"/>`;
+}).join('');
+
+// Each delta = what this specific step ADDS to the compass
+const DELTAS = [
+  /* 0 ring    */ `<circle cx="30" cy="27" r="21" fill="none" stroke="${G}" stroke-width="1.8" opacity=".9"/>
+                   <circle cx="30" cy="27" r="18.5" fill="none" stroke="${G}" stroke-width=".5" opacity=".18"/>`,
+  /* 1 N arrow */ `<polygon points="30,6 33,21 30,18 27,21" fill="${G}"/>
+                   <text x="30" y="3.5" text-anchor="middle" font-size="5.5" font-weight="700" fill="${G}" font-family="sans-serif">N</text>`,
+  /* 2 E mark  */ `<line x1="51" y1="27" x2="43" y2="27" stroke="${G}" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>
+                   <text x="55" y="29.5" text-anchor="middle" font-size="5" fill="${G}" font-family="sans-serif" opacity=".7">E</text>`,
+  /* 3 S arrow */ `<polygon points="30,48 27,33 30,36 33,33" fill="${G}" opacity=".28"/>
+                   <text x="30" y="55" text-anchor="middle" font-size="5" fill="${G}" font-family="sans-serif" opacity=".45">S</text>`,
+  /* 4 W mark  */ `<line x1="9" y1="27" x2="17" y2="27" stroke="${G}" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>
+                   <text x="5" y="29.5" text-anchor="middle" font-size="5" fill="${G}" font-family="sans-serif" opacity=".7">W</text>`,
+  /* 5 ticks   */ `<circle cx="30" cy="27" r="13" fill="none" stroke="${G}" stroke-width=".8" opacity=".28"/>${TICKS}`,
+  /* 6 N needle*/ `<polygon points="30,7 33.5,27 30,22 26.5,27" fill="${G}"/>`,
+  /* 7 S needle*/ `<polygon points="30,47 26.5,27 30,32 33.5,27" fill="${R}" opacity=".72"/>`,
+  /* 8 rosette */ `${PETALS}<circle cx="30" cy="27" r="6" fill="${G}" opacity=".2"/>
+                   <circle cx="30" cy="27" r="3.5" fill="${G}"/>`,
+];
+
+// Returns the SVG for milestone i in state 'done'|'cur'|'open'
+// For 'cur': base layers are fully visible, only NEW delta animates in
+// For 'done': everything at reduced opacity (ghost via CSS class)
+function compassSVG(i, state) {
+  if (state === 'open') return '';
+  const base  = DELTAS.slice(0, i).join('');
+  const delta = DELTAS[i] || '';
+  let inner;
+  if (state === 'done') {
+    inner = `<g>${base}${delta}</g>`; // opacity handled by .csil-done wrapper
+  } else {
+    // current: previous layers solid, new delta fades in with animation
+    inner = `<g>${base}</g><g class="dnew">${delta}</g>`;
+  }
+  return `<svg viewBox="0 0 60 54" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+
+// ───────────────────────────────────────────────────────
+// DATA
+// ───────────────────────────────────────────────────────
+const STEPS = [
+  "Wertehypothese aufstellen",
+  "Tag 1 — Reflexion",
+  "Tag 2 — Reflexion",
+  "Tag 3 — Reflexion",
+  "Auf dem Gipfel 🏔️",
+  "Tag 5 — Reflexion",
+  "Tag 6 — Reflexion",
+  "Tag 7 — Reflexion",
+  "Auswertung & Erkenntnisse",
+];
+
+// ───────────────────────────────────────────────────────
+// STATE
+// ───────────────────────────────────────────────────────
+let done = 0;
+let mascot = 'a';
+
+function st(i) {
+  if (i < done)  return 'done';
+  if (i === done && done < 9) return 'cur';
+  return 'open';
+}
+
+// ───────────────────────────────────────────────────────
+// RENDER
+// ───────────────────────────────────────────────────────
+function render() {
+  document.getElementById('vf').style.height =
+    done === 0 ? '0%' : Math.min(done/8*100, 100) + '%';
+
+  const html = STEPS.map((label, i) => {
+    const s = st(i);
+    const isCur = s === 'cur', isDone = s === 'done';
+
+    // Dot
+    let dotCls, dotInner;
+    if (mascot === 'a' && isCur) {
+      dotCls  = 'md md-mascot';
+      dotInner = MSV;
+    } else if (isDone) {
+      dotCls = 'md md-done'; dotInner = '✓';
+    } else if (isCur) {
+      dotCls = 'md md-cur'; dotInner = i+1;
+    } else {
+      dotCls = 'md md-open'; dotInner = i+1;
+    }
+
+    // Compass
+    const silCls = `csil csil-${s}`;
+    const cSvg = compassSVG(i, s);
+
+    // Badge
+    const badge = isDone ? `<span class="ml-badge bd">Abgeschlossen</span>`
+                : isCur  ? `<span class="ml-badge bc">Jetzt</span>` : '';
+
+    // Mascot B: peeks beneath compass of current step
+    const mB = (mascot === 'b' && isCur)
+      ? `<div class="mascot-b show">${MSV_SM}</div>` : '';
+
+    return `<div class="ms ms-${s}" onclick="cycle(${i})">
+      <div class="${dotCls}">${dotInner}</div>
+      <div class="ml-wrap"><div class="ml-main">${label}</div>${badge}</div>
+      <div class="${silCls}">${cSvg}</div>
+      ${mB}
+    </div>`;
+  }).join('');
+
+  document.getElementById('ms').innerHTML = html;
+
+  // Mascot C: position on path, smooth transition
+  const mc = document.getElementById('mascot-c');
+  if (mascot === 'c') {
+    mc.style.display = 'block';
+    mc.innerHTML = MSV;
+    // Each row: 34px dot + 28px gap = 62px. Dot center = row_start + 17px.
+    const cur = Math.min(done, 8);
+    mc.style.top = (cur * 62 + 17 - 19) + 'px'; // center 38px mascot on dot
+  } else {
+    mc.style.display = 'none';
+  }
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('on', ['a','b','c'][i] === mascot);
+  });
+}
+
+function cycle(i) {
+  const s = st(i);
+  if (s === 'open') done = i;
+  else if (s === 'cur') done = i + 1;
+  else done = i;
+  render();
+}
+function setP(n) { done = Math.max(0, Math.min(9, n)); render(); }
+function setM(o) { mascot = o; render(); }
+
+render();
+</script>
+</body>
+</html>
