@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 
-import { VALUES_BANK, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
+import { SELECTABLE_VALUES, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
 import { saveHypothesisAction } from "../actions";
 
 const MAX_VALUES = 5;
@@ -99,7 +99,7 @@ export function HypothesisForm({ initialValues }: Props) {
 
         {/* Chip grid */}
         <div className="flex flex-wrap gap-2" role="group" aria-label="Werte-Auswahl">
-          {VALUES_BANK.map((item) => {
+          {SELECTABLE_VALUES.map((item) => {
             const isSelected = selectedValues.includes(item.id);
             return (
               <button

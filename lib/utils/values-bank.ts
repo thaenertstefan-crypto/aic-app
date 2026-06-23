@@ -105,3 +105,20 @@ export function getValueLabel(idOrCustom: string): string {
   const item = VALUES_BANK.find((v) => v.id === idOrCustom);
   return item ? item.de : idOrCustom;
 }
+
+/**
+ * Kuratierte Auswahl (30) für den Hypothese-Picker. Die volle VALUES_BANK bleibt
+ * für die Label-Auflösung bestehender/Custom-Werte erhalten.
+ */
+export const SELECTABLE_VALUE_IDS = [
+  "authenticity", "self-compassion", "honesty", "integrity", "mindfulness",
+  "courage", "assertiveness", "resilience", "empowerment", "self-discipline",
+  "responsibility", "growth", "curiosity", "creativity", "wisdom",
+  "empathy", "kindness", "generosity", "connection", "service",
+  "gratitude", "forgiveness", "balance", "rest", "physical-health",
+  "joy", "humor", "purpose", "adventurousness", "letting-go",
+] as const;
+
+export const SELECTABLE_VALUES = VALUES_BANK.filter((v) =>
+  (SELECTABLE_VALUE_IDS as readonly string[]).includes(v.id),
+);
