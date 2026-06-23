@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 
 import { Mascot } from "@/components/brand/mascot";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
@@ -13,7 +13,8 @@ const DOT_PX = 34;
 const ROW_GAP = 28;
 const STEP_H = DOT_PX + ROW_GAP; // 62
 const DOT_CENTER = DOT_PX / 2; // 17
-const MASCOT_PX = 56; // Mascot size="sm" = size-14
+const MASCOT_SM_PX = 56; // Mascot size="sm" = size-14 (intrinsische Größe)
+const MASCOT_PX = 40; // ~28% kleiner — überdeckt den Meilenstein-Text nicht mehr
 
 const STEP_LABELS = [
   "Wertehypothese aufstellen",
@@ -134,19 +135,28 @@ export function ValuesJourneyClient({
             style={{ left: DOT_CENTER - 1, top: DOT_CENTER, height: fillHeight }}
           />
 
-          {/* Mitwanderndes Maskottchen */}
+          {/* Mitwanderndes Maskottchen (auf MASCOT_PX herunterskaliert) */}
           <div
             className="absolute"
             style={{
               left: DOT_CENTER - MASCOT_PX / 2,
               top: mascotTop,
+              width: MASCOT_PX,
+              height: MASCOT_PX,
               zIndex: 20,
               transition: reduced
                 ? "none"
                 : "top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
             }}
           >
-            <Mascot size="sm" expression="curious" gazeY={-1} />
+            <div
+              style={{
+                transform: `scale(${MASCOT_PX / MASCOT_SM_PX})`,
+                transformOrigin: "top left",
+              }}
+            >
+              <Mascot size="sm" expression="curious" gazeY={-1} />
+            </div>
           </div>
 
           {/* Meilensteine */}
@@ -192,6 +202,9 @@ export function ValuesJourneyClient({
                   style={{ width: DOT_PX, height: DOT_PX }}
                 >
                   {state === "done" && <Check className="size-4" />}
+                  {state === "open" && (
+                    <Lock className="size-3 text-muted-foreground" />
+                  )}
                 </div>
 
                 {/* Label (klickbar, wenn done/current) */}
