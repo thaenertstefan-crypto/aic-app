@@ -5,6 +5,7 @@ import { ChevronDown, Info } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import type { IntroCard } from "@/lib/utils/recipe-intros";
+import { cn } from "@/lib/utils";
 
 type RecipeIntroCollapsibleProps = {
   cards: IntroCard[];
@@ -25,7 +26,10 @@ export function RecipeIntroCollapsible({
 
   return (
     <Card className="border-primary/30">
-      <CardContent className="pt-(--card-spacing)">
+      {/* Extra-pt nur im aufgeklappten Zustand. Eingeklappt würde es zusätzlich
+          zum py der Card oben doppeltes Padding erzeugen — die obere Hälfte
+          wirkte dann größer als die untere. */}
+      <CardContent className={cn(open && "pt-(--card-spacing)")}>
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
