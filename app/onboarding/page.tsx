@@ -19,10 +19,15 @@ import { Slider } from "@/components/ui/slider";
 import { FormError } from "@/components/ui/form-error";
 import { Mascot, type MascotExpression } from "@/components/brand/mascot";
 import { Crossfade } from "@/components/dashboard/crossfade";
+import { LoginOnboardingOverlay } from "@/components/onboarding/login-onboarding-overlay";
+import { POST_LOGIN_KEY } from "@/components/dashboard/dashboard-reveal";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { ONBOARDING_INTRO } from "@/lib/content/onboarding-intro";
 
 import { completeOnboardingAction } from "@/app/onboarding/onboarding.actions";
+
+/** Gültigkeitsfenster für den Post-Login-Marker (analog dashboard-reveal). */
+const POST_LOGIN_MAX_AGE_MS = 10_000;
 
 type Step =
   | "name"
@@ -85,6 +90,23 @@ export default function OnboardingPage() {
   const [name, setName] = useState("");
 
   const mascotRef = useRef<HTMLDivElement>(null);
+
+  // Übergangs-Overlay nur beim allerersten Onboarding-Eintritt direkt nach dem
+  // Login/Signup (frischer Post-Login-Marker). Per useEffect gesetzt, damit es
+  // keine Hydration-Diskrepanz gibt.
+  const [showLoginIntro, setShowLoginIntro] = useState(false);
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(POST_LOGIN_KEY);
+      const ts = raw ? Number(raw) : NaN;
+      if (Number.isFinite(ts) && Date.now() - ts < POST_LOGIN_MAX_AGE_MS) {
+        sessionStorage.removeItem(POST_LOGIN_KEY);
+        setShowLoginIntro(true);
+      }
+    } catch {
+      // sessionStorage nicht verfügbar — kein Overlay, kein Problem.
+    }
+  }, []);
 
   const [state, formAction, pending] = useActionState(completeOnboardingAction, {
     error: null,
@@ -173,6 +195,9 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex min-h-svh flex-col justify-center px-4 py-8">
+      {showLoginIntro && (
+        <LoginOnboardingOverlay onDone={() => setShowLoginIntro(false)} />
+      )}
       {/* Mascot über der Karte */}
       <div className="mb-4 flex justify-center">
         <div ref={mascotRef}>
