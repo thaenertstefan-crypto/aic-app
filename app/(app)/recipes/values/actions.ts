@@ -117,7 +117,7 @@ export async function saveHypothesisAction(
     }
   }
 
-  redirect("/recipes/values/journal");
+  redirect("/me/values/journey/journal");
 }
 
 /**
@@ -310,7 +310,7 @@ export async function saveJournalEntryAction(
     }
   }
 
-  revalidatePath("/recipes/values/journal");
+  revalidatePath("/me/values/journey/journal");
   return { error: null };
 }
 
@@ -620,7 +620,7 @@ export async function saveAdjustedHypothesisAction(
     }
   }
 
-  revalidatePath("/recipes/values/evaluation");
+  revalidatePath("/me/values/journey/evaluation");
   return { error: null, success: true };
 }
 
@@ -675,5 +675,5 @@ export async function startNewCycleAction(
     return { error: insertError.message };
   }
 
-  redirect("/recipes/values/journal");
+  redirect("/me/values/journey/journal");
 }

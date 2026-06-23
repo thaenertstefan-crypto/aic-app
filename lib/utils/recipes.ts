@@ -52,11 +52,11 @@ export const RECIPES: readonly Recipe[] = [
     duration: "7–14 Tage",
     cyclical: true,
     available: true,
-    startPath: "/recipes/values/hypothesis",
+    startPath: "/me/values/journey/hypothesis",
     stepPaths: [
-      "/recipes/values/hypothesis",
-      "/recipes/values/journal",
-      "/recipes/values/evaluation",
+      "/me/values/journey/hypothesis",
+      "/me/values/journey/journal",
+      "/me/values/journey/evaluation",
     ],
   },
   {

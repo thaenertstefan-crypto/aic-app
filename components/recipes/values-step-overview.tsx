@@ -45,7 +45,7 @@ export function ValuesStepOverview({
       n: 1,
       title: "Hypothese aufstellen",
       description: "Wähle 5 Werte, die sich gerade echt für dich anfühlen.",
-      href: "/recipes/values/hypothesis",
+      href: "/me/values/journey/hypothesis",
       status: hypothesisDone ? "done" : "current",
       badge: hypothesisDone ? "erledigt" : "offen",
     },
@@ -53,7 +53,7 @@ export function ValuesStepOverview({
       n: 2,
       title: "7 Tage beobachten",
       description: "Halte eine Woche lang täglich fest, was dich bewegt.",
-      href: "/recipes/values/journal",
+      href: "/me/values/journey/journal",
       status: journalDone
         ? "done"
         : !hypothesisDone
@@ -73,7 +73,7 @@ export function ValuesStepOverview({
       n: 3,
       title: "Auswerten & verfeinern",
       description: "Schau dir die Muster an und schärfe deine Werte nach.",
-      href: "/recipes/values/evaluation",
+      href: "/me/values/journey/evaluation",
       status: evaluationDone
         ? "done"
         : !journalDone

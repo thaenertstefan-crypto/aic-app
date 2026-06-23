@@ -138,7 +138,7 @@ export default async function DashboardPage() {
     : undefined;
   const valuesHref = valuesProgress
     ? getRecipeStepPath("values", valuesProgress.current_step ?? 1)
-    : "/recipes/values/hypothesis";
+    : "/me/values/journey/hypothesis";
 
   // Werte-Status (not_started | in_progress | completed) für die dreistufige CTA.
   const valuesStatus =
@@ -196,7 +196,7 @@ export default async function DashboardPage() {
     {
       key: "bor",
       sentence: "Ich brauch ein Reminder, was ich mir erlauben darf",
-      href: "/recipes/bill-of-rights",
+      href: "/me/bill-of-rights",
     },
     {
       key: "mantra",
@@ -260,7 +260,7 @@ export default async function DashboardPage() {
               <Button
                 variant="outline"
                 size="sm"
-                render={<Link href="/recipes/bill-of-rights" />}
+                render={<Link href="/me/bill-of-rights" />}
               >
                 Bill of Rights starten
               </Button>

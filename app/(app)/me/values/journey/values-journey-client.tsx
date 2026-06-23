@@ -28,15 +28,15 @@ const STEP_LABELS = [
 ];
 
 const STEP_LINKS = [
-  "/recipes/values/hypothesis",
-  "/recipes/values/journal",
-  "/recipes/values/journal",
-  "/recipes/values/journal",
-  "/recipes/values/journal",
-  "/recipes/values/journal",
-  "/recipes/values/journal",
-  "/recipes/values/journal",
-  "/recipes/values/evaluation",
+  "/me/values/journey/hypothesis",
+  "/me/values/journey/journal",
+  "/me/values/journey/journal",
+  "/me/values/journey/journal",
+  "/me/values/journey/journal",
+  "/me/values/journey/journal",
+  "/me/values/journey/journal",
+  "/me/values/journey/journal",
+  "/me/values/journey/evaluation",
 ];
 
 // ─── Kompass: aufbauende Deltas ───────────────────────────────────────
