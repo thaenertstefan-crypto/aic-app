@@ -1,45 +1,56 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useActionState, useState } from "react";
+import gsap from "gsap";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { FormError } from "@/components/ui/form-error";
+import { Mascot, type MascotExpression } from "@/components/brand/mascot";
+import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
+import { ONBOARDING_INTRO } from "@/lib/content/onboarding-intro";
 
 import { completeOnboardingAction } from "@/app/onboarding/onboarding.actions";
 
-type Step = "reason" | "confidence" | "name";
+type Step =
+  | "welcome"
+  | "name"
+  | "response"
+  | "reason"
+  | "confidence"
+  | "intro1"
+  | "intro2"
+  | "intro3"
+  | "intro4";
 
-const STEPS: Step[] = ["reason", "confidence", "name"];
-
-const STEP_LABELS: Record<Step, string> = {
-  reason: "Dein Grund",
-  confidence: "Dein Gefühl",
-  name: "Dein Name",
-};
+const STEPS: Step[] = [
+  "welcome",
+  "name",
+  "response",
+  "reason",
+  "confidence",
+  "intro1",
+  "intro2",
+  "intro3",
+  "intro4",
+];
 
 const REASON_OPTIONS = [
-  {
-    value: "know-myself",
-    label: "Ich möchte mich besser kennenlernen",
-  },
-  {
-    value: "struggle-say-no",
-    label: "Mir fällt es schwer, Nein zu sagen",
-  },
-  {
-    value: "overthink",
-    label: "Ich denke über alles zu viel nach",
-  },
-  {
-    value: "more-confidence",
-    label: "Ich möchte insgesamt selbstbewusster werden",
-  },
+  { value: "know-myself", label: "Ich möchte mich besser kennenlernen" },
+  { value: "struggle-say-no", label: "Mir fällt es schwer, Nein zu sagen" },
+  { value: "overthink", label: "Ich denke über alles zu viel nach" },
+  { value: "more-confidence", label: "Ich möchte insgesamt selbstbewusster werden" },
 ];
 
 const CONFIDENCE_LABELS: Record<number, string> = {
@@ -55,11 +66,26 @@ const CONFIDENCE_LABELS: Record<number, string> = {
   10: "Rundum sicher",
 };
 
+function expressionForStep(step: Step): MascotExpression {
+  switch (step) {
+    case "response":
+      return "happy";
+    case "reason":
+    case "confidence":
+      return "curious";
+    default:
+      return "smile";
+  }
+}
+
 export default function OnboardingPage() {
-  const [step, setStep] = useState<Step>("reason");
+  const reduced = useReducedMotion();
+  const [step, setStep] = useState<Step>("welcome");
   const [reason, setReason] = useState("");
   const [confidenceBaseline, setConfidenceBaseline] = useState(5);
   const [name, setName] = useState("");
+
+  const mascotRef = useRef<HTMLDivElement>(null);
 
   const [state, formAction, pending] = useActionState(completeOnboardingAction, {
     error: null,
@@ -68,40 +94,97 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (state.success) {
+      // Reminder am Onboarding-Tag unterdrücken (Sicherheitsnetz).
+      try {
+        localStorage.setItem(
+          "aic_reminder_date",
+          new Date().toISOString().slice(0, 10),
+        );
+      } catch {
+        // ignore
+      }
       window.location.href = "/dashboard";
     }
   }, [state.success]);
 
+  // Mascot springt beim ersten Mount aus dem Boden in die Mitte.
+  useEffect(() => {
+    const el = mascotRef.current;
+    if (!el) return;
+    if (reduced) {
+      gsap.set(el, { y: 0, opacity: 1, scale: 1 });
+      return;
+    }
+    const tween = gsap.fromTo(
+      el,
+      { y: 80, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.7, ease: "back.out(1.7)" },
+    );
+    return () => {
+      tween.kill();
+    };
+  }, [reduced]);
+
+  // Kleiner Hüpfer auf der Antwort-Karte.
+  useEffect(() => {
+    if (step !== "response" || reduced) return;
+    const el = mascotRef.current;
+    if (!el) return;
+    const tween = gsap.fromTo(
+      el,
+      { scale: 1 },
+      { scale: 1.1, duration: 0.16, yoyo: true, repeat: 1, ease: "power1.inOut" },
+    );
+    return () => {
+      tween.kill();
+    };
+  }, [step, reduced]);
+
   const stepIndex = STEPS.indexOf(step);
   const progressPercent = ((stepIndex + 1) / STEPS.length) * 100;
+  const isLast = step === "intro4";
 
-  const canAdvanceFromReason = reason !== "";
-  const canAdvanceFromConfidence = true;
+  const canAdvance =
+    step === "name"
+      ? name.trim() !== ""
+      : step === "reason"
+        ? reason !== ""
+        : true;
 
-  const handleNext = () => {
-    const currentIndex = STEPS.indexOf(step);
-    if (currentIndex < STEPS.length - 1) {
-      setStep(STEPS[currentIndex + 1]);
+  const goNext = () => {
+    if (isLast) {
+      const formData = new FormData();
+      formData.set("reason", reason);
+      formData.set("confidenceBaseline", String(confidenceBaseline));
+      formData.set("name", name);
+      formAction(formData);
+      return;
     }
+    setStep(STEPS[stepIndex + 1]);
   };
 
-  const handleSubmit = () => {
-    const formData = new FormData();
-    formData.set("reason", reason);
-    formData.set("confidenceBaseline", String(confidenceBaseline));
-    formData.set("name", name);
-    formAction(formData);
+  const goBack = () => {
+    if (stepIndex > 0) setStep(STEPS[stepIndex - 1]);
   };
+
+  const displayName = name.trim() || "du";
+  const introCard =
+    step.startsWith("intro") &&
+    ONBOARDING_INTRO[Number(step.replace("intro", "")) - 1];
 
   return (
-    <div className="flex min-h-svh flex-col px-4 py-8">
-      {/* Progress indicator */}
-      <div className="mb-8 flex flex-col gap-2">
+    <div className="flex min-h-svh flex-col justify-center px-4 py-8">
+      {/* Mascot über der Karte */}
+      <div className="mb-4 flex justify-center">
+        <div ref={mascotRef}>
+          <Mascot expression={expressionForStep(step)} size="md" />
+        </div>
+      </div>
+
+      {/* Fortschrittsanzeige */}
+      <div className="mx-auto mb-6 flex w-full max-w-sm flex-col gap-2">
         <span className="text-sm font-medium text-muted-foreground">
           Schritt {stepIndex + 1} von {STEPS.length}
-          <span className="ml-2 text-muted-foreground/60">
-            — {STEP_LABELS[step]}
-          </span>
         </span>
         <div className="h-1 w-full rounded-full bg-muted">
           <div
@@ -111,34 +194,56 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Card */}
+      {/* Karte */}
       <Card className="mx-auto w-full max-w-sm">
         <CardHeader>
-          {stepIndex === 0 && (
+          {step === "welcome" && (
             <>
-              <CardTitle>Was bringt dich hierher?</CardTitle>
+              <CardTitle>Willkommen 👋</CardTitle>
               <CardDescription>
-                Schön, dass du da bist! Jeder Schritt zählt — und du hast den
-                ersten schon gemacht. Was hat dich heute hergeführt?
+                Willkommen im Anti Imposter Club. Schön, dass du da bist.
+                Verrätst du mir, wie du heißt?
               </CardDescription>
             </>
           )}
-          {stepIndex === 1 && (
+          {step === "name" && (
+            <>
+              <CardTitle>Wie möchtest du genannt werden?</CardTitle>
+              <CardDescription>
+                Sag mir deinen Namen, dann kann es richtig losgehen.
+              </CardDescription>
+            </>
+          )}
+          {step === "response" && (
+            <>
+              <CardTitle>Nett dich kennenzulernen, {displayName}! 👋</CardTitle>
+              <CardDescription>
+                Lass mich dir kurz zwei Fragen stellen und dir dann die App
+                zeigen.
+              </CardDescription>
+            </>
+          )}
+          {step === "reason" && (
+            <>
+              <CardTitle>Was bringt dich hierher?</CardTitle>
+              <CardDescription>
+                Was hat dich heute hergeführt? Dein Weg darf sich später ändern.
+              </CardDescription>
+            </>
+          )}
+          {step === "confidence" && (
             <>
               <CardTitle>Wie sicher fühlst du dich gerade?</CardTitle>
               <CardDescription>
                 Es gibt kein &bdquo;richtig&ldquo; oder &bdquo;falsch&ldquo;
-                hier. Sei ehrlich mit dir — das ist der Ort dafür.
+                hier. Sei ehrlich mit dir.
               </CardDescription>
             </>
           )}
-          {stepIndex === 2 && (
+          {introCard && (
             <>
-              <CardTitle>Wie möchtest du genannt werden?</CardTitle>
-              <CardDescription>
-                Perfekt, fast geschafft! Sag mir noch deinen Namen, dann kann es
-                richtig losgehen.
-              </CardDescription>
+              <CardTitle>{introCard.title}</CardTitle>
+              <CardDescription>{introCard.body}</CardDescription>
             </>
           )}
         </CardHeader>
@@ -146,48 +251,6 @@ export default function OnboardingPage() {
         <CardContent>
           <FormError message={state.error} className="mb-4" />
 
-          {/* Step 1: Reason */}
-          {step === "reason" && (
-            <RadioGroup
-              value={reason}
-              onValueChange={(val) => setReason(val as string)}
-            >
-              {REASON_OPTIONS.map((option) => (
-                <RadioGroupItem key={option.value} value={option.value}>
-                  {option.label}
-                </RadioGroupItem>
-              ))}
-            </RadioGroup>
-          )}
-
-          {/* Step 2: Confidence slider */}
-          {step === "confidence" && (
-            <div className="flex flex-col gap-6">
-              <div className="text-center">
-                <span className="text-5xl font-bold text-primary">
-                  {confidenceBaseline}
-                </span>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {CONFIDENCE_LABELS[confidenceBaseline]}
-                </p>
-              </div>
-              <Slider
-                value={confidenceBaseline}
-                onValueChange={(val: number) =>
-                  setConfidenceBaseline(val)
-                }
-                min={1}
-                max={10}
-                step={1}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Wenig sicher</span>
-                <span>Sehr sicher</span>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Name */}
           {step === "name" && (
             <div className="flex flex-col gap-2">
               <Label htmlFor="name">Dein Name</Label>
@@ -203,54 +266,76 @@ export default function OnboardingPage() {
               />
             </div>
           )}
+
+          {step === "reason" && (
+            <RadioGroup
+              value={reason}
+              onValueChange={(val) => setReason(val as string)}
+            >
+              {REASON_OPTIONS.map((option) => (
+                <RadioGroupItem key={option.value} value={option.value}>
+                  {option.label}
+                </RadioGroupItem>
+              ))}
+            </RadioGroup>
+          )}
+
+          {step === "confidence" && (
+            <div className="flex flex-col gap-6">
+              <div className="text-center">
+                <span className="text-5xl font-bold text-primary">
+                  {confidenceBaseline}
+                </span>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {CONFIDENCE_LABELS[confidenceBaseline]}
+                </p>
+              </div>
+              <Slider
+                value={confidenceBaseline}
+                onValueChange={(val: number) => setConfidenceBaseline(val)}
+                min={1}
+                max={10}
+                step={1}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Wenig sicher</span>
+                <span>Sehr sicher</span>
+              </div>
+            </div>
+          )}
         </CardContent>
-
-        <CardFooter className="flex-col gap-2 border-t pt-4">
-          {step !== "name" && (
-            <Button
-              className="w-full"
-              disabled={
-                (step === "reason" && !canAdvanceFromReason) ||
-                (step === "confidence" && !canAdvanceFromConfidence)
-              }
-              onClick={handleNext}
-            >
-              Weiter
-            </Button>
-          )}
-
-          {step === "name" && (
-            <Button
-              className="w-full"
-              disabled={!name || pending}
-              onClick={handleSubmit}
-            >
-              {pending ? "Wird eingerichtet …" : "Loslegen!"}
-            </Button>
-          )}
-
-          {stepIndex > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full text-muted-foreground"
-              onClick={() => setStep(STEPS[stepIndex - 1])}
-            >
-              Zurück
-            </Button>
-          )}
-        </CardFooter>
       </Card>
 
-      {/* Encouraging footer */}
-      <p className="mx-auto mt-6 max-w-xs text-center text-xs text-muted-foreground">
-        {step === "reason" &&
-          "Du musst dich nicht entscheiden — dein Weg darf sich ändern."}
-        {step === "confidence" &&
-          "Selbstvertrauen ist kein Ziel, sondern eine Reise. Du bist genau richtig, wo du bist."}
-        {step === "name" &&
-          "Gleich geht's los. Wir freuen uns auf dich!"}
-      </p>
+      {/* Navigation */}
+      <div className="mx-auto mt-4 flex w-full max-w-sm flex-col gap-2">
+        <Button
+          className="w-full"
+          disabled={!canAdvance || (isLast && pending)}
+          onClick={goNext}
+        >
+          {step === "welcome"
+            ? "Weiter"
+            : step === "name"
+              ? "Los geht's"
+              : isLast
+                ? pending
+                  ? "Wird eingerichtet …"
+                  : "Ich bin bereit"
+                : "Weiter"}
+        </Button>
+
+        {stepIndex > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-muted-foreground"
+            onClick={goBack}
+            disabled={pending}
+          >
+            Zurück
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
