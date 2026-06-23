@@ -3,6 +3,7 @@ import {
   Brain,
   Heart,
   Notebook,
+  NotebookPen,
   Shield,
   type LucideIcon,
 } from "lucide-react";
@@ -18,7 +19,8 @@ export type TemplateType =
   | "value_eval"
   | "bill_of_rights"
   | "messy_moment"
-  | "overthinking";
+  | "overthinking"
+  | "free";
 
 export type JournalEntryRow = {
   id: string;
@@ -71,6 +73,11 @@ export const JOURNAL_TEMPLATE_MAP: Record<string, TemplateConfig> = {
     icon: Brain,
     label: "Grübelspirale durchbrochen",
     recipeSlug: "overthinking",
+  },
+  free: {
+    icon: NotebookPen,
+    label: "Freier Eintrag",
+    recipeSlug: "",
   },
 };
 
@@ -242,6 +249,17 @@ function formatOverthinking(
   return sections;
 }
 
+function formatFree(content: Record<string, unknown>): ContentSection[] {
+  const sections: ContentSection[] = [];
+  const title = stringField(content, "title");
+  const body = stringField(content, "body");
+
+  if (title) sections.push({ label: "Titel", value: title });
+  sections.push({ label: "Eintrag", value: body });
+
+  return sections;
+}
+
 /* ------------------------------------------------------------------ */
 /*  Dispatcher                                                        */
 /* ------------------------------------------------------------------ */
@@ -255,6 +273,7 @@ const FORMATTERS: Record<
   bill_of_rights: formatBillOfRights,
   messy_moment: formatMessyMoment,
   overthinking: formatOverthinking,
+  free: formatFree,
 };
 
 /**
