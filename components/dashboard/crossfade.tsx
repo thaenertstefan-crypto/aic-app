@@ -1,20 +1,16 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
-import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
+import { CROSSFADE_MS, useCrossfade } from "@/lib/hooks/use-crossfade";
 import { cn } from "@/lib/utils";
-
-/** Halbe Überblendung in ms — out + in ≈ 0,5 s gesamt (wie focus-question.tsx). */
-const FADE_MS = 250;
 
 /**
  * Blendet beliebige `children` beim Wechsel des `token` sanft über: aktuellen
- * Inhalt ausblenden, tauschen, neuen Inhalt einblenden. Respektiert
- * `prefers-reduced-motion` (dann sofortiger Wechsel ohne Animation).
- *
- * Das Einblenden hängt bewusst am `shown.token`-Wechsel (Effect 2) und nicht am
- * Tausch-Effect (Effect 1), damit es nicht von dessen Cleanup abgebrochen wird.
+ * Inhalt ausblenden, tauschen, neuen Inhalt einblenden. Läuft über die geteilte
+ * `useCrossfade`-Maschine, damit der Wechsel exakt synchron zur Fokus-Frage
+ * (`focus-question.tsx`) verläuft. Respektiert `prefers-reduced-motion` (dann
+ * sofortiger Wechsel ohne Animation).
  */
 export function Crossfade({
   token,
@@ -25,33 +21,7 @@ export function Crossfade({
   children: ReactNode;
   className?: string;
 }) {
-  const reduced = useReducedMotion();
-  const [shown, setShown] = useState<{ token: string; node: ReactNode }>({
-    token,
-    node: children,
-  });
-  const [visible, setVisible] = useState(true);
-
-  // Effect 1 — auf token-Wechsel reagieren: aktuellen Inhalt ausblenden, dann tauschen.
-  useEffect(() => {
-    if (reduced || token === shown.token) return;
-
-    const fadeOut = requestAnimationFrame(() => setVisible(false));
-    const swap = setTimeout(() => setShown({ token, node: children }), FADE_MS);
-
-    return () => {
-      cancelAnimationFrame(fadeOut);
-      clearTimeout(swap);
-    };
-  }, [token, children, reduced, shown.token]);
-
-  // Effect 2 — neuen Inhalt einblenden, sobald getauscht wurde.
-  useEffect(() => {
-    if (reduced) return;
-
-    const fadeIn = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(fadeIn);
-  }, [shown.token, reduced]);
+  const { shown, visible, reduced } = useCrossfade<ReactNode>(token, children);
 
   if (reduced) {
     return <div className={className}>{children}</div>;
@@ -64,9 +34,9 @@ export function Crossfade({
         visible ? "opacity-100" : "opacity-0",
         className,
       )}
-      style={{ transitionDuration: `${FADE_MS}ms` }}
+      style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
     >
-      {shown.node}
+      {shown.value}
     </div>
   );
 }
