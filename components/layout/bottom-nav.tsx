@@ -4,17 +4,18 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import gsap from "gsap";
-import { Home, BookOpen, NotebookPen, Sparkles, User } from "lucide-react";
+import { Home, User, FlaskConical, NotebookPen, Settings2 } from "lucide-react";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
+import { NAV_LABELS } from "@/lib/content/labels";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: Home },
-  { label: "Rezepte", href: "/recipes", icon: BookOpen },
-  { label: "Journal", href: "/journal", icon: NotebookPen },
-  { label: "Cleanser", href: "/cleansers", icon: Sparkles },
-  { label: "Profil", href: "/profile", icon: User },
+  { label: NAV_LABELS.dashboard, href: "/dashboard", icon: Home },
+  { label: NAV_LABELS.me, href: "/me", icon: User },
+  { label: NAV_LABELS.booster, href: "/booster", icon: FlaskConical },
+  { label: NAV_LABELS.journal, href: "/journal", icon: NotebookPen },
+  { label: NAV_LABELS.settings, href: "/settings", icon: Settings2 },
 ] as const;
 
 /** Width (px) of the sliding active-tab indicator line. */
