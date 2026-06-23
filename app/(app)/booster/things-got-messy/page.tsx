@@ -11,12 +11,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormError } from "@/components/ui/form-error";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
+import { PAGE_TITLES } from "@/lib/content/labels";
 
 import {
   getMessyMoments,
   saveMessyMomentAction,
   type MessyMomentEntry,
-} from "../actions";
+} from "./actions";
 
 // ─── Date helpers ───────────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ function guiltLabel(value: string): string {
 
 // ─── Page ─────────────────────────────────────────────────────────────────
 
-export default function MessyPage() {
+export default function ThingsGotMessyPage() {
   const [entries, setEntries] = useState<MessyMomentEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -88,7 +89,7 @@ export default function MessyPage() {
   if (loading) {
     return (
       <div className="flex min-h-svh flex-col">
-        <SubPageHeader backHref="/recipes/bill-of-rights" title="Messy Moment" />
+        <SubPageHeader backHref="/booster" title={PAGE_TITLES.thingsGotMessy} />
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-4 py-6">
           <div className="space-y-2 text-center">
             <Skeleton className="mx-auto h-7 w-48" />
@@ -112,13 +113,14 @@ export default function MessyPage() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <SubPageHeader backHref="/recipes/bill-of-rights" title="Messy Moment" />
+      <SubPageHeader backHref="/booster" title={PAGE_TITLES.thingsGotMessy} />
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-4 py-6">
         {/* Intro */}
         <div className="flex flex-col gap-3 text-center">
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Momente, in denen du nicht nach deinen eigenen Regeln gehandelt hast – das passiert.
-            Hier kannst du sie reflektieren, ohne dich zu verurteilen.
+            Momente, in denen es chaotisch wurde und du nicht nach deinen eigenen
+            Regeln gehandelt hast – das passiert. Hier kannst du sie reflektieren,
+            ohne dich zu verurteilen.
           </p>
         </div>
 
@@ -129,8 +131,8 @@ export default function MessyPage() {
         <form className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="messy_when" className="text-base font-medium">
-              Wann ist es diese Woche &bdquo;messy&ldquo; geworden – wann bist du nicht nach deinem
-              Bill of Rights gegangen?
+              Wann ist es &bdquo;messy&ldquo; geworden – wann hast du nicht nach
+              dem gehandelt, was dir wichtig ist?
             </Label>
             <Textarea
               id="messy_when"
@@ -237,8 +239,8 @@ export default function MessyPage() {
         </div>
 
         {/* Back link */}
-        <Button variant="outline" className="w-full" render={<Link href="/recipes/bill-of-rights" />}>
-          Zurück zum Bill of Rights
+        <Button variant="outline" className="w-full" render={<Link href="/booster" />}>
+          Zurück zur Kopf-Apotheke
         </Button>
 
         {/* Bottom spacing */}

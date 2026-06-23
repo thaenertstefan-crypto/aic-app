@@ -7,6 +7,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { PAGE_TITLES } from "@/lib/content/labels";
+
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
 /* ------------------------------------------------------------------ */
@@ -62,8 +64,8 @@ export const JOURNAL_TEMPLATE_MAP: Record<string, TemplateConfig> = {
   },
   messy_moment: {
     icon: AlertTriangle,
-    label: "Verletzte Gefühle",
-    recipeSlug: "bill-of-rights",
+    label: PAGE_TITLES.thingsGotMessy,
+    recipeSlug: "things-got-messy",
   },
   overthinking: {
     icon: Brain,
@@ -305,6 +307,11 @@ export function getFilterTabs(): FilterTab[] {
       value: "overthinking",
       label: "Grübelspiralen",
       icon: Brain,
+    },
+    {
+      value: "things-got-messy",
+      label: PAGE_TITLES.thingsGotMessy,
+      icon: AlertTriangle,
     },
   ];
 }

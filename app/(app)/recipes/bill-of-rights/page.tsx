@@ -634,25 +634,6 @@ export default function BillOfRightsPage() {
             ))}
           </div>
 
-          {/* Messy Moment CTA – wiederkehrender Einstieg in der fertigen Ansicht */}
-          <Card className="mt-8 border-primary/30 bg-primary/10">
-            <CardContent className="space-y-3 pt-(--card-spacing) text-center">
-              <p className="text-sm font-medium text-foreground">
-                Es ist mal wieder messy geworden?
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Nicht nach deinen eigenen Rechten gehandelt? Reflektiere hier, was passiert ist –
-                ohne Druck, ohne Urteil.
-              </p>
-              <Button
-                className="w-full gap-2"
-                render={<Link href="/recipes/bill-of-rights/messy" />}
-              >
-                Hier reflektieren &rarr;
-              </Button>
-            </CardContent>
-          </Card>
-
           {/* Actions */}
           <div className="mt-8 flex w-full flex-col gap-3">
             <Button
