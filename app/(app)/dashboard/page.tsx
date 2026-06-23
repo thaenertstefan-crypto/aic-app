@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { Flame, NotebookPen, Quote, Sparkles } from "lucide-react";
+import { Quote } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
-import { computeStreak } from "@/lib/utils/streak";
 import { RECIPES, getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { StatCard } from "@/components/ui/stat-card";
 import { DashboardReveal } from "@/components/dashboard/dashboard-reveal";
 import { DashboardFocus } from "@/components/dashboard/dashboard-focus";
 import type {
@@ -57,9 +55,6 @@ export default async function DashboardPage() {
     status: string | null;
   }[] = [];
   let rights: RightItem[] = [];
-  let journalStreak = 0;
-  let promiseStreak = 0;
-  let mantraStreak = 0;
 
   if (user) {
     const [
@@ -67,9 +62,6 @@ export default async function DashboardPage() {
       { data: moodRow },
       { data: progress },
       { data: billOfRights },
-      { data: journalEntries },
-      { data: promiseRows },
-      { data: mantraCheckins },
     ] = await Promise.all([
       supabase
         .from("profiles")
@@ -91,24 +83,6 @@ export default async function DashboardPage() {
         .select("rights")
         .eq("user_id", user.id)
         .maybeSingle(),
-      supabase
-        .from("journal_entries")
-        .select("entry_date")
-        .eq("user_id", user.id)
-        .order("entry_date", { ascending: false })
-        .limit(90),
-      supabase
-        .from("promises")
-        .select("current_streak")
-        .eq("user_id", user.id)
-        .eq("active", true),
-      supabase
-        .from("cleanser_checkins")
-        .select("date")
-        .eq("user_id", user.id)
-        .eq("cleanser_slug", "mantra")
-        .order("date", { ascending: false })
-        .limit(90),
     ]);
 
     name = profile?.name ?? null;
@@ -116,21 +90,6 @@ export default async function DashboardPage() {
     todayMood = moodRow?.mood_score ?? null;
     progressRows = progress ?? [];
     rights = (billOfRights?.rights as RightItem[] | null) ?? [];
-
-    const journalDates = new Set(
-      (journalEntries ?? []).map((e) => e.entry_date as string),
-    );
-    journalStreak = computeStreak(journalDates, journalDates.has(today));
-
-    promiseStreak = (promiseRows ?? []).reduce(
-      (max, p) => Math.max(max, (p.current_streak as number) ?? 0),
-      0,
-    );
-
-    const mantraDates = new Set(
-      (mantraCheckins ?? []).map((c) => c.date as string),
-    );
-    mantraStreak = computeStreak(mantraDates, mantraDates.has(today));
   }
 
   // --- Aktuelles Recipe ---
@@ -292,25 +251,6 @@ export default async function DashboardPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Streaks */}
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard
-          icon={<NotebookPen className="size-4 text-primary" />}
-          value={journalStreak}
-          label="Tagebuch"
-        />
-        <StatCard
-          icon={<Flame className="size-4 text-celebrate" />}
-          value={promiseStreak}
-          label="Versprechen"
-        />
-        <StatCard
-          icon={<Sparkles className="size-4 text-primary" />}
-          value={mantraStreak}
-          label="Mantra"
-        />
-      </div>
       </DashboardReveal>
     </div>
   );
