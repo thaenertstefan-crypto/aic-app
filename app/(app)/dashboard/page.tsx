@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DashboardReveal } from "@/components/dashboard/dashboard-reveal";
 import { DashboardFocus } from "@/components/dashboard/dashboard-focus";
+import { DailyReminderScreen } from "@/components/daily-reminder/daily-reminder-screen";
 import type {
   Destination,
   PrimaryRecommendation,
@@ -201,6 +202,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6 p-4">
+      <DailyReminderScreen rights={activeRights.map((r) => r.text)} />
       <DashboardReveal>
       {/* Greeting */}
       <header className="space-y-1">
