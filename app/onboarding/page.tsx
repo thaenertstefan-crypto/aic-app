@@ -291,7 +291,7 @@ export default function OnboardingPage() {
         >
           <Mascot
             expression={introExpression ?? expressionForStep(step)}
-            size="md"
+            size="lg"
           />
         </div>
       </div>
@@ -326,8 +326,13 @@ export default function OnboardingPage() {
             <>
               <CardTitle>Willkommen 👋</CardTitle>
               <CardDescription>
-                Willkommen im Anti Imposter Club. Schön, dass du da bist.
-                Verrätst du mir, wie du heißt?
+                Willkommen im Anti Imposter Club – einem Ort, der Dir helfen soll,
+                aus Gedankenspiralen auszubrechen, schuldgefühlfrei &bdquo;Nein&ldquo;
+                zu sagen und Dich einfach wieder gut genug zu fühlen.
+              </CardDescription>
+              <CardDescription>
+                Bevor ich Dich mit unserer Club-App vertraut mache, magst Du mir
+                verraten, wie Du heißt?
               </CardDescription>
             </>
           )}
@@ -359,7 +364,7 @@ export default function OnboardingPage() {
           )}
           {introCard && (
             <>
-              <CardTitle>{introCard.title}</CardTitle>
+              {introCard.title && <CardTitle>{introCard.title}</CardTitle>}
               <CardDescription>{introCard.body}</CardDescription>
             </>
           )}
