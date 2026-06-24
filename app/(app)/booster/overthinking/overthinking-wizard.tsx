@@ -700,7 +700,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   // ── Render: Wizard ──────────────────────────────────────────────
 
   return (
-    <div className="relative flex min-h-svh flex-col">
+    <div className="relative flex min-h-svh flex-col overflow-x-clip">
       <SubPageHeader backHref="/booster" title="Overthinking" />
       <div className="flex flex-1 flex-col px-4 py-6">
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col">
