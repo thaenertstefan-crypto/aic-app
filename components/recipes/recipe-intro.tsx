@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import type { IntroCard } from "@/lib/utils/recipe-intros";
 
 type RecipeIntroProps = {
@@ -50,11 +51,8 @@ function ProgressDots({ total, current }: { total: number; current: number }) {
 export function RecipeIntro({ cards, onComplete, onSkip, renderMascot }: RecipeIntroProps) {
   const [index, setIndex] = useState(0);
 
-  // Bei jedem Kartenwechsel an den Seitenanfang springen — das globale
-  // ScrollToTop greift nur bei Pathname-Wechsel, nicht bei diesem State-Wechsel.
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
-  }, [index]);
+  // Bei jedem Kartenwechsel an den Seitenanfang springen.
+  useScrollTopOnChange(index);
 
   if (cards.length === 0) return null;
 

@@ -21,6 +21,7 @@ import { Mascot, type MascotExpression } from "@/components/brand/mascot";
 import { Crossfade } from "@/components/dashboard/crossfade";
 import { POST_LOGIN_KEY } from "@/components/dashboard/dashboard-reveal";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
+import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { ONBOARDING_INTRO } from "@/lib/content/onboarding-intro";
 import { cn } from "@/lib/utils";
 
@@ -85,6 +86,7 @@ function expressionForStep(step: Step): MascotExpression {
 export default function OnboardingPage() {
   const reduced = useReducedMotion();
   const [step, setStep] = useState<Step>("name");
+  useScrollTopOnChange(step);
   const [reason, setReason] = useState("");
   const [confidenceBaseline, setConfidenceBaseline] = useState(5);
   const [name, setName] = useState("");

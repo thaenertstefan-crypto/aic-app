@@ -9,11 +9,13 @@ import { FormError } from "@/components/ui/form-error";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
+import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 
 import { saveGeneratedRightAction } from "../actions";
 
 export default function GenerateRightPage() {
   const [phase, setPhase] = useState<"reflect" | "result">("reflect");
+  useScrollTopOnChange(phase);
   const [p1, setP1] = useState("");
   const [p3, setP3] = useState("");
   const [suggestion, setSuggestion] = useState("");

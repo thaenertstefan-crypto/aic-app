@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/ui/form-error";
 
 import { VALUES_BANK, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
+import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 
 import {
   saveEvalReflectionAction,
@@ -43,6 +44,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
   const [currentPhase, setCurrentPhase] = useState<
     "reflection" | "adjust" | "complete"
   >(phase);
+  useScrollTopOnChange(currentPhase);
 
   // ── AI insights ─────────────────────────────────────────────────
   // Seed from previously generated insights so a reload doesn't re-call.

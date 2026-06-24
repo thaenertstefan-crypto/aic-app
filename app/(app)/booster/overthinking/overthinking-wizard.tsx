@@ -24,6 +24,7 @@ import type { MascotExpression } from "@/components/brand/mascot";
 import { Reveal } from "@/components/ui/reveal";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
+import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 
 import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
 import { saveOverthinkingAction } from "./actions";
@@ -221,6 +222,9 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Bei jedem Schritt- und beim Wechsel auf den Abschluss-Screen nach oben.
+  useScrollTopOnChange(saved ? "complete" : step);
 
   // Hybrid-Intro (Schritt 6.10)
   const [introDismissed, setIntroDismissed] = useState(false);
