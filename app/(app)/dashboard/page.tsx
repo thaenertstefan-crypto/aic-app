@@ -136,9 +136,12 @@ export default async function DashboardPage() {
   const valuesBadge = valuesProgress
     ? `Schritt ${Math.min(Math.max(valuesProgress.current_step ?? 1, 1), valuesTotalSteps)} von ${valuesTotalSteps}`
     : undefined;
-  const valuesHref = valuesProgress
-    ? getRecipeStepPath("values", valuesProgress.current_step ?? 1)
-    : "/me/values/journey/hypothesis";
+  // Laufende Entdeckung führt auf die Journey-Übersicht (nicht direkt ins
+  // Journal); ein Neustart beginnt mit der Hypothese.
+  const valuesHref =
+    valuesProgress?.status === "in_progress"
+      ? "/me/values/journey"
+      : "/me/values/journey/hypothesis";
 
   // Werte-Status (not_started | in_progress | completed) für die dreistufige CTA.
   const valuesStatus =
@@ -167,9 +170,12 @@ export default async function DashboardPage() {
             : hasActiveRecipe
               ? "Weitermachen"
               : "Jetzt starten",
-        href: hasActiveRecipe
-          ? getRecipeStepPath(continuityRecipe.slug, activeProgress?.current_step ?? 1)
-          : continuityRecipe.startPath,
+        href:
+          continuityRecipe.slug === "values"
+            ? valuesHref
+            : hasActiveRecipe
+              ? getRecipeStepPath(continuityRecipe.slug, activeProgress?.current_step ?? 1)
+              : continuityRecipe.startPath,
       }
     : null;
 

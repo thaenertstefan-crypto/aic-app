@@ -1,13 +1,19 @@
 "use client";
 
 import { useActionState, useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
+import { CompletionCelebration } from "@/components/ui/completion-celebration";
 
 import { SELECTABLE_VALUES, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
+import { getValueEmoji } from "@/lib/utils/values-emojis";
+import { getValueDescription } from "@/lib/utils/values-descriptions";
 import { saveHypothesisAction } from "@/app/(app)/recipes/values/actions";
 
 const MAX_VALUES = 5;
@@ -66,6 +72,48 @@ export function HypothesisForm({ initialValues }: Props) {
   };
 
   const isFull = selectedValues.length === MAX_VALUES;
+
+  // ── Completion-Screen nach erfolgreichem Speichern ──
+  if (state.success) {
+    return (
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center gap-6 px-4 py-8 text-center">
+        <CompletionCelebration />
+        <p className="max-w-prose text-base text-muted-foreground">
+          Super! In den nächsten Tagen werden wir diese Werte-Hypothese testen.
+          Beginne deine erste Reflexion.
+        </p>
+
+        <div className="w-full space-y-3 text-left">
+          {selectedValues.map((id) => (
+            <Card key={id}>
+              <CardContent className="flex items-start gap-3">
+                <span className="text-2xl leading-none" aria-hidden="true">
+                  {getValueEmoji(id)}
+                </span>
+                <div className="min-w-0 space-y-1">
+                  <p className="font-heading text-base font-semibold text-foreground">
+                    {getValueLabel(id)}
+                  </p>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Dir ist wichtig, dass {getValueDescription(id)}.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <Button
+          className="mt-2 w-full gap-2"
+          size="lg"
+          render={<Link href="/me/values/journey" />}
+        >
+          Weiter
+          <ArrowRight className="size-4" />
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col px-4 py-6">

@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 
 export type ValuesActionState = {
   error: string | null;
+  success?: boolean;
 };
 
 /**
@@ -117,7 +118,9 @@ export async function saveHypothesisAction(
     }
   }
 
-  redirect("/me/values/journey/journal");
+  // Kein Redirect mehr — die Form zeigt nach Erfolg einen Completion-Screen
+  // (grüner Haken + Werte-Liste) und verlinkt von dort auf die Journey-Übersicht.
+  return { error: null, success: true };
 }
 
 /**
