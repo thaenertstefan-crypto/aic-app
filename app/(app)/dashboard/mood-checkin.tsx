@@ -52,12 +52,9 @@ export function MoodCheckin({
   return (
     <Card variant="glass">
       <CardContent className="space-y-4">
-        <div className="space-y-1">
+        <div>
           <p className="font-heading text-lg font-medium text-foreground">
             Wie geht&apos;s dir heute?
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Ein kurzer Check-in für dich — ganz ohne Bewertung.
           </p>
         </div>
 

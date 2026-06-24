@@ -19,6 +19,7 @@ import { Slider } from "@/components/ui/slider";
 import { FormError } from "@/components/ui/form-error";
 import { Mascot, type MascotExpression } from "@/components/brand/mascot";
 import { Crossfade } from "@/components/dashboard/crossfade";
+import { MePreview, BoosterPreview } from "@/components/onboarding/intro-previews";
 import { POST_LOGIN_KEY } from "@/components/dashboard/dashboard-reveal";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
@@ -365,13 +366,18 @@ export default function OnboardingPage() {
           {introCard && (
             <>
               {introCard.title && <CardTitle>{introCard.title}</CardTitle>}
-              <CardDescription>{introCard.body}</CardDescription>
+              {introCard.body.map((paragraph, i) => (
+                <CardDescription key={i}>{paragraph}</CardDescription>
+              ))}
             </>
           )}
         </CardHeader>
 
         <CardContent>
           <FormError message={state.error} className="mb-4" />
+
+          {step === "intro2" && <MePreview />}
+          {step === "intro3" && <BoosterPreview />}
 
           {step === "name" && (
             <div className="flex flex-col gap-2">

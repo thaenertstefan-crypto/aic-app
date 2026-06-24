@@ -17,4 +17,5 @@ export const NAV_LABELS = {
 export const PAGE_TITLES = {
   booster: "Kopf-Apotheke",
   thingsGotMessy: "Things Got Messy",
+  me: "Me",
 } as const;

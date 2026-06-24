@@ -9,6 +9,7 @@ import {
 
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
+import { PAGE_TITLES } from "@/lib/content/labels";
 import { cn } from "@/lib/utils";
 
 type RightItem = { id: string; text: string; active: boolean };
@@ -110,6 +111,15 @@ export default async function MePage() {
 
   return (
     <div className="space-y-6 p-4">
+      <header className="space-y-1">
+        <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
+          {PAGE_TITLES.me}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          That&apos;s me! Wer ich bin und was mir wichtig ist.
+        </p>
+      </header>
+
       {/* Profil-Identität */}
       <div className="flex items-center gap-4">
         <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-primary font-heading text-2xl font-bold text-primary-foreground">

@@ -128,14 +128,10 @@ export default async function DashboardPage() {
   const continuityRecipe = hasActiveRecipe ? activeRecipe : suggestedRecipe;
 
   // Werte-Fortschritt immer ermitteln (unabhängig vom aktiven Recipe), damit
-  // der "Werte reflektieren"-Eintrag den richtigen Schritt/Badge zeigt.
+  // der "Werte reflektieren"-Eintrag auf den richtigen Schritt verlinkt.
   const valuesProgress = progressRows.find(
     (p) => p.recipe_slug === "values" && p.status !== "completed",
   );
-  const valuesTotalSteps = getRecipeBySlug("values")?.stepPaths?.length ?? 3;
-  const valuesBadge = valuesProgress
-    ? `Schritt ${Math.min(Math.max(valuesProgress.current_step ?? 1, 1), valuesTotalSteps)} von ${valuesTotalSteps}`
-    : undefined;
   // Laufende Entdeckung führt auf die Journey-Übersicht (nicht direkt ins
   // Journal); ein Neustart beginnt mit der Hypothese.
   const valuesHref =
@@ -156,12 +152,9 @@ export default async function DashboardPage() {
     ? {
         key: continuityRecipe.slug,
         title: continuityRecipe.title,
-        subtitle:
-          continuityRecipe.slug === "values" && valuesBadge
-            ? valuesBadge
-            : hasActiveRecipe
-              ? "Du bist mittendrin."
-              : continuityRecipe.description,
+        subtitle: hasActiveRecipe
+          ? "Du bist mittendrin."
+          : continuityRecipe.description,
         cta:
           continuityRecipe.slug === "values"
             ? valuesStatus === "in_progress"
@@ -192,7 +185,6 @@ export default async function DashboardPage() {
         ? "Ich würde gern meine Werte ansehen"
         : "Ich würde gern meine Werte reflektieren",
       href: valuesCompleted ? "/me/values" : valuesHref,
-      badge: valuesBadge,
     },
     {
       key: "overthinking",
