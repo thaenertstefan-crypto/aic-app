@@ -97,7 +97,7 @@ export const RECIPES: readonly Recipe[] = [
     icon: "Brain",
     duration: "15 Minuten",
     available: true,
-    startPath: "/recipes/overthinking",
+    startPath: "/booster/overthinking",
   },
   {
     slug: "shadow",

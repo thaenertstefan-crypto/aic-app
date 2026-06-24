@@ -16,7 +16,7 @@ const MANTRA_PRIMARY: PrimaryRecommendation = {
   title: "Ich bin nicht für jeden",
   subtitle: "30 Sekunden Mantra-Pause",
   cta: "Kurz durchatmen",
-  href: "/cleansers/mantra",
+  href: "/booster/mantra",
 };
 
 type DashboardFocusProps = {

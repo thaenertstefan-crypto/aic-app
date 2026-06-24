@@ -27,7 +27,7 @@ const TILES: Tile[] = [
     title: "Overthinking",
     desc: "Gedankenspirale durchbrechen",
     icon: Brain,
-    href: "/recipes/overthinking",
+    href: "/booster/overthinking",
   },
   {
     title: PAGE_TITLES.thingsGotMessy,
@@ -45,19 +45,19 @@ const TILES: Tile[] = [
     title: "Showstopper Confidence",
     desc: "Selbstbewusstsein in 5 Minuten",
     icon: Sparkles,
-    href: "/cleansers/confidence",
+    href: "/booster/confidence",
   },
   {
     title: "Mantra Cleanser",
     desc: "Innere Kritik umschreiben",
     icon: Quote,
-    href: "/cleansers/mantra",
+    href: "/booster/mantra",
   },
   {
     title: "Promise Keeper",
     desc: "Versprechen an dich selbst",
     icon: CheckCircle2,
-    href: "/cleansers/promises",
+    href: "/booster/promises",
   },
 ];
 

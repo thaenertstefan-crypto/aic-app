@@ -25,6 +25,28 @@ const nextConfig: NextConfig = {
         destination: "/me/bill-of-rights",
         permanent: false,
       },
+      // Übungen nach /booster migriert (Bug 7)
+      {
+        source: "/recipes/overthinking",
+        destination: "/booster/overthinking",
+        permanent: false,
+      },
+      { source: "/cleansers", destination: "/booster", permanent: false },
+      {
+        source: "/cleansers/confidence",
+        destination: "/booster/confidence",
+        permanent: false,
+      },
+      {
+        source: "/cleansers/mantra",
+        destination: "/booster/mantra",
+        permanent: false,
+      },
+      {
+        source: "/cleansers/promises",
+        destination: "/booster/promises",
+        permanent: false,
+      },
     ];
   },
 };

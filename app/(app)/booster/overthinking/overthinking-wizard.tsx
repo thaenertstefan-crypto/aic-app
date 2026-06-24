@@ -612,7 +612,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   if (!introSeen && !introDismissed && INTRO_CARDS.length > 0) {
     return (
       <div className="flex min-h-svh flex-col">
-        <SubPageHeader backHref="/recipes" title="Overthinking" />
+        <SubPageHeader backHref="/booster" title="Overthinking" />
         <div className="flex flex-1 flex-col justify-center">
           <RecipeIntro
             cards={INTRO_CARDS}
@@ -672,7 +672,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
           )}
 
           <div className="flex w-full flex-col gap-3 pt-4">
-            <Button className="w-full" size="lg" render={<Link href="/recipes" />}>
+            <Button className="w-full" size="lg" render={<Link href="/booster" />}>
               Zurück zur Übersicht
             </Button>
             <Button
@@ -701,7 +701,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
   return (
     <div className="relative flex min-h-svh flex-col">
-      <SubPageHeader backHref="/recipes" title="Overthinking" />
+      <SubPageHeader backHref="/booster" title="Overthinking" />
       <div className="flex flex-1 flex-col px-4 py-6">
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col">
           {/* "Worum geht's?"-Collapsible — nur in Schritt 1 (Wiederkehrer-Einstieg) */}

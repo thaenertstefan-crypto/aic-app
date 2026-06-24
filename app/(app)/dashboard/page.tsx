@@ -197,7 +197,7 @@ export default async function DashboardPage() {
     {
       key: "overthinking",
       sentence: "Ich bin schon wieder am Overthinken",
-      href: "/recipes/overthinking",
+      href: "/booster/overthinking",
     },
     {
       key: "bor",
@@ -207,17 +207,17 @@ export default async function DashboardPage() {
     {
       key: "mantra",
       sentence: "Ich fühl mich grad nicht gut genug",
-      href: "/cleansers/mantra",
+      href: "/booster/mantra",
     },
     {
       key: "promises",
       sentence: "Ich will mein Versprechen an mich selbst einlösen",
-      href: "/cleansers/promises",
+      href: "/booster/promises",
     },
     {
       key: "confidence",
       sentence: "Ich brauch 'n schnellen Confidence-Boost",
-      href: "/cleansers/confidence",
+      href: "/booster/confidence",
     },
   ];
 

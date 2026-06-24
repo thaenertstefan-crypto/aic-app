@@ -12,7 +12,7 @@ export type CleanserCheckinState = {
 
 const MANTRA_MAX = 120;
 const CARD_MAX = 200;
-const REVALIDATE_PATH = "/cleansers/mantra";
+const REVALIDATE_PATH = "/booster/mantra";
 
 export type MantraActionState = { error: string | null; success: boolean };
 

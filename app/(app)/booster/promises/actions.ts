@@ -116,7 +116,7 @@ export async function createPromiseAction(
     return { error: error.message, success: false };
   }
 
-  revalidatePath("/cleansers/promises");
+  revalidatePath("/booster/promises");
   return { error: null, success: true };
 }
 
@@ -215,7 +215,7 @@ export async function togglePromiseCompletionAction(
       ? current
       : null;
 
-  revalidatePath("/cleansers/promises");
+  revalidatePath("/booster/promises");
   return { error: null, success: true, doneToday, currentStreak: current, milestone };
 }
 
@@ -248,6 +248,6 @@ export async function endPromiseAction(
     return { error: error.message, success: false };
   }
 
-  revalidatePath("/cleansers/promises");
+  revalidatePath("/booster/promises");
   return { error: null, success: true };
 }
