@@ -27,6 +27,13 @@ export function Crossfade({
     return <div className={className}>{children}</div>;
   }
 
+  // Bei stabilem Token (oder nach dem Swap) die LIVE children rendern, damit
+  // interaktive Inhalte (kontrollierte Inputs, Radios, Slider) funktionieren —
+  // der eingefrorene Snapshot `shown.value` wird nur während der Ausblend-Phase
+  // gezeigt (Token bereits gewechselt, Swap noch ausstehend), damit der alte
+  // Inhalt sauber ausblendet.
+  const content = shown.token === token ? children : shown.value;
+
   return (
     <div
       className={cn(
@@ -36,7 +43,7 @@ export function Crossfade({
       )}
       style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
     >
-      {shown.value}
+      {content}
     </div>
   );
 }

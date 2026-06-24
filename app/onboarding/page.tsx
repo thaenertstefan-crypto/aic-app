@@ -19,10 +19,10 @@ import { Slider } from "@/components/ui/slider";
 import { FormError } from "@/components/ui/form-error";
 import { Mascot, type MascotExpression } from "@/components/brand/mascot";
 import { Crossfade } from "@/components/dashboard/crossfade";
-import { LoginOnboardingOverlay } from "@/components/onboarding/login-onboarding-overlay";
 import { POST_LOGIN_KEY } from "@/components/dashboard/dashboard-reveal";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { ONBOARDING_INTRO } from "@/lib/content/onboarding-intro";
+import { cn } from "@/lib/utils";
 
 import { completeOnboardingAction } from "@/app/onboarding/onboarding.actions";
 
@@ -90,23 +90,37 @@ export default function OnboardingPage() {
   const [name, setName] = useState("");
 
   const mascotRef = useRef<HTMLDivElement>(null);
+  const coverRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  // Übergangs-Overlay nur beim allerersten Onboarding-Eintritt direkt nach dem
-  // Login/Signup (frischer Post-Login-Marker). Per useEffect gesetzt, damit es
-  // keine Hydration-Diskrepanz gibt.
-  const [showLoginIntro, setShowLoginIntro] = useState(false);
-  useEffect(() => {
+  // Übergangs-Animation nur beim allerersten Onboarding-Eintritt direkt nach dem
+  // Login/Signup (frischer Post-Login-Marker). Lazy-Initializer (wie
+  // dashboard-reveal), damit die Startzustände schon im ersten Client-Render
+  // gesetzt sind (kein Flash). Der Marker wird im Effect entfernt.
+  const [showLoginIntro, setShowLoginIntro] = useState(() => {
+    if (typeof window === "undefined") return false;
     try {
       const raw = sessionStorage.getItem(POST_LOGIN_KEY);
       const ts = raw ? Number(raw) : NaN;
-      if (Number.isFinite(ts) && Date.now() - ts < POST_LOGIN_MAX_AGE_MS) {
-        sessionStorage.removeItem(POST_LOGIN_KEY);
-        setShowLoginIntro(true);
-      }
+      return Number.isFinite(ts) && Date.now() - ts < POST_LOGIN_MAX_AGE_MS;
     } catch {
-      // sessionStorage nicht verfügbar — kein Overlay, kein Problem.
+      return false;
     }
-  }, []);
+  });
+  // Während der Intro überschriebener Gesichtsausdruck (Freude beim Landen).
+  const [introExpression, setIntroExpression] = useState<MascotExpression | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (showLoginIntro) {
+      try {
+        sessionStorage.removeItem(POST_LOGIN_KEY);
+      } catch {
+        // ignore
+      }
+    }
+  }, [showLoginIntro]);
 
   const [state, formAction, pending] = useActionState(completeOnboardingAction, {
     error: null,
@@ -128,23 +142,77 @@ export default function OnboardingPage() {
     }
   }, [state.success]);
 
-  // Mascot springt beim ersten Mount aus dem Boden in die Mitte.
+  // Mascot-Entrance: entweder die Login→Onboarding-Sprungsequenz (nur beim
+  // allerersten Eintritt nach Login) oder der normale Mount-Tween.
   useEffect(() => {
-    const el = mascotRef.current;
-    if (!el) return;
+    const mascot = mascotRef.current;
+    if (!mascot) return;
+
+    // ── Login→Onboarding-Übergang ──
+    if (showLoginIntro) {
+      const content = contentRef.current;
+      const cover = coverRef.current;
+
+      if (reduced) {
+        gsap.set(mascot, { y: 0, rotation: 0, opacity: 1, scale: 1 });
+        if (content) gsap.set(content, { opacity: 0 });
+        setIntroExpression("radiant");
+        const tl = gsap.timeline({
+          onComplete: () => {
+            setShowLoginIntro(false);
+            setIntroExpression(null);
+          },
+        });
+        if (content) tl.to(content, { opacity: 1, duration: 0.5, delay: 0.5 });
+        if (cover) tl.to(cover, { opacity: 0, duration: 0.4 }, "+=0.1");
+        return () => {
+          tl.kill();
+        };
+      }
+
+      const drop = window.innerHeight * 0.45;
+      gsap.set(mascot, { y: -drop, rotation: 180, opacity: 1, scale: 1 });
+      if (content) gsap.set(content, { opacity: 0 });
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          setShowLoginIntro(false);
+          setIntroExpression(null);
+        },
+      });
+      // a–c: ein Satz nach unten, dabei aufrecht drehen; beim Landen strahlen.
+      tl.to(mascot, {
+        y: 0,
+        rotation: 0,
+        duration: 1.0,
+        ease: "power2.out",
+        onComplete: () => setIntroExpression("radiant"),
+      });
+      // e: Schritt 1 langsam unter dem Maskottchen einblenden.
+      if (content) tl.to(content, { opacity: 1, duration: 0.9, ease: "power1.out" }, "+=0.35");
+      // f: Cover ausblenden → Logo + Layout erscheinen mit Schritt 1.
+      if (cover) tl.to(cover, { opacity: 0, duration: 0.6, ease: "power1.in" }, "+=0.1");
+
+      return () => {
+        tl.kill();
+      };
+    }
+
+    // ── Normaler Mount-Tween ──
     if (reduced) {
-      gsap.set(el, { y: 0, opacity: 1, scale: 1 });
+      gsap.set(mascot, { y: 0, opacity: 1, scale: 1 });
       return;
     }
     const tween = gsap.fromTo(
-      el,
+      mascot,
       { y: 80, opacity: 0 },
       { y: 0, opacity: 1, duration: 0.7, ease: "back.out(1.7)" },
     );
     return () => {
       tween.kill();
     };
-  }, [reduced]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Kleiner Hüpfer auf der Antwort-Karte.
   useEffect(() => {
@@ -195,16 +263,46 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex min-h-svh flex-col justify-center px-4 py-8">
-      {showLoginIntro && (
-        <LoginOnboardingOverlay onDone={() => setShowLoginIntro(false)} />
-      )}
-      {/* Mascot über der Karte */}
-      <div className="mb-4 flex justify-center">
-        <div ref={mascotRef}>
-          <Mascot expression={expressionForStep(step)} size="md" />
+      {/* Clean-Cover für den Login→Onboarding-Übergang: verdeckt Logo + Layout,
+          sodass beim Sprung nur das Maskottchen sichtbar ist. Immer gerendert
+          (kein Struktur-Mismatch bei der Hydration), nur per `hidden` gated. */}
+      <div
+        ref={coverRef}
+        aria-hidden="true"
+        suppressHydrationWarning
+        className={cn(
+          "fixed inset-0 z-40 bg-[var(--background)]",
+          !showLoginIntro && "hidden",
+        )}
+      />
+
+      {/* Mascot über der Karte (z-50 → über dem Cover während der Intro) */}
+      <div className="relative z-50 mb-4 flex justify-center">
+        <div
+          ref={mascotRef}
+          suppressHydrationWarning
+          style={
+            showLoginIntro && !reduced
+              ? { transform: "translateY(-45vh) rotate(180deg)" }
+              : undefined
+          }
+        >
+          <Mascot
+            expression={introExpression ?? expressionForStep(step)}
+            size="md"
+          />
         </div>
       </div>
 
+      {/* Inhalt (Fortschritt + Karte + Navigation) — während der Intro
+          ausgeblendet, blendet danach unter dem Maskottchen ein. z-50 → über
+          dem Cover. */}
+      <div
+        ref={contentRef}
+        className="relative z-50 flex flex-col"
+        suppressHydrationWarning
+        style={showLoginIntro ? { opacity: 0 } : undefined}
+      >
       {/* Fortschrittsanzeige */}
       <div className="mx-auto mb-6 flex w-full max-w-sm flex-col gap-2">
         <span className="text-sm font-medium text-muted-foreground">
@@ -351,6 +449,7 @@ export default function OnboardingPage() {
             Zurück
           </Button>
         )}
+      </div>
       </div>
     </div>
   );

@@ -72,9 +72,11 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
             size="lg"
             expression="smile"
             pulseSeconds={3}
+            rotate={180}
             gazeX={0}
-            gazeY={3}
-            className="pointer-events-none absolute top-0 left-1/2 -ml-16 -mt-14 z-0"
+            gazeY={-3}
+            className="pointer-events-none absolute left-1/2 -ml-16 -mt-10 z-0"
+            style={{ top: "env(safe-area-inset-top, 0px)" }}
           />
         )}
       </div>
@@ -111,9 +113,11 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
             size="lg"
             expression="smile"
             pulseSeconds={3}
+            rotate={180}
             gazeX={0}
-            gazeY={3}
-            className="pointer-events-none absolute top-0 left-1/2 -ml-16 -mt-14 z-0"
+            gazeY={-3}
+            className="pointer-events-none absolute left-1/2 -ml-16 -mt-10 z-0"
+            style={{ top: "env(safe-area-inset-top, 0px)" }}
           />
         )}
       </div>

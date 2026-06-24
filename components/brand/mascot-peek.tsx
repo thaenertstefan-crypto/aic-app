@@ -21,6 +21,9 @@ type MascotPeekProps = {
    *  und gleitet also mit dem Mascot mit (z. B. ein Notizblock, den er „hält"). */
   accessory?: ReactNode;
   className?: string;
+  /** Inline-Styles am Wurzel-Container — z. B. für Safe-Area-Insets, die sich
+   *  nicht sauber als Tailwind-Klasse ausdrücken lassen. */
+  style?: React.CSSProperties;
 };
 
 /**
@@ -42,6 +45,7 @@ export function MascotPeek({
   rotate = 0,
   accessory,
   className,
+  style,
 }: MascotPeekProps) {
   const reduced = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
@@ -84,7 +88,7 @@ export function MascotPeek({
   }, [reduced, from, rotate]);
 
   return (
-    <div ref={ref} className={cn("relative inline-block", className)}>
+    <div ref={ref} className={cn("relative inline-block", className)} style={style}>
       <Mascot
         expression={expression}
         pulseSeconds={pulseSeconds}
