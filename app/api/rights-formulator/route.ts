@@ -8,6 +8,10 @@ import {
 } from "@/lib/anthropic/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
+// Cap per-field input length so a single allowed call can't drive up input-token
+// costs. max_tokens only bounds the OUTPUT.
+const MAX_INPUT_LEN = 2000;
+
 /**
  * Reformulate a user's reflection (Recipe #3 – Bill of Rights) into a single
  * empowering "Ich habe das Recht, …" statement. Accepts { situation,
@@ -39,6 +43,19 @@ export async function POST(request: Request) {
     );
   }
 
+  if (
+    (situation?.trim().length ?? 0) > MAX_INPUT_LEN ||
+    (idealReaction?.trim().length ?? 0) > MAX_INPUT_LEN
+  ) {
+    return Response.json(
+      {
+        error:
+          "Deine Eingabe ist etwas lang geraten. Kürze sie bitte ein wenig und versuch es noch einmal.",
+      },
+      { status: 400 },
+    );
+  }
+
   // Cap hourly AI calls per user (checked after input validation so invalid
   // requests don't burn quota).
   if (
@@ -54,10 +71,10 @@ export async function POST(request: Request) {
 
   try {
     const userMessage = `Situation, in der ich mich zurückgehalten gefühlt habe:
-${situation?.trim() || "(keine Angabe)"}
+<situation>${situation?.trim() || "(keine Angabe)"}</situation>
 
 Wie ich idealerweise gehandelt hätte:
-${idealReaction?.trim() || "(keine Angabe)"}`;
+<ideal_reaction>${idealReaction?.trim() || "(keine Angabe)"}</ideal_reaction>`;
 
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5",

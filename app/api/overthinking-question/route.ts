@@ -9,6 +9,12 @@ import {
 } from "@/lib/anthropic/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
+// Cap input so a single allowed call can't drive up input-token costs
+// (max_tokens only bounds the OUTPUT).
+const MAX_PROBLEM_LEN = 2000;
+const MAX_WHY_ITEMS = 10;
+const MAX_WHY_ITEM_LEN = 500;
+
 /**
  * Formulate a tailored question for the Overthinking wizard (Recipe #5 –
  * Gedankenspirale). Accepts { problem, whyChain, mode } and returns { question }.
@@ -46,6 +52,16 @@ export async function POST(request: Request) {
     );
   }
 
+  if (problem.trim().length > MAX_PROBLEM_LEN) {
+    return Response.json(
+      {
+        error:
+          "Deine Beschreibung ist etwas lang geraten. Kürze sie bitte ein wenig und versuch es noch einmal.",
+      },
+      { status: 400 },
+    );
+  }
+
   // Cap hourly AI calls per user (checked after input validation so invalid
   // requests don't burn quota).
   if (
@@ -61,7 +77,8 @@ export async function POST(request: Request) {
 
   try {
     const answers = (whyChain ?? [])
-      .map((a) => a?.trim())
+      .slice(0, MAX_WHY_ITEMS)
+      .map((a) => a?.trim().slice(0, MAX_WHY_ITEM_LEN))
       .filter((a): a is string => Boolean(a));
 
     const previousAnswers =
@@ -70,10 +87,10 @@ export async function POST(request: Request) {
         : "(noch keine)";
 
     const userMessage = `Oberflächliches Problem:
-${problem.trim()}
+<problem>${problem.trim()}</problem>
 
 Bisherige Antworten auf „Warum?“:
-${previousAnswers}
+<why_chain>${previousAnswers}</why_chain>
 
 ${
   isChallenger

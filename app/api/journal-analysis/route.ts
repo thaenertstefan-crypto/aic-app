@@ -13,6 +13,14 @@ import { getValueLabel } from "@/lib/utils/values-bank";
 const FALLBACK_INSIGHTS =
   "Wir konnten diesmal leider keine Beobachtungen für dich erstellen. Schau einfach selbst noch einmal auf deine Woche zurück – was hat sich für dich besonders stimmig angefühlt?";
 
+// Entries come from the user's own DB, so defensively truncate (no 400) to keep
+// input-token costs bounded — max_tokens only bounds the OUTPUT.
+const MAX_ENTRY_LEN = 2000;
+
+function clampEntryText(value: string): string {
+  return value.slice(0, MAX_ENTRY_LEN);
+}
+
 type DailyValueContent = { happenings: string; response: string };
 type ValueEvalContent = {
   positive_reflection: string;
@@ -99,7 +107,7 @@ export async function POST() {
     const entriesText = entries
       .map(
         (entry, i) =>
-          `Tag ${i + 1}\nWas ist passiert: ${entry.content.happenings}\nGedanken & Gefühle: ${entry.content.response}`,
+          `Tag ${i + 1}\nWas ist passiert: ${clampEntryText(entry.content.happenings)}\nGedanken & Gefühle: ${clampEntryText(entry.content.response)}`,
       )
       .join("\n\n");
 
@@ -110,12 +118,15 @@ export async function POST() {
     }
 
 Die Tagebucheinträge der letzten Woche:
-
+<journal_entries>
 ${entriesText || "(keine Einträge vorhanden)"}
+</journal_entries>
 
 Rückblick der Person:
-Positive Momente: ${reflection.positive_reflection || "(keine Angabe)"}
-Belastende Momente: ${reflection.negative_reflection || "(keine Angabe)"}`;
+<rueckblick>
+Positive Momente: ${clampEntryText(reflection.positive_reflection) || "(keine Angabe)"}
+Belastende Momente: ${clampEntryText(reflection.negative_reflection) || "(keine Angabe)"}
+</rueckblick>`;
 
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5",
