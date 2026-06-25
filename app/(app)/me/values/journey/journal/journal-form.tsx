@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
+import { formatDateDE } from "@/lib/utils/date";
 
 import {
   saveJournalEntryAction,
@@ -27,11 +28,6 @@ function getTodayKey(): string {
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const dd = String(now.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
-}
-
-function formatDateDE(key: string): string {
-  const [y, m, d] = key.split("-");
-  return `${d}.${m}.${y}`;
 }
 
 // ─── Microcopy ──────────────────────────────────────────────────────

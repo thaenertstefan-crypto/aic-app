@@ -12,19 +12,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FormError } from "@/components/ui/form-error";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { PAGE_TITLES } from "@/lib/content/labels";
+import { formatDateDE } from "@/lib/utils/date";
 
 import {
   getMessyMoments,
   saveMessyMomentAction,
   type MessyMomentEntry,
 } from "./actions";
-
-// ─── Date helpers ───────────────────────────────────────────────────
-
-function formatDateDE(dateStr: string): string {
-  const [y, m, d] = dateStr.split("-");
-  return `${d}.${m}.${y}`;
-}
 
 function preview(text: string, maxLen = 80): string {
   if (text.length <= maxLen) return text;

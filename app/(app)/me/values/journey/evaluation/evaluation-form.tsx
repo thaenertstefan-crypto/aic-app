@@ -13,6 +13,7 @@ import { FormError } from "@/components/ui/form-error";
 
 import { VALUES_BANK, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
+import { formatDateDE } from "@/lib/utils/date";
 
 import {
   saveEvalReflectionAction,
@@ -20,13 +21,6 @@ import {
   startNewCycleAction,
   type EvaluationPageData,
 } from "@/app/(app)/recipes/values/actions";
-
-// ─── Date helpers ───────────────────────────────────────────────────
-
-function formatDateDE(key: string): string {
-  const [y, m, d] = key.split("-");
-  return `${d}.${m}.${y}`;
-}
 
 // ─── Props ──────────────────────────────────────────────────────────
 

@@ -126,20 +126,9 @@ function truncate(text: string, maxLen: number): string {
   return text.slice(0, maxLen).trimEnd() + "…";
 }
 
-/** Format an ISO date string to German locale: "2026-06-14" → "14.6.2026" */
-export function formatDateDE(dateStr: string): string {
-  try {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
-    return date.toLocaleDateString("de-DE", {
-      day: "numeric",
-      month: "numeric",
-      year: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
-}
+/** Format a date key "YYYY-MM-DD" to German "DD.MM.YYYY". Re-exported from the
+ *  central date helper so existing imports from this module keep working. */
+export { formatDateDE } from "./date";
 
 /* ------------------------------------------------------------------ */
 /*  Per-template-type content formatters                              */
