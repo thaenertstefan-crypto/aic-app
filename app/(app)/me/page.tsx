@@ -76,22 +76,32 @@ export default async function MePage() {
   let activeRightsCount = 0;
 
   if (user) {
-    const [{ data: profile }, { data: hypothesis }, { data: billOfRights }] =
-      await Promise.all([
-        supabase.from("profiles").select("name").eq("id", user.id).single(),
-        supabase
-          .from("values_hypothesis")
-          .select("values")
-          .eq("user_id", user.id)
-          .order("version", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from("bill_of_rights")
-          .select("rights")
-          .eq("user_id", user.id)
-          .maybeSingle(),
-      ]);
+    const [
+      { data: profile, error: profileError },
+      { data: hypothesis, error: hypothesisError },
+      { data: billOfRights, error: rightsError },
+    ] = await Promise.all([
+      supabase.from("profiles").select("name").eq("id", user.id).single(),
+      supabase
+        .from("values_hypothesis")
+        .select("values")
+        .eq("user_id", user.id)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("bill_of_rights")
+        .select("rights")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]);
+
+    // Echte Lesefehler an die Segment-Error-Boundary geben statt als Leerzustand
+    // zu zeigen.
+    const readError = profileError ?? hypothesisError ?? rightsError;
+    if (readError) {
+      throw new Error(`me: read failed (${readError.code ?? "unknown"})`);
+    }
 
     name = profile?.name ?? null;
     valuesCount = ((hypothesis?.values as string[] | null) ?? []).length;

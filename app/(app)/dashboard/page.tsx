@@ -59,10 +59,10 @@ export default async function DashboardPage() {
 
   if (user) {
     const [
-      { data: profile },
-      { data: moodRow },
-      { data: progress },
-      { data: billOfRights },
+      { data: profile, error: profileError },
+      { data: moodRow, error: moodError },
+      { data: progress, error: progressError },
+      { data: billOfRights, error: rightsError },
     ] = await Promise.all([
       supabase
         .from("profiles")
@@ -85,6 +85,13 @@ export default async function DashboardPage() {
         .eq("user_id", user.id)
         .maybeSingle(),
     ]);
+
+    // Echte Lesefehler dürfen nicht zu einem Leerzustand coalescen ("Daten weg"),
+    // sondern sollen die Segment-Error-Boundary (app/(app)/error.tsx) auslösen.
+    const readError = profileError ?? moodError ?? progressError ?? rightsError;
+    if (readError) {
+      throw new Error(`dashboard: read failed (${readError.code ?? "unknown"})`);
+    }
 
     name = profile?.name ?? null;
     activeRecipeId = profile?.active_recipe_id ?? null;

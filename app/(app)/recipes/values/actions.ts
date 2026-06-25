@@ -175,7 +175,7 @@ export async function getJournalData(): Promise<JournalPageData> {
   }
 
   // Fetch latest values hypothesis
-  const { data: hypothesisRow } = await supabase
+  const { data: hypothesisRow, error: hypothesisError } = await supabase
     .from("values_hypothesis")
     .select("values")
     .eq("user_id", user.id)
@@ -184,7 +184,7 @@ export async function getJournalData(): Promise<JournalPageData> {
     .maybeSingle();
 
   // Fetch journal entries for this recipe
-  const { data: entries } = await supabase
+  const { data: entries, error: entriesError } = await supabase
     .from("journal_entries")
     .select("id, entry_date, content")
     .eq("user_id", user.id)
@@ -193,7 +193,7 @@ export async function getJournalData(): Promise<JournalPageData> {
     .order("entry_date", { ascending: true });
 
   // Fetch user progress
-  const { data: progress } = await supabase
+  const { data: progress, error: progressError } = await supabase
     .from("user_recipe_progress")
     .select("started_at, current_step")
     .eq("user_id", user.id)
@@ -201,6 +201,12 @@ export async function getJournalData(): Promise<JournalPageData> {
     .order("cycle_number", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  // Echte Lesefehler an die Segment-Error-Boundary geben statt als Leerzustand.
+  const readError = hypothesisError ?? entriesError ?? progressError;
+  if (readError) {
+    throw new Error(`getJournalData: read failed (${readError.code ?? "unknown"})`);
+  }
 
   return {
     hypothesis: (hypothesisRow?.values as string[]) ?? null,
