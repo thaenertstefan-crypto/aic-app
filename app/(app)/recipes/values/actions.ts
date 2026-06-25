@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 
 import type { ActionState } from "@/lib/types/action-state";
 import { dbError } from "@/lib/utils/db-error";
+import { serverTodayKey } from "@/lib/server/timezone";
 
 /**
  * Save the values hypothesis (Step 1 of Recipe #1).
@@ -235,13 +236,12 @@ export async function saveJournalEntryAction(
     return { error: "Du musst angemeldet sein, um einen Eintrag zu speichern." };
   }
 
-  const entryDate = formData.get("entry_date");
+  // entry_date serverseitig in der User-Zeitzone bestimmen (nicht dem Client
+  // vertrauen) — damit Schreiben und Gating dieselbe Tagesgrenze nutzen.
+  const entryDate = await serverTodayKey();
   const happenings = formData.get("happenings");
   const response = formData.get("response");
 
-  if (!entryDate || typeof entryDate !== "string") {
-    return { error: "Kein Datum angegeben." };
-  }
   if (!happenings || typeof happenings !== "string") {
     return { error: "Bitte beschreib, was heute passiert ist." };
   }

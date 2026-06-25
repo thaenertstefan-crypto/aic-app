@@ -209,8 +209,6 @@ export function JournalForm({ initialData }: JournalFormProps) {
             ) : (
               /* ── Form ── */
               <form key={formKey} action={formAction} className="space-y-5">
-                <input type="hidden" name="entry_date" value={todayKey} />
-
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">{encouragement}</p>
                 </div>

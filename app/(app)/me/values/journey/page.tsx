@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { localDateKey } from "@/lib/utils/date";
+import { serverTodayKey } from "@/lib/server/timezone";
 
 import { ValuesJourneyClient } from "./values-journey-client";
 
@@ -71,7 +71,7 @@ export default async function ValuesJourneyPage() {
   // bleibt auf dem heute erledigten Tag; der Folgetag bleibt gesperrt bis zum
   // nächsten Kalendertag. Hypothese (0) und Auswertung (8) bleiben unberührt.
   if (
-    latestEntryDate === localDateKey() &&
+    latestEntryDate === (await serverTodayKey()) &&
     currentStep >= 1 &&
     currentStep <= 7
   ) {
