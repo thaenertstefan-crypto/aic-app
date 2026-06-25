@@ -7,12 +7,11 @@ import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
-
-type Right = { id: string; text: string; active: boolean };
+import type { RightItem } from "@/lib/types/db-json";
 
 export type MeRightsState = { error: string | null };
 
-async function loadRights(): Promise<{ userId: string | null; rights: Right[] }> {
+async function loadRights(): Promise<{ userId: string | null; rights: RightItem[] }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -25,12 +24,12 @@ async function loadRights(): Promise<{ userId: string | null; rights: Right[] }>
     .eq("user_id", user.id)
     .maybeSingle();
 
-  return { userId: user.id, rights: (data?.rights as Right[] | null) ?? [] };
+  return { userId: user.id, rights: (data?.rights as RightItem[] | null) ?? [] };
 }
 
 /** Schreibt das KOMPLETTE Array über die kanonische saveRightsAction zurück
  *  (upsert + BoR-Progress). */
-async function persistRights(rights: Right[]): Promise<string | null> {
+async function persistRights(rights: RightItem[]): Promise<string | null> {
   const fd = new FormData();
   fd.set("rights", JSON.stringify(rights));
   const res = await saveRightsAction({ error: null, success: false }, fd);
@@ -48,7 +47,7 @@ export async function appendRightAction(
   const { userId, rights } = await loadRights();
   if (!userId) return { error: "Du musst angemeldet sein." };
 
-  const updated: Right[] = [
+  const updated: RightItem[] = [
     ...rights,
     { id: crypto.randomUUID(), text, active: true },
   ];
@@ -115,8 +114,8 @@ export async function saveGeneratedRightAction(
     .select("rights")
     .eq("user_id", user.id)
     .maybeSingle();
-  const rights = (bor?.rights as Right[] | null) ?? [];
-  const updated: Right[] = [
+  const rights = (bor?.rights as RightItem[] | null) ?? [];
+  const updated: RightItem[] = [
     ...rights,
     { id: crypto.randomUUID(), text, active: true },
   ];

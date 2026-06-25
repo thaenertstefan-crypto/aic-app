@@ -11,9 +11,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCachedUser } from "@/lib/supabase/get-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { PAGE_TITLES } from "@/lib/content/labels";
+import type { RightItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
-
-type RightItem = { id: string; text: string; active: boolean };
 
 function MeBlock({
   icon: Icon,

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import type { MessyMomentContent } from "@/lib/types/db-json";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
 
@@ -12,11 +13,7 @@ import { serverTodayKey } from "@/lib/server/timezone";
 export type MessyMomentEntry = {
   id: string;
   entry_date: string;
-  content: {
-    messy_when: string;
-    conflicting_rules: string;
-    guilt_type: "healthy" | "unhealthy" | "unsure";
-  };
+  content: MessyMomentContent;
 };
 
 export type MessyMomentsData = {

@@ -7,6 +7,7 @@ import {
   logUsage,
 } from "@/lib/anthropic/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+import type { DailyValueContent, ValueEvalContent } from "@/lib/types/db-json";
 import { getValueLabel } from "@/lib/utils/values-bank";
 
 // Warm German fallback shown when the AI call fails for any reason.
@@ -20,12 +21,6 @@ const MAX_ENTRY_LEN = 2000;
 function clampEntryText(value: string): string {
   return value.slice(0, MAX_ENTRY_LEN);
 }
-
-type DailyValueContent = { happenings: string; response: string };
-type ValueEvalContent = {
-  positive_reflection: string;
-  negative_reflection: string;
-};
 
 /**
  * Analyse the user's last 7 daily journal entries (Recipe #1) and surface a few

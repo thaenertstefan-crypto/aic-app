@@ -95,10 +95,8 @@ export async function getMantraData(): Promise<MantraData> {
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
-  const cards =
-    cardRows && cardRows.length > 0
-      ? (cardRows as MantraCardData[])
-      : defaultCards();
+  const cards: MantraCardData[] =
+    cardRows && cardRows.length > 0 ? cardRows : defaultCards();
 
   return { mantra: mantraRow?.text ?? DEFAULT_MANTRA, cards };
 }
@@ -304,7 +302,7 @@ export async function seedDefaultCardsAction(): Promise<{
     .order("created_at", { ascending: true });
 
   if (existing && existing.length > 0) {
-    return { error: null, cards: existing as MantraCardData[] };
+    return { error: null, cards: existing };
   }
 
   const rows = DEFAULT_CARDS.map((c, i) => ({
@@ -324,7 +322,7 @@ export async function seedDefaultCardsAction(): Promise<{
   }
 
   const cards: MantraCardData[] = [...inserted]
-    .sort((a, b) => (a.sort_order as number) - (b.sort_order as number))
+    .sort((a, b) => a.sort_order - b.sort_order)
     .map((r) => ({ id: r.id, thought: r.thought, reframe: r.reframe }));
 
   revalidatePath(REVALIDATE_PATH);

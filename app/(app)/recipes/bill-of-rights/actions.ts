@@ -1,11 +1,16 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import type {
+  TablesInsert,
+  TablesUpdate,
+} from "@/lib/supabase/database.types";
 import type { ActionState } from "@/lib/types/action-state";
+import type { RightItem } from "@/lib/types/db-json";
 import { dbError } from "@/lib/utils/db-error";
 
 export type RightsData = {
-  rights: { id: string; text: string; active: boolean }[] | null;
+  rights: RightItem[] | null;
   introSeen: boolean;
 };
 
@@ -45,7 +50,7 @@ export async function getBillOfRightsData(): Promise<{
   return {
     error: null,
     data: {
-      rights: (bor?.rights as { id: string; text: string; active: boolean }[]) ?? null,
+      rights: (bor?.rights as RightItem[]) ?? null,
       introSeen: Boolean(introRow),
     },
   };
@@ -53,12 +58,10 @@ export async function getBillOfRightsData(): Promise<{
 
 // ─── Save Rights ────────────────────────────────────────────────────────
 
-type Right = { id: string; text: string; active: boolean };
-
 /** saveRightsAction liefert zusätzlich das gemergte Array zurück, damit der
  *  Client seinen State mit dem Server-Stand synchronisieren kann. */
 export type SaveRightsState = ActionState & {
-  rights?: Right[];
+  rights?: RightItem[];
 };
 
 export async function saveRightsAction(
@@ -80,7 +83,7 @@ export async function saveRightsAction(
     return { error: "Keine Rechte zum Speichern erhalten.", success: false };
   }
 
-  let incoming: Right[];
+  let incoming: RightItem[];
   try {
     incoming = JSON.parse(rightsRaw);
   } catch {
@@ -107,7 +110,7 @@ export async function saveRightsAction(
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const dbRights = (existing?.rights as Right[] | null) ?? [];
+  const dbRights = (existing?.rights as RightItem[] | null) ?? [];
   const incomingIds = new Set(incoming.map((r) => r.id));
   const previousIdSet = new Set(previousIds);
   // DB-Rechte, die der Client weder kannte noch mitschickt → parallel angelegt,
@@ -116,7 +119,7 @@ export async function saveRightsAction(
   const concurrentAdds = dbRights.filter(
     (r) => !incomingIds.has(r.id) && !previousIdSet.has(r.id),
   );
-  const merged: Right[] = [...incoming, ...concurrentAdds];
+  const merged: RightItem[] = [...incoming, ...concurrentAdds];
 
   if (existing) {
     const { error: updateError } = await supabase
@@ -156,7 +159,7 @@ export async function saveRightsAction(
     .maybeSingle();
 
   if (progress) {
-    const update: Record<string, string | number> = { current_step: 2 };
+    const update: TablesUpdate<"user_recipe_progress"> = { current_step: 2 };
     if (completed && progress.status !== "completed") {
       update.status = "completed";
       update.completed_at = new Date().toISOString();
@@ -171,7 +174,7 @@ export async function saveRightsAction(
       return { error: dbError(progressError, "bill-of-rights"), success: false };
     }
   } else {
-    const insert: Record<string, string | number | boolean> = {
+    const insert: TablesInsert<"user_recipe_progress"> = {
       user_id: user.id,
       recipe_slug: "bill-of-rights",
       current_step: 2,

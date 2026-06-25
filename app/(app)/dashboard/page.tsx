@@ -14,8 +14,7 @@ import type {
   Destination,
   PrimaryRecommendation,
 } from "@/components/dashboard/daily-focus";
-
-type RightItem = { id: string; text: string; active: boolean };
+import type { RightItem } from "@/lib/types/db-json";
 
 /** Day-of-year (1–366), used to pick a stable daily right. */
 function dayOfYear(date: Date): number {

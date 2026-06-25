@@ -14,8 +14,7 @@ import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/brand/page-header";
 import { NAV_LABELS } from "@/lib/content/labels";
-
-type RightItem = { id: string; text: string; active: boolean };
+import type { RightItem } from "@/lib/types/db-json";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -60,7 +59,7 @@ export default async function SettingsPage() {
     ).size;
 
     longestPromiseStreak = (promiseRows ?? []).reduce(
-      (max, p) => Math.max(max, (p.longest_streak as number) ?? 0),
+      (max, p) => Math.max(max, p.longest_streak ?? 0),
       0,
     );
 

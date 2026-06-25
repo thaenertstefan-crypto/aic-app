@@ -86,7 +86,7 @@ export async function getJournalEntryDetail(
   if (!data) return null;
   return {
     content: (data.content as Record<string, unknown>) ?? {},
-    ai_insights: (data.ai_insights as string | null) ?? null,
+    ai_insights: data.ai_insights ?? null,
   };
 }
 

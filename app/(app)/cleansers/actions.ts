@@ -27,7 +27,7 @@ export async function getSeenCleanserIntros(): Promise<string[]> {
     .select("cleanser_slug")
     .eq("user_id", user.id);
 
-  return (data ?? []).map((r) => r.cleanser_slug as string);
+  return (data ?? []).map((r) => r.cleanser_slug);
 }
 
 /**

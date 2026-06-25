@@ -35,9 +35,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 type ProgressRow = {
   recipe_slug: string;
-  status: string;
-  current_step: number;
-  cycle_number: number;
+  status: string | null;
+  current_step: number | null;
+  cycle_number: number | null;
 };
 
 type ProgressState = {
@@ -52,11 +52,12 @@ function buildProgressMap(rows: ProgressRow[]): Map<string, ProgressState> {
 
   for (const row of rows) {
     const existing = map.get(row.recipe_slug);
-    if (!existing || row.cycle_number > existing.cycle_number) {
+    const cycleNumber = row.cycle_number ?? 0;
+    if (!existing || cycleNumber > existing.cycle_number) {
       map.set(row.recipe_slug, {
-        status: row.status,
-        current_step: row.current_step,
-        cycle_number: row.cycle_number,
+        status: row.status ?? "not_started",
+        current_step: row.current_step ?? 1,
+        cycle_number: cycleNumber,
       });
     }
   }

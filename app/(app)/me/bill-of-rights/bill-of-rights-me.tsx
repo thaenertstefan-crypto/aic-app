@@ -13,8 +13,7 @@ import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { MascotJudge } from "@/components/brand/mascot-judge";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
-
-type Right = { id: string; text: string; active: boolean };
+import type { RightItem } from "@/lib/types/db-json";
 
 const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
 
@@ -69,15 +68,15 @@ export function BillOfRightsMe({
   initialRights,
   introSeen,
 }: {
-  initialRights: Right[];
+  initialRights: RightItem[];
   introSeen: boolean;
 }) {
-  const [rights, setRights] = useState<Right[]>(initialRights);
+  const [rights, setRights] = useState<RightItem[]>(initialRights);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  async function persist(updated: Right[]) {
+  async function persist(updated: RightItem[]) {
     // Optimistisch setzen, aber bei Fehler zurückrollen, damit der UI-Stand
     // nicht fälschlich "gespeichert" suggeriert.
     const previous = rights;
@@ -101,7 +100,7 @@ export function BillOfRightsMe({
 
   const activeRights = rights.filter((r) => r.active);
 
-  function startEdit(r: Right) {
+  function startEdit(r: RightItem) {
     setEditingId(r.id);
     setEditText(r.text);
   }

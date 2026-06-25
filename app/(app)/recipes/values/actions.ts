@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import type { ActionState } from "@/lib/types/action-state";
+import type { DailyValueContent, ValueEvalContent } from "@/lib/types/db-json";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
 
@@ -149,7 +150,7 @@ export async function getHypothesisData(): Promise<string[] | null> {
 export type JournalEntry = {
   id: string;
   entry_date: string;
-  content: { happenings: string; response: string };
+  content: DailyValueContent;
 };
 
 export type JournalPageData = {
@@ -333,7 +334,7 @@ export async function saveJournalEntryAction(
       .limit(1)
       .maybeSingle();
 
-    if (progress && progress.current_step < 3) {
+    if (progress && (progress.current_step ?? 1) < 3) {
       const { error: advanceError } = await supabase
         .from("user_recipe_progress")
         .update({ current_step: 3 })
@@ -359,7 +360,7 @@ export async function saveHypothesis(formData: FormData): Promise<void> {
 
 export type ValueEvalEntry = {
   id: string;
-  content: { positive_reflection: string; negative_reflection: string };
+  content: ValueEvalContent;
   aiInsights: string | null;
 } | null;
 
@@ -370,9 +371,9 @@ export type EvaluationPageData = {
   valueEvalEntry: ValueEvalEntry;
   progress: {
     id: string;
-    cycleNumber: number;
-    startedAt: string;
-    status: string;
+    cycleNumber: number | null;
+    startedAt: string | null;
+    status: string | null;
   } | null;
   phase: "reflection" | "adjust" | "complete";
 };
@@ -443,7 +444,7 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
   ]);
 
   const hypothesis = (hypothesisRow?.values as string[]) ?? [];
-  const hypothesisVersion = (hypothesisRow?.version as number) ?? 1;
+  const hypothesisVersion = hypothesisRow?.version ?? 1;
 
   // Show them in chronological order.
   const cycleEntries = ((entries as JournalEntry[]) ?? []).slice().reverse();
@@ -451,11 +452,11 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
   const valueEvalEntry: ValueEvalEntry = evalRow
     ? {
         id: evalRow.id,
-        content: (evalRow.content as {
-          positive_reflection: string;
-          negative_reflection: string;
-        }) ?? { positive_reflection: "", negative_reflection: "" },
-        aiInsights: (evalRow.ai_insights as string | null) ?? null,
+        content: (evalRow.content as ValueEvalContent) ?? {
+          positive_reflection: "",
+          negative_reflection: "",
+        },
+        aiInsights: evalRow.ai_insights ?? null,
       }
     : null;
 
