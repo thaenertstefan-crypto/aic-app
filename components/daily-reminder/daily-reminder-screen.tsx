@@ -68,12 +68,10 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
 
     const raf = requestAnimationFrame(() => setVisible(true));
     const btnTimer = setTimeout(() => setShowButton(true), 2000);
-    const autoClose = setTimeout(() => setRight(null), 5000);
 
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(btnTimer);
-      clearTimeout(autoClose);
     };
   }, [right, reduced]);
 
@@ -86,7 +84,12 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
       onClick={() => setRight(null)}
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-background px-6"
     >
-      <p className="text-sm text-muted-foreground">Kurzer Reminder</p>
+      <p
+        className="text-lg font-medium text-primary"
+        style={{ textShadow: "0 0 18px rgba(231,182,94,0.55)" }}
+      >
+        Kurzer Reminder
+      </p>
 
       <p
         className={cn(
@@ -103,17 +106,21 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
         {asAffirmation(right)}
       </p>
 
-      {showButton && (
-        <Button
-          variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation();
-            setRight(null);
-          }}
-        >
-          Weiter
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        aria-hidden={!showButton}
+        tabIndex={showButton ? undefined : -1}
+        onClick={(e) => {
+          e.stopPropagation();
+          setRight(null);
+        }}
+        className={cn(
+          !reduced && "transition-opacity duration-500",
+          showButton ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+      >
+        Weiter
+      </Button>
     </div>
   );
 }
