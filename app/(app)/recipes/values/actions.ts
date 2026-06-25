@@ -4,10 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-export type ValuesActionState = {
-  error: string | null;
-  success?: boolean;
-};
+import type { ActionState } from "@/lib/types/action-state";
 
 /**
  * Save the values hypothesis (Step 1 of Recipe #1).
@@ -15,9 +12,9 @@ export type ValuesActionState = {
  * - Advances user_recipe_progress to step 2
  */
 export async function saveHypothesisAction(
-  _prevState: ValuesActionState,
+  _prevState: ActionState,
   formData: FormData,
-): Promise<ValuesActionState> {
+): Promise<ActionState> {
   const supabase = await createClient();
 
   const {
@@ -212,19 +209,15 @@ export async function getJournalData(): Promise<JournalPageData> {
   };
 }
 
-export type JournalActionState = {
-  error: string | null;
-};
-
 /**
  * Save (create or update) a daily journal entry for Recipe #1.
  * - Upserts into journal_entries by (user_id, entry_date, template_type)
  * - After saving, if 7+ entries exist, advances user_recipe_progress to step 3
  */
 export async function saveJournalEntryAction(
-  _prevState: JournalActionState,
+  _prevState: ActionState,
   formData: FormData,
-): Promise<JournalActionState> {
+): Promise<ActionState> {
   const supabase = await createClient();
 
   const {
@@ -326,12 +319,6 @@ export async function saveHypothesis(formData: FormData): Promise<void> {
 
 // ─── Evaluation (Step 3) ───────────────────────────────────────────
 
-export type EvaluationEntry = {
-  id: string;
-  entry_date: string;
-  content: { happenings: string; response: string };
-};
-
 export type ValueEvalEntry = {
   id: string;
   content: { positive_reflection: string; negative_reflection: string };
@@ -341,7 +328,7 @@ export type ValueEvalEntry = {
 export type EvaluationPageData = {
   hypothesis: string[];
   hypothesisVersion: number;
-  entries: EvaluationEntry[];
+  entries: JournalEntry[];
   valueEvalEntry: ValueEvalEntry;
   progress: {
     id: string;
@@ -412,7 +399,7 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
     .limit(7);
 
   // Show them in chronological order.
-  const cycleEntries = ((entries as EvaluationEntry[]) ?? []).slice().reverse();
+  const cycleEntries = ((entries as JournalEntry[]) ?? []).slice().reverse();
 
   // Fetch existing value_eval entry (if any)
   const { data: evalRow } = await supabase
@@ -463,20 +450,15 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
   };
 }
 
-export type EvalReflectionState = {
-  error: string | null;
-  success: boolean;
-};
-
 /**
  * Save the evaluation reflection (Phase 1 of Step 3).
  * Upserts a journal_entries row with template_type='value_eval'.
  * Returns success so the client can transition to the adjust phase.
  */
 export async function saveEvalReflectionAction(
-  _prevState: EvalReflectionState,
+  _prevState: ActionState,
   formData: FormData,
-): Promise<EvalReflectionState> {
+): Promise<ActionState> {
   const supabase = await createClient();
 
   const {
@@ -538,11 +520,6 @@ export async function saveEvalReflectionAction(
   return { error: null, success: true };
 }
 
-export type AdjustedHypothesisState = {
-  error: string | null;
-  success: boolean;
-};
-
 /**
  * Save adjusted values (Phase 2 of Step 3).
  * - Creates a NEW values_hypothesis row with version+1 (preserving history)
@@ -550,9 +527,9 @@ export type AdjustedHypothesisState = {
  * - Returns success so the client can transition to the complete phase
  */
 export async function saveAdjustedHypothesisAction(
-  _prevState: AdjustedHypothesisState,
+  _prevState: ActionState,
   formData: FormData,
-): Promise<AdjustedHypothesisState> {
+): Promise<ActionState> {
   const supabase = await createClient();
 
   const {
@@ -579,8 +556,9 @@ export async function saveAdjustedHypothesisAction(
     return { error: "Bitte mindestens einen Wert angeben.", success: false };
   }
 
+  const originalVersionRaw = formData.get("original_version");
   const originalVersion = parseInt(
-    formData.get("original_version") as string,
+    typeof originalVersionRaw === "string" ? originalVersionRaw : "",
     10,
   );
   const newVersion = isNaN(originalVersion) ? 2 : originalVersion + 1;
@@ -627,19 +605,15 @@ export async function saveAdjustedHypothesisAction(
   return { error: null, success: true };
 }
 
-export type NewCycleState = {
-  error: string | null;
-};
-
 /**
  * Start a new 7-day journal cycle (Phase 3 CTA).
  * Creates a new user_recipe_progress row with cycle_number+1,
  * current_step=2 (skip hypothesis), then redirects to the journal.
  */
 export async function startNewCycleAction(
-  _prevState: NewCycleState,
+  _prevState: ActionState,
   _formData: FormData,
-): Promise<NewCycleState> {
+): Promise<ActionState> {
   const supabase = await createClient();
 
   const {

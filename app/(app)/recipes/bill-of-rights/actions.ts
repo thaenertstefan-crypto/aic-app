@@ -1,11 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-
-export type BillOfRightsActionState = {
-  error: string | null;
-  success: boolean;
-};
+import type { ActionState } from "@/lib/types/action-state";
 
 export type RightsData = {
   journalEntry: {
@@ -87,9 +83,9 @@ export async function getBillOfRightsData(): Promise<{
 // ─── Save Reflection (journal entry) ────────────────────────────────────
 
 export async function saveReflectionAction(
-  _prevState: BillOfRightsActionState,
+  _prevState: ActionState,
   formData: FormData,
-): Promise<BillOfRightsActionState> {
+): Promise<ActionState> {
   const supabase = await createClient();
 
   const {
@@ -100,19 +96,18 @@ export async function saveReflectionAction(
     return { error: "Du musst angemeldet sein, um zu speichern.", success: false };
   }
 
-  const prompt1 = formData.get("prompt1") as string | null;
-  const prompt2 = formData.get("prompt2") as string | null;
-  const prompt3 = formData.get("prompt3") as string | null;
+  const prompt1Raw = formData.get("prompt1");
+  const prompt2Raw = formData.get("prompt2");
+  const prompt3Raw = formData.get("prompt3");
+  const prompt1 = typeof prompt1Raw === "string" ? prompt1Raw : "";
+  const prompt2 = typeof prompt2Raw === "string" ? prompt2Raw : "";
+  const prompt3 = typeof prompt3Raw === "string" ? prompt3Raw : "";
 
-  if (!prompt1?.trim()) {
+  if (!prompt1.trim()) {
     return { error: "Bitte beschreib kurz, was diese Woche passiert ist.", success: false };
   }
 
-  const content = {
-    prompt1: prompt1 ?? "",
-    prompt2: prompt2 ?? "",
-    prompt3: prompt3 ?? "",
-  };
+  const content = { prompt1, prompt2, prompt3 };
 
   // Upsert journal_entries
   const { data: existingEntry } = await supabase
@@ -181,9 +176,9 @@ export async function saveReflectionAction(
 // ─── Save Rights ────────────────────────────────────────────────────────
 
 export async function saveRightsAction(
-  _prevState: BillOfRightsActionState,
+  _prevState: ActionState,
   formData: FormData,
-): Promise<BillOfRightsActionState> {
+): Promise<ActionState> {
   const supabase = await createClient();
 
   const {
@@ -194,8 +189,8 @@ export async function saveRightsAction(
     return { error: "Du musst angemeldet sein, um zu speichern.", success: false };
   }
 
-  const rightsRaw = formData.get("rights") as string | null;
-  if (!rightsRaw) {
+  const rightsRaw = formData.get("rights");
+  if (typeof rightsRaw !== "string" || !rightsRaw) {
     return { error: "Keine Rechte zum Speichern erhalten.", success: false };
   }
 

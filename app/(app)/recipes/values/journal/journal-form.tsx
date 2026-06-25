@@ -12,11 +12,8 @@ import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { getValueLabel } from "@/lib/utils/values-bank";
 
-import {
-  saveJournalEntryAction,
-  type JournalActionState,
-  type JournalPageData,
-} from "../actions";
+import { saveJournalEntryAction, type JournalPageData } from "../actions";
+import type { ActionState } from "@/lib/types/action-state";
 
 type JournalDraft = { happenings: string; response: string };
 
@@ -135,7 +132,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
   // Form action — wraps the server action to fall back to a local draft when
   // the request can't reach the server (offline or network error).
   const [state, formAction, pending] = useActionState(
-    async (prev: JournalActionState, formData: FormData) => {
+    async (prev: ActionState, formData: FormData) => {
       const draft: JournalDraft = {
         happenings: (formData.get("happenings") as string) ?? "",
         response: (formData.get("response") as string) ?? "",
