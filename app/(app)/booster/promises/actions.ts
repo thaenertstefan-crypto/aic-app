@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { dbError } from "@/lib/utils/db-error";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type CreatePromiseState = {
@@ -113,7 +114,7 @@ export async function createPromiseAction(
   });
 
   if (error) {
-    return { error: error.message, success: false };
+    return { error: dbError(error, "promises"), success: false };
   }
 
   revalidatePath("/booster/promises");
@@ -182,7 +183,7 @@ export async function togglePromiseCompletionAction(
       .delete()
       .eq("id", existing.id);
     if (error) {
-      return failed(error.message);
+      return failed(dbError(error, "promise_completions"));
     }
     doneToday = false;
   } else {
@@ -191,7 +192,7 @@ export async function togglePromiseCompletionAction(
       .insert({ promise_id: promiseId, completed_date: today });
     // 23505 = unique_violation → already completed today, treat as done.
     if (error && error.code !== "23505") {
-      return failed(error.message);
+      return failed(dbError(error, "promise_completions"));
     }
     doneToday = true;
   }
@@ -210,7 +211,7 @@ export async function togglePromiseCompletionAction(
     .eq("user_id", user.id);
 
   if (updateError) {
-    return failed(updateError.message);
+    return failed(dbError(updateError, "promises"));
   }
 
   const milestone =
@@ -249,7 +250,7 @@ export async function endPromiseAction(
     .eq("user_id", user.id);
 
   if (error) {
-    return { error: error.message, success: false };
+    return { error: dbError(error, "promises"), success: false };
   }
 
   revalidatePath("/booster/promises");

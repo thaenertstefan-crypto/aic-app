@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { dbError } from "@/lib/utils/db-error";
 
 export type MoodCheckinState = {
   error: string | null;
@@ -43,7 +44,7 @@ export async function saveMoodCheckinAction(
     );
 
   if (error) {
-    return { error: error.message, success: false, score: null };
+    return { error: dbError(error, "daily_checkins"), success: false, score: null };
   }
 
   return { error: null, success: true, score };

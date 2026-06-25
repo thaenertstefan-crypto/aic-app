@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { dbError } from "@/lib/utils/db-error";
 
 // ─── Things Got Messy ───────────────────────────────────────────────────
 // Eigenständige Übung in der Kopf-Apotheke. Einträge werden als journal_entries
@@ -99,7 +100,7 @@ export async function saveMessyMomentAction(
   });
 
   if (insertError) {
-    return { error: insertError.message, success: false };
+    return { error: dbError(insertError, "things-got-messy"), success: false };
   }
 
   return { error: null, success: true };

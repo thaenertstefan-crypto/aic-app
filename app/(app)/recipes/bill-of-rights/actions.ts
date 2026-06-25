@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/types/action-state";
+import { dbError } from "@/lib/utils/db-error";
 
 export type RightsData = {
   journalEntry: {
@@ -125,7 +126,7 @@ export async function saveReflectionAction(
       .eq("id", existingEntry.id);
 
     if (updateError) {
-      return { error: updateError.message, success: false };
+      return { error: dbError(updateError, "bill-of-rights"), success: false };
     }
   } else {
     const { error: insertError } = await supabase
@@ -139,7 +140,7 @@ export async function saveReflectionAction(
       });
 
     if (insertError) {
-      return { error: insertError.message, success: false };
+      return { error: dbError(insertError, "bill-of-rights"), success: false };
     }
   }
 
@@ -218,7 +219,7 @@ export async function saveRightsAction(
       .eq("id", existing.id);
 
     if (updateError) {
-      return { error: updateError.message, success: false };
+      return { error: dbError(updateError, "bill-of-rights"), success: false };
     }
   } else {
     const { error: insertError } = await supabase
@@ -229,7 +230,7 @@ export async function saveRightsAction(
       });
 
     if (insertError) {
-      return { error: insertError.message, success: false };
+      return { error: dbError(insertError, "bill-of-rights"), success: false };
     }
   }
 

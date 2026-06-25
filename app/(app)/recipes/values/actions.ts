@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import type { ActionState } from "@/lib/types/action-state";
+import { dbError } from "@/lib/utils/db-error";
 
 /**
  * Save the values hypothesis (Step 1 of Recipe #1).
@@ -56,7 +57,7 @@ export async function saveHypothesisAction(
       .eq("id", existingHypothesis.id);
 
     if (updateError) {
-      return { error: updateError.message };
+      return { error: dbError(updateError, "values") };
     }
   } else {
     const { error: insertError } = await supabase
@@ -69,7 +70,7 @@ export async function saveHypothesisAction(
       });
 
     if (insertError) {
-      return { error: insertError.message };
+      return { error: dbError(insertError, "values") };
     }
   }
 
@@ -94,7 +95,7 @@ export async function saveHypothesisAction(
       .eq("id", existingProgress.id);
 
     if (updateError) {
-      return { error: updateError.message };
+      return { error: dbError(updateError, "values") };
     }
   } else {
     // Shouldn't happen normally (user would have started the recipe first),
@@ -111,7 +112,7 @@ export async function saveHypothesisAction(
       });
 
     if (insertError) {
-      return { error: insertError.message };
+      return { error: dbError(insertError, "values") };
     }
   }
 
@@ -261,7 +262,7 @@ export async function saveJournalEntryAction(
       .eq("id", existingEntry.id);
 
     if (updateError) {
-      return { error: updateError.message };
+      return { error: dbError(updateError, "values") };
     }
   } else {
     // Insert new entry
@@ -276,7 +277,7 @@ export async function saveJournalEntryAction(
       });
 
     if (insertError) {
-      return { error: insertError.message };
+      return { error: dbError(insertError, "values") };
     }
   }
 
@@ -500,7 +501,7 @@ export async function saveEvalReflectionAction(
       .eq("id", existing.id);
 
     if (updateError) {
-      return { error: updateError.message, success: false };
+      return { error: dbError(updateError, "values"), success: false };
     }
   } else {
     const { error: insertError } = await supabase.from("journal_entries").insert(
@@ -513,7 +514,7 @@ export async function saveEvalReflectionAction(
     );
 
     if (insertError) {
-      return { error: insertError.message, success: false };
+      return { error: dbError(insertError, "values"), success: false };
     }
   }
 
@@ -574,7 +575,7 @@ export async function saveAdjustedHypothesisAction(
     });
 
   if (insertError) {
-    return { error: insertError.message, success: false };
+    return { error: dbError(insertError, "values"), success: false };
   }
 
   // Mark recipe progress as completed
@@ -597,7 +598,7 @@ export async function saveAdjustedHypothesisAction(
       .eq("id", progress.id);
 
     if (updateError) {
-      return { error: updateError.message, success: false };
+      return { error: dbError(updateError, "values"), success: false };
     }
   }
 
@@ -649,7 +650,7 @@ export async function startNewCycleAction(
     });
 
   if (insertError) {
-    return { error: insertError.message };
+    return { error: dbError(insertError, "values") };
   }
 
   redirect("/me/values/journey/journal");

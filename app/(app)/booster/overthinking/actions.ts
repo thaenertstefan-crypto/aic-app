@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { dbError } from "@/lib/utils/db-error";
 
 export type OverthinkingActionState = {
   error: string | null;
@@ -69,7 +70,7 @@ export async function saveOverthinkingAction(
       .eq("id", existingEntry.id);
 
     if (updateError) {
-      return { error: updateError.message, success: false };
+      return { error: dbError(updateError, "overthinking"), success: false };
     }
   } else {
     const { error: insertError } = await supabase
@@ -83,7 +84,7 @@ export async function saveOverthinkingAction(
       });
 
     if (insertError) {
-      return { error: insertError.message, success: false };
+      return { error: dbError(insertError, "overthinking"), success: false };
     }
   }
 
@@ -108,7 +109,7 @@ export async function saveOverthinkingAction(
       .eq("id", progress.id);
 
     if (updateError) {
-      return { error: updateError.message, success: false };
+      return { error: dbError(updateError, "overthinking"), success: false };
     }
   } else {
     // Shouldn't happen (recipe was started via startRecipeAction), but handle gracefully
@@ -125,7 +126,7 @@ export async function saveOverthinkingAction(
       });
 
     if (insertError) {
-      return { error: insertError.message, success: false };
+      return { error: dbError(insertError, "overthinking"), success: false };
     }
   }
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { dbError } from "@/lib/utils/db-error";
 
 // ─── Cleanser-Intro "schon gesehen?"-Status ────────────────────────────
 //
@@ -54,5 +55,5 @@ export async function markCleanserIntroSeenAction(
     { onConflict: "user_id,cleanser_slug" },
   );
 
-  return { error: error?.message ?? null };
+  return { error: error ? dbError(error, "cleanser_intro_seen") : null };
 }

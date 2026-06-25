@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { dbError } from "@/lib/utils/db-error";
 import { redirect } from "next/navigation";
 import { getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
 
@@ -57,7 +58,7 @@ export async function startOrContinueRecipeAction(
         .eq("id", existing.id);
 
       if (updateError) {
-        return { error: updateError.message };
+        return { error: dbError(updateError, "user_recipe_progress") };
       }
     }
 
@@ -77,7 +78,7 @@ export async function startOrContinueRecipeAction(
       });
 
     if (insertError) {
-      return { error: insertError.message };
+      return { error: dbError(insertError, "user_recipe_progress") };
     }
   }
 
@@ -149,7 +150,7 @@ export async function markRecipeIntroSeenAction(
       .from("user_recipe_progress")
       .update({ intro_seen: true })
       .eq("id", existing.id);
-    return { error: error?.message ?? null };
+    return { error: error ? dbError(error, "user_recipe_progress") : null };
   }
 
   // Noch keine Zeile — anlegen, ohne das Rezept als gestartet zu markieren.
@@ -162,5 +163,5 @@ export async function markRecipeIntroSeenAction(
     intro_seen: true,
   });
 
-  return { error: error?.message ?? null };
+  return { error: error ? dbError(error, "user_recipe_progress") : null };
 }

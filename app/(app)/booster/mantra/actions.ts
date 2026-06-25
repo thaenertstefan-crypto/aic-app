@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { dbError } from "@/lib/utils/db-error";
 import { DEFAULT_CARDS, DEFAULT_MANTRA } from "./defaults";
 
 export type CleanserCheckinState = {
@@ -56,7 +57,7 @@ export async function logCleanserCheckinAction(
 
   // 23505 = unique_violation → schon heute erledigt, kein echter Fehler.
   if (error && error.code !== "23505") {
-    return { error: error.message, success: false };
+    return { error: dbError(error, "mantra"), success: false };
   }
 
   return { error: null, success: true };
@@ -133,7 +134,7 @@ export async function saveMantraAction(
   );
 
   if (error) {
-    return { error: error.message, success: false };
+    return { error: dbError(error, "mantra"), success: false };
   }
 
   revalidatePath(REVALIDATE_PATH);
@@ -193,7 +194,7 @@ export async function addCardAction(
   });
 
   if (error) {
-    return { error: error.message, success: false };
+    return { error: dbError(error, "mantra"), success: false };
   }
 
   revalidatePath(REVALIDATE_PATH);
@@ -233,7 +234,7 @@ export async function updateCardAction(
     .eq("user_id", user.id);
 
   if (error) {
-    return { error: error.message, success: false };
+    return { error: dbError(error, "mantra"), success: false };
   }
 
   revalidatePath(REVALIDATE_PATH);
@@ -265,7 +266,7 @@ export async function deleteCardAction(
     .eq("user_id", user.id);
 
   if (error) {
-    return { error: error.message, success: false };
+    return { error: dbError(error, "mantra"), success: false };
   }
 
   revalidatePath(REVALIDATE_PATH);
@@ -318,7 +319,7 @@ export async function seedDefaultCardsAction(): Promise<{
     .select("id, thought, reframe, sort_order");
 
   if (error || !inserted) {
-    return { error: error?.message ?? "Konnte Karten nicht anlegen.", cards: [] };
+    return { error: dbError(error, "mantra_cards.insert"), cards: [] };
   }
 
   const cards: MantraCardData[] = [...inserted]

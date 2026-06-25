@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { dbError } from "@/lib/utils/db-error";
 import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
 
 type Right = { id: string; text: string; active: boolean };
@@ -94,7 +95,7 @@ export async function saveGeneratedRightAction(
       .from("journal_entries")
       .update({ content, ai_insights: text })
       .eq("id", existingEntry.id);
-    if (error) return { error: error.message };
+    if (error) return { error: dbError(error, "bill-of-rights") };
   } else {
     const { error } = await supabase.from("journal_entries").insert({
       user_id: user.id,
@@ -104,7 +105,7 @@ export async function saveGeneratedRightAction(
       ai_insights: text,
       entry_date: new Date().toISOString().slice(0, 10),
     });
-    if (error) return { error: error.message };
+    if (error) return { error: dbError(error, "bill-of-rights") };
   }
 
   // Recht ans bestehende Array anhängen.

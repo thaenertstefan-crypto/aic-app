@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { dbError } from "@/lib/utils/db-error";
 
 export type FreeEntryState = {
   error: string | null;
@@ -46,7 +47,7 @@ export async function createFreeEntryAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error, "journal_entries") };
   }
 
   revalidatePath("/journal");
