@@ -53,10 +53,18 @@ export async function getBillOfRightsData(): Promise<{
 
 // ─── Save Rights ────────────────────────────────────────────────────────
 
+type Right = { id: string; text: string; active: boolean };
+
+/** saveRightsAction liefert zusätzlich das gemergte Array zurück, damit der
+ *  Client seinen State mit dem Server-Stand synchronisieren kann. */
+export type SaveRightsState = ActionState & {
+  rights?: Right[];
+};
+
 export async function saveRightsAction(
   _prevState: ActionState,
   formData: FormData,
-): Promise<ActionState> {
+): Promise<SaveRightsState> {
   const supabase = await createClient();
 
   const {
@@ -72,25 +80,49 @@ export async function saveRightsAction(
     return { error: "Keine Rechte zum Speichern erhalten.", success: false };
   }
 
-  let rights: { id: string; text: string; active: boolean }[];
+  let incoming: Right[];
   try {
-    rights = JSON.parse(rightsRaw);
+    incoming = JSON.parse(rightsRaw);
   } catch {
     return { error: "Ungültiges Format.", success: false };
   }
 
-  // Upsert bill_of_rights
+  // Optionale Baseline-IDs, die der Client beim Laden kannte — damit vom Client
+  // beabsichtigte Löschungen greifen, ohne parallel (auf einem anderen Gerät)
+  // hinzugefügte Rechte zu verlieren.
+  const previousIdsRaw = formData.get("previousIds");
+  let previousIds: string[] = [];
+  if (typeof previousIdsRaw === "string" && previousIdsRaw) {
+    try {
+      previousIds = JSON.parse(previousIdsRaw);
+    } catch {
+      previousIds = [];
+    }
+  }
+
+  // Aktuellen DB-Stand frisch laden und per id mergen (Reload-vor-Write).
   const { data: existing } = await supabase
     .from("bill_of_rights")
-    .select("id")
+    .select("id, rights")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  const dbRights = (existing?.rights as Right[] | null) ?? [];
+  const incomingIds = new Set(incoming.map((r) => r.id));
+  const previousIdSet = new Set(previousIds);
+  // DB-Rechte, die der Client weder kannte noch mitschickt → parallel angelegt,
+  // also bewahren. (DB-Rechte in previousIds, die jetzt fehlen, sind echte
+  // Löschungen und fallen damit korrekt weg.)
+  const concurrentAdds = dbRights.filter(
+    (r) => !incomingIds.has(r.id) && !previousIdSet.has(r.id),
+  );
+  const merged: Right[] = [...incoming, ...concurrentAdds];
 
   if (existing) {
     const { error: updateError } = await supabase
       .from("bill_of_rights")
       .update({
-        rights,
+        rights: merged,
         updated_at: new Date().toISOString(),
       })
       .eq("id", existing.id);
@@ -103,7 +135,7 @@ export async function saveRightsAction(
       .from("bill_of_rights")
       .insert({
         user_id: user.id,
-        rights,
+        rights: merged,
       });
 
     if (insertError) {
@@ -112,7 +144,7 @@ export async function saveRightsAction(
   }
 
   // Update progress: mark completed if 3+ rights
-  const completed = rights.filter((r) => r.active).length >= 3;
+  const completed = merged.filter((r) => r.active).length >= 3;
 
   const { data: progress } = await supabase
     .from("user_recipe_progress")
@@ -158,5 +190,5 @@ export async function saveRightsAction(
     }
   }
 
-  return { error: null, success: true };
+  return { error: null, success: true, rights: merged };
 }
