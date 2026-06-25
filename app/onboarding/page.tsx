@@ -25,6 +25,7 @@ import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { ONBOARDING_INTRO } from "@/lib/content/onboarding-intro";
 import { cn } from "@/lib/utils";
+import { utcDateKey } from "@/lib/utils/date";
 
 import { completeOnboardingAction } from "@/app/onboarding/onboarding.actions";
 
@@ -134,10 +135,7 @@ export default function OnboardingPage() {
     if (state.success) {
       // Reminder am Onboarding-Tag unterdrücken (Sicherheitsnetz).
       try {
-        localStorage.setItem(
-          "aic_reminder_date",
-          new Date().toISOString().slice(0, 10),
-        );
+        localStorage.setItem("aic_reminder_date", utcDateKey());
       } catch {
         // ignore
       }

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
+import { utcDateKey } from "@/lib/utils/date";
 
 // ─── Things Got Messy ───────────────────────────────────────────────────
 // Eigenständige Übung in der Kopf-Apotheke. Einträge werden als journal_entries
@@ -96,7 +97,7 @@ export async function saveMessyMomentAction(
     recipe_slug: "things-got-messy",
     template_type: "messy_moment",
     content,
-    entry_date: new Date().toISOString().slice(0, 10),
+    entry_date: utcDateKey(),
   });
 
   if (insertError) {

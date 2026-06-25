@@ -17,6 +17,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { utcDateKey } from "@/lib/utils/date";
 
 import {
   endPromiseAction,
@@ -40,7 +41,7 @@ const END_INITIAL: EndPromiseState = { error: null, success: false };
 function addDaysISO(iso: string, n: number): string {
   const d = new Date(`${iso}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
+  return utcDateKey(d);
 }
 
 export function PromiseCard({

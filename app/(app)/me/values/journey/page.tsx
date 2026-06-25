@@ -1,19 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
+import { localDateKey } from "@/lib/utils/date";
 
 import { ValuesJourneyClient } from "./values-journey-client";
 
 const LAST_INDEX = 8;
-
-/** Heutiges Datum als lokaler Tagesschlüssel (YYYY-MM-DD), analog zu
- *  getTodayKey() in der journal-form — damit der Vergleich mit dem dort
- *  gespeicherten entry_date stimmt. */
-function getTodayKey(): string {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
 
 export default async function ValuesJourneyPage() {
   const supabase = await createClient();
@@ -81,7 +71,7 @@ export default async function ValuesJourneyPage() {
   // bleibt auf dem heute erledigten Tag; der Folgetag bleibt gesperrt bis zum
   // nächsten Kalendertag. Hypothese (0) und Auswertung (8) bleiben unberührt.
   if (
-    latestEntryDate === getTodayKey() &&
+    latestEntryDate === localDateKey() &&
     currentStep >= 1 &&
     currentStep <= 7
   ) {

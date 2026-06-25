@@ -1,9 +1,30 @@
 /**
  * Zentrale Datums-Helfer.
  *
- * In Phase 13.10 kommen hier die Key-Helfer (utcDateKey/localDateKey) dazu;
- * 13.11 migriert die Aufrufer auf zeitzonenbewusste Schlüssel.
+ * 13.11 wird die `utcDateKey`-Aufrufer auf zeitzonenbewusste Schlüssel
+ * (User-Lokalzeit) migrieren.
  */
+
+/**
+ * Kalendertag-Key "YYYY-MM-DD" in **UTC** (bisheriges Standard-Muster
+ * `new Date().toISOString().slice(0,10)`). Auf Vercel (Server-TZ = UTC) ist das
+ * der UTC-Kalendertag — 13.11 ersetzt das, wo User-Lokalzeit nötig ist.
+ */
+export function utcDateKey(d: Date = new Date()): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Kalendertag-Key "YYYY-MM-DD" in der **lokalen** Zeit der ausführenden
+ * Umgebung (Client-Browser bzw. Server-TZ). Spiegelt das bisherige
+ * getFullYear/getMonth/getDate-Muster.
+ */
+export function localDateKey(d: Date = new Date()): string {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 /**
  * Formatiert einen reinen Kalendertag-Key "YYYY-MM-DD" zu "DD.MM.YYYY".

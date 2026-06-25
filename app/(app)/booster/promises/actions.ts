@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
+import { utcDateKey } from "@/lib/utils/date";
+import { computeStreak } from "@/lib/utils/streak";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type CreatePromiseState = {
@@ -30,10 +32,6 @@ export type EndPromiseState = {
 const VALID_TARGET_DAYS = [7, 14, 30] as const;
 const MILESTONES = [7, 14, 30] as const;
 
-function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 /**
  * Recompute a promise's streak straight from its completion rows — robust for
  * both directions of the toggle (mark + undo).
@@ -57,19 +55,8 @@ async function recomputeStreak(
     return { current: 0, last: null };
   }
 
-  const today = todayISO();
-  const doneToday = dates.has(today);
-
-  const cursor = new Date();
-  if (!doneToday) {
-    cursor.setUTCDate(cursor.getUTCDate() - 1);
-  }
-
-  let current = 0;
-  while (dates.has(cursor.toISOString().slice(0, 10))) {
-    current += 1;
-    cursor.setUTCDate(cursor.getUTCDate() - 1);
-  }
+  const doneToday = dates.has(utcDateKey());
+  const current = computeStreak(dates, doneToday);
 
   // `last` = max date in the set (rows are ordered desc, so the first one).
   const last = (rows?.[0]?.completed_date as string) ?? null;
@@ -166,7 +153,7 @@ export async function togglePromiseCompletionAction(
     return failed("Promise nicht gefunden.");
   }
 
-  const today = todayISO();
+  const today = utcDateKey();
 
   const { data: existing } = await supabase
     .from("promise_completions")

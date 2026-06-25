@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
+import { utcDateKey } from "@/lib/utils/date";
 
 export type OverthinkingActionState = {
   error: string | null;
@@ -80,7 +81,7 @@ export async function saveOverthinkingAction(
         recipe_slug: "overthinking",
         template_type: "overthinking",
         content,
-        entry_date: new Date().toISOString().slice(0, 10),
+        entry_date: utcDateKey(),
       });
 
     if (insertError) {

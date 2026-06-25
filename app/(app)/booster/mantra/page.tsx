@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { computeStreak } from "@/lib/utils/streak";
+import { utcDateKey } from "@/lib/utils/date";
 
 import { MantraCleanser } from "./mantra-cleanser";
 import { getMantraData } from "./actions";
@@ -11,7 +12,7 @@ export default async function MantraCleanserPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = utcDateKey();
 
   let doneToday = false;
   let streak = 0;

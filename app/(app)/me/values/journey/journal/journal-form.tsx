@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
-import { formatDateDE } from "@/lib/utils/date";
+import { formatDateDE, localDateKey } from "@/lib/utils/date";
 
 import {
   saveJournalEntryAction,
@@ -19,16 +19,6 @@ import {
 import type { ActionState } from "@/lib/types/action-state";
 
 type JournalDraft = { happenings: string; response: string };
-
-// ─── Date helpers ───────────────────────────────────────────────────
-
-function getTodayKey(): string {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
 
 // ─── Microcopy ──────────────────────────────────────────────────────
 
@@ -56,7 +46,7 @@ interface JournalFormProps {
 
 export function JournalForm({ initialData }: JournalFormProps) {
   const { entries, currentStep } = initialData;
-  const todayKey = getTodayKey();
+  const todayKey = localDateKey();
 
   // Build entry lookup by date
   const entryByDate = new Map<string, { id: string; happenings: string; response: string }>();

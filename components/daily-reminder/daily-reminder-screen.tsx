@@ -5,11 +5,12 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
+import { utcDateKey } from "@/lib/utils/date";
 
 const STORAGE_KEY = "aic_reminder_date";
 
 function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
+  return utcDateKey();
 }
 
 /** Ensure a right reads as a full affirmation sentence. */
