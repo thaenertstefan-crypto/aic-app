@@ -18,7 +18,6 @@ import { formatDateDE } from "@/lib/utils/date";
 import {
   saveEvalReflectionAction,
   saveAdjustedHypothesisAction,
-  startNewCycleAction,
   type EvaluationPageData,
 } from "@/app/(app)/recipes/values/actions";
 
@@ -191,12 +190,6 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
     adjustAction(fd);
   };
 
-  // ── Phase 3: Complete → start new cycle ─────────────────────────
-  const [newCycleState, newCycleAction, newCyclePending] = useActionState(
-    startNewCycleAction,
-    { error: null },
-  );
-
   // ── Render ──────────────────────────────────────────────────────
 
   return (
@@ -213,9 +206,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
 
       {/* ── Shared error banner ── */}
       <FormError
-        message={
-          reflectionState.error || adjustState.error || newCycleState.error
-        }
+        message={reflectionState.error || adjustState.error}
         className="mb-6"
       />
 
@@ -664,24 +655,11 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
             </CardContent>
           </Card>
 
-          {/* CTAs */}
+          {/* CTA — der „Neuer Zyklus"-Button ist vorerst deaktiviert (Phase 13.12),
+              bis die Zyklus-Logik sauber pro Zyklus abgegrenzt ist. */}
           <div className="mt-auto space-y-3">
-            <form action={newCycleAction}>
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={newCyclePending}
-              >
-                {newCyclePending
-                  ? "Wird gestartet …"
-                  : "Neuen 7-Tage-Zyklus starten"}
-              </Button>
-            </form>
-
             <Button
               className="w-full"
-              variant="outline"
               size="lg"
               render={<Link href="/me/values" />}
             >

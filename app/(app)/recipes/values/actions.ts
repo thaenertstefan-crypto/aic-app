@@ -619,6 +619,11 @@ export async function saveAdjustedHypothesisAction(
  * Start a new 7-day journal cycle (Phase 3 CTA).
  * Creates a new user_recipe_progress row with cycle_number+1,
  * current_step=2 (skip hypothesis), then redirects to the journal.
+ *
+ * HINWEIS (Phase 13.12): Der zugehörige CTA ist in der UI vorerst deaktiviert,
+ * weil Journal-Einträge noch nicht pro Zyklus abgegrenzt sind (F-CYCLE). Diese
+ * Action bleibt als Export erhalten und wird mit der sauberen Zyklus-Logik in
+ * einer eigenen Session reaktiviert.
  */
 export async function startNewCycleAction(
   _prevState: ActionState,
