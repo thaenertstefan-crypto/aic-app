@@ -13,7 +13,6 @@
  */
 
 export type IntroCard = { title: string; body: string };
-export type RecipeIntro = { slug: string; cards: IntroCard[] };
 
 export const RECIPE_INTROS: Record<string, IntroCard[]> = {
   values: [
