@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
-import { utcDateKey } from "@/lib/utils/date";
+import { serverTodayKey } from "@/lib/server/timezone";
 
 export type FreeEntryState = {
   error: string | null;
@@ -44,7 +44,7 @@ export async function createFreeEntryAction(
     recipe_slug: null,
     template_type: "free",
     content,
-    entry_date: utcDateKey(),
+    entry_date: await serverTodayKey(),
   });
 
   if (error) {

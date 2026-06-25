@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
-import { utcDateKey } from "@/lib/utils/date";
+import { serverTodayKey } from "@/lib/server/timezone";
 import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
 
 type Right = { id: string; text: string; active: boolean };
@@ -104,7 +104,7 @@ export async function saveGeneratedRightAction(
       template_type: "bill_of_rights",
       content,
       ai_insights: text,
-      entry_date: utcDateKey(),
+      entry_date: await serverTodayKey(),
     });
     if (error) return { error: dbError(error, "bill-of-rights") };
   }

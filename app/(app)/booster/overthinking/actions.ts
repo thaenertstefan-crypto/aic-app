@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
-import { utcDateKey } from "@/lib/utils/date";
+import { serverTodayKey } from "@/lib/server/timezone";
 
 export type OverthinkingActionState = {
   error: string | null;
@@ -81,7 +81,7 @@ export async function saveOverthinkingAction(
         recipe_slug: "overthinking",
         template_type: "overthinking",
         content,
-        entry_date: utcDateKey(),
+        entry_date: await serverTodayKey(),
       });
 
     if (insertError) {
