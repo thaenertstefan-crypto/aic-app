@@ -51,38 +51,44 @@ export async function POST() {
     return Response.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
   }
 
-  // Most recent 7 daily_value entries = the current cycle.
-  const { data: dailyEntries } = await supabase
-    .from("journal_entries")
-    .select("content")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "values")
-    .eq("template_type", "daily_value")
-    .order("created_at", { ascending: false })
-    .limit(7);
+  // Die drei Reads sind voneinander unabhängig → parallel laden, bevor der
+  // KI-Call startet.
+  const [
+    { data: dailyEntries },
+    { data: hypothesisRow },
+    { data: evalRow },
+  ] = await Promise.all([
+    // Most recent 7 daily_value entries = the current cycle.
+    supabase
+      .from("journal_entries")
+      .select("content")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "values")
+      .eq("template_type", "daily_value")
+      .order("created_at", { ascending: false })
+      .limit(7),
+    // Latest values hypothesis.
+    supabase
+      .from("values_hypothesis")
+      .select("values")
+      .eq("user_id", user.id)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    // The value_eval entry holds the user's reflection and is where we save insights.
+    supabase
+      .from("journal_entries")
+      .select("id, content")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "values")
+      .eq("template_type", "value_eval")
+      .maybeSingle(),
+  ]);
 
   // Chronological order reads more naturally in the prompt.
   const entries = ((dailyEntries ?? []).reverse() as { content: DailyValueContent }[]);
 
-  // Latest values hypothesis.
-  const { data: hypothesisRow } = await supabase
-    .from("values_hypothesis")
-    .select("values")
-    .eq("user_id", user.id)
-    .order("version", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
   const values = (hypothesisRow?.values as string[] | undefined) ?? [];
-
-  // The value_eval entry holds the user's reflection and is where we save insights.
-  const { data: evalRow } = await supabase
-    .from("journal_entries")
-    .select("id, content")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "values")
-    .eq("template_type", "value_eval")
-    .maybeSingle();
 
   const reflection = (evalRow?.content as ValueEvalContent | undefined) ?? {
     positive_reflection: "",

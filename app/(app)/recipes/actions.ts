@@ -38,7 +38,7 @@ export async function startOrContinueRecipeAction(
   // Check for existing progress — pick the highest cycle_number
   const { data: existing } = await supabase
     .from("user_recipe_progress")
-    .select("*")
+    .select("id, status, current_step")
     .eq("user_id", user.id)
     .eq("recipe_slug", recipeSlug)
     .order("cycle_number", { ascending: false })

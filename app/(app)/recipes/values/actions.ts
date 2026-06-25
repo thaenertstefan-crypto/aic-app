@@ -79,7 +79,7 @@ export async function saveHypothesisAction(
   // --- Advance user_recipe_progress to step 2 ---
   const { data: existingProgress } = await supabase
     .from("user_recipe_progress")
-    .select("*")
+    .select("started_at, id")
     .eq("user_id", user.id)
     .eq("recipe_slug", "values")
     .order("cycle_number", { ascending: false })

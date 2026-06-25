@@ -16,22 +16,28 @@ export default async function MantraCleanserPage() {
   let doneToday = false;
   let streak = 0;
 
-  if (user) {
-    const { data: checkins } = await supabase
-      .from("cleanser_checkins")
-      .select("date")
-      .eq("user_id", user.id)
-      .eq("cleanser_slug", "mantra")
-      .order("date", { ascending: false })
-      .limit(90);
+  // Check-ins und Mantra/Karten sind voneinander unabhängig → parallel laden.
+  const [checkinsResult, { mantra, cards }] = await Promise.all([
+    user
+      ? supabase
+          .from("cleanser_checkins")
+          .select("date")
+          .eq("user_id", user.id)
+          .eq("cleanser_slug", "mantra")
+          .order("date", { ascending: false })
+          .limit(90)
+      : Promise.resolve({ data: null }),
+    // Mantra + Karten (mit Default-Fallback) zentral über die Action laden.
+    getMantraData(),
+  ]);
 
-    const dates = new Set((checkins ?? []).map((c) => c.date as string));
+  if (user) {
+    const dates = new Set(
+      (checkinsResult.data ?? []).map((c) => c.date as string),
+    );
     doneToday = dates.has(today);
     streak = computeStreak(dates, doneToday);
   }
-
-  // Mantra + Karten (mit Default-Fallback) zentral über die Action laden.
-  const { mantra, cards } = await getMantraData();
 
   return (
     <MantraCleanser
