@@ -160,9 +160,22 @@ export type JournalPageData = {
 };
 
 /**
+ * Optional vorgeladene Daten, die der Aufrufer (z. B. die Rezept-Detailseite)
+ * bereits geholt hat — werden durchgereicht, um doppelte Round-Trips zu
+ * vermeiden. Wird `preloaded` übergeben, holt getJournalData nur noch die
+ * Journal-Einträge frisch; progress/hypothesis stammen aus dem Aufrufer.
+ */
+type JournalDataPreload = {
+  progress: { started_at: string | null; current_step: number | null } | null;
+  hypothesisValues: string[] | null;
+};
+
+/**
  * Fetch all data needed for the journal page (Step 2 of Recipe #1).
  */
-export async function getJournalData(): Promise<JournalPageData> {
+export async function getJournalData(
+  preloaded?: JournalDataPreload,
+): Promise<JournalPageData> {
   const user = await getCachedUser();
 
   if (!user) {
@@ -170,17 +183,9 @@ export async function getJournalData(): Promise<JournalPageData> {
   }
 
   const supabase = await createClient();
-  // Fetch latest values hypothesis
-  const { data: hypothesisRow, error: hypothesisError } = await supabase
-    .from("values_hypothesis")
-    .select("values")
-    .eq("user_id", user.id)
-    .order("version", { ascending: false })
-    .limit(1)
-    .maybeSingle();
 
-  // Fetch journal entries for this recipe
-  const { data: entries, error: entriesError } = await supabase
+  // Journal-Einträge werden immer frisch gelesen.
+  const entriesQuery = supabase
     .from("journal_entries")
     .select("id, entry_date, content")
     .eq("user_id", user.id)
@@ -188,15 +193,43 @@ export async function getJournalData(): Promise<JournalPageData> {
     .eq("template_type", "daily_value")
     .order("entry_date", { ascending: true });
 
-  // Fetch user progress
-  const { data: progress, error: progressError } = await supabase
-    .from("user_recipe_progress")
-    .select("started_at, current_step")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "values")
-    .order("cycle_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Schnellpfad: progress + hypothesis vom Aufrufer übernommen → nur entries.
+  if (preloaded) {
+    const { data: entries, error: entriesError } = await entriesQuery;
+    if (entriesError) {
+      throw new Error(`getJournalData: read failed (${entriesError.code ?? "unknown"})`);
+    }
+    return {
+      hypothesis: preloaded.hypothesisValues,
+      entries: (entries as JournalEntry[]) ?? [],
+      startedAt: preloaded.progress?.started_at ?? null,
+      currentStep: preloaded.progress?.current_step ?? 1,
+    };
+  }
+
+  // Standalone: die drei unabhängigen Reads parallel statt seriell.
+  const [
+    { data: hypothesisRow, error: hypothesisError },
+    { data: entries, error: entriesError },
+    { data: progress, error: progressError },
+  ] = await Promise.all([
+    supabase
+      .from("values_hypothesis")
+      .select("values")
+      .eq("user_id", user.id)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    entriesQuery,
+    supabase
+      .from("user_recipe_progress")
+      .select("started_at, current_step")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "values")
+      .order("cycle_number", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   // Echte Lesefehler an die Segment-Error-Boundary geben statt als Leerzustand.
   const readError = hypothesisError ?? entriesError ?? progressError;
@@ -364,53 +397,56 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
   }
 
   const supabase = await createClient();
-  // Fetch user progress for this recipe
-  const { data: progress } = await supabase
-    .from("user_recipe_progress")
-    .select("id, cycle_number, started_at, status")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "values")
-    .order("cycle_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
 
-  // Fetch latest values hypothesis
-  const { data: hypothesisRow } = await supabase
-    .from("values_hypothesis")
-    .select("values, version")
-    .eq("user_id", user.id)
-    .order("version", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Die vier unabhängigen Reads parallel statt seriell.
+  // Hinweis zu den Einträgen: die letzten 7 nach created_at zu zählen hält dies
+  // konsistent mit dem Journal-Schritt (der "Zur Auswertung" ab 7 Einträgen
+  // freischaltet) und mit der journal-analysis-Route — statt nach
+  // entry_date >= started_at zu filtern (was das Test-Backdating in
+  // journal-form.tsx bricht).
+  const [
+    { data: progress },
+    { data: hypothesisRow },
+    { data: entries },
+    { data: evalRow },
+  ] = await Promise.all([
+    supabase
+      .from("user_recipe_progress")
+      .select("id, cycle_number, started_at, status")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "values")
+      .order("cycle_number", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("values_hypothesis")
+      .select("values, version")
+      .eq("user_id", user.id)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("journal_entries")
+      .select("id, entry_date, content")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "values")
+      .eq("template_type", "daily_value")
+      .order("created_at", { ascending: false })
+      .limit(7),
+    supabase
+      .from("journal_entries")
+      .select("id, content, ai_insights")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "values")
+      .eq("template_type", "value_eval")
+      .maybeSingle(),
+  ]);
 
   const hypothesis = (hypothesisRow?.values as string[]) ?? [];
   const hypothesisVersion = (hypothesisRow?.version as number) ?? 1;
 
-  // Fetch the most recent 7 daily_value entries — the current cycle.
-  // Counting the latest 7 by created_at keeps this consistent with the journal
-  // step (which unlocks "Zur Auswertung" once 7 entries exist) and with the
-  // journal-analysis API route, instead of filtering by entry_date >= started_at
-  // (which the test-only back-dating in journal-form.tsx breaks).
-  const { data: entries } = await supabase
-    .from("journal_entries")
-    .select("id, entry_date, content")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "values")
-    .eq("template_type", "daily_value")
-    .order("created_at", { ascending: false })
-    .limit(7);
-
   // Show them in chronological order.
   const cycleEntries = ((entries as JournalEntry[]) ?? []).slice().reverse();
-
-  // Fetch existing value_eval entry (if any)
-  const { data: evalRow } = await supabase
-    .from("journal_entries")
-    .select("id, content, ai_insights")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "values")
-    .eq("template_type", "value_eval")
-    .maybeSingle();
 
   const valueEvalEntry: ValueEvalEntry = evalRow
     ? {

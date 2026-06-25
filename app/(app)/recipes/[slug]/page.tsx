@@ -69,31 +69,45 @@ export default async function RecipeDetailPage(props: {
   const supabase = await createClient();
 
   const user = await getCachedUser();
-
-  // Fetch the user's name for a warm greeting
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name")
-    .eq("id", user?.id ?? "")
-    .maybeSingle();
-
-  // Check for existing progress — highest cycle_number wins
-  const { data: progress } = await supabase
-    .from("user_recipe_progress")
-    .select("status, current_step")
-    .eq("user_id", user?.id ?? "")
-    .eq("recipe_slug", slug)
-    .order("cycle_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const hasProgress = progress && progress.status !== "not_started";
-  const isCompleted = progress?.status === "completed";
+  const userId = user?.id ?? "";
+  const isValues = slug === "values";
 
   // Hybrid-Intro (Schritt 6.10): beim ersten Mal Sequenz, danach Collapsible.
   // cards ist nur für Rezepte mit hinterlegter Intro gesetzt (aktuell "values").
   const introCards = getRecipeIntro(slug);
-  const introSeen = await hasSeenRecipeIntro(slug);
+
+  // Alle voneinander unabhängigen Reads in einer Welle parallelisieren, statt
+  // sie seriell hintereinander zu awaiten (Waterfall, P-1). Die values_hypothesis
+  // wird nur für das Werte-Rezept gebraucht.
+  const [{ data: profile }, { data: progress }, introSeen, hypothesisRow] =
+    await Promise.all([
+      // Fetch the user's name for a warm greeting
+      supabase.from("profiles").select("name").eq("id", userId).maybeSingle(),
+      // Existing progress — highest cycle_number wins. started_at wird unten an
+      // getJournalData durchgereicht (statt es dort erneut zu laden).
+      supabase
+        .from("user_recipe_progress")
+        .select("status, current_step, started_at")
+        .eq("user_id", userId)
+        .eq("recipe_slug", slug)
+        .order("cycle_number", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      hasSeenRecipeIntro(slug),
+      isValues
+        ? supabase
+            .from("values_hypothesis")
+            .select("values, confirmed")
+            .eq("user_id", userId)
+            .order("version", { ascending: false })
+            .limit(1)
+            .maybeSingle()
+            .then((r) => r.data)
+        : Promise.resolve(null),
+    ]);
+
+  const hasProgress = progress && progress.status !== "not_started";
+  const isCompleted = progress?.status === "completed";
 
   // For the (cyclical) values recipe, surface the user's confirmed values right
   // here so returning users see them without having to restart the recipe.
@@ -103,22 +117,21 @@ export default async function RecipeDetailPage(props: {
   let journalCount = 0;
   let journalDone = false;
   let evaluationDone = false;
-  if (slug === "values") {
-    const { data: hypothesis } = await supabase
-      .from("values_hypothesis")
-      .select("values, confirmed")
-      .eq("user_id", user?.id ?? "")
-      .order("version", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (hypothesis?.confirmed) {
-      confirmedValues = (hypothesis.values as string[] | null) ?? [];
+  if (isValues) {
+    const hypothesisValues = (hypothesisRow?.values as string[] | null) ?? null;
+    if (hypothesisRow?.confirmed) {
+      confirmedValues = hypothesisValues ?? [];
     }
 
-    // Derive the three sub-step states from the existing journal helper plus the
-    // already-fetched progress row — no new data logic.
-    const journalData = await getJournalData();
+    // Derive the three sub-step states from the existing journal helper. Die
+    // bereits geladenen progress/hypothesis werden durchgereicht, damit
+    // getJournalData NUR noch die Journal-Einträge holt (kein Doppel-Fetch).
+    const journalData = await getJournalData({
+      progress: progress
+        ? { started_at: progress.started_at, current_step: progress.current_step }
+        : null,
+      hypothesisValues,
+    });
     hypothesisDone = (journalData.hypothesis?.length ?? 0) > 0;
     journalCount = journalData.entries.length;
     journalDone = journalCount >= 7;
