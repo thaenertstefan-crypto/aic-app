@@ -33,6 +33,44 @@ export type JournalEntryRow = {
   created_at: string;
 };
 
+/**
+ * Schlanke Variante für die Journal-Liste: enthält NUR die für Anzeige und
+ * Filterung nötigen Felder plus eine kurze, serverseitig berechnete Vorschau.
+ * content (JSONB) und ai_insights (langer Text) werden bewusst NICHT in die
+ * Liste geladen — sie werden erst beim Öffnen eines Eintrags nachgeladen.
+ */
+export type JournalListItem = {
+  id: string;
+  template_type: string;
+  recipe_slug: string | null;
+  entry_date: string;
+  created_at: string;
+  preview: string;
+};
+
+/** Seitengröße für die paginierte Journal-Liste ("Mehr laden"). */
+export const JOURNAL_PAGE_SIZE = 30;
+
+/** Mappt eine geladene Eintragszeile auf das schlanke Listen-Item und
+ *  berechnet dabei die Vorschau serverseitig (content verlässt den Server nicht). */
+export function toJournalListItem(row: {
+  id: string;
+  template_type: string;
+  recipe_slug: string | null;
+  entry_date: string;
+  created_at: string;
+  content: Record<string, unknown>;
+}): JournalListItem {
+  return {
+    id: row.id,
+    template_type: row.template_type,
+    recipe_slug: row.recipe_slug,
+    entry_date: row.entry_date,
+    created_at: row.created_at,
+    preview: extractPreview(row.content),
+  };
+}
+
 export type ContentSection = {
   label: string;
   value: string;

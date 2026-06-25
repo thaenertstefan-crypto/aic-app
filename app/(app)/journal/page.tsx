@@ -1,28 +1,15 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
-import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/brand/page-header";
 import { Button } from "@/components/ui/button";
 import { JournalHub } from "@/components/journal/journal-hub";
-import type { JournalEntryRow } from "@/lib/utils/journal";
+import { getJournalPage } from "@/app/(app)/journal/actions";
 
 export default async function JournalPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // The (app) layout already enforces auth; this is a defensive guard so we
-  // never run the query with an empty user id.
-  if (!user) return null;
-
-  const { data: entries } = await supabase
-    .from("journal_entries")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  // Nur die erste, schlanke Seite laden (id/typ/datum/vorschau) — content und
+  // ai_insights bleiben draußen und werden pro Eintrag beim Öffnen nachgeladen.
+  const { items, hasMore } = await getJournalPage();
 
   return (
     <div className="p-4">
@@ -37,7 +24,7 @@ export default async function JournalPage() {
         <Plus className="size-4" />
         Neuer Eintrag
       </Button>
-      <JournalHub entries={(entries as JournalEntryRow[]) ?? []} />
+      <JournalHub initialEntries={items} initialHasMore={hasMore} />
     </div>
   );
 }

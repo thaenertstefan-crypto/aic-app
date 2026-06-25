@@ -1,30 +1,35 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { Notebook } from "lucide-react";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { JournalDetailDialog } from "@/components/journal/journal-detail-dialog";
+import { getJournalPage } from "@/app/(app)/journal/actions";
 import {
   getFilterTabs,
   getJournalConfig,
-  extractPreview,
   formatDateDE,
-  type JournalEntryRow,
+  type JournalListItem,
 } from "@/lib/utils/journal";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  entries: JournalEntryRow[];
+  initialEntries: JournalListItem[];
+  initialHasMore: boolean;
 };
 
-export function JournalHub({ entries }: Props) {
+export function JournalHub({ initialEntries, initialHasMore }: Props) {
   const [selectedFilter, setSelectedFilter] = useState("all");
-  const [selectedEntry, setSelectedEntry] = useState<JournalEntryRow | null>(
+  const [selectedEntry, setSelectedEntry] = useState<JournalListItem | null>(
     null,
   );
+  const [entries, setEntries] = useState<JournalListItem[]>(initialEntries);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [isPending, startTransition] = useTransition();
 
   const filterTabs = useMemo(() => getFilterTabs(), []);
 
@@ -46,6 +51,16 @@ export function JournalHub({ entries }: Props) {
         selectedFilter;
 
   const isEmpty = filteredEntries.length === 0;
+
+  function loadMore() {
+    const last = entries[entries.length - 1];
+    if (!last) return;
+    startTransition(async () => {
+      const { items, hasMore: more } = await getJournalPage(last.created_at);
+      setEntries((prev) => [...prev, ...items]);
+      setHasMore(more);
+    });
+  }
 
   return (
     <div className="mt-6 space-y-4">
@@ -82,7 +97,7 @@ export function JournalHub({ entries }: Props) {
               {filteredEntries.map((entry) => {
                 const config = getJournalConfig(entry.template_type);
                 const Icon = config.icon;
-                const preview = extractPreview(entry.content);
+                const preview = entry.preview;
 
                 return (
                   <Card
@@ -127,6 +142,18 @@ export function JournalHub({ entries }: Props) {
             </div>
           )}
 
+          {/* ---- Load more ---- */}
+          {!isEmpty && hasMore && (
+            <Button
+              variant="outline"
+              className="mt-4 w-full"
+              onClick={loadMore}
+              disabled={isPending}
+            >
+              {isPending ? "Lädt …" : "Mehr laden"}
+            </Button>
+          )}
+
           {/* ---- Empty state ---- */}
           {isEmpty && (
             <EmptyState
@@ -154,4 +181,3 @@ export function JournalHub({ entries }: Props) {
     </div>
   );
 }
-
