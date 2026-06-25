@@ -152,11 +152,13 @@ export async function togglePromiseCompletionAction(
     return failed("Promise nicht gefunden.");
   }
 
-  // RLS scopes this to the owner; a missing row means it's not theirs.
+  // Defense-in-Depth: zusätzlich zur RLS explizit auf den Eigentümer filtern,
+  // damit eine fremde promise_id aus dem Client-FormData ins Leere läuft.
   const { data: promise } = await supabase
     .from("promises")
     .select("id, longest_streak")
     .eq("id", promiseId)
+    .eq("user_id", user.id)
     .single();
 
   if (!promise) {
@@ -204,7 +206,8 @@ export async function togglePromiseCompletionAction(
       longest_streak: longest,
       last_completed: last,
     })
-    .eq("id", promiseId);
+    .eq("id", promiseId)
+    .eq("user_id", user.id);
 
   if (updateError) {
     return failed(updateError.message);
@@ -242,7 +245,8 @@ export async function endPromiseAction(
   const { error } = await supabase
     .from("promises")
     .update({ active: false })
-    .eq("id", promiseId);
+    .eq("id", promiseId)
+    .eq("user_id", user.id);
 
   if (error) {
     return { error: error.message, success: false };
