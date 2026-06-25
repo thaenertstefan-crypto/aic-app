@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { utcDateKey } from "@/lib/utils/date";
+import { serverTodayKey } from "@/lib/server/timezone";
 
 import { PromisesCleanser, type Promise as PromiseRow } from "./promises-cleanser";
 
@@ -10,7 +10,7 @@ export default async function PromisesCleanserPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const today = utcDateKey();
+  const today = await serverTodayKey();
 
   let promises: PromiseRow[] = [];
   let completionsByPromise: Record<string, string[]> = {};

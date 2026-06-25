@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
-import { utcDateKey } from "@/lib/utils/date";
+import { serverTodayKey } from "@/lib/server/timezone";
 import { DEFAULT_CARDS, DEFAULT_MANTRA } from "./defaults";
 
 export type CleanserCheckinState = {
@@ -48,7 +48,7 @@ export async function logCleanserCheckinAction(
     return { error: "Du musst angemeldet sein.", success: false };
   }
 
-  const today = utcDateKey();
+  const today = await serverTodayKey();
 
   const { error } = await supabase.from("cleanser_checkins").insert({
     user_id: user.id,

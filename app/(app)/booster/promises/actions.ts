@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
-import { utcDateKey } from "@/lib/utils/date";
+import { serverTodayKey } from "@/lib/server/timezone";
 import { computeStreak } from "@/lib/utils/streak";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -55,8 +55,8 @@ async function recomputeStreak(
     return { current: 0, last: null };
   }
 
-  const doneToday = dates.has(utcDateKey());
-  const current = computeStreak(dates, doneToday);
+  const today = await serverTodayKey();
+  const current = computeStreak(dates, today);
 
   // `last` = max date in the set (rows are ordered desc, so the first one).
   const last = (rows?.[0]?.completed_date as string) ?? null;
@@ -153,7 +153,7 @@ export async function togglePromiseCompletionAction(
     return failed("Promise nicht gefunden.");
   }
 
-  const today = utcDateKey();
+  const today = await serverTodayKey();
 
   const { data: existing } = await supabase
     .from("promise_completions")

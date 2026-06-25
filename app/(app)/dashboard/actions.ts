@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
-import { utcDateKey } from "@/lib/utils/date";
+import { serverTodayKey } from "@/lib/server/timezone";
 
 export type MoodCheckinState = {
   error: string | null;
@@ -35,7 +35,7 @@ export async function saveMoodCheckinAction(
     return { error: "Ungültige Auswahl.", success: false, score: null };
   }
 
-  const today = utcDateKey();
+  const today = await serverTodayKey();
 
   const { error } = await supabase
     .from("daily_checkins")

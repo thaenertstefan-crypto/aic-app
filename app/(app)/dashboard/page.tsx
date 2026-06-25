@@ -3,7 +3,7 @@ import { Quote } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { RECIPES, getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
-import { utcDateKey } from "@/lib/utils/date";
+import { serverTodayKey } from "@/lib/server/timezone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DashboardReveal } from "@/components/dashboard/dashboard-reveal";
@@ -40,7 +40,7 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   const now = new Date();
-  const today = utcDateKey(now);
+  const today = await serverTodayKey(now);
   const dateLabel = now.toLocaleDateString("de-DE", {
     weekday: "long",
     day: "numeric",
