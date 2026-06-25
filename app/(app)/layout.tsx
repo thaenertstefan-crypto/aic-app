@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { OfflineBanner } from "@/components/offline/offline-banner";
 import { AppBackdrop } from "@/components/ui/app-backdrop";
+import { TimezoneSync } from "@/components/timezone-sync";
 
 export default async function AppLayout({
   children,
@@ -35,6 +36,7 @@ export default async function AppLayout({
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
       <AppBackdrop />
+      <TimezoneSync />
       <OfflineBanner />
       <main className="flex-1">{children}</main>
       <BottomNav />

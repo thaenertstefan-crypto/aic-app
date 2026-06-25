@@ -1,9 +1,37 @@
 /**
- * Zentrale Datums-Helfer.
- *
- * 13.11 wird die `utcDateKey`-Aufrufer auf zeitzonenbewusste Schlüssel
- * (User-Lokalzeit) migrieren.
+ * Zentrale Datums-Helfer (rein, client-safe — KEIN next/headers-Import).
+ * Den serverseitigen Zugriff auf die User-Zeitzone kapselt lib/server/timezone.ts.
  */
+
+/** Standard-Zeitzone, wenn keine User-TZ bekannt/gültig ist. */
+export const DEFAULT_TIME_ZONE = "Europe/Berlin";
+
+/** Cookie-Name, unter dem die Browser-IANA-Zeitzone transportiert wird. */
+export const TZ_COOKIE = "tz";
+
+/**
+ * Kalendertag-Key "YYYY-MM-DD" für `date` in der angegebenen IANA-Zeitzone.
+ * Unabhängig von der Server-eigenen Zeitzone. Bei ungültiger `timeZone` wird
+ * auf DEFAULT_TIME_ZONE zurückgefallen.
+ */
+export function localDateKeyInTz(date: Date, timeZone: string): string {
+  try {
+    // en-CA liefert das ISO-nahe Format YYYY-MM-DD.
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  } catch {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: DEFAULT_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  }
+}
 
 /**
  * Kalendertag-Key "YYYY-MM-DD" in **UTC** (bisheriges Standard-Muster
