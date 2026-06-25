@@ -5,16 +5,7 @@ import type { ActionState } from "@/lib/types/action-state";
 import { dbError } from "@/lib/utils/db-error";
 
 export type RightsData = {
-  journalEntry: {
-    prompt1: string;
-    prompt2: string;
-    prompt3: string;
-  } | null;
   rights: { id: string; text: string; active: boolean }[] | null;
-  progress: {
-    status: string;
-    current_step: number;
-  } | null;
   introSeen: boolean;
 };
 
@@ -34,30 +25,11 @@ export async function getBillOfRightsData(): Promise<{
     return { error: "Du musst angemeldet sein.", data: null };
   }
 
-  // Fetch journal entry
-  const { data: entry } = await supabase
-    .from("journal_entries")
-    .select("content")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "bill-of-rights")
-    .eq("template_type", "bill_of_rights")
-    .maybeSingle();
-
   // Fetch bill of rights
   const { data: bor } = await supabase
     .from("bill_of_rights")
     .select("rights")
     .eq("user_id", user.id)
-    .maybeSingle();
-
-  // Fetch progress
-  const { data: progress } = await supabase
-    .from("user_recipe_progress")
-    .select("status, current_step")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "bill-of-rights")
-    .order("cycle_number", { ascending: false })
-    .limit(1)
     .maybeSingle();
 
   // Intro "schon gesehen?" — gilt pro Slug, sobald irgendeine Zeile intro_seen=true hat.
@@ -73,9 +45,7 @@ export async function getBillOfRightsData(): Promise<{
   return {
     error: null,
     data: {
-      journalEntry: entry?.content as RightsData["journalEntry"],
       rights: (bor?.rights as { id: string; text: string; active: boolean }[]) ?? null,
-      progress: progress ? { status: progress.status, current_step: progress.current_step } : null,
       introSeen: Boolean(introRow),
     },
   };
