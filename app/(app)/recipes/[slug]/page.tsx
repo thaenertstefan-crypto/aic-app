@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Heart, ArrowLeft } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/get-user";
 import { getRecipeBySlug } from "@/lib/utils/recipes";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { getValueLabel } from "@/lib/utils/values-bank";
@@ -67,9 +68,7 @@ export default async function RecipeDetailPage(props: {
   // --- Available recipe -----------------------------------------------
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   // Fetch the user's name for a warm greeting
   const { data: profile } = await supabase

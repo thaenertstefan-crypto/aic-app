@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/get-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
@@ -15,9 +16,7 @@ import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 export default async function MeValuesPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   let values: string[] = [];
   let valuesStatus = "not_started";

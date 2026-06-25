@@ -9,6 +9,7 @@ import {
 
 import { signoutAction } from "@/app/(auth)/auth.actions";
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/get-user";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/stat-card";
 import { PageHeader } from "@/components/brand/page-header";
@@ -19,9 +20,7 @@ type RightItem = { id: string; text: string; active: boolean };
 export default async function SettingsPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   let journalCount = 0;
   let recipesCompleted = 0;

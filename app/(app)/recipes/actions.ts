@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/get-user";
 import { dbError } from "@/lib/utils/db-error";
 import { redirect } from "next/navigation";
 import { getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
@@ -21,15 +22,13 @@ export async function startOrContinueRecipeAction(
   _prevState: RecipeActionState,
   formData: FormData,
 ): Promise<RecipeActionState> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   if (!user) {
     return { error: "Du musst angemeldet sein, um ein Rezept zu starten." };
   }
+
+  const supabase = await createClient();
 
   const recipeSlug = formData.get("recipeSlug") as string;
   if (!recipeSlug) {
@@ -95,14 +94,11 @@ export async function startOrContinueRecipeAction(
  * IRGENDEINE Fortschritts-Zeile dieses Slugs intro_seen = true hat.
  */
 export async function hasSeenRecipeIntro(slug: string): Promise<boolean> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   if (!user) return false;
 
+  const supabase = await createClient();
   const { data } = await supabase
     .from("user_recipe_progress")
     .select("intro_seen")
@@ -125,16 +121,13 @@ export async function hasSeenRecipeIntro(slug: string): Promise<boolean> {
 export async function markRecipeIntroSeenAction(
   slug: string,
 ): Promise<{ error: string | null }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   if (!user) {
     return { error: "Du musst angemeldet sein." };
   }
 
+  const supabase = await createClient();
   // Höchste cycle_number-Zeile für (user, slug) holen
   const { data: existing } = await supabase
     .from("user_recipe_progress")

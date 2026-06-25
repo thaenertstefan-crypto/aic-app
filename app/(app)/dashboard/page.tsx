@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Quote } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/get-user";
 import { RECIPES, getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { Button } from "@/components/ui/button";
@@ -35,9 +36,7 @@ function asAffirmation(text: string): string {
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   const now = new Date();
   const today = await serverTodayKey(now);

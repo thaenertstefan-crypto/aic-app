@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/get-user";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -127,14 +128,11 @@ export async function saveHypothesisAction(
  * Used to pre-fill the hypothesis form when revisiting the step.
  */
 export async function getHypothesisData(): Promise<string[] | null> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   if (!user) return null;
 
+  const supabase = await createClient();
   const { data: hypothesisRow } = await supabase
     .from("values_hypothesis")
     .select("values")
@@ -165,16 +163,13 @@ export type JournalPageData = {
  * Fetch all data needed for the journal page (Step 2 of Recipe #1).
  */
 export async function getJournalData(): Promise<JournalPageData> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   if (!user) {
     return { hypothesis: null, entries: [], startedAt: null, currentStep: 1 };
   }
 
+  const supabase = await createClient();
   // Fetch latest values hypothesis
   const { data: hypothesisRow, error: hypothesisError } = await supabase
     .from("values_hypothesis")
@@ -355,11 +350,7 @@ export type EvaluationPageData = {
  * - Redirects to journal if fewer than 7 entries exist
  */
 export async function getEvaluationData(): Promise<EvaluationPageData> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   if (!user) {
     return {
@@ -372,6 +363,7 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
     };
   }
 
+  const supabase = await createClient();
   // Fetch user progress for this recipe
   const { data: progress } = await supabase
     .from("user_recipe_progress")

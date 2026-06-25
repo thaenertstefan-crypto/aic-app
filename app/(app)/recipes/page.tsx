@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/get-user";
 import { RECIPES } from "@/lib/utils/recipes";
 import { PageHeader } from "@/components/brand/page-header";
 import {
@@ -66,9 +67,7 @@ function buildProgressMap(rows: ProgressRow[]): Map<string, ProgressState> {
 export default async function RecipesPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
 
   // Fetch progress for all recipes the user has touched
   const { data: progressRows } = await supabase
