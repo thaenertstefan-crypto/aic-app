@@ -300,10 +300,13 @@ export async function saveJournalEntryAction(
       .maybeSingle();
 
     if (progress && progress.current_step < 3) {
-      await supabase
+      const { error: advanceError } = await supabase
         .from("user_recipe_progress")
         .update({ current_step: 3 })
         .eq("id", progress.id);
+      if (advanceError) {
+        return { error: dbError(advanceError, "values") };
+      }
     }
   }
 

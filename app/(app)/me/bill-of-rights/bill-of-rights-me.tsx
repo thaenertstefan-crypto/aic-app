@@ -7,6 +7,7 @@ import { Check, Pencil, PenLine, Sparkles, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { FormError } from "@/components/ui/form-error";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { MascotJudge } from "@/components/brand/mascot-judge";
@@ -74,12 +75,21 @@ export function BillOfRightsMe({
   const [rights, setRights] = useState<Right[]>(initialRights);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   async function persist(updated: Right[]) {
+    // Optimistisch setzen, aber bei Fehler zurückrollen, damit der UI-Stand
+    // nicht fälschlich "gespeichert" suggeriert.
+    const previous = rights;
     setRights(updated);
+    setSaveError(null);
     const fd = new FormData();
     fd.set("rights", JSON.stringify(updated));
-    await saveRightsAction({ error: null, success: false }, fd);
+    const result = await saveRightsAction({ error: null, success: false }, fd);
+    if (result.error) {
+      setRights(previous);
+      setSaveError(result.error);
+    }
   }
 
   const activeRights = rights.filter((r) => r.active);
@@ -117,6 +127,7 @@ export function BillOfRightsMe({
         introSeen={introSeen}
       >
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
+          <FormError message={saveError} />
           {activeRights.length === 0 ? (
             <div className="flex flex-col gap-4">
               <p className="text-center text-sm text-muted-foreground">

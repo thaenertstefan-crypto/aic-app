@@ -155,20 +155,28 @@ export async function saveReflectionAction(
     .maybeSingle();
 
   if (progress && progress.status === "not_started") {
-    await supabase
+    const { error: progressError } = await supabase
       .from("user_recipe_progress")
       .update({ status: "in_progress", current_step: 1 })
       .eq("id", progress.id);
+    if (progressError) {
+      return { error: dbError(progressError, "bill-of-rights"), success: false };
+    }
   } else if (!progress) {
     // Create a new progress row if none exists
-    await supabase.from("user_recipe_progress").insert({
-      user_id: user.id,
-      recipe_slug: "bill-of-rights",
-      current_step: 1,
-      status: "in_progress",
-      started_at: new Date().toISOString(),
-      cycle_number: 1,
-    });
+    const { error: progressError } = await supabase
+      .from("user_recipe_progress")
+      .insert({
+        user_id: user.id,
+        recipe_slug: "bill-of-rights",
+        current_step: 1,
+        status: "in_progress",
+        started_at: new Date().toISOString(),
+        cycle_number: 1,
+      });
+    if (progressError) {
+      return { error: dbError(progressError, "bill-of-rights"), success: false };
+    }
   }
 
   return { error: null, success: true };
@@ -254,7 +262,13 @@ export async function saveRightsAction(
     } else if (!completed && progress.status === "not_started") {
       update.status = "in_progress";
     }
-    await supabase.from("user_recipe_progress").update(update).eq("id", progress.id);
+    const { error: progressError } = await supabase
+      .from("user_recipe_progress")
+      .update(update)
+      .eq("id", progress.id);
+    if (progressError) {
+      return { error: dbError(progressError, "bill-of-rights"), success: false };
+    }
   } else {
     const insert: Record<string, string | number | boolean> = {
       user_id: user.id,
@@ -267,7 +281,12 @@ export async function saveRightsAction(
     if (completed) {
       insert.completed_at = new Date().toISOString();
     }
-    await supabase.from("user_recipe_progress").insert(insert);
+    const { error: progressError } = await supabase
+      .from("user_recipe_progress")
+      .insert(insert);
+    if (progressError) {
+      return { error: dbError(progressError, "bill-of-rights"), success: false };
+    }
   }
 
   return { error: null, success: true };
