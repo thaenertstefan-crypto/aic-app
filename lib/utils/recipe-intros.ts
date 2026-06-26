@@ -50,11 +50,11 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
     },
     {
       title: "Nicht alles, was Du denkst, ist Realität.",
-      body: "Während Dein Unterbewusstsein ein Meister darin ist, Worst-Case-Szenarios auszumalen, hat es ein entscheidenes Manko. Dein Unterbewusstsein kann Realität und Fiktion nicht unterscheiden. Sprich, die Horror-Filme in deinem Kopf fühlen sich echt an — sind es aber fast nie. Wie Matthew McConaughey mal sinngemäß sagte: „I have had many crises in my life. Most of them never happened.“",
+      body: "Während Dein Unterbewusstsein ein Meister darin ist, Worst-Case-Szenarios auszumalen, hat es ein entscheidenes Manko: Dein Unterbewusstsein kann Realität und Fiktion nicht unterscheiden. Sprich, die Horror-Filme, die sich beim Overthinking in deinem Kopf abspielen, mögen sich echt anfühlen — sind es aber fast nie. Wie Matthew McConaughey mal sinngemäß sagte: „I have had many crises in my life. Most of them never happened.“",
     },
     {
       title: "Was dich erwartet",
-      body: "Die Folgende Übung soll Dir dabei helfen, aus Deinen Gedankenspiralen auszubrechen. Ziel ist es zuerst durch ein sogenanntes Pattern Interrupt dein Unterbewusstsein bei seiner kreativen Schwarzmalerei zu unterbrechen indem du von 5 runterzählts oder laut „Stop“ sagst (ja das meine ich ernst). Dann gräbst du dich mit ein paar ehrlichen „Warum?“-Fragen zur Wurzel des Problems durch, das Dich bedrückt und Deine Gedankenspirale ausgelöst hat. Am Ende der Frage-Runde solltest Du Dir dann selber die echten Fakten hinsichtlich des Problems auf den Tisch gelegt haben und kannst somit eine klare Entscheidung treffen, wie Du mit dem Problem umgehst - und zwar gemessen daran, was das Problem wirklich ist, nicht gemessen daran was Dein Unterbewusstsein dir vormacht. Bist Du bereit?",
+      body: "Die Folgende Übung soll Dir dabei helfen, dieses Manko deines Unterbewusstseins zu händeln und aus deinen Gedankenspiralen auszubrechen. Ziel ist es zuerst durch ein sogenanntes „Pattern Interrupt“ dein Unterbewusstsein bei seiner kreativen Schwarzmalerei zu unterbrechen indem du von 5 runterzählts oder laut „Stop“ sagst (ja das meine ich ernst). Dann gräbst du dich mit ein paar ehrlichen „Warum?“-Fragen zur Wurzel des Problems durch, das deine Gedankenspirale ausgelöst hat. Am Ende der Frage-Runde werde ich dich dazu challengen, das Problem aus einer anderen Perspektive zu betrachten, die der Schwarzmalerei deines Unterbewusstseins entgegensteht. Auf der Basis sollst Du dann in der Lage sein, eine klare Entscheidung treffen, wie Du mit dem Problem umgehst - und zwar gemessen daran, was das Problem wirklich ist, nicht gemessen daran was Dein Unterbewusstsein dir vormacht. Bist Du bereit?",
     },
   ],
 };

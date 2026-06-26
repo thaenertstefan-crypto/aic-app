@@ -57,7 +57,7 @@ const TOTAL_STEPS = 8;
 
 // Fixe Einleitung vor der KI-Challenger-Frage in Schritt 6 (Perspektivwechsel).
 const CHALLENGE_INTRO =
-  "Verstehe … Ich möchte dich gerne challengen: Was, wenn du falsch liegst? Gibt es eine Perspektive, die du noch nicht gesehen hast?";
+  "Verstehe … Ich möchte dich gerne challengen: Gibt es eine Perspektive, die du noch nicht betrachtet hast?";
 
 // ─── Step Labels ──────────────────────────────────────────────────────
 
