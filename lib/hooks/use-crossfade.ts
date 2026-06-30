@@ -13,9 +13,19 @@ export const CROSSFADE_MS = 250;
  * synchron und mit identischem Timing überblenden — sie können nicht mehr
  * gegeneinander driften.
  *
- * Ablauf bei Token-Wechsel: sichtbaren Inhalt ausblenden (CROSSFADE_MS) →
- * tauschen → neuen Inhalt einblenden. Es ist immer nur ein Inhalt im DOM; alter
- * und neuer Zustand sind nie gleichzeitig mit opacity > 0 sichtbar.
+ * Ablauf bei Token-Wechsel: sichtbaren Inhalt ausblenden (CROSSFADE_MS, volle
+ * Dauer abgewartet) → tauschen → neuen Inhalt einblenden. Es ist immer nur ein
+ * Inhalt im DOM; alter und neuer Zustand sind nie gleichzeitig mit opacity > 0
+ * sichtbar — der Swap läuft erst, wenn das Ausblenden wirklich auf opacity 0
+ * angekommen ist.
+ *
+ * Der Swap wird NICHT direkt per `setTimeout(CROSSFADE_MS)` ausgelöst: dieser
+ * Timer liefe gegen die gleich lange CSS-Transition (die erst beim nächsten
+ * Paint startet) und feuerte ein, zwei Frames zu früh — der alte Inhalt würde
+ * getauscht, während er noch teil-sichtbar ist (kurze Überlagerung). Stattdessen
+ * starten wir den Timer erst nach einem doppelten requestAnimationFrame, also
+ * sobald der opacity-0-Zustand gepaintet (= die Ausblend-Transition begonnen)
+ * ist. So spannt die volle CROSSFADE_MS garantiert die komplette Ausblendung ab.
  *
  * Der Out-Effect hängt bewusst NUR am `token` (einem Primitive), nicht am
  * `value`: Die Karte übergibt `children` als `value` — neue Objekt-Identität bei
@@ -47,11 +57,27 @@ export function useCrossfade<T>(token: string, value: T) {
     if (reduced || token === shown.token) return;
 
     setVisible(false); // läuft post-paint, blendet den sichtbaren Inhalt aus
-    const swap = setTimeout(
-      () => setShown({ token, value: latestValue.current }),
-      CROSSFADE_MS,
-    );
-    return () => clearTimeout(swap);
+
+    // Den Swap erst nach VOLLSTÄNDIGEM Ausblenden auslösen: per doppeltem rAF
+    // warten, bis der opacity-0-Zustand tatsächlich gepaintet ist (= die CSS-
+    // Transition hat begonnen), und erst dann die volle Transition-Dauer. So
+    // läuft der Timer nicht mehr gegen die CSS-Transition — der alte Inhalt ist
+    // garantiert auf opacity 0, bevor getauscht wird.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => {
+        timer = setTimeout(
+          () => setShown({ token, value: latestValue.current }),
+          CROSSFADE_MS,
+        );
+      });
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+      if (timer) clearTimeout(timer);
+    };
   }, [token, reduced, shown.token]);
 
   // In → neuen Inhalt einblenden, nachdem getauscht (und opacity-0 gepaintet) wurde.
