@@ -104,7 +104,7 @@ function TileCard({ tile }: { tile: Tile }) {
 export default function BoosterPage() {
   return (
     <div className="space-y-6 p-4">
-      <header className="space-y-1">
+      <header className="space-y-3">
         <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
           {PAGE_TITLES.booster}
         </h1>

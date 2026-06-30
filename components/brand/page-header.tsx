@@ -16,7 +16,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "space-y-2",
+        "space-y-3",
         align === "center" && "text-center",
         className,
       )}
@@ -25,7 +25,7 @@ export function PageHeader({
         {title}
       </h1>
       {description && (
-        <p className="max-w-prose text-lg text-muted-foreground">
+        <p className="max-w-prose text-sm text-muted-foreground">
           {description}
         </p>
       )}
