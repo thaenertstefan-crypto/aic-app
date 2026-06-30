@@ -98,7 +98,7 @@ export function DailyFocus({
                     href={destination.href}
                     className="flex items-center gap-2 rounded-lg border px-3 py-2.5 transition-colors hover:bg-muted/40"
                   >
-                    <span className="text-base text-foreground/90">
+                    <span className="text-sm font-medium text-foreground/90">
                       {destination.sentence}
                     </span>
                     {destination.badge && (

@@ -76,7 +76,7 @@ function TileCard({ tile }: { tile: Tile }) {
           <Icon className="size-4" />
         </div>
         <div className="space-y-0.5">
-          <p className="font-heading text-sm font-semibold leading-snug text-foreground">
+          <p className="font-heading text-base font-semibold leading-snug text-foreground">
             {title}
           </p>
           <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
