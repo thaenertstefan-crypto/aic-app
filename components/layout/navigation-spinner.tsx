@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
-import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
-import { cn } from "@/lib/utils";
+import { SpinnerOverlay } from "@/components/ui/spinner";
 
 /** Verzögerung, bevor der Spinner erscheint — verhindert Aufblitzen bei
  *  geprefetchter/instant Navigation. */
@@ -25,7 +24,6 @@ const SAFETY_TIMEOUT_MS = 8000;
  */
 export function NavigationSpinner() {
   const pathname = usePathname();
-  const reduced = useReducedMotion();
   const [pending, setPending] = useState(false);
 
   const showTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,20 +108,5 @@ export function NavigationSpinner() {
 
   if (!pending) return null;
 
-  return (
-    <div
-      role="status"
-      aria-label="Lädt …"
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-background/40 backdrop-blur-sm animate-in fade-in-0 duration-200"
-    >
-      <span
-        className={cn(
-          "block size-10 rounded-full border-[3px] border-primary/25 border-t-primary",
-          !reduced && "animate-spin",
-          reduced && "animate-pulse",
-        )}
-        style={{ filter: "drop-shadow(0 0 10px rgba(231,182,94,0.55))" }}
-      />
-    </div>
-  );
+  return <SpinnerOverlay />;
 }

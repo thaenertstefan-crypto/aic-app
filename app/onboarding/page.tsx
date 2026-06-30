@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
+import { SpinnerOverlay } from "@/components/ui/spinner";
 import { FormError } from "@/components/ui/form-error";
 import { Mascot, type MascotExpression } from "@/components/brand/mascot";
 import { Crossfade } from "@/components/dashboard/crossfade";
@@ -264,6 +265,10 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex min-h-svh flex-col justify-center px-4 py-8">
+      {/* Abschluss-Übergang: goldener Spinner, solange die Server-Action läuft und
+          während der anschließenden Hard-Navigation aufs Dashboard. */}
+      {(pending || state.success) && <SpinnerOverlay />}
+
       {/* Clean-Cover für den Login→Onboarding-Übergang: verdeckt Logo + Layout,
           sodass beim Sprung nur das Maskottchen sichtbar ist. Immer gerendert
           (kein Struktur-Mismatch bei der Hydration), nur per `hidden` gated. */}
@@ -323,13 +328,13 @@ export default function OnboardingPage() {
         <CardHeader>
           {step === "name" && (
             <>
-              <CardTitle>Willkommen 👋</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-xl">Willkommen 👋</CardTitle>
+              <CardDescription className="text-base">
                 Willkommen im Anti Imposter Club – einem Ort, der Dir helfen soll,
                 aus Gedankenspiralen auszubrechen, schuldgefühlfrei &bdquo;Nein&ldquo;
                 zu sagen und Dich einfach wieder gut genug zu fühlen.
               </CardDescription>
-              <CardDescription>
+              <CardDescription className="text-base">
                 Bevor ich Dich mit unserer Club-App vertraut mache, magst Du mir
                 verraten, wie Du heißt?
               </CardDescription>
@@ -337,8 +342,8 @@ export default function OnboardingPage() {
           )}
           {step === "response" && (
             <>
-              <CardTitle>Nett dich kennenzulernen, {displayName}! 👋</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-xl">Nett dich kennenzulernen, {displayName}! 👋</CardTitle>
+              <CardDescription className="text-base">
                 Lass mich dir kurz zwei Fragen stellen und dir dann die App
                 zeigen.
               </CardDescription>
@@ -346,16 +351,16 @@ export default function OnboardingPage() {
           )}
           {step === "reason" && (
             <>
-              <CardTitle>Was bringt dich hierher?</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-xl">Was bringt dich hierher?</CardTitle>
+              <CardDescription className="text-base">
                 Was hat dich heute hergeführt? Dein Weg darf sich später ändern.
               </CardDescription>
             </>
           )}
           {step === "confidence" && (
             <>
-              <CardTitle>Wie sicher fühlst du dich gerade?</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-xl">Wie sicher fühlst du dich gerade?</CardTitle>
+              <CardDescription className="text-base">
                 Es gibt kein &bdquo;richtig&ldquo; oder &bdquo;falsch&ldquo;
                 hier. Sei ehrlich mit dir.
               </CardDescription>
@@ -363,9 +368,9 @@ export default function OnboardingPage() {
           )}
           {introCard && (
             <>
-              {introCard.title && <CardTitle>{introCard.title}</CardTitle>}
+              {introCard.title && <CardTitle className="text-xl">{introCard.title}</CardTitle>}
               {introCard.body.map((paragraph, i) => (
-                <CardDescription key={i}>{paragraph}</CardDescription>
+                <CardDescription key={i} className="text-base">{paragraph}</CardDescription>
               ))}
             </>
           )}
@@ -388,6 +393,7 @@ export default function OnboardingPage() {
                 autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="md:text-base"
                 required
               />
             </div>

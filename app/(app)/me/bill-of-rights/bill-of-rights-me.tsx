@@ -75,6 +75,10 @@ export function BillOfRightsMe({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Folgt dem Gate-Zustand (nicht nur der server-gelieferten Prop), damit das
+  // Richter-Maskottchen schon beim ersten Durchklicken der Intro erscheint und
+  // nicht erst beim erneuten Öffnen der Seite.
+  const [introDone, setIntroDone] = useState(introSeen);
 
   async function persist(updated: RightItem[]) {
     // Optimistisch setzen, aber bei Fehler zurückrollen, damit der UI-Stand
@@ -121,7 +125,7 @@ export function BillOfRightsMe({
       <SubPageHeader backHref="/me" title="Meine Bill of Rights" />
 
       {/* Maskottchen als Richter — nur sobald die Intro-Sequenz vorbei ist. */}
-      {introSeen && (
+      {introDone && (
         <div className="flex justify-center px-4 pt-6">
           <MascotJudge />
         </div>
@@ -131,6 +135,7 @@ export function BillOfRightsMe({
         slug="bill-of-rights"
         cards={INTRO_CARDS}
         introSeen={introSeen}
+        onSeen={() => setIntroDone(true)}
       >
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
           <FormError message={saveError} />

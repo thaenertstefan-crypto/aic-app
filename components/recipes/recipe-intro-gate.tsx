@@ -12,6 +12,10 @@ type RecipeIntroGateProps = {
   cards: IntroCard[] | null;
   introSeen: boolean;
   children: React.ReactNode;
+  /** Wird aufgerufen, sobald die Intro-Sequenz durchgeklickt/übersprungen wurde
+   *  (optimistisch, vor der Persistenz). Erlaubt dem Aufrufer, weitere UI sofort
+   *  freizugeben, die sonst an der server-gelieferten `introSeen`-Prop hinge. */
+  onSeen?: () => void;
 };
 
 /**
@@ -28,6 +32,7 @@ export function RecipeIntroGate({
   cards,
   introSeen,
   children,
+  onSeen,
 }: RecipeIntroGateProps) {
   const [dismissed, setDismissed] = useState(false);
 
@@ -37,6 +42,7 @@ export function RecipeIntroGate({
 
   const handleSeen = () => {
     setDismissed(true);
+    onSeen?.();
     // Persistiert geräteübergreifend; UI reagiert bereits optimistisch.
     void markRecipeIntroSeenAction(slug);
   };

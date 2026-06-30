@@ -20,9 +20,9 @@ const MOODS: { score: number; label: string }[] = Object.entries(
 // Encouraging, judgment-free message per score — low scores get warmth, not pity.
 const MESSAGES: Record<number, string> = {
   1: "Schwere Tage gehören dazu. Schön, dass du trotzdem hier bist. 🤍",
-  2: "Auch zähe Tage dürfen sein. Sei heute sanft mit dir.",
+  2: "Auch zähe Tage dürfen sein. Sei heute sanft mit dir. 🫶",
   3: "Schön, in deiner Mitte zu sein — aus dieser Ruhe heraus kann der Tag wachsen. 🌿",
-  4: "Schön, dass es heute gut läuft. Genieß diesen Moment.",
+  4: "Schön, dass es heute gut läuft. Genieß diesen Moment. ☀️",
   5: "Wunderbar — nimm den Schwung mit in den Tag! ✨",
 };
 

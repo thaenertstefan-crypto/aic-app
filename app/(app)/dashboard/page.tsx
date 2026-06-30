@@ -133,23 +133,18 @@ export default async function DashboardPage() {
   // Continuity-Empfehlung: das, was die alte RecipeCard gezeigt hätte.
   const continuityRecipe = hasActiveRecipe ? activeRecipe : suggestedRecipe;
 
-  // Werte-Fortschritt immer ermitteln (unabhängig vom aktiven Recipe), damit
-  // der "Werte reflektieren"-Eintrag auf den richtigen Schritt verlinkt.
-  const valuesProgress = progressRows.find(
-    (p) => p.recipe_slug === "values" && p.status !== "completed",
-  );
-  // Laufende Entdeckung führt auf die Journey-Übersicht (nicht direkt ins
-  // Journal); ein Neustart beginnt mit der Hypothese.
-  const valuesHref =
-    valuesProgress?.status === "in_progress"
-      ? "/me/values/journey"
-      : "/me/values/journey/hypothesis";
-
-  // Werte-Status (not_started | in_progress | completed) für die dreistufige CTA.
+  // Werte-Status (not_started | in_progress | completed) für die dreistufige CTA
+  // und die Verlinkung.
   const valuesStatus =
     progressRows.find((p) => p.recipe_slug === "values")?.status ??
     "not_started";
   const valuesCompleted = valuesStatus === "completed";
+
+  // Laufende Entdeckung führt direkt zurück in die Journey (Wiederaufnahme, kein
+  // erneutes Intro). Sonst auf die kanonische Werte-Heimat /me/values, die die
+  // Intro-Sequenz gated und danach zur "Meine Werte"-Seite (→ Journey) führt.
+  const valuesHref =
+    valuesStatus === "in_progress" ? "/me/values/journey" : "/me/values";
 
   // "Normale" Empfehlung (recipe-basiert, mood-unabhängig). Der low-Tier-Fall
   // (Mantra-Pause) und die Frage werden client-seitig in DashboardFocus aus der
@@ -190,7 +185,7 @@ export default async function DashboardPage() {
       sentence: valuesCompleted
         ? "Ich würde gern meine Werte ansehen"
         : "Ich würde gern meine Werte reflektieren",
-      href: valuesCompleted ? "/me/values" : valuesHref,
+      href: valuesHref,
     },
     {
       key: "overthinking",

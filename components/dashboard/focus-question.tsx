@@ -1,35 +1,24 @@
-"use client";
-
-import { CROSSFADE_MS, useCrossfade } from "@/lib/hooks/use-crossfade";
+import { CROSSFADE_MS } from "@/lib/hooks/use-crossfade";
 import { cn } from "@/lib/utils";
 
 const QUESTION_CLASS = "font-heading text-lg font-medium text-foreground/90";
 
-/** Token-Marker für „keine Frage anzeigen" (kollidiert mit keinem echten
- *  Fragetext). */
-const NO_QUESTION_TOKEN = " none";
-
 /**
- * Blendet die Fokus-Frage beim Wechsel sanft über: aktuellen Text ausblenden,
- * Text tauschen, neuen Text einblenden. Läuft über dieselbe `useCrossfade`-
- * Maschine wie die Empfehlungskarte (`crossfade.tsx`), damit Frage und
- * Empfehlung bei einem Stimmungswechsel synchron wechseln. Respektiert
- * `prefers-reduced-motion` (dann sofortiger Wechsel ohne Animation). `null` =
- * keine Frage anzeigen.
+ * Rein präsentationale Fokus-Frage. Text **und** Sichtbarkeit kommen von außen
+ * (`daily-focus.tsx`), damit Frage und Empfehlungskarte über **dieselbe**
+ * Crossfade-Maschine synchron überblenden. `null` = keine Frage anzeigen.
+ * Die Opacity-Transition nutzt dasselbe Timing (`CROSSFADE_MS`) wie der restliche
+ * Fokus-Block; bei reduzierter Bewegung bleibt `visible` konstant `true`, sodass
+ * kein Übergang ausgelöst wird.
  */
-export function FocusQuestion({ question }: { question: string | null }) {
-  const token = question ?? NO_QUESTION_TOKEN;
-  const { shown, visible, reduced } = useCrossfade(token, question);
-
-  if (reduced) {
-    return question === null ? null : (
-      <p aria-live="polite" className={QUESTION_CLASS}>
-        {question}
-      </p>
-    );
-  }
-
-  if (shown.value === null) return null;
+export function FocusQuestion({
+  question,
+  visible,
+}: {
+  question: string | null;
+  visible: boolean;
+}) {
+  if (question === null) return null;
 
   return (
     <p
@@ -41,7 +30,7 @@ export function FocusQuestion({ question }: { question: string | null }) {
       )}
       style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
     >
-      {shown.value}
+      {question}
     </p>
   );
 }

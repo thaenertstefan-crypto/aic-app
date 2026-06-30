@@ -1,10 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FocusQuestion } from "@/components/dashboard/focus-question";
-import { Crossfade } from "@/components/dashboard/crossfade";
+import { CROSSFADE_MS, useCrossfade } from "@/lib/hooks/use-crossfade";
+import { cn } from "@/lib/utils";
 
 export type Destination = {
   key: string;
@@ -30,10 +33,23 @@ type DailyFocusProps = {
   alternatives: Destination[];
 };
 
+/** Eingefrorener Tier-Zustand für die gemeinsame Überblendung. */
+type FocusSnapshot = {
+  question: string | null;
+  primary: PrimaryRecommendation | null;
+  fallbackMessage?: string;
+  alternatives: Destination[];
+};
+
 /**
  * Stimmungsbasierter Tages-Fokus: optionale Frage, eine primäre Empfehlung und
- * eine Liste alternativer Ziele. Rein präsentational — alle Daten kommen als
- * Props rein (Berechnung passiert beim Aufrufer).
+ * eine Liste alternativer Ziele.
+ *
+ * Frage, Empfehlungskarte und Alternativen laufen bewusst über **eine einzige**
+ * `useCrossfade`-Maschine (Token = `tier`): so blenden sie mit einem gemeinsamen
+ * Timer und einer gemeinsamen Opacity in Lockstep aus und wieder ein
+ * (garantiert out→swap→in, nie Überlagerung). Würde man Frage und Karte über
+ * getrennte Maschinen führen, könnten sie bei schnellem Stimmungswechsel driften.
  */
 export function DailyFocus({
   tier,
@@ -49,24 +65,52 @@ export function DailyFocus({
       ? "Brauchst du eine Mantra-Pause?"
       : "Sollen wir weitermachen?";
 
+  // Kompletter Tier-Zustand in einem Snapshot — neue Objekt-Identität pro Render
+  // ist gewollt; `useCrossfade` liest den jeweils neuesten Wert über eine Ref und
+  // übernimmt ihn erst beim Swap (Dependencies hängen nur am Token).
+  const snapshot: FocusSnapshot = {
+    question: showQuestion ? question : null,
+    primary,
+    fallbackMessage,
+    alternatives,
+  };
+
+  const { shown, visible, reduced } = useCrossfade<FocusSnapshot>(tier, snapshot);
+  // Während der Ausblend-Phase den eingefrorenen alten Snapshot zeigen, sonst den
+  // live berechneten (analog zur `Crossfade`-Komponente). Bei reduzierter Bewegung
+  // immer live (kein Swap-Timing).
+  const view = reduced || shown.token === tier ? snapshot : shown.value;
+
   return (
     <div className="space-y-3">
-      <FocusQuestion question={showQuestion ? question : null} />
+      <FocusQuestion question={view.question} visible={visible} />
 
-      <Crossfade token={tier} className="space-y-6">
-        {primary ? (
+      <div
+        className={cn(
+          "space-y-6",
+          !reduced && "transition-opacity",
+          !reduced && (visible ? "opacity-100" : "opacity-0"),
+        )}
+        style={
+          !reduced ? { transitionDuration: `${CROSSFADE_MS}ms` } : undefined
+        }
+      >
+        {view.primary ? (
           <Card variant="glass" className="border border-primary">
             <CardContent className="space-y-3">
               <div className="space-y-1">
                 <p className="font-heading text-lg font-medium text-foreground">
-                  {primary.title}
+                  {view.primary.title}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {primary.subtitle}
+                  {view.primary.subtitle}
                 </p>
               </div>
-              <Button className="w-full" render={<Link href={primary.href} />}>
-                {primary.cta}
+              <Button
+                className="w-full"
+                render={<Link href={view.primary.href} />}
+              >
+                {view.primary.cta}
                 <ArrowRight />
               </Button>
             </CardContent>
@@ -74,7 +118,9 @@ export function DailyFocus({
         ) : (
           <Card variant="glass">
             <CardContent className="space-y-3">
-              <p className="text-base text-muted-foreground">{fallbackMessage}</p>
+              <p className="text-base text-muted-foreground">
+                {view.fallbackMessage}
+              </p>
               <Button
                 variant="outline"
                 className="w-full"
@@ -86,13 +132,13 @@ export function DailyFocus({
           </Card>
         )}
 
-        {alternatives.length > 0 && (
+        {view.alternatives.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
               …oder brauchst du gerade was anderes?
             </p>
             <ul className="space-y-2">
-              {alternatives.map((destination) => (
+              {view.alternatives.map((destination) => (
                 <li key={destination.key}>
                   <Link
                     href={destination.href}
@@ -113,7 +159,7 @@ export function DailyFocus({
             </ul>
           </div>
         )}
-      </Crossfade>
+      </div>
     </div>
   );
 }

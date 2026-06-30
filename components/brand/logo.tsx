@@ -8,16 +8,16 @@ interface LogoProps {
 }
 
 const sizeClasses: Record<LogoSize, string> = {
-  sm: "text-lg tracking-wide",
-  default: "text-2xl tracking-wider",
-  lg: "text-4xl tracking-widest",
+  sm: "text-lg",
+  default: "text-2xl",
+  lg: "text-4xl",
 };
 
 export function Logo({ className, size = "default" }: LogoProps) {
   return (
     <p
       className={cn(
-        "inline-flex items-baseline gap-1.5 font-heading font-semibold leading-none",
+        "inline-flex items-baseline gap-1.5 font-heading font-bold tracking-tight leading-none",
         sizeClasses[size],
         className,
       )}
