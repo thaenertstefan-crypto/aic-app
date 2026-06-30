@@ -17,30 +17,30 @@ export type IntroCard = { title: string; body: string };
 export const RECIPE_INTROS: Record<string, IntroCard[]> = {
   values: [
     {
-      title: "Warum das wichtig ist",
-      body: "Es gibt eine Frage, die über fast jede Entscheidung in deinem Leben mitbestimmt, ob sie sich später gut oder falsch anfühlt: Was sind eigentlich deine Werte? Werte sind dein innerer Kompass — die Dinge, die dir wirklich wichtig sind, oft ohne dass du es bewusst merkst.",
+      title: "Schon mal das Gefühl gehabt?",
+      body: "Du triffst eine Entscheidung — einen Job, eine Beziehung, eine Bitte von jemandem — und irgendwas fühlt sich dabei komisch an. Nicht weil du falsch entschieden hast. Sondern weil du dich von etwas entfernt hast, das dir tief innen wichtig ist. Gleichzeitig gibt es diese anderen Momente, in denen du einfach in deinem Element bist — voll Energie, klar im Kopf, einfach gut. In beiden Momenten greifst du unbewusst auf dasselbe zurück:",
     },
     {
-      title: "Die Idee dahinter",
-      body: "Wir gehen das wie ein kleines Experiment an: Du stellst eine Hypothese auf (5 Werte, die du vermutest), sammelst eine Woche lang Daten über dich selbst und wertest dann aus. Test, Auswerten, Verbessern — wie ein Wissenschaftler, nur dass das Forschungsobjekt du bist.",
+      title: "Deine Werte.",
+      body: "Werte sind dein innerer Kompass — die Prinzipien und Überzeugungen, die deine Entscheidungen, Gedanken und Gefühle leiten, auch wenn du dir dessen gar nicht bewusst bist. Das Problem ist: Die meisten Menschen wissen gar nicht, was ihre eigentlich sind. Und wer seinen Kompass nicht kennt, navigiert auf gut Glück.",
     },
     {
       title: "Was dich erwartet",
-      body: "Zuerst wählst du 5 Werte. Dann begleitest du dich 7 Tage mit kurzen Tagebuch-Einträgen. Am Ende schaust du, welche Muster sich zeigen. Nimm dir pro Tag nur 2–3 Minuten — mehr braucht es nicht.",
+      body: "In diesem Rezept findest du deine Werte nicht durch stundenlange Selbstreflexion — sondern durch echte Beobachtung von dir selbst. Wie ein Wissenschaftler. Du startest mit deiner Hypothese: 5 Werte, von denen du vermutest, dass sie deine sind — ohne zu viel nachzudenken. Dann beobachtest du dich selbst für 7 Tage mit kurzen Tagebuch-Einträgen: Was hat dich heute wirklich bewegt? Was hat dich genervt? Was hat dir Energie gegeben oder gekostet? Und vor allem: warum? Am Ende wertest du aus, ob deine Hypothese stimmt — oder ob du dich selbst überrascht hast. Pro Tag brauchst du dafür nur 2–3 Minuten. Bist du dabei?",
     },
   ],
   "bill-of-rights": [
     {
-      title: "Warum das wichtig ist",
-      body: "Vieles, was wir tun, läuft automatisch ab — gesteuert von inneren Regeln, die wir uns irgendwann unbewusst angeeignet haben. „Sag bloß nicht Nein.“ „Mach keinen Aufstand.“ Solche Regeln können dich leise klein halten.",
+      title: "Da war doch was.",
+      body: "Du hast heute Ja gesagt, obwohl du eigentlich Nein wolltest. Oder etwas nicht gesagt, obwohl du es gedacht hast. Oder wieder dieser Moment hinterher, in dem du dich fragst: Warum habe ich das nicht einfach gesagt? Das ist kein Zufall. Das ist kein Charakterfehler. Das ist dein Autopilot — und der läuft seit Jahren auf demselben Programm:",
     },
     {
-      title: "Die Idee dahinter",
-      body: "Die gute Nachricht: Regeln sind nur Regeln — und die kannst du neu schreiben. Was du dir selbst zugestehst, ist deine Entscheidung. Genau das machen wir hier: aus einschränkenden inneren Regeln werden bewusste, stärkende Grundrechte.",
+      title: "Deine inneren Regeln.",
+      body: "Psychologen nennen diese automatischen Muster Heuristiken: vorgefertigte innere Regeln, die dein Verhalten steuern, bevor du überhaupt bewusst entschieden hast. „“„Sag bloß nicht Nein.“, „Mach keinen Aufstand.“, „Was werden die anderen denken?“. Solche Regeln können dich leise kleinhalten — und das seit Jahren. Das Gute daran: Regeln sind nur Regeln. Und Regeln kann man umschreiben.",
     },
     {
       title: "Was dich erwartet",
-      body: "Du reflektierst kurz, wo dich eine innere Regel zuletzt zurückgehalten hat. Dann formulierst du daraus deine eigenen Rechte — mindestens drei, um dein persönliches Bill of Rights abzuschließen. Sie begleiten dich danach jeden Tag.",
+      body: "In diesem Rezept reflektierst du konkrete Momente aus deinem Alltag, in denen dich eine innere Regel zuletzt ausgebremst hat — Situationen, in denen du Ja gesagt hast obwohl du Nein wolltest, oder geschwiegen hast obwohl du hättest sprechen sollen. Aus jedem solchen Moment formulierst du ein Recht für dich: „Ich habe das Recht zu…“. Mindestens drei solcher Rechte bilden zusammen dein persönliches Bill of Rights. Und dann kommt der entscheidende Teil: Dein Bill of Rights verschwindet nicht in der Schublade. Es begleitet dich danach täglich in der App — denn nur durch Wiederholung reprogrammierst du echte neue innere Muster. Und wenn die Dinge mal messy werden (und das werden sie), hast du auch dafür hier einen Platz. Bist du dabei?",
     },
   ],
   overthinking: [
