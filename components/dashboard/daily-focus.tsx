@@ -53,7 +53,7 @@ export function DailyFocus({
     <div className="space-y-3">
       <FocusQuestion question={showQuestion ? question : null} />
 
-      <Crossfade token={tier} className="space-y-3">
+      <Crossfade token={tier} className="space-y-6">
         {primary ? (
           <Card variant="glass" className="border border-primary">
             <CardContent className="space-y-3">
