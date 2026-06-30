@@ -36,7 +36,7 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
     },
     {
       title: "Deine inneren Regeln.",
-      body: "Psychologen nennen diese automatischen Muster Heuristiken: vorgefertigte innere Regeln, die dein Verhalten steuern, bevor du überhaupt bewusst entschieden hast. „“„Sag bloß nicht Nein.“, „Mach keinen Aufstand.“, „Was werden die anderen denken?“. Solche Regeln können dich leise kleinhalten — und das seit Jahren. Das Gute daran: Regeln sind nur Regeln. Und Regeln kann man umschreiben.",
+      body: "Psychologen nennen diese automatischen Muster Heuristiken: vorgefertigte innere Regeln, die dein Verhalten steuern, bevor du überhaupt bewusst entschieden hast. „Sag bloß nicht Nein.“, „Mach keinen Aufstand.“, „Was werden die anderen denken?“. Solche Regeln können dich leise kleinhalten. Das Gute daran: Regeln sind nur Regeln. Und Regeln kann man umschreiben.",
     },
     {
       title: "Was dich erwartet",
