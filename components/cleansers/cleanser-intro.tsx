@@ -40,7 +40,7 @@ export function CleanserIntro({ intro, defaultOpen = false }: CleanserIntroProps
         </button>
 
         {open && (
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground animate-in fade-in slide-in-from-top-2 duration-300">
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground animate-in fade-in slide-in-from-top-2 duration-300">
             {intro.body}
           </p>
         )}

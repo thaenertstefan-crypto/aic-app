@@ -97,7 +97,7 @@ export function JournalDetailDialog({ entry, open, onOpenChange }: Props) {
                       {section.label}
                     </p>
                     {section.value ? (
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      <p className="whitespace-pre-wrap text-base leading-relaxed">
                         {section.value}
                       </p>
                     ) : (
@@ -120,7 +120,7 @@ export function JournalDetailDialog({ entry, open, onOpenChange }: Props) {
                   <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     KI-Einsicht
                   </p>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                  <p className="whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
                     {detail.ai_insights}
                   </p>
                 </div>

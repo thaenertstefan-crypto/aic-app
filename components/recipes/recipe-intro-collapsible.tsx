@@ -54,7 +54,7 @@ export function RecipeIntroCollapsible({
                 <h3 className="font-heading text-sm font-semibold text-foreground">
                   {card.title}
                 </h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">
+                <p className="text-base leading-relaxed text-muted-foreground">
                   {card.body}
                 </p>
               </div>

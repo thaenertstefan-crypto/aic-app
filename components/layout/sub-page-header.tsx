@@ -33,7 +33,7 @@ export function SubPageHeader({ backHref, title, subtitle }: SubPageHeaderProps)
             {title}
           </h1>
           {subtitle && (
-            <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+            <p className="truncate text-sm text-muted-foreground">{subtitle}</p>
           )}
         </div>
       </div>

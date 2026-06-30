@@ -179,7 +179,7 @@ function StepRow({ step }: { step: Step }) {
           </h3>
           <StepBadge status={step.status} label={step.badge} />
         </div>
-        <p className="text-sm leading-relaxed text-muted-foreground">
+        <p className="text-base leading-relaxed text-muted-foreground">
           {step.description}
         </p>
       </div>

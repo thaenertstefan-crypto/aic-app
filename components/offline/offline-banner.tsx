@@ -16,7 +16,7 @@ export function OfflineBanner() {
   return (
     <div
       role="status"
-      className="flex items-center justify-center gap-2 bg-primary/15 px-4 py-1.5 text-center text-xs font-medium text-primary"
+      className="flex items-center justify-center gap-2 bg-primary/15 px-4 py-1.5 text-center text-sm font-medium text-primary"
     >
       <WifiOff className="size-3.5 shrink-0" />
       <span>Offline – deine Einträge werden lokal als Entwurf gesichert.</span>
