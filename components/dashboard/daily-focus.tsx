@@ -61,7 +61,7 @@ export function DailyFocus({
                 <p className="font-heading text-lg font-medium text-foreground">
                   {primary.title}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   {primary.subtitle}
                 </p>
               </div>
@@ -74,7 +74,7 @@ export function DailyFocus({
         ) : (
           <Card variant="glass">
             <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">{fallbackMessage}</p>
+              <p className="text-base text-muted-foreground">{fallbackMessage}</p>
               <Button
                 variant="outline"
                 className="w-full"
@@ -88,7 +88,7 @@ export function DailyFocus({
 
         {alternatives.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               …oder brauchst du gerade was anderes?
             </p>
             <ul className="space-y-2">
@@ -98,7 +98,7 @@ export function DailyFocus({
                     href={destination.href}
                     className="flex items-center gap-2 rounded-lg border px-3 py-2.5 transition-colors hover:bg-muted/40"
                   >
-                    <span className="text-sm text-foreground/90">
+                    <span className="text-base text-foreground/90">
                       {destination.sentence}
                     </span>
                     {destination.badge && (

@@ -95,7 +95,7 @@ export function MoodCheckin({
         </form>
 
         {selected !== null && (
-          <p className="pt-2 text-sm text-muted-foreground">
+          <p className="pt-2 text-base leading-relaxed text-muted-foreground">
             {MESSAGES[selected]}
           </p>
         )}

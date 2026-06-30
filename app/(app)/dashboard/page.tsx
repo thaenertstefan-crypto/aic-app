@@ -257,7 +257,7 @@ export default async function DashboardPage() {
             </p>
           ) : (
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 Du hast noch keine persönlichen Grundrechte formuliert. Sie
                 erinnern dich täglich daran, was du dir selbst zugestehst.
               </p>
