@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Handshake, PartyPopper, Plus, Trophy } from "lucide-react";
 
-import { PageHeader } from "@/components/brand/page-header";
+import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { CleanserIntroSection } from "@/components/cleansers/cleanser-intro-section";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -61,13 +61,10 @@ export function PromisesCleanser({
   const [milestone, setMilestone] = useState<number | null>(null);
 
   return (
-    <div className="space-y-6 p-4">
-      <PageHeader
-        title="Versprechen an dich selbst"
-        description="Kleine, konkrete Versprechen — Tag für Tag gehalten. So beweist du dir, dass du dich auf dich verlassen kannst."
-      />
-
-      <CleanserIntroSection slug="promises" />
+    <div className="flex min-h-svh flex-col">
+      <SubPageHeader backHref="/booster" title="Promise Keeper" />
+      <div className="mx-auto w-full max-w-lg space-y-6 px-4 py-6">
+        <CleanserIntroSection slug="promises" />
 
       <NewPromiseDialog />
 
@@ -95,6 +92,7 @@ export function PromisesCleanser({
         milestone={milestone}
         onClose={() => setMilestone(null)}
       />
+      </div>
     </div>
   );
 }

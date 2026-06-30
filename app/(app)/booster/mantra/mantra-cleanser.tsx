@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { CleanserIntroSection } from "@/components/cleansers/cleanser-intro-section";
+import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -521,7 +522,9 @@ export function MantraCleanser({
   }, [state.success, doneToday, router]);
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-8 px-4 py-10">
+    <div className="flex min-h-svh flex-col">
+      <SubPageHeader backHref="/booster" title="Mantra Cleanser" />
+      <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-10">
       <div className="flex w-full max-w-md flex-col items-center gap-8">
         <div className="w-full">
           <CleanserIntroSection slug="mantra" />
@@ -567,6 +570,7 @@ export function MantraCleanser({
 
           <FormError message={state.error} />
         </div>
+      </div>
       </div>
     </div>
   );
