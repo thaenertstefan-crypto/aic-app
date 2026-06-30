@@ -149,7 +149,7 @@ function NewPromiseDialog() {
               placeholder="z.B. 'Ich gehe an Homeoffice-Tagen direkt nach der Arbeit 30 Min im Park spazieren'"
               aria-label="Promise-Beschreibung"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Nenne den Auslöser, die Handlung und – wenn möglich – wo und wie
               lange.
             </p>

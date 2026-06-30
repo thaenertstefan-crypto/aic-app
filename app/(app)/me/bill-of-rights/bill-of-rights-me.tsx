@@ -136,7 +136,7 @@ export function BillOfRightsMe({
           <FormError message={saveError} />
           {activeRights.length === 0 ? (
             <div className="flex flex-col gap-4">
-              <p className="text-center text-sm text-muted-foreground">
+              <p className="text-center text-base text-muted-foreground">
                 Du hast noch keine Rechte definiert.
                 <br />
                 Füge dein erstes Recht hinzu.
@@ -180,7 +180,7 @@ export function BillOfRightsMe({
                           </>
                         ) : (
                           <>
-                            <p className="flex-1 text-sm leading-relaxed text-foreground">
+                            <p className="flex-1 text-base leading-relaxed text-foreground">
                               {asAffirmation(r.text)}
                             </p>
                             <Button

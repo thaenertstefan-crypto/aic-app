@@ -94,7 +94,7 @@ export function HypothesisForm({ initialValues }: Props) {
                   <p className="font-heading text-base font-semibold text-foreground">
                     {getValueLabel(id)}
                   </p>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
+                  <p className="text-base leading-relaxed text-muted-foreground">
                     Dir ist wichtig, dass {getValueDescription(id)}.
                   </p>
                 </div>
@@ -235,7 +235,7 @@ export function HypothesisForm({ initialValues }: Props) {
             {pending ? "Wird gespeichert …" : "Weiter zum Tagebuch"}
           </Button>
           {!isFull && selectedValues.length > 0 && (
-            <p className="mt-2 text-center text-xs text-muted-foreground">
+            <p className="mt-2 text-center text-sm text-muted-foreground">
               Wähle noch {MAX_VALUES - selectedValues.length} weitere
               {MAX_VALUES - selectedValues.length === 1 ? "n" : ""} Wert
               {MAX_VALUES - selectedValues.length === 1 ? "" : "e"} aus.

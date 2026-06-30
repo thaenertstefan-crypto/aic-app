@@ -67,7 +67,7 @@ function ExerciseCard({
         </span>
         <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
       </summary>
-      <div className="border-t border-border px-4 py-3 text-sm leading-relaxed text-foreground">
+      <div className="border-t border-border px-4 py-3 text-base leading-relaxed text-foreground">
         {children}
       </div>
     </details>
@@ -164,12 +164,12 @@ function BreathingExercise() {
       </p>
 
       {done ? (
-        <p className="text-center text-sm text-foreground">
+        <p className="text-center text-base text-foreground">
           Vier Runden geschafft. Spürst du den Unterschied? Dein Nervensystem ist
           jetzt ein Stück ruhiger.
         </p>
       ) : (
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-base text-muted-foreground">
           4 Sekunden einatmen, 7 Sekunden halten, 8 Sekunden ausatmen — vier
           Runden lang. Folge einfach dem Kreis.
         </p>

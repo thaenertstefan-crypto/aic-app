@@ -108,7 +108,7 @@ function Ladder({ ancestors }: { ancestors: { label: string; value: string }[] }
   return (
     <div className="w-full space-y-1.5">
       {ancestors.map((a, i) => (
-        <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+        <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
           <span className="mt-0.5 shrink-0 text-primary/60">
             {i === 0 ? "●" : "↳"}
           </span>
@@ -427,7 +427,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
             <CountdownCircle duration={5} onComplete={() => setCountdownDone(true)} />
 
             {countdownDone && (
-              <p className="text-sm text-muted-foreground animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <p className="text-base text-muted-foreground animate-in fade-in slide-in-from-bottom-2 duration-500">
                 Gut gemacht. Der Gedankenkarussell ist kurz gestoppt — nutzen wir diesen Moment.
               </p>
             )}
@@ -462,7 +462,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
                   <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
                   <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Ich überlege, wie ich am besten weiterfrage …
                 </p>
               </div>
@@ -484,7 +484,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
                   className="min-h-[120px] resize-y"
                 />
                 {answers[key].length === 0 && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Nur ein paar Stichwörter reichen. Es muss kein perfekter Satz sein.
                   </p>
                 )}
@@ -507,7 +507,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
                 <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
                 <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Einen Moment – ich denke über eine andere Perspektive nach …
               </p>
             </div>

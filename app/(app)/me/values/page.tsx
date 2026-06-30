@@ -76,7 +76,7 @@ export default async function MeValuesPage() {
                         <p className="font-heading text-base font-semibold text-foreground">
                           {getValueLabel(id)}
                         </p>
-                        <p className="text-sm leading-relaxed text-muted-foreground">
+                        <p className="text-base leading-relaxed text-muted-foreground">
                           Dir ist wichtig, dass {getValueDescription(id)}.
                         </p>
                       </div>
@@ -88,7 +88,7 @@ export default async function MeValuesPage() {
             </>
           ) : (
             <div className="flex flex-col gap-4">
-              <p className="text-center text-sm text-muted-foreground">
+              <p className="text-center text-base text-muted-foreground">
                 Du hast noch keine Werte entdeckt.
               </p>
               {cta("w-full gap-2")}

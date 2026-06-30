@@ -79,7 +79,7 @@ function TileCard({ tile }: { tile: Tile }) {
           <p className="font-heading text-sm font-semibold leading-snug text-foreground">
             {title}
           </p>
-          <p className="text-xs leading-relaxed text-muted-foreground">{desc}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
         </div>
         {soon && (
           <span className="mt-auto inline-flex w-fit items-center rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">

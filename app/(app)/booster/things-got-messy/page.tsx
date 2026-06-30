@@ -111,7 +111,7 @@ export default function ThingsGotMessyPage() {
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-4 py-6">
         {/* Intro */}
         <div className="flex flex-col gap-3 text-center">
-          <p className="text-sm leading-relaxed text-muted-foreground">
+          <p className="text-base leading-relaxed text-muted-foreground">
             Momente, in denen es chaotisch wurde und du nicht nach deinen eigenen
             Regeln gehandelt hast – das passiert. Hier kannst du sie reflektieren,
             ohne dich zu verurteilen.
@@ -199,7 +199,7 @@ export default function ThingsGotMessyPage() {
           </h2>
 
           {entries.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Noch keine Einträge. Der erste Schritt ist der wichtigste!
             </p>
           ) : (
@@ -217,11 +217,11 @@ export default function ThingsGotMessyPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-sm leading-relaxed text-foreground">
+                    <p className="text-base leading-relaxed text-foreground">
                       {preview(entry.content.messy_when)}
                     </p>
                     {entry.content.conflicting_rules && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         Konflikt: {preview(entry.content.conflicting_rules, 60)}
                       </p>
                     )}

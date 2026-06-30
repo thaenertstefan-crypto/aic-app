@@ -155,7 +155,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
               <p className="text-center text-lg font-semibold text-primary">
                 🎉 7 Tage voll!
               </p>
-              <p className="text-center text-sm text-muted-foreground">
+              <p className="text-center text-base text-muted-foreground">
                 Du hast eine ganze Woche lang deine Gedanken und Gefühle festgehalten.
                 Jetzt wird es spannend – schau dir an, welche Muster sich zeigen.
               </p>
@@ -188,19 +188,19 @@ export function JournalForm({ initialData }: JournalFormProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-sm text-muted-foreground">
                       Was ist heute passiert?
                     </Label>
-                    <p className="whitespace-pre-wrap rounded-lg bg-muted/50 px-3 py-2 text-sm leading-relaxed">
+                    <p className="whitespace-pre-wrap rounded-lg bg-muted/50 px-3 py-2 text-base leading-relaxed">
                       {todayEntry.happenings || "—"}
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-sm text-muted-foreground">
                       Welche Gedanken, Gefühle, Reaktionen kamen dabei auf?
                     </Label>
-                    <p className="whitespace-pre-wrap rounded-lg bg-muted/50 px-3 py-2 text-sm leading-relaxed">
+                    <p className="whitespace-pre-wrap rounded-lg bg-muted/50 px-3 py-2 text-base leading-relaxed">
                       {todayEntry.response || "—"}
                     </p>
                   </div>
@@ -210,7 +210,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
               /* ── Form ── */
               <form key={formKey} action={formAction} className="space-y-5">
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">{encouragement}</p>
+                  <p className="text-sm text-muted-foreground">{encouragement}</p>
                 </div>
 
                 <div className="space-y-2">
@@ -274,7 +274,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
           </div>
 
           {/* Entry count progress note */}
-          <p className="mt-6 text-center text-xs text-muted-foreground">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             {entryCount < 7
               ? `Noch ${7 - entryCount} ${7 - entryCount === 1 ? "Eintrag" : "Einträge"} bis zur Auswertung`
               : ""}

@@ -240,18 +240,18 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                 </summary>
                 <div className="space-y-3 border-t border-border px-3 py-3">
                   <div className="space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-muted-foreground">
                       Was ist passiert?
                     </p>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                    <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
                       {entry.content.happenings}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-muted-foreground">
                       Gedanken & Gefühle
                     </p>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                    <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
                       {entry.content.response}
                     </p>
                   </div>
@@ -267,7 +267,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
             <div className="space-y-2">
               <Label
                 htmlFor="positive_reflection"
-                className="text-sm leading-relaxed font-medium"
+                className="text-base leading-relaxed font-medium"
               >
                 Welche Momente haben dich diese Woche positiv gestimmt — und
                 warum? Was war dir in diesen Momenten wichtig?
@@ -287,7 +287,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
             <div className="space-y-2">
               <Label
                 htmlFor="negative_reflection"
-                className="text-sm leading-relaxed font-medium"
+                className="text-base leading-relaxed font-medium"
               >
                 Welche Momente haben dich gestresst oder genervt — und warum?
                 Was wurde dabei verletzt oder vernachlässigt?
@@ -390,7 +390,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                   {/* Replacement picker (shown when "Ersetzen" is active) */}
                   {!isKept[index] && pickingIndex === index && (
                     <div className="space-y-3 rounded-lg bg-muted/30 p-3">
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         Wähle einen Ersatz aus oder gib einen eigenen Wert ein:
                       </p>
 
@@ -421,7 +421,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                         <div className="flex-1">
                           <Label
                             htmlFor={`custom-replace-${index}`}
-                            className="mb-1 block text-xs text-muted-foreground"
+                            className="mb-1 block text-sm text-muted-foreground"
                           >
                             Eigenen Wert eingeben
                           </Label>
@@ -468,7 +468,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                         <button
                           type="button"
                           onClick={() => setPickingIndex(index)}
-                          className="ml-auto text-xs text-muted-foreground underline hover:text-foreground"
+                          className="ml-auto text-sm text-muted-foreground underline hover:text-foreground"
                         >
                           Ändern
                         </button>
@@ -484,7 +484,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
             <h2 className="font-heading text-base font-semibold">
               Weitere Werte hinzufügen
             </h2>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Dir fällt noch ein Wert ein, der dir wichtig ist? Füg ihn
               einfach hinzu. Es gibt kein Limit.
             </p>
@@ -510,7 +510,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
               <div className="flex-1">
                 <Label
                   htmlFor="custom-additional"
-                  className="mb-1 block text-xs text-muted-foreground"
+                  className="mb-1 block text-sm text-muted-foreground"
                 >
                   Eigenen Wert hinzufügen
                 </Label>
@@ -619,7 +619,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
               <p className="text-center font-heading text-lg font-semibold text-primary">
                 Erster Zyklus geschafft!
               </p>
-              <p className="text-center text-sm text-muted-foreground">
+              <p className="text-center text-base text-muted-foreground">
                 Du hast eine ganze Woche reflektiert, deine Werte hinterfragt
                 und ein klareres Bild von dem bekommen, was dir wirklich wichtig
                 ist. Das ist ein großer Schritt.
