@@ -61,7 +61,7 @@ export function DailyFocus({
                 <p className="font-heading text-lg font-medium text-foreground">
                   {primary.title}
                 </p>
-                <p className="text-base text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {primary.subtitle}
                 </p>
               </div>

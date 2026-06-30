@@ -82,7 +82,7 @@ export function MoodCheckin({
                   setSelected(mood.score);
                   onSelect?.(mood.score);
                 }}
-                className={`shrink-0 whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-medium transition-all ${
+                className={`shrink-0 whitespace-nowrap rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
                   isActive
                     ? "border-primary bg-primary/10 scale-105"
                     : "border-border bg-card hover:bg-muted/50"
@@ -95,7 +95,7 @@ export function MoodCheckin({
         </form>
 
         {selected !== null && (
-          <p className="pt-2 text-base leading-relaxed text-muted-foreground">
+          <p className="pt-2 text-sm text-muted-foreground">
             {MESSAGES[selected]}
           </p>
         )}

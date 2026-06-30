@@ -12,5 +12,5 @@ export function MoodAvatar({
   face: MoodFace;
   pulseSeconds: number;
 }) {
-  return <Mascot expression={face} pulseSeconds={pulseSeconds} size="md" />;
+  return <Mascot expression={face} pulseSeconds={pulseSeconds} size="lg" />;
 }

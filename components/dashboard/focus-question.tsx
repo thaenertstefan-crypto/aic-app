@@ -3,7 +3,7 @@
 import { CROSSFADE_MS, useCrossfade } from "@/lib/hooks/use-crossfade";
 import { cn } from "@/lib/utils";
 
-const QUESTION_CLASS = "font-heading text-base text-foreground/90";
+const QUESTION_CLASS = "font-heading text-lg font-medium text-foreground/90";
 
 /** Token-Marker für „keine Frage anzeigen" (kollidiert mit keinem echten
  *  Fragetext). */
