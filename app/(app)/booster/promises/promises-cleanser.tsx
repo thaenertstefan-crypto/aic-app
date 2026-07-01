@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Handshake, PartyPopper, Plus, Trophy } from "lucide-react";
 
 import { SubPageHeader } from "@/components/layout/sub-page-header";
-import { CleanserIntroSection } from "@/components/cleansers/cleanser-intro-section";
+import { CleanserIntroInfoButton } from "@/components/intro/cleanser-intro-info-button";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FormError } from "@/components/ui/form-error";
@@ -62,10 +62,12 @@ export function PromisesCleanser({
 
   return (
     <div className="flex min-h-svh flex-col">
-      <SubPageHeader backHref="/booster" title="Promise Keeper" />
+      <SubPageHeader
+        backHref="/booster"
+        title="Promise Keeper"
+        action={<CleanserIntroInfoButton slug="promises" />}
+      />
       <div className="mx-auto w-full max-w-lg space-y-6 px-4 py-6">
-        <CleanserIntroSection slug="promises" />
-
       <NewPromiseDialog />
 
       {promises.length === 0 ? (

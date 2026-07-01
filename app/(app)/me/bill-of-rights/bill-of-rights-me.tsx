@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
+import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { MascotJudge } from "@/components/brand/mascot-judge";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
@@ -122,7 +123,15 @@ export function BillOfRightsMe({
 
   return (
     <div className="flex min-h-svh flex-col">
-      <SubPageHeader backHref="/me" title="Meine Bill of Rights" />
+      <SubPageHeader
+        backHref="/me"
+        title="Meine Bill of Rights"
+        action={
+          INTRO_CARDS.length > 0 ? (
+            <IntroInfoButton cards={INTRO_CARDS} />
+          ) : undefined
+        }
+      />
 
       {/* Maskottchen als Richter — nur sobald die Intro-Sequenz vorbei ist. */}
       {introDone && (

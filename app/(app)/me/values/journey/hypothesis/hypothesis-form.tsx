@@ -232,7 +232,7 @@ export function HypothesisForm({ initialValues }: Props) {
             size="lg"
             disabled={!isFull || pending}
           >
-            {pending ? "Wird gespeichert …" : "Weiter zum Tagebuch"}
+            {pending ? "Wird gespeichert …" : "Weiter"}
           </Button>
           {!isFull && selectedValues.length > 0 && (
             <p className="mt-2 text-center text-sm text-muted-foreground">

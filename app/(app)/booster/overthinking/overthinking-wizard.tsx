@@ -12,7 +12,7 @@ import { FormError } from "@/components/ui/form-error";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
-import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
+import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { ReframeAnimation } from "@/components/auth/reframe-animation";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
 import {
@@ -705,16 +705,17 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
   return (
     <div className="relative flex min-h-svh flex-col overflow-x-clip">
-      <SubPageHeader backHref="/booster" title="Overthinking" />
+      <SubPageHeader
+        backHref="/booster"
+        title="Overthinking"
+        action={
+          INTRO_CARDS.length > 0 ? (
+            <IntroInfoButton cards={INTRO_CARDS} />
+          ) : undefined
+        }
+      />
       <div className="flex flex-1 flex-col px-4 py-6">
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col">
-          {/* "Worum geht's?"-Collapsible — nur in Schritt 1 (Wiederkehrer-Einstieg) */}
-          {step === 1 && INTRO_CARDS.length > 0 && (
-            <div className="mb-6">
-              <RecipeIntroCollapsible cards={INTRO_CARDS} />
-            </div>
-          )}
-
           {/* Progress dots */}
         <ProgressDots current={step} completed={false} />
 
@@ -767,23 +768,24 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
         {/* Bottom navigation */}
         <div className="mt-auto flex items-center justify-between gap-3 pt-8">
-          <Button
-            variant="outline"
-            onClick={goBack}
-            disabled={step === 1}
-            className="gap-1"
-          >
-            <ChevronLeft className="size-4" />
-            Zurück
-          </Button>
+          {step > 1 && (
+            <Button
+              variant="outline"
+              onClick={goBack}
+              className="gap-1"
+            >
+              <ChevronLeft className="size-4" />
+              Zurück
+            </Button>
+          )}
 
           {step < TOTAL_STEPS ? (
-            <Button onClick={goNext} disabled={!canGoNext()} className="gap-1">
+            <Button onClick={goNext} disabled={!canGoNext()} className="ml-auto gap-1">
               Weiter
               <ChevronRight className="size-4" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={submitting} className="gap-1">
+            <Button onClick={handleSubmit} disabled={submitting} className="ml-auto gap-1">
               {submitting ? "Wird gespeichert …" : "Abschließen"}
               <ChevronRight className="size-4" />
             </Button>

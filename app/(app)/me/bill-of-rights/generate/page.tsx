@@ -7,11 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
-import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
+import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 
 import { saveGeneratedRightAction } from "../actions";
+
+const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
 
 export default function GenerateRightPage() {
   const [phase, setPhase] = useState<"reflect" | "result">("reflect");
@@ -54,10 +56,16 @@ export default function GenerateRightPage() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <SubPageHeader backHref="/me/bill-of-rights" title="Vorschlag generieren" />
+      <SubPageHeader
+        backHref="/me/bill-of-rights"
+        title="Vorschlag generieren"
+        action={
+          INTRO_CARDS.length > 0 ? (
+            <IntroInfoButton cards={INTRO_CARDS} />
+          ) : undefined
+        }
+      />
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
-        <RecipeIntroCollapsible cards={getRecipeIntro("bill-of-rights") ?? []} />
-
         {phase === "reflect" ? (
           <>
             <p className="text-sm text-muted-foreground">Deine inneren Konflikte</p>

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ValuesStepOverview } from "@/components/recipes/values-step-overview";
 import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
+import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { StartRecipeButton } from "./start-recipe-button";
 
 export default async function RecipeDetailPage(props: {
@@ -141,14 +142,17 @@ export default async function RecipeDetailPage(props: {
   return (
     <RecipeIntroGate slug={slug} cards={introCards} introSeen={introSeen}>
     <div className="px-4 py-6">
-      {/* Back link */}
-      <Link
-        href="/recipes"
-        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Alle Rezepte
-      </Link>
+      {/* Back link + Info-Icon */}
+      <div className="mb-6 flex items-center justify-between gap-2">
+        <Link
+          href="/recipes"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          Alle Rezepte
+        </Link>
+        {introCards && <IntroInfoButton cards={introCards} />}
+      </div>
 
       <div className="max-w-prose">
         {/* Greeting */}

@@ -12,6 +12,7 @@ import { getValueDescription } from "@/lib/utils/values-descriptions";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { hasSeenRecipeIntro } from "@/app/(app)/recipes/actions";
 import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
+import { IntroInfoButton } from "@/components/intro/intro-info-button";
 
 export default async function MeValuesPage() {
   const supabase = await createClient();
@@ -60,7 +61,11 @@ export default async function MeValuesPage() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <SubPageHeader backHref="/me" title="Meine Werte" />
+      <SubPageHeader
+        backHref="/me"
+        title="Meine Werte"
+        action={introCards ? <IntroInfoButton cards={introCards} /> : undefined}
+      />
       <RecipeIntroGate slug="values" cards={introCards} introSeen={introSeen}>
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
           {values.length > 0 ? (

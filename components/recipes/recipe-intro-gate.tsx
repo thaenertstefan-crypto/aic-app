@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
-import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
 import { ValuesIntroMascot } from "@/components/recipes/values-intro-mascot";
 import { BillOfRightsIntroMascot } from "@/components/recipes/bill-of-rights-intro-mascot";
 import type { IntroCard } from "@/lib/utils/recipe-intros";
@@ -21,11 +20,12 @@ type RecipeIntroGateProps = {
 };
 
 /**
- * Hybrid-Intro-Gate für Server-gerenderte Rezept-Hubs (z.B. /recipes/values):
+ * Erst-Intro-Gate für Server-gerenderte Rezept-Hubs (z.B. /recipes/values):
  * - Beim ersten Mal (intro_seen == false) wird die durchklickbare Sequenz als
  *   erste Ansicht gezeigt; onComplete/onSkip markiert sie als gesehen und gibt
  *   den Hub frei.
- * - Danach steht oben der eingeklappte "Worum geht's?"-Collapsible über dem Hub.
+ * - Danach werden einfach die children gerendert; die Intro-Texte sind für
+ *   Wiederkehrer über das Info-Icon im Header nachlesbar (IntroInfoButton).
  *
  * Ohne Karten (anderer Slug der [slug]-Route) wird einfach children gerendert.
  */
@@ -72,14 +72,5 @@ export function RecipeIntroGate({
     );
   }
 
-  return (
-    <>
-      <div className="px-4 pt-6">
-        <div className="max-w-prose">
-          <RecipeIntroCollapsible cards={cards} />
-        </div>
-      </div>
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

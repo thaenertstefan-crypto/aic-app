@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 
 import { SubPageHeader } from "@/components/layout/sub-page-header";
-import { CleanserIntroSection } from "@/components/cleansers/cleanser-intro-section";
+import { CleanserIntroInfoButton } from "@/components/intro/cleanser-intro-info-button";
 import { Button } from "@/components/ui/button";
 
 type TextExercise = {
@@ -190,10 +190,12 @@ function BreathingExercise() {
 export default function ConfidenceCleanserPage() {
   return (
     <div className="flex min-h-svh flex-col">
-      <SubPageHeader backHref="/booster" title="Showstopper Confidence" />
+      <SubPageHeader
+        backHref="/booster"
+        title="Showstopper Confidence"
+        action={<CleanserIntroInfoButton slug="confidence" />}
+      />
       <div className="mx-auto w-full max-w-lg space-y-6 px-4 py-6">
-        <CleanserIntroSection slug="confidence" />
-
       <div className="space-y-3">
         {EXERCISES.map((exercise, index) => (
           <ExerciseCard

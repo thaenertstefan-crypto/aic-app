@@ -6,26 +6,26 @@ import {
   getSeenCleanserIntros,
   markCleanserIntroSeenAction,
 } from "@/app/(app)/cleansers/actions";
-import { CleanserIntro } from "@/components/cleansers/cleanser-intro";
+import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { getCleanserIntro } from "@/lib/utils/cleanser-intros";
 
-type CleanserIntroSectionProps = {
+type CleanserIntroInfoButtonProps = {
   slug: string;
 };
 
 /**
- * Bindet den "Worum geht's?"-Intro eines Cleansers ein und kapselt den
- * "schon gesehen?"-Status (DB, geräteübergreifend).
+ * Info-Icon für Cleanser (mantra/promises/confidence) inkl. "schon gesehen?"-
+ * Status (DB, geräteübergreifend). Ersetzt die frühere CleanserIntroSection.
  *
- * - Erstbesuch (Slug noch nicht in cleanser_intro_seen): Intro aufgeklappt,
- *   und beim ersten Anzeigen wird der Slug als gesehen markiert.
- * - Danach: eingeklappt, jederzeit über den Header aufklappbar.
+ * - Erstbesuch (Slug noch nicht in cleanser_intro_seen): Overlay öffnet sich
+ *   einmal automatisch und der Slug wird als gesehen markiert.
+ * - Danach: nur noch per Tap aufs Icon.
  *
  * Self-read: lädt den Status selbst per Server-Action, damit die Komponente
  * auch in Client-Component-Seiten (z.B. confidence) ohne Server-Boundary
  * funktioniert. Solange der Status unbekannt ist, wird nichts gerendert.
  */
-export function CleanserIntroSection({ slug }: CleanserIntroSectionProps) {
+export function CleanserIntroInfoButton({ slug }: CleanserIntroInfoButtonProps) {
   const [seen, setSeen] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -51,5 +51,11 @@ export function CleanserIntroSection({ slug }: CleanserIntroSectionProps) {
   const intro = getCleanserIntro(slug);
   if (!intro) return null;
 
-  return <CleanserIntro intro={intro} defaultOpen={!seen} />;
+  return (
+    <IntroInfoButton
+      cards={[{ title: "", body: intro.body }]}
+      title={intro.title}
+      defaultOpen={!seen}
+    />
+  );
 }

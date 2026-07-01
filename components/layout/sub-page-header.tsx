@@ -5,9 +5,16 @@ interface SubPageHeaderProps {
   backHref: string;
   title: string;
   subtitle?: string;
+  /** Optionaler rechtsbündiger Slot, z.B. ein Info-Icon. */
+  action?: React.ReactNode;
 }
 
-export function SubPageHeader({ backHref, title, subtitle }: SubPageHeaderProps) {
+export function SubPageHeader({
+  backHref,
+  title,
+  subtitle,
+  action,
+}: SubPageHeaderProps) {
   return (
     <header
       className="sticky top-0 z-40 border-b backdrop-blur-xl"
@@ -36,6 +43,7 @@ export function SubPageHeader({ backHref, title, subtitle }: SubPageHeaderProps)
             <p className="truncate text-sm text-muted-foreground">{subtitle}</p>
           )}
         </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
     </header>
   );
