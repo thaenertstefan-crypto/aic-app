@@ -166,15 +166,15 @@ function Scroll({
         )}
       </defs>
 
-      {/* Pergament-Körper (leicht gebogene Seiten) */}
+      {/* Pergament-Körper (geschwungene, S-förmige Seiten) */}
       <path
-        d="M11,13 C8,26 8,40 11,50 C20,52 28,52 37,50 C40,40 40,26 37,13 C28,11 20,11 11,13 Z"
+        d="M12,14 C9,25 14,39 11,50 C20,52 28,52 37,50 C34,39 39,25 36,14 C28,12 20,12 12,14 Z"
         fill={`url(#${parchGrad})`}
         stroke="#CE9A4E"
         strokeWidth={1}
       />
-      {/* Dezenter Highlight links */}
-      <path d="M13,16 C11,28 11,38 13,48" fill="none" stroke="#FFFFFF" strokeWidth={1.6} strokeLinecap="round" opacity={0.4} />
+      {/* Dezenter Highlight links, der der Schwung-Kante folgt */}
+      <path d="M13,17 C11,27 15,39 12,48" fill="none" stroke="#FFFFFF" strokeWidth={1.6} strokeLinecap="round" opacity={0.4} />
 
       {/* Zeilen: „§" + Regel-Strich */}
       <g clipPath={mode === "write" ? `url(#${writeClip})` : undefined}>
