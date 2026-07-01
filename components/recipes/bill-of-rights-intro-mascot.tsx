@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, type CSSProperties } from "react";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { Mascot } from "@/components/brand/mascot";
@@ -27,18 +27,18 @@ function SpeechBubbleOverlay({ reduced }: { reduced: boolean }) {
   return (
     <>
       {/* Sprechblasen-Pfeil oben-links, zeigt hoch zum Mund */}
-      <path d="M30,45.5 L34,45.5 L28,41.5 Z" fill="#FBF6EA" stroke="var(--primary-foreground)" strokeWidth={0.6} />
-      {/* Blase unter dem Mund */}
-      <rect x={25} y={45} width={19} height={11} rx={3.5} fill="#FBF6EA" stroke="var(--primary-foreground)" strokeWidth={0.7} />
+      <path d="M35,48.5 L39,48.5 L31,43.5 Z" fill="#FBF6EA" stroke="var(--primary-foreground)" strokeWidth={0.6} />
+      {/* Blase unter/rechts vom Mund */}
+      <rect x={29} y={48} width={19} height={11} rx={3.5} fill="#FBF6EA" stroke="var(--primary-foreground)" strokeWidth={0.7} />
 
       <defs>
         <clipPath id={typeClip}>
-          <rect x={27} y={46.5} width={reduced ? 15 : 0} height={9}>
+          <rect x={31} y={49.5} width={reduced ? 15 : 0} height={9}>
             {!reduced && (
               <animate
                 attributeName="width"
-                values="0;0;3.8;7.6;11.4;15;15;0"
-                keyTimes="0;0.03;0.09;0.16;0.24;0.30;0.9;1"
+                values="0;0;3.8;7.6;11.4;15;15;0;0"
+                keyTimes="0;0.05;0.11;0.17;0.23;0.29;0.44;0.46;1"
                 calcMode="discrete"
                 dur="6s"
                 repeatCount="indefinite"
@@ -48,27 +48,28 @@ function SpeechBubbleOverlay({ reduced }: { reduced: boolean }) {
         </clipPath>
       </defs>
 
-      {/* „Nein" (getippt) + Durchstreichung — blendet zur Wortmitte aus */}
+      {/* „Nein" (getippt) + Durchstreichung — blendet zur Wortmitte aus,
+          endet auf opacity 0 (kein Full-Nein-Blitz am Loop-Seam) */}
       <g opacity={1}>
         {!reduced && (
           <animate
             attributeName="opacity"
-            values="1;1;0;0;1"
-            keyTimes="0;0.42;0.48;0.98;1"
+            values="1;1;0;0"
+            keyTimes="0;0.40;0.46;1"
             dur="6s"
             repeatCount="indefinite"
           />
         )}
         <g clipPath={`url(#${typeClip})`}>
-          <text x={27} y={52} fontSize={6} fontWeight={700} fill="var(--primary-foreground)">
+          <text x={31} y={55} fontSize={6} fontWeight={700} fill="var(--primary-foreground)">
             Nein
           </text>
         </g>
         <line
-          x1={26.5}
-          y1={50}
-          x2={40}
-          y2={50}
+          x1={30.5}
+          y1={53}
+          x2={44}
+          y2={53}
           stroke="var(--destructive)"
           strokeWidth={1.4}
           strokeLinecap="round"
@@ -78,8 +79,8 @@ function SpeechBubbleOverlay({ reduced }: { reduced: boolean }) {
           {!reduced && (
             <animate
               attributeName="stroke-dashoffset"
-              values="15;15;0;0;15"
-              keyTimes="0;0.26;0.34;0.98;1"
+              values="15;15;0;0;15;15"
+              keyTimes="0;0.25;0.33;0.44;0.46;1"
               dur="6s"
               repeatCount="indefinite"
             />
@@ -87,13 +88,13 @@ function SpeechBubbleOverlay({ reduced }: { reduced: boolean }) {
         </line>
       </g>
 
-      {/* „ja" — erscheint zum Schluss */}
-      <text x={34.5} y={52} textAnchor="middle" fontSize={6} fontWeight={700} fill="var(--primary-foreground)" opacity={0}>
+      {/* „ja" — erscheint zum Schluss und verschwindet langsam vor dem Loop */}
+      <text x={38.5} y={55} textAnchor="middle" fontSize={6} fontWeight={700} fill="var(--primary-foreground)" opacity={0}>
         {!reduced && (
           <animate
             attributeName="opacity"
             values="0;0;1;1;0"
-            keyTimes="0;0.46;0.52;0.94;1"
+            keyTimes="0;0.46;0.52;0.90;1"
             dur="6s"
             repeatCount="indefinite"
           />
@@ -133,28 +134,34 @@ function Scroll({
   const uid = useId();
   const writeClip = `bor-scroll-write-${uid}`;
   const height = (width * 64) / 48;
-  const ys = lines === 2 ? [24, 38] : [19, 29, 39];
+  const ys = lines === 2 ? [25, 38] : [21, 30, 39];
 
   return (
     <svg width={width} height={height} viewBox="0 0 48 64" fill="none" aria-hidden="true">
       {mode === "write" && (
         <defs>
           <clipPath id={writeClip}>
-            <rect x={0} y={9} width={48} height={reduced ? 48 : 0}>
-              {!reduced && <animate attributeName="height" values="0;48" dur="2.4s" begin="0.15s" fill="freeze" />}
+            <rect x={0} y={13} width={48} height={reduced ? 40 : 0}>
+              {!reduced && (
+                <animate
+                  attributeName="height"
+                  values="0;0;40;40;0"
+                  keyTimes="0;0.08;0.5;0.9;1"
+                  dur="5s"
+                  repeatCount="indefinite"
+                />
+              )}
             </rect>
           </clipPath>
         </defs>
       )}
 
-      {/* Pergament */}
-      <rect x={7} y={11} width={34} height={42} rx={1.5} fill="#FBF6EA" stroke="var(--primary-foreground)" strokeWidth={0.9} />
-      {/* Obere Rolle */}
-      <rect x={3} y={6} width={42} height={8} rx={4} fill="#F0E6CC" stroke="var(--primary-foreground)" strokeWidth={0.9} />
-      <line x1={7} y1={10} x2={41} y2={10} stroke="var(--primary-foreground)" strokeWidth={0.5} opacity={0.35} />
-      {/* Untere Rolle */}
-      <rect x={3} y={50} width={42} height={8} rx={4} fill="#F0E6CC" stroke="var(--primary-foreground)" strokeWidth={0.9} />
-      <line x1={7} y1={54} x2={41} y2={54} stroke="var(--primary-foreground)" strokeWidth={0.5} opacity={0.35} />
+      {/* Papierblatt */}
+      <rect x={8} y={13} width={32} height={38} rx={1.5} fill="#FBF6EA" stroke="var(--primary-foreground)" strokeWidth={0.9} />
+      {/* Leicht aufgerollte Lippe oben */}
+      <path d="M8,13 Q24,9 40,13 Q24,16.5 8,13 Z" fill="#EFE4C8" stroke="var(--primary-foreground)" strokeWidth={0.7} />
+      {/* Leicht aufgerollte Lippe unten */}
+      <path d="M8,51 Q24,55 40,51 Q24,47.5 8,51 Z" fill="#EFE4C8" stroke="var(--primary-foreground)" strokeWidth={0.7} />
 
       {/* Zeilen: „§" + Regel-Strich */}
       <g clipPath={mode === "write" ? `url(#${writeClip})` : undefined}>
@@ -163,7 +170,7 @@ function Scroll({
             <text x={10} y={ly + 2.4} fontSize={7} fontWeight={700} fill="var(--primary-foreground)">
               §
             </text>
-            <line x1={17} y1={ly} x2={40} y2={ly} stroke="var(--primary-foreground)" strokeWidth={1.4} strokeLinecap="round" opacity={0.6} />
+            <line x1={16} y1={ly} x2={37} y2={ly} stroke="var(--primary-foreground)" strokeWidth={1.4} strokeLinecap="round" opacity={0.6} />
           </g>
         ))}
       </g>
@@ -171,17 +178,25 @@ function Scroll({
       {/* Durchstreichung (nur strike-Modus): eine diagonale Linie über die Rolle */}
       {mode === "strike" && (
         <line
-          x1={8}
-          y1={14}
-          x2={40}
-          y2={50}
+          x1={10}
+          y1={15}
+          x2={38}
+          y2={49}
           stroke="var(--destructive)"
           strokeWidth={2}
           strokeLinecap="round"
-          strokeDasharray={49}
-          strokeDashoffset={reduced ? 0 : 49}
+          strokeDasharray={45}
+          strokeDashoffset={reduced ? 0 : 45}
         >
-          {!reduced && <animate attributeName="stroke-dashoffset" values="49;0" dur="0.9s" begin="0.4s" fill="freeze" />}
+          {!reduced && (
+            <animate
+              attributeName="stroke-dashoffset"
+              values="45;45;0;0;45"
+              keyTimes="0;0.1;0.45;0.9;1"
+              dur="5s"
+              repeatCount="indefinite"
+            />
+          )}
         </line>
       )}
     </svg>
@@ -202,11 +217,22 @@ function GoldArrow() {
 // Gesicht wie Karte 0 (sorrowMild). Eine Schriftrolle ragt unter dem Blob
 // hervor; jede Zeile mit „§". Statisch (keine Durchstreichung).
 
-function Card1Mascot() {
+// Atmet synchron mit dem Blob (gleiche Keyframe/Dauer wie mood-breathe), unten
+// am Kopf verankert. Bei reduced keine Bewegung.
+function breathingStyle(reduced: boolean): CSSProperties | undefined {
+  return reduced
+    ? undefined
+    : {
+        transformOrigin: "center bottom",
+        animation: "mood-breathe 3s ease-in-out infinite",
+      };
+}
+
+function Card1Mascot({ reduced }: { reduced: boolean }) {
   return (
     <div className="flex flex-col items-center">
-      <div className="relative z-10">
-        <Scroll width={62} lines={3} mode="none" reduced={false} />
+      <div className="relative z-10" style={breathingStyle(reduced)}>
+        <Scroll width={62} lines={3} mode="none" reduced={reduced} />
       </div>
       <Mascot expression="sorrowMild" size="md" className="-mt-8" />
     </div>
@@ -221,7 +247,7 @@ function Card1Mascot() {
 function Card2Mascot({ reduced }: { reduced: boolean }) {
   return (
     <div className="flex flex-col items-center">
-      <div className="relative z-10 flex items-center gap-1">
+      <div className="relative z-10 flex items-center gap-1" style={breathingStyle(reduced)}>
         <Scroll width={50} lines={2} mode="strike" reduced={reduced} />
         <GoldArrow />
         <Scroll width={50} lines={2} mode="write" reduced={reduced} />
@@ -243,6 +269,6 @@ export function BillOfRightsIntroMascot({ index }: { index: number }) {
   const reduced = useReducedMotion();
 
   if (index === 0) return <Card0Mascot reduced={reduced} />;
-  if (index === 1) return <Card1Mascot />;
+  if (index === 1) return <Card1Mascot reduced={reduced} />;
   return <Card2Mascot reduced={reduced} />;
 }
