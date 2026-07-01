@@ -133,19 +133,29 @@ function Scroll({
 }) {
   const uid = useId();
   const writeClip = `bor-scroll-write-${uid}`;
+  const parchGrad = `bor-parch-${uid}`;
+  const rollGrad = `bor-roll-${uid}`;
   const height = (width * 64) / 48;
-  const ys = lines === 2 ? [25, 38] : [21, 30, 39];
+  const ys = lines === 2 ? [26, 38] : [22, 30, 38];
 
   return (
     <svg width={width} height={height} viewBox="0 0 48 64" fill="none" aria-hidden="true">
-      {mode === "write" && (
-        <defs>
+      <defs>
+        <linearGradient id={parchGrad} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#FDF8ED" />
+          <stop offset="1" stopColor="#F1E5C9" />
+        </linearGradient>
+        <linearGradient id={rollGrad} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#F2DCA4" />
+          <stop offset="1" stopColor="#E3BE79" />
+        </linearGradient>
+        {mode === "write" && (
           <clipPath id={writeClip}>
-            <rect x={0} y={13} width={48} height={reduced ? 40 : 0}>
+            <rect x={0} y={16} width={48} height={reduced ? 34 : 0}>
               {!reduced && (
                 <animate
                   attributeName="height"
-                  values="0;0;40;40;0"
+                  values="0;0;34;34;0"
                   keyTimes="0;0.08;0.5;0.9;1"
                   dur="5s"
                   repeatCount="indefinite"
@@ -153,45 +163,48 @@ function Scroll({
               )}
             </rect>
           </clipPath>
-        </defs>
-      )}
+        )}
+      </defs>
 
-      {/* Papierblatt */}
-      <rect x={8} y={13} width={32} height={38} rx={1.5} fill="#FBF6EA" stroke="var(--primary-foreground)" strokeWidth={0.9} />
-      {/* Leicht aufgerollte Lippe oben */}
-      <path d="M8,13 Q24,9 40,13 Q24,16.5 8,13 Z" fill="#EFE4C8" stroke="var(--primary-foreground)" strokeWidth={0.7} />
-      {/* Leicht aufgerollte Lippe unten */}
-      <path d="M8,51 Q24,55 40,51 Q24,47.5 8,51 Z" fill="#EFE4C8" stroke="var(--primary-foreground)" strokeWidth={0.7} />
+      {/* Pergament-Körper (leicht gebogene Seiten) */}
+      <path
+        d="M11,13 C8,26 8,40 11,50 C20,52 28,52 37,50 C40,40 40,26 37,13 C28,11 20,11 11,13 Z"
+        fill={`url(#${parchGrad})`}
+        stroke="#CE9A4E"
+        strokeWidth={1}
+      />
+      {/* Dezenter Highlight links */}
+      <path d="M13,16 C11,28 11,38 13,48" fill="none" stroke="#FFFFFF" strokeWidth={1.6} strokeLinecap="round" opacity={0.4} />
 
       {/* Zeilen: „§" + Regel-Strich */}
       <g clipPath={mode === "write" ? `url(#${writeClip})` : undefined}>
         {ys.map((ly, i) => (
           <g key={i}>
-            <text x={10} y={ly + 2.4} fontSize={7} fontWeight={700} fill="var(--primary-foreground)">
+            <text x={12} y={ly + 2.4} fontSize={6.5} fontWeight={700} fill="var(--primary-foreground)">
               §
             </text>
-            <line x1={16} y1={ly} x2={37} y2={ly} stroke="var(--primary-foreground)" strokeWidth={1.4} strokeLinecap="round" opacity={0.6} />
+            <line x1={17} y1={ly} x2={34} y2={ly} stroke="var(--primary-foreground)" strokeWidth={1.3} strokeLinecap="round" opacity={0.6} />
           </g>
         ))}
       </g>
 
-      {/* Durchstreichung (nur strike-Modus): eine diagonale Linie über die Rolle */}
+      {/* Durchstreichung (nur strike-Modus): diagonale Linie über das Blatt */}
       {mode === "strike" && (
         <line
-          x1={10}
-          y1={15}
-          x2={38}
-          y2={49}
+          x1={12}
+          y1={18}
+          x2={35}
+          y2={46}
           stroke="var(--destructive)"
           strokeWidth={2}
           strokeLinecap="round"
-          strokeDasharray={45}
-          strokeDashoffset={reduced ? 0 : 45}
+          strokeDasharray={37}
+          strokeDashoffset={reduced ? 0 : 37}
         >
           {!reduced && (
             <animate
               attributeName="stroke-dashoffset"
-              values="45;45;0;0;45"
+              values="37;37;0;0;37"
               keyTimes="0;0.1;0.45;0.9;1"
               dur="5s"
               repeatCount="indefinite"
@@ -199,6 +212,18 @@ function Scroll({
           )}
         </line>
       )}
+
+      {/* Obere Rolle — Band quer, prominenter Curl oben-rechts */}
+      <rect x={9} y={8.5} width={30} height={6.5} rx={3.25} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.9} />
+      <circle cx={37} cy={11.75} r={6} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={1} />
+      <path d="M37,7 A4.75,4.75 0 1 1 32.4,10.5" fill="none" stroke="#B7823A" strokeWidth={1} strokeLinecap="round" />
+      <circle cx={37} cy={11.75} r={1.7} fill="#FDF8ED" stroke="#CE9A4E" strokeWidth={0.5} />
+
+      {/* Untere Rolle — Band quer, prominenter Curl unten-links */}
+      <rect x={9} y={49} width={30} height={6.5} rx={3.25} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.9} />
+      <circle cx={11} cy={52.25} r={6} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={1} />
+      <path d="M11,47.5 A4.75,4.75 0 1 1 15.6,51" fill="none" stroke="#B7823A" strokeWidth={1} strokeLinecap="round" />
+      <circle cx={11} cy={52.25} r={1.7} fill="#FDF8ED" stroke="#CE9A4E" strokeWidth={0.5} />
     </svg>
   );
 }
