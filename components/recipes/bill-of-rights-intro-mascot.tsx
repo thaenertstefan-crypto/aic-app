@@ -213,11 +213,8 @@ function Scroll({
         </line>
       )}
 
-      {/* Obere Rolle — schmales Band, dezenter Curl oben-rechts */}
+      {/* Obere Rolle — nur schmales Band (Curl entfernt) */}
       <rect x={11} y={10.5} width={26} height={3.6} rx={1.8} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.8} />
-      <circle cx={36} cy={12.3} r={3.4} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.8} />
-      <path d="M36,9.9 A2.4,2.4 0 1 1 34,11.2" fill="none" stroke="#B7823A" strokeWidth={0.7} strokeLinecap="round" opacity={0.7} />
-      <circle cx={36} cy={12.3} r={0.9} fill="#FDF8ED" stroke="#CE9A4E" strokeWidth={0.4} />
 
       {/* Untere Rolle — nur schmales Band (Curl entfernt) */}
       <rect x={11} y={49.9} width={26} height={3.6} rx={1.8} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.8} />
