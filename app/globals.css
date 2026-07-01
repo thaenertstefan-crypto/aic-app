@@ -256,23 +256,21 @@
     60%       { stroke-dashoffset: 0;  opacity: 0.85; }
   }
 
-  /* ── Werte-Intro Animationen (Kompass-Leitmotiv) ──────────────────── */
+  /* ── Werte-Intro Animationen (Bauchgefühl → innerer Kompass → Lupe) ── */
 
-  /* Karte 0: Nadel wackelt unruhig hin und her – rastet NIE ein */
-  @keyframes val-needle-wobble {
-    0%   { transform: rotate(-32deg); }
-    18%  { transform: rotate(38deg);  }
-    34%  { transform: rotate(-14deg); }
-    52%  { transform: rotate(44deg);  }
-    68%  { transform: rotate(-40deg); }
-    84%  { transform: rotate(22deg);  }
-    100% { transform: rotate(-32deg); }
+  /* Karte 0: Der Bauch churnt – wellige Linien undulieren (flauer Magen) */
+  @keyframes val-belly-churn {
+    0%, 100% { transform: scaleY(1)    rotate(-2deg)  translateY(0);      }
+    33%       { transform: scaleY(1.12) rotate(1.5deg) translateY(-0.5px); }
+    66%       { transform: scaleY(0.9)  rotate(-1deg)  translateY(0.5px);  }
   }
 
-  /* Karte 0: Der ganze Blob schwankt sanft (langsamer als ot-sway) */
-  @keyframes val-drift {
-    0%, 100% { transform: rotate(-1.8deg); }
-    50%       { transform: rotate(1.8deg);  }
+  /* Karte 0: Der ganze Blob schwankt langsam und leicht unruhig */
+  @keyframes val-unease-sway {
+    0%, 100% { transform: rotate(-2deg);   }
+    30%       { transform: rotate(1.5deg);  }
+    55%       { transform: rotate(-0.8deg); }
+    80%       { transform: rotate(1deg);    }
   }
 
   /* Karte 1: Nadel schwingt gedämpft ein und rastet auf Norden (0deg) */
@@ -290,12 +288,6 @@
     0%, 66% { opacity: 0;   transform: scale(0.4); }
     82%      { opacity: 0.9; transform: scale(1.5); }
     100%     { opacity: 0;   transform: scale(1);   }
-  }
-
-  /* Karte 2: Lupe scannt langsam horizontal über die Augen */
-  @keyframes val-loupe-pan {
-    0%, 100% { transform: translateX(-2px); }
-    50%       { transform: translateX(20px); }
   }
 
   /* ── Bill-of-Rights-Intro Animationen ─────────────────────────────── */
