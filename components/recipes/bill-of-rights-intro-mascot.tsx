@@ -213,17 +213,17 @@ function Scroll({
         </line>
       )}
 
-      {/* Obere Rolle — Band quer, prominenter Curl oben-rechts */}
-      <rect x={9} y={8.5} width={30} height={6.5} rx={3.25} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.9} />
-      <circle cx={37} cy={11.75} r={6} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={1} />
-      <path d="M37,7 A4.75,4.75 0 1 1 32.4,10.5" fill="none" stroke="#B7823A" strokeWidth={1} strokeLinecap="round" />
-      <circle cx={37} cy={11.75} r={1.7} fill="#FDF8ED" stroke="#CE9A4E" strokeWidth={0.5} />
+      {/* Obere Rolle — schmales Band, dezenter Curl oben-rechts */}
+      <rect x={11} y={10.5} width={26} height={3.6} rx={1.8} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.8} />
+      <circle cx={36} cy={12.3} r={3.4} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.8} />
+      <path d="M36,9.9 A2.4,2.4 0 1 1 34,11.2" fill="none" stroke="#B7823A" strokeWidth={0.7} strokeLinecap="round" opacity={0.7} />
+      <circle cx={36} cy={12.3} r={0.9} fill="#FDF8ED" stroke="#CE9A4E" strokeWidth={0.4} />
 
-      {/* Untere Rolle — Band quer, prominenter Curl unten-links */}
-      <rect x={9} y={49} width={30} height={6.5} rx={3.25} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.9} />
-      <circle cx={11} cy={52.25} r={6} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={1} />
-      <path d="M11,47.5 A4.75,4.75 0 1 1 15.6,51" fill="none" stroke="#B7823A" strokeWidth={1} strokeLinecap="round" />
-      <circle cx={11} cy={52.25} r={1.7} fill="#FDF8ED" stroke="#CE9A4E" strokeWidth={0.5} />
+      {/* Untere Rolle — schmales Band, dezenter Curl unten-links */}
+      <rect x={11} y={49.9} width={26} height={3.6} rx={1.8} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.8} />
+      <circle cx={12} cy={51.7} r={3.4} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.8} />
+      <path d="M12,49.3 A2.4,2.4 0 1 1 14,50.6" fill="none" stroke="#B7823A" strokeWidth={0.7} strokeLinecap="round" opacity={0.7} />
+      <circle cx={12} cy={51.7} r={0.9} fill="#FDF8ED" stroke="#CE9A4E" strokeWidth={0.4} />
     </svg>
   );
 }
