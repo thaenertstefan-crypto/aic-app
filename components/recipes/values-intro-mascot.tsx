@@ -11,14 +11,34 @@ import { Mascot } from "@/components/brand/mascot";
 // Kompass sitzt im unteren Blob-Bereich („Bauch"), knapp unter dem Mund und
 // innerhalb des Blobs.
 const COMPASS_CX = 32;
-const COMPASS_CY = 49;
+const COMPASS_CY = 52;
 const RING_R = 5.5;
 const NEEDLE_LEN = 4.6;
 
+// Bauch-Zentrum für das mulmige Gefühl (Karte 0) – etwas tiefer als der Mund.
+const BELLY_CX = 32;
+const BELLY_CY = 52;
+
+// Archimedische Spirale (~1,5 Windungen) um (cx,cy) – der churnende „flaue Magen".
+function spiralPath(cx: number, cy: number): string {
+  const a = 0.4;
+  const turns = 3 * Math.PI; // 1,5 Umdrehungen
+  const steps = 24;
+  let d = "";
+  for (let i = 0; i <= steps; i++) {
+    const t = (turns * i) / steps;
+    const r = a * t;
+    const x = cx + r * Math.cos(t);
+    const y = cy + r * Math.sin(t);
+    d += `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)} `;
+  }
+  return d.trim();
+}
+
 // ─── Karte 0: „Schon mal das Gefühl gehabt?" — mulmiges Bauchgefühl ──
-// Sorgenvolles Gesicht, Blick leicht nach unten zum Bauch. Im Bauch churnt es
-// (wellige Linien undulieren), und der ganze Blob schwankt unruhig.
-// = „ein komisches Gefühl im Bauch". Reduced: Wellen statisch, kein Schwanken.
+// Sorgenvolles Gesicht, Blick leicht nach unten zum Bauch. Im Bauch churnt eine
+// Spirale (undulierend), und der ganze Blob schwankt unruhig.
+// = „ein komisches Gefühl im Bauch". Reduced: Spirale statisch, kein Schwanken.
 
 function BellyChurnOverlay({ reduced }: { reduced: boolean }) {
   return (
@@ -28,26 +48,19 @@ function BellyChurnOverlay({ reduced }: { reduced: boolean }) {
           ? undefined
           : {
               transformBox: "view-box",
-              transformOrigin: `${COMPASS_CX}px ${COMPASS_CY}px`,
+              transformOrigin: `${BELLY_CX}px ${BELLY_CY}px`,
               animation: "val-belly-churn 3.2s ease-in-out infinite",
             }
       }
     >
       <path
-        d="M25,47 Q28.5,45.3 32,47 Q35.5,48.7 39,47"
+        d={spiralPath(BELLY_CX, BELLY_CY)}
         fill="none"
         stroke="var(--primary-foreground)"
         strokeWidth={1}
         strokeLinecap="round"
+        strokeLinejoin="round"
         opacity={0.4}
-      />
-      <path
-        d="M25,50.5 Q28.5,52.2 32,50.5 Q35.5,48.8 39,50.5"
-        fill="none"
-        stroke="var(--primary-foreground)"
-        strokeWidth={1}
-        strokeLinecap="round"
-        opacity={0.3}
       />
     </g>
   );
@@ -170,18 +183,18 @@ function Card1Mascot({ reduced }: { reduced: boolean }) {
 // = „echte Beobachtung von dir selbst".
 
 function LoupeOverlay() {
-  const lensCx = 22;
+  const lensCx = 42;
   const lensCy = 27;
 
   return (
     <g>
-      {/* Vergrößertes linkes Auge (überdeckt das reale r7/r4-Auge → wirkt größer) */}
+      {/* Vergrößertes rechtes Auge (überdeckt das reale r7/r4-Auge → wirkt größer) */}
       <circle cx={lensCx} cy={lensCy} r={9} fill="#FBF6EA" />
       <circle cx={lensCx - 1.3} cy={lensCy} r={5} fill="var(--primary-foreground)" />
       <circle cx={lensCx - 2.6} cy={lensCy - 1.6} r={1.6} fill="white" />
 
-      {/* Linsen-Glas + Ring */}
-      <circle cx={lensCx} cy={lensCy} r={9.5} fill="rgba(255,255,255,0.14)" stroke="var(--primary-foreground)" strokeWidth={1.6} />
+      {/* Linsen-Glas + Ring (Rahmen so dick wie der Griff) */}
+      <circle cx={lensCx} cy={lensCy} r={9.5} fill="rgba(255,255,255,0.14)" stroke="var(--primary-foreground)" strokeWidth={2} />
       <circle cx={lensCx} cy={lensCy} r={9.5} fill="none" stroke="#E7B65E" strokeWidth={0.5} opacity={0.5} />
 
       {/* Griff */}
