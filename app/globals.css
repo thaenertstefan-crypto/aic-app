@@ -258,12 +258,7 @@
 
   /* ── Werte-Intro Animationen (Bauchgefühl → innerer Kompass → Lupe) ── */
 
-  /* Karte 0: Der Bauch churnt – wellige Linien undulieren (flauer Magen) */
-  @keyframes val-belly-churn {
-    0%, 100% { transform: scaleY(1)    rotate(-2deg)  translateY(0);      }
-    33%       { transform: scaleY(1.12) rotate(1.5deg) translateY(-0.5px); }
-    66%       { transform: scaleY(0.9)  rotate(-1deg)  translateY(0.5px);  }
-  }
+  /* Karte 0: Bauch-Linie morpht wellig↔Spirale per SMIL (siehe values-intro-mascot). */
 
   /* Karte 0: Der ganze Blob schwankt langsam und leicht unruhig */
   @keyframes val-unease-sway {

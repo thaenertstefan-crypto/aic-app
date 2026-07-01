@@ -11,7 +11,7 @@ import { Mascot } from "@/components/brand/mascot";
 // Kompass sitzt im unteren Blob-Bereich („Bauch"), knapp unter dem Mund und
 // innerhalb des Blobs.
 const COMPASS_CX = 32;
-const COMPASS_CY = 52;
+const COMPASS_CY = 54;
 const RING_R = 5.5;
 const NEEDLE_LEN = 4.6;
 
@@ -19,14 +19,29 @@ const NEEDLE_LEN = 4.6;
 const BELLY_CX = 32;
 const BELLY_CY = 52;
 
-// Archimedische Spirale (~1,5 Windungen) um (cx,cy) – der churnende „flaue Magen".
+// Anzahl Segmente – wavy und spiral MÜSSEN gleich viele Punkte haben, damit
+// SMIL sauber Punkt-für-Punkt zwischen ihnen morpht.
+const CHURN_STEPS = 24;
+
+// Wellige Linie (~2 Sinus-Zyklen) um (cx,cy) – der „ruhige" Zustand.
+function wavyPath(cx: number, cy: number): string {
+  const halfW = 6;
+  let d = "";
+  for (let i = 0; i <= CHURN_STEPS; i++) {
+    const x = cx - halfW + (2 * halfW * i) / CHURN_STEPS;
+    const y = cy + 2 * Math.sin((2 * Math.PI * 2 * i) / CHURN_STEPS);
+    d += `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)} `;
+  }
+  return d.trim();
+}
+
+// Archimedische Spirale (~1,5 Windungen) um (cx,cy) – der „aufgewühlte" Zustand.
 function spiralPath(cx: number, cy: number): string {
   const a = 0.4;
   const turns = 3 * Math.PI; // 1,5 Umdrehungen
-  const steps = 24;
   let d = "";
-  for (let i = 0; i <= steps; i++) {
-    const t = (turns * i) / steps;
+  for (let i = 0; i <= CHURN_STEPS; i++) {
+    const t = (turns * i) / CHURN_STEPS;
     const r = a * t;
     const x = cx + r * Math.cos(t);
     const y = cy + r * Math.sin(t);
@@ -36,33 +51,37 @@ function spiralPath(cx: number, cy: number): string {
 }
 
 // ─── Karte 0: „Schon mal das Gefühl gehabt?" — mulmiges Bauchgefühl ──
-// Sorgenvolles Gesicht, Blick leicht nach unten zum Bauch. Im Bauch churnt eine
-// Spirale (undulierend), und der ganze Blob schwankt unruhig.
-// = „ein komisches Gefühl im Bauch". Reduced: Spirale statisch, kein Schwanken.
+// Sorgenvolles Gesicht, Blick leicht nach unten zum Bauch. Im Bauch morpht eine
+// Linie im Loop: wellig → Spirale → wellig (aufgewühlt/beruhigt), und der ganze
+// Blob schwankt unruhig. = „ein komisches Gefühl im Bauch".
+// Reduced: statische wellige Linie, kein Morph, kein Schwanken.
 
 function BellyChurnOverlay({ reduced }: { reduced: boolean }) {
+  const wavy = wavyPath(BELLY_CX, BELLY_CY);
+  const spiral = spiralPath(BELLY_CX, BELLY_CY);
+
   return (
-    <g
-      style={
-        reduced
-          ? undefined
-          : {
-              transformBox: "view-box",
-              transformOrigin: `${BELLY_CX}px ${BELLY_CY}px`,
-              animation: "val-belly-churn 3.2s ease-in-out infinite",
-            }
-      }
+    <path
+      d={wavy}
+      fill="none"
+      stroke="var(--primary-foreground)"
+      strokeWidth={1}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      opacity={0.4}
     >
-      <path
-        d={spiralPath(BELLY_CX, BELLY_CY)}
-        fill="none"
-        stroke="var(--primary-foreground)"
-        strokeWidth={1}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity={0.4}
-      />
-    </g>
+      {!reduced && (
+        <animate
+          attributeName="d"
+          values={`${wavy};${spiral};${wavy}`}
+          dur="4.5s"
+          repeatCount="indefinite"
+          calcMode="spline"
+          keyTimes="0;0.5;1"
+          keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
+        />
+      )}
+    </path>
   );
 }
 
