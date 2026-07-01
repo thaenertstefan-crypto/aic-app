@@ -5,6 +5,8 @@ import { useState } from "react";
 import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { RecipeIntroCollapsible } from "@/components/recipes/recipe-intro-collapsible";
+import { ValuesIntroMascot } from "@/components/recipes/values-intro-mascot";
+import { BillOfRightsIntroMascot } from "@/components/recipes/bill-of-rights-intro-mascot";
 import type { IntroCard } from "@/lib/utils/recipe-intros";
 
 type RecipeIntroGateProps = {
@@ -48,9 +50,24 @@ export function RecipeIntroGate({
   };
 
   if (!introSeen && !dismissed) {
+    // Der Gate ist "use client" und kennt den Slug — deshalb dispatcht er das
+    // per-Karten-Maskottchen selbst (die Server-Component-Aufrufer dürfen keine
+    // Funktions-Prop übergeben).
+    const renderMascot =
+      slug === "values"
+        ? (i: number) => <ValuesIntroMascot index={i} />
+        : slug === "bill-of-rights"
+          ? (i: number) => <BillOfRightsIntroMascot index={i} />
+          : undefined;
+
     return (
       <div className="flex min-h-svh flex-col justify-center">
-        <RecipeIntro cards={cards} onComplete={handleSeen} onSkip={handleSeen} />
+        <RecipeIntro
+          cards={cards}
+          onComplete={handleSeen}
+          onSkip={handleSeen}
+          renderMascot={renderMascot}
+        />
       </div>
     );
   }
