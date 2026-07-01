@@ -256,6 +256,48 @@
     60%       { stroke-dashoffset: 0;  opacity: 0.85; }
   }
 
+  /* ── Werte-Intro Animationen (Kompass-Leitmotiv) ──────────────────── */
+
+  /* Karte 0: Nadel wackelt unruhig hin und her – rastet NIE ein */
+  @keyframes val-needle-wobble {
+    0%   { transform: rotate(-32deg); }
+    18%  { transform: rotate(38deg);  }
+    34%  { transform: rotate(-14deg); }
+    52%  { transform: rotate(44deg);  }
+    68%  { transform: rotate(-40deg); }
+    84%  { transform: rotate(22deg);  }
+    100% { transform: rotate(-32deg); }
+  }
+
+  /* Karte 0: Der ganze Blob schwankt sanft (langsamer als ot-sway) */
+  @keyframes val-drift {
+    0%, 100% { transform: rotate(-1.8deg); }
+    50%       { transform: rotate(1.8deg);  }
+  }
+
+  /* Karte 1: Nadel schwingt gedämpft ein und rastet auf Norden (0deg) */
+  @keyframes val-needle-settle {
+    0%       { transform: rotate(-46deg); }
+    20%      { transform: rotate(30deg);  }
+    38%      { transform: rotate(-18deg); }
+    54%      { transform: rotate(10deg);  }
+    68%      { transform: rotate(-5deg);  }
+    80%, 100% { transform: rotate(0deg);  }
+  }
+
+  /* Karte 1: Kurzer goldener Puls am Nordpunkt im Einrast-Moment */
+  @keyframes val-north-pulse {
+    0%, 66% { opacity: 0;   transform: scale(0.4); }
+    82%      { opacity: 0.9; transform: scale(1.5); }
+    100%     { opacity: 0;   transform: scale(1);   }
+  }
+
+  /* Karte 2: Lupe scannt langsam horizontal über die Augen */
+  @keyframes val-loupe-pan {
+    0%, 100% { transform: translateX(-2px); }
+    50%       { transform: translateX(20px); }
+  }
+
   /* 4-7-8 breathing cycle (19s): inhale 4s, hold 7s, exhale 8s */
   @keyframes breathe478 {
     0% {
