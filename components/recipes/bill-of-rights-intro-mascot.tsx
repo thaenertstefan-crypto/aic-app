@@ -219,11 +219,8 @@ function Scroll({
       <path d="M36,9.9 A2.4,2.4 0 1 1 34,11.2" fill="none" stroke="#B7823A" strokeWidth={0.7} strokeLinecap="round" opacity={0.7} />
       <circle cx={36} cy={12.3} r={0.9} fill="#FDF8ED" stroke="#CE9A4E" strokeWidth={0.4} />
 
-      {/* Untere Rolle — schmales Band, dezenter Curl unten-links */}
+      {/* Untere Rolle — nur schmales Band (Curl entfernt) */}
       <rect x={11} y={49.9} width={26} height={3.6} rx={1.8} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.8} />
-      <circle cx={12} cy={51.7} r={3.4} fill={`url(#${rollGrad})`} stroke="#CE9A4E" strokeWidth={0.8} />
-      <path d="M12,49.3 A2.4,2.4 0 1 1 14,50.6" fill="none" stroke="#B7823A" strokeWidth={0.7} strokeLinecap="round" opacity={0.7} />
-      <circle cx={12} cy={51.7} r={0.9} fill="#FDF8ED" stroke="#CE9A4E" strokeWidth={0.4} />
     </svg>
   );
 }
