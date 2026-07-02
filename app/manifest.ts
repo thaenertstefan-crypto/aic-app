@@ -6,7 +6,7 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Anti Imposter Club",
-    short_name: "AIC",
+    short_name: "Anti Imposter Club",
     description: "Dein Begleiter für mehr Selbstbewusstsein",
     start_url: "/dashboard",
     display: "standalone",
