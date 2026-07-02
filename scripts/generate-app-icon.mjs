@@ -99,42 +99,29 @@ function buildSvg({ maskable }) {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">
   <defs>
-    <radialGradient id="gold" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="${GOLD}" stop-opacity="0.34"/>
-      <stop offset="100%" stop-color="${GOLD}" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="${GOLD}" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="${GOLD}" stop-opacity="0"/>
-    </radialGradient>
     <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur stdDeviation="10"/>
     </filter>
     <clipPath id="blobClip"><path d="${blobPath()}"/></clipPath>
   </defs>
 
-  <!-- Auberginen-Hintergrund, randlos -->
+  <!-- Auberginen-Hintergrund, randlos & einfarbig -->
   <rect width="${SIZE}" height="${SIZE}" fill="${AUBERGINE}"/>
-
-  <!-- Weiche, unscharfe Akzente (analog app-backdrop blur-Blobs) -->
-  <circle cx="215" cy="205" r="580" fill="url(#gold)"/>
-  <circle cx="${CENTER}" cy="405" r="330" fill="url(#halo)"/>
 
   <!-- Vordergrund (bei maskable in die Safe-Zone skaliert) -->
   <g transform="${fg}">
-    <!-- Wordmark: „Anti" mittig über „Imposter Club" -->
+    <!-- Wordmark: großes „AIC" -->
     <g fill="${INK}" font-family="Fraunces" font-weight="700" text-anchor="middle">
-      <text x="${CENTER}" y="352" font-size="140" letter-spacing="-2.8">Anti</text>
-      <text x="${CENTER}" y="500" font-size="140" letter-spacing="-2.8">Imposter Club</text>
+      <text x="${CENTER}" y="400" font-size="320" letter-spacing="-6">AIC</text>
     </g>
 
     <!-- Maskottchen: von unten halb angeschnitten, Blick nach oben -->
     <g transform="${mascotXf}">
-      <!-- Gold-Aura hinter dem Blob -->
-      <path d="${blobPath()}" fill="${GOLD}" opacity="0.28" filter="url(#soft)"
+      <!-- Gold-Aura hinter dem Blob (dezenter Glow) -->
+      <path d="${blobPath()}" fill="${GOLD}" opacity="0.22" filter="url(#soft)"
         transform="translate(-3 -3) scale(1.09)"/>
-      <!-- Blob-Körper -->
-      <path d="${blobPath()}" fill="rgba(231,182,94,0.12)"
+      <!-- Blob-Körper: voll gold -->
+      <path d="${blobPath()}" fill="${GOLD}"
         stroke="rgba(255,255,255,0.24)" stroke-width="1"/>
       <!-- Gesicht, vom Blob beschnitten -->
       <g clip-path="url(#blobClip)">${mascotFace()}</g>
