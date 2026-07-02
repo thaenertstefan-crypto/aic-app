@@ -10,13 +10,13 @@ import {
   type PrimaryRecommendation,
 } from "@/components/dashboard/daily-focus";
 
-/** Low-Tier-Empfehlung — eine kurze Mantra-Pause statt "weitermachen". */
-const MANTRA_PRIMARY: PrimaryRecommendation = {
-  key: "mantra",
-  title: "Ich bin nicht für jeden",
-  subtitle: "30 Sekunden Mantra-Pause",
-  cta: "Kurz durchatmen",
-  href: "/booster/mantra",
+/** Low-Tier-Empfehlung — Ausstieg aus dem Gedankenkarussell statt "weitermachen". */
+const OVERTHINKING_PRIMARY: PrimaryRecommendation = {
+  key: "overthinking",
+  title: "Raus aus dem Gedankenkarussell",
+  subtitle: "Sortiere deine Gedanken und komm zu einer klaren Entscheidung",
+  cta: "Los geht's",
+  href: "/booster/overthinking",
 };
 
 type DashboardFocusProps = {
@@ -43,7 +43,7 @@ export function DashboardFocus({
   const [score, setScore] = useState<number | null>(initialScore);
 
   const tier = moodTier(score);
-  const primary = tier === "low" ? MANTRA_PRIMARY : normalPrimary;
+  const primary = tier === "low" ? OVERTHINKING_PRIMARY : normalPrimary;
   const showQuestion = score !== null && primary !== null;
   const alternatives = allDestinations.filter((d) => d.key !== primary?.key);
 

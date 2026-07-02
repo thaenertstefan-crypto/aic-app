@@ -62,7 +62,7 @@ export function DailyFocus({
   // bei künftigen "low"-Empfehlungen stimmig bleibt.
   const question =
     tier === "low"
-      ? "Brauchst du eine Mantra-Pause?"
+      ? "Dreht dein Kopf gerade Runden?"
       : "Sollen wir weitermachen?";
 
   // Kompletter Tier-Zustand in einem Snapshot — neue Objekt-Identität pro Render
