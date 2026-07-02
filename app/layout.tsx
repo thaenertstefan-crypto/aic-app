@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "Dein persönlicher Begleiter für mehr Selbstvertrauen — mit interaktiven Übungen aus dem Anti-Imposter-Workbook.",
   appleWebApp: {
     capable: true,
-    title: "Anti Imposter Club",
+    title: "AIC",
     // "black-translucent" lets the web content (incl. the fixed AppBackdrop)
     // extend full-bleed under the status bar so the ambient blobs render behind
     // the clock/wifi instead of a flat aubergine band.
