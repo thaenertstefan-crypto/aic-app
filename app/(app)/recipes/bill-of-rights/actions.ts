@@ -8,6 +8,24 @@ import type {
 import type { ActionState } from "@/lib/types/action-state";
 import type { RightItem } from "@/lib/types/db-json";
 import { dbError } from "@/lib/utils/db-error";
+import { TEXT_MAX_SHORT, tooLong } from "@/lib/utils/form-validation";
+
+// Obergrenzen für das rights-JSONB-Array: schützt vor manipulierten
+// FormData-Payloads (beliebige Objekte / Riesen-Texte), die sonst ungeprüft
+// in der DB landen und später als RightItem gerendert würden.
+const MAX_RIGHTS = 100;
+
+/** Prüft ein einzelnes Element auf die RightItem-Shape (inkl. Text-Cap). */
+function isRightItem(value: unknown): value is RightItem {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.id === "string" &&
+    typeof v.text === "string" &&
+    tooLong(v.text, TEXT_MAX_SHORT) === null &&
+    typeof v.active === "boolean"
+  );
+}
 
 export type RightsData = {
   rights: RightItem[] | null;
@@ -83,12 +101,28 @@ export async function saveRightsAction(
     return { error: "Keine Rechte zum Speichern erhalten.", success: false };
   }
 
-  let incoming: RightItem[];
+  let incomingRaw: unknown;
   try {
-    incoming = JSON.parse(rightsRaw);
+    incomingRaw = JSON.parse(rightsRaw);
   } catch {
     return { error: "Ungültiges Format.", success: false };
   }
+
+  if (
+    !Array.isArray(incomingRaw) ||
+    incomingRaw.length > MAX_RIGHTS ||
+    !incomingRaw.every(isRightItem)
+  ) {
+    return { error: "Ungültiges Format.", success: false };
+  }
+
+  // Auf die bekannte Shape normalisieren, damit keine Fremd-Properties
+  // mit ins JSONB geschrieben werden.
+  const incoming: RightItem[] = incomingRaw.map((r) => ({
+    id: r.id,
+    text: r.text,
+    active: r.active,
+  }));
 
   // Optionale Baseline-IDs, die der Client beim Laden kannte — damit vom Client
   // beabsichtigte Löschungen greifen, ohne parallel (auf einem anderen Gerät)
@@ -97,7 +131,10 @@ export async function saveRightsAction(
   let previousIds: string[] = [];
   if (typeof previousIdsRaw === "string" && previousIdsRaw) {
     try {
-      previousIds = JSON.parse(previousIdsRaw);
+      const parsed: unknown = JSON.parse(previousIdsRaw);
+      previousIds = Array.isArray(parsed)
+        ? parsed.filter((x): x is string => typeof x === "string")
+        : [];
     } catch {
       previousIds = [];
     }

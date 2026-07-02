@@ -58,6 +58,7 @@ export default function ThingsGotMessyPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Daten-Load beim Mount; die setState-Aufrufe laufen erst nach dem await, nicht synchron
     loadEntries();
   }, []);
 
@@ -71,6 +72,7 @@ export default function ThingsGotMessyPage() {
   // Reset form after successful save
   useEffect(() => {
     if (state.success) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Formular-Reset als Reaktion auf den Action-Erfolg; läuft genau einmal pro Erfolg
       setMessyWhen("");
       setConflictingRules("");
       setGuiltType("");

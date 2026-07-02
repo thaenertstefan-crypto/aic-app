@@ -13,9 +13,14 @@ export type RecipeActionState = {
 /**
  * Wrapper around startOrContinueRecipeAction for use with plain `<form action={fn}>`
  * (server components). Discards the prevState argument that useActionState expects.
+ * Fehler dürfen hier nicht stumm versanden (kein useActionState-Feedback) —
+ * stattdessen an die Segment-Error-Boundary werfen.
  */
 export async function startRecipeAction(formData: FormData): Promise<void> {
-  await startOrContinueRecipeAction({ error: null }, formData);
+  const result = await startOrContinueRecipeAction({ error: null }, formData);
+  if (result?.error) {
+    throw new Error(`startRecipeAction: ${result.error}`);
+  }
 }
 
 export async function startOrContinueRecipeAction(
@@ -33,6 +38,13 @@ export async function startOrContinueRecipeAction(
   const recipeSlug = formData.get("recipeSlug") as string;
   if (!recipeSlug) {
     return { error: "Kein Rezept angegeben." };
+  }
+
+  // Nur bekannte, verfügbare Rezepte akzeptieren — sonst legen manipulierte
+  // FormData-Requests Junk-Zeilen in user_recipe_progress an.
+  const recipe = getRecipeBySlug(recipeSlug);
+  if (!recipe || !recipe.available) {
+    return { error: "Unbekanntes Rezept." };
   }
 
   // Check for existing progress — pick the highest cycle_number
@@ -82,8 +94,7 @@ export async function startOrContinueRecipeAction(
   }
 
   // Redirect to the recipe's actual exercise page
-  const recipe = getRecipeBySlug(recipeSlug);
-  redirect(recipe?.startPath ?? `/recipes/${recipeSlug}`);
+  redirect(recipe.startPath);
 }
 
 // ─── Rezept-Intro "schon gesehen?"-Status (Schritt 6.10) ────────────────
@@ -125,6 +136,11 @@ export async function markRecipeIntroSeenAction(
 
   if (!user) {
     return { error: "Du musst angemeldet sein." };
+  }
+
+  // Slug kommt aus Client-Komponenten — nur bekannte Rezepte zulassen.
+  if (!getRecipeBySlug(slug)) {
+    return { error: "Unbekanntes Rezept." };
   }
 
   const supabase = await createClient();

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { MessyMomentContent } from "@/lib/types/db-json";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
+import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
 
 // ─── Things Got Messy ───────────────────────────────────────────────────
 // Eigenständige Übung in der Kopf-Apotheke. Einträge werden als journal_entries
@@ -81,6 +82,13 @@ export async function saveMessyMomentAction(
 
   if (!guiltType || !["healthy", "unhealthy", "unsure"].includes(guiltType)) {
     return { error: "Bitte wähl aus, ob die Schuld gesund oder ungesund war.", success: false };
+  }
+
+  const lengthError =
+    tooLong(messyWhen, TEXT_MAX_LONG) ??
+    tooLong(conflictingRules ?? "", TEXT_MAX_LONG);
+  if (lengthError) {
+    return { error: lengthError, success: false };
   }
 
   const content = {

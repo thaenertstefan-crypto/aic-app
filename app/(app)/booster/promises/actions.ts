@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { computeStreak } from "@/lib/utils/streak";
+import { TEXT_MAX_SHORT, tooLong } from "@/lib/utils/form-validation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type CreatePromiseState = {
@@ -85,6 +86,10 @@ export async function createPromiseAction(
   const description = String(formData.get("description") ?? "").trim();
   if (!description) {
     return { error: "Bitte beschreibe dein Promise.", success: false };
+  }
+  const lengthError = tooLong(description, TEXT_MAX_SHORT);
+  if (lengthError) {
+    return { error: lengthError, success: false };
   }
 
   const parsedDays = Number(formData.get("target_days"));

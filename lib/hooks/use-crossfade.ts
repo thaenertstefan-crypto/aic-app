@@ -49,13 +49,19 @@ export function useCrossfade<T>(token: string, value: T) {
   const [visible, setVisible] = useState(true);
 
   // Neuesten value halten, ohne ihn in die Effect-Dependencies aufzunehmen.
+  // Der Sync läuft in einem Effect (kein Ref-Write während des Renders); der
+  // einzige Lesezugriff passiert später im setTimeout des Out-Effects — da ist
+  // dieser Effect garantiert schon gelaufen.
   const latestValue = useRef(value);
-  latestValue.current = value;
+  useEffect(() => {
+    latestValue.current = value;
+  });
 
   // Out → tauschen, sobald sich der Token ändert.
   useEffect(() => {
     if (reduced || token === shown.token) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- bewusst post-paint: das Ausblenden darf erst starten, nachdem der alte Inhalt gepaintet wurde (s. Kommentar oben)
     setVisible(false); // läuft post-paint, blendet den sichtbaren Inhalt aus
 
     // Den Swap erst nach VOLLSTÄNDIGEM Ausblenden auslösen: per doppeltem rAF

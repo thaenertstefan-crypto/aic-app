@@ -9,6 +9,20 @@ import type { ActionState } from "@/lib/types/action-state";
 import type { DailyValueContent, ValueEvalContent } from "@/lib/types/db-json";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
+import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
+
+// Werte-Slugs/-Labels sind Kurzstrings; custom Werte sind erlaubt, daher wird
+// nur Typ + Länge geprüft (nicht gegen die values-bank).
+const MAX_VALUE_LEN = 100;
+
+/** Prüft, dass ein geparstes Werte-Array nur Kurzstrings enthält (max. 20). */
+function isValueList(values: unknown): values is string[] {
+  return (
+    Array.isArray(values) &&
+    values.length <= 20 &&
+    values.every((v) => typeof v === "string" && v.length <= MAX_VALUE_LEN)
+  );
+}
 
 /**
  * Save the values hypothesis (Step 1 of Recipe #1).
@@ -34,14 +48,17 @@ export async function saveHypothesisAction(
     return { error: "Keine Werte ausgewählt." };
   }
 
-  let values: string[];
+  let values: unknown;
   try {
     values = JSON.parse(valuesRaw);
   } catch {
     return { error: "Ungültiges Format der ausgewählten Werte." };
   }
 
-  if (!Array.isArray(values) || values.length !== 5) {
+  if (!isValueList(values)) {
+    return { error: "Ungültiges Format der ausgewählten Werte." };
+  }
+  if (values.length !== 5) {
     return { error: "Bitte genau 5 Werte auswählen." };
   }
 
@@ -277,6 +294,11 @@ export async function saveJournalEntryAction(
   if (!response || typeof response !== "string") {
     return { error: "Bitte teil deine Gedanken und Gefühle dazu mit." };
   }
+  const lengthError =
+    tooLong(happenings, TEXT_MAX_LONG) ?? tooLong(response, TEXT_MAX_LONG);
+  if (lengthError) {
+    return { error: lengthError };
+  }
 
   const content = { happenings, response };
 
@@ -347,13 +369,6 @@ export async function saveJournalEntryAction(
 
   revalidatePath("/me/values/journey/journal");
   return { error: null };
-}
-
-/**
- * Wrapper for use with plain `<form action={fn}>` in server components.
- */
-export async function saveHypothesis(formData: FormData): Promise<void> {
-  await saveHypothesisAction({ error: null }, formData);
 }
 
 // ─── Evaluation (Step 3) ───────────────────────────────────────────
@@ -517,6 +532,12 @@ export async function saveEvalReflectionAction(
   if (!negativeReflection || typeof negativeReflection !== "string") {
     return { error: "Bitte beantworte die zweite Frage.", success: false };
   }
+  const lengthError =
+    tooLong(positiveReflection, TEXT_MAX_LONG) ??
+    tooLong(negativeReflection, TEXT_MAX_LONG);
+  if (lengthError) {
+    return { error: lengthError, success: false };
+  }
 
   const content = {
     positive_reflection: positiveReflection,
@@ -584,14 +605,17 @@ export async function saveAdjustedHypothesisAction(
     return { error: "Keine Werte angegeben.", success: false };
   }
 
-  let values: string[];
+  let values: unknown;
   try {
     values = JSON.parse(valuesRaw);
   } catch {
     return { error: "Ungültiges Format der Werte.", success: false };
   }
 
-  if (!Array.isArray(values) || values.length === 0) {
+  if (!isValueList(values)) {
+    return { error: "Ungültiges Format der Werte.", success: false };
+  }
+  if (values.length === 0) {
     return { error: "Bitte mindestens einen Wert angeben.", success: false };
   }
 

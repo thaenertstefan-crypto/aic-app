@@ -3,6 +3,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
+import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
+
+// Die Warum-Leiter hat im Wizard max. 3 Ebenen; 10 lässt Luft für Formate von
+// morgen, blockt aber manipulierte Riesen-Arrays.
+const MAX_WHY_LEVELS = 10;
 
 export type OverthinkingActionState = {
   error: string | null;
@@ -40,9 +45,24 @@ export async function saveOverthinkingAction(
     return { error: "Bitte triff eine Entscheidung, bevor du abschließt.", success: false };
   }
 
+  const lengthError =
+    tooLong(problem, TEXT_MAX_LONG) ??
+    tooLong(whatIfWrong ?? "", TEXT_MAX_LONG) ??
+    tooLong(reframedProblem ?? "", TEXT_MAX_LONG) ??
+    tooLong(decision, TEXT_MAX_LONG);
+  if (lengthError) {
+    return { error: lengthError, success: false };
+  }
+
   let whyLevels: string[] = [];
   try {
-    whyLevels = whyLevelsRaw ? JSON.parse(whyLevelsRaw) : [];
+    const parsed: unknown = whyLevelsRaw ? JSON.parse(whyLevelsRaw) : [];
+    if (Array.isArray(parsed)) {
+      whyLevels = parsed
+        .filter((v): v is string => typeof v === "string")
+        .slice(0, MAX_WHY_LEVELS)
+        .map((v) => v.slice(0, TEXT_MAX_LONG));
+    }
   } catch {
     // ignore parse errors, default to empty
   }

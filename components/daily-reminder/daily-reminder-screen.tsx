@@ -55,6 +55,7 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
       // ignore
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Entscheidung hängt an localStorage und muss post-mount fallen (SSR kennt den "heute schon gezeigt?"-Stand nicht)
     setRight(rights[Math.floor(Math.random() * rights.length)]);
   }, [rights]);
 
@@ -63,6 +64,7 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
     if (!right) return;
 
     if (reduced) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reduced-Motion-Zweig: sofort sichtbar statt Fade-in, feuert einmal pro gewähltem Recht
       setVisible(true);
       setShowButton(true);
       return;

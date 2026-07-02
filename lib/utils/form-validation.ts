@@ -24,3 +24,23 @@ export function invalidMessage(message: string) {
 export function clearValidity(e: React.FormEvent<InputEl>) {
   e.currentTarget.setCustomValidity("");
 }
+
+/* ------------------------------------------------------------------ */
+/*  Serverseitige Längen-Caps für Freitext-Felder                     */
+/* ------------------------------------------------------------------ */
+
+/** Kurzfelder: Namen, Rechte, Promise-Beschreibungen, Titel. */
+export const TEXT_MAX_SHORT = 300;
+/** Lange Felder: Journal-/Reflexionstexte. */
+export const TEXT_MAX_LONG = 5000;
+
+/**
+ * Serverseitiger Längen-Check für Server Actions: gibt bei Überlänge eine
+ * warme deutsche Fehlermeldung zurück, sonst null. Die Client-Formulare
+ * begrenzen meist schon per maxLength — das hier ist die Absicherung dahinter.
+ */
+export function tooLong(value: string, max: number): string | null {
+  return value.length > max
+    ? `Dein Text ist etwas lang geraten (maximal ${max} Zeichen). Kürze ihn bitte ein wenig.`
+    : null;
+}

@@ -4,7 +4,7 @@ import { Quote } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCachedUser } from "@/lib/supabase/get-user";
 import { RECIPES, getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
-import { serverTodayKey } from "@/lib/server/timezone";
+import { getUserTimeZone, serverTodayKey } from "@/lib/server/timezone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DashboardReveal } from "@/components/dashboard/dashboard-reveal";
@@ -16,8 +16,13 @@ import type {
 } from "@/components/dashboard/daily-focus";
 import type { RightItem } from "@/lib/types/db-json";
 
-/** Day-of-year (1–366), used to pick a stable daily right. */
-function dayOfYear(date: Date): number {
+/**
+ * Day-of-year (1–366), used to pick a stable daily right. Nimmt den
+ * Kalendertag-Key "YYYY-MM-DD" in der User-Zeitzone entgegen, damit das
+ * "Heutige Recht" um die lokale Mitternacht wechselt (nicht um UTC-Mitternacht).
+ */
+function dayOfYear(dateKey: string): number {
+  const date = new Date(`${dateKey}T00:00:00Z`);
   const start = Date.UTC(date.getUTCFullYear(), 0, 0);
   const now = Date.UTC(
     date.getUTCFullYear(),
@@ -39,11 +44,15 @@ export default async function DashboardPage() {
 
   const now = new Date();
   const today = await serverTodayKey(now);
+  // Ohne explizite timeZone würde hier die Server-TZ (auf Vercel: UTC)
+  // formatiert — abends/nachts stünde dann der falsche Wochentag da, während
+  // `today` bereits den User-Kalendertag meint.
   const dateLabel = now.toLocaleDateString("de-DE", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: await getUserTimeZone(),
   });
 
   let name: string | null = null;
@@ -124,7 +133,7 @@ export default async function DashboardPage() {
   const activeRights = rights.filter((r) => r.active);
   const todayRight =
     activeRights.length > 0
-      ? activeRights[dayOfYear(now) % activeRights.length]
+      ? activeRights[dayOfYear(today) % activeRights.length]
       : null;
 
   const greetingName = name?.trim();

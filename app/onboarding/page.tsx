@@ -158,6 +158,7 @@ export default function OnboardingPage() {
       if (reduced) {
         gsap.set(mascot, { y: 0, rotation: 0, opacity: 1, scale: 1 });
         if (content) gsap.set(content, { opacity: 0 });
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Teil der einmaligen GSAP-Entrance-Sequenz beim Mount (Reduced-Motion-Zweig)
         setIntroExpression("radiant");
         const tl = gsap.timeline({
           onComplete: () => {

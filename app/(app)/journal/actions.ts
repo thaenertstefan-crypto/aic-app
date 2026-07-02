@@ -12,6 +12,11 @@ import {
   toJournalListItem,
   type JournalListItem,
 } from "@/lib/utils/journal";
+import {
+  TEXT_MAX_LONG,
+  TEXT_MAX_SHORT,
+  tooLong,
+} from "@/lib/utils/form-validation";
 
 /** Spalten für die schlanke Listenansicht. content wird nur zur serverseitigen
  *  Vorschau-Berechnung gelesen und verlässt den Server nicht (ai_insights gar nicht). */
@@ -117,6 +122,11 @@ export async function createFreeEntryAction(
 
   if (!body) {
     return { error: "Bitte schreib ein paar Worte, bevor du speicherst." };
+  }
+  const lengthError =
+    tooLong(title, TEXT_MAX_SHORT) ?? tooLong(body, TEXT_MAX_LONG);
+  if (lengthError) {
+    return { error: lengthError };
   }
 
   const content: { title?: string; body: string } = { body };

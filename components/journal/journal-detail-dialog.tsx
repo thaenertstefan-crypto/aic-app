@@ -36,6 +36,7 @@ export function JournalDetailDialog({ entry, open, onOpenChange }: Props) {
 
   useEffect(() => {
     if (!entry || !open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Detail beim Schließen verwerfen, damit beim nächsten Öffnen kein fremder Eintrag aufblitzt
       setDetail(null);
       return;
     }

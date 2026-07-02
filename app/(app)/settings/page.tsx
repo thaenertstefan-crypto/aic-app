@@ -67,8 +67,10 @@ export default async function SettingsPage() {
     activeRightsCount = rights.filter((r) => r.active).length;
 
     if (user.created_at) {
+      // eslint-disable-next-line react-hooks/purity -- Server Component: wird pro Request frisch gerendert, Date.now() ist hier gewollt
+      const nowMs = Date.now();
       daysSinceJoining = Math.floor(
-        (Date.now() - new Date(user.created_at).getTime()) / 86_400_000,
+        (nowMs - new Date(user.created_at).getTime()) / 86_400_000,
       );
     }
   }

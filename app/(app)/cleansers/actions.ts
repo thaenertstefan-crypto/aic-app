@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
+import { getCleanserIntro } from "@/lib/utils/cleanser-intros";
 
 // ─── Cleanser-Intro "schon gesehen?"-Status ────────────────────────────
 //
@@ -45,6 +46,11 @@ export async function markCleanserIntroSeenAction(
 
   if (!user) {
     return { error: "Du musst angemeldet sein." };
+  }
+
+  // Slug kommt aus Client-Komponenten — nur bekannte Cleanser zulassen.
+  if (!getCleanserIntro(slug)) {
+    return { error: "Unbekannte Übung." };
   }
 
   const { error } = await supabase.from("cleanser_intro_seen").upsert(

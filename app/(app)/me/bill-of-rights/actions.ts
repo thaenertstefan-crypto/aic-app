@@ -8,6 +8,11 @@ import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
 import type { RightItem } from "@/lib/types/db-json";
+import {
+  TEXT_MAX_LONG,
+  TEXT_MAX_SHORT,
+  tooLong,
+} from "@/lib/utils/form-validation";
 
 export type MeRightsState = { error: string | null };
 
@@ -43,6 +48,8 @@ export async function appendRightAction(
 ): Promise<MeRightsState> {
   const text = (formData.get("text") as string | null)?.trim() ?? "";
   if (!text) return { error: "Bitte schreib zuerst dein Recht auf." };
+  const lengthError = tooLong(text, TEXT_MAX_SHORT);
+  if (lengthError) return { error: lengthError };
 
   const { userId, rights } = await loadRights();
   if (!userId) return { error: "Du musst angemeldet sein." };
@@ -72,6 +79,11 @@ export async function saveGeneratedRightAction(
   const text = (formData.get("text") as string | null)?.trim() ?? "";
 
   if (!text) return { error: "Der Vorschlag ist leer." };
+  const lengthError =
+    tooLong(text, TEXT_MAX_SHORT) ??
+    tooLong(prompt1, TEXT_MAX_LONG) ??
+    tooLong(prompt3, TEXT_MAX_LONG);
+  if (lengthError) return { error: lengthError };
 
   const supabase = await createClient();
   const {

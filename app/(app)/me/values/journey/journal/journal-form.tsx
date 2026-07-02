@@ -70,6 +70,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
   // Reset editing state when today's entry changes (after revalidate)
   useEffect(() => {
     if (!todayEntry) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync mit dem Server-Stand nach revalidatePath; feuert nur beim Verschwinden des Tageseintrags
       setIsEditing(false);
     }
   }, [todayEntry]);

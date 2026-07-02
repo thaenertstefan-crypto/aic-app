@@ -137,14 +137,17 @@ function CountdownCircle({
   const doneRef = useRef(false);
 
   const animate = useCallback(
-    (timestamp: number) => {
+    // Benannter Funktionsausdruck: der rekursive rAF-Aufruf bindet an den
+    // Funktionsnamen selbst statt an die (zur Initialisierungszeit noch nicht
+    // deklarierte) äußere const.
+    function animateFrame(timestamp: number) {
       if (startRef.current === null) startRef.current = timestamp;
       const elapsed = (timestamp - startRef.current) / 1000;
       const p = Math.min(elapsed / duration, 1);
       setProgress(p);
 
       if (p < 1) {
-        rafRef.current = requestAnimationFrame(animate);
+        rafRef.current = requestAnimationFrame(animateFrame);
       } else if (!doneRef.current) {
         doneRef.current = true;
         onComplete();

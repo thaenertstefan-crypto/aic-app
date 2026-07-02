@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { dbError } from "@/lib/utils/db-error";
+import { TEXT_MAX_SHORT, tooLong } from "@/lib/utils/form-validation";
 
 export type OnboardingState = {
   error: string | null;
@@ -19,11 +21,26 @@ export async function completeOnboardingAction(
   formData: FormData,
 ): Promise<OnboardingState> {
   const reason = formData.get("reason") as string;
-  const confidenceBaseline = formData.get("confidenceBaseline") as string;
-  const name = formData.get("name") as string;
+  const confidenceBaselineRaw = formData.get("confidenceBaseline") as string;
+  const name = ((formData.get("name") as string | null) ?? "").trim();
 
-  if (!reason || !confidenceBaseline || !name) {
+  if (!reason || !confidenceBaselineRaw || !name) {
     return { error: "Bitte fülle alle Felder aus.", success: false };
+  }
+
+  const nameLengthError = tooLong(name, TEXT_MAX_SHORT);
+  if (nameLengthError) {
+    return { error: nameLengthError, success: false };
+  }
+
+  // Der Slider liefert 1–10; alles andere ist eine manipulierte Anfrage.
+  const confidenceBaseline = Number(confidenceBaselineRaw);
+  if (
+    !Number.isInteger(confidenceBaseline) ||
+    confidenceBaseline < 1 ||
+    confidenceBaseline > 10
+  ) {
+    return { error: "Ungültige Auswahl. Bitte versuche es erneut.", success: false };
   }
 
   const activeRecipeId = RECIPE_MAP[reason];
@@ -47,13 +64,13 @@ export async function completeOnboardingAction(
     .upsert({
       id: user.id,
       name,
-      confidence_baseline: parseInt(confidenceBaseline, 10),
+      confidence_baseline: confidenceBaseline,
       active_recipe_id: activeRecipeId,
       onboarding_completed: true,
     });
 
   if (error) {
-    return { error: error.message, success: false };
+    return { error: dbError(error, "profiles"), success: false };
   }
 
   return { error: null, success: true };
