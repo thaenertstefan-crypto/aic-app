@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type TransitionEvent,
+} from "react";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 
@@ -8,24 +14,36 @@ import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 export const CROSSFADE_MS = 250;
 
 /**
+ * Puffer für den Fallback-Timer: nur relevant, wenn `transitionend` nie feuert
+ * (Element unmountet, Transition von WebKit übersprungen, App mitten im Fade
+ * in den Hintergrund geschickt).
+ */
+const FALLBACK_BUFFER_MS = 150;
+
+/**
  * Geteilte Out→Swap→In-Überblendung. Beide Dashboard-Fader (Fokus-Frage und
  * Empfehlungskarte) laufen darüber, damit sie bei einem Stimmungswechsel exakt
  * synchron und mit identischem Timing überblenden — sie können nicht mehr
  * gegeneinander driften.
  *
- * Ablauf bei Token-Wechsel: sichtbaren Inhalt ausblenden (CROSSFADE_MS, volle
- * Dauer abgewartet) → tauschen → neuen Inhalt einblenden. Es ist immer nur ein
- * Inhalt im DOM; alter und neuer Zustand sind nie gleichzeitig mit opacity > 0
- * sichtbar — der Swap läuft erst, wenn das Ausblenden wirklich auf opacity 0
- * angekommen ist.
+ * Ablauf bei Token-Wechsel: sichtbaren Inhalt ausblenden → tauschen → neuen
+ * Inhalt einblenden. Es ist immer nur ein Inhalt im DOM; alter und neuer
+ * Zustand sind nie gleichzeitig mit opacity > 0 sichtbar — der Swap läuft erst,
+ * wenn das Ausblenden wirklich auf opacity 0 angekommen ist.
  *
- * Der Swap wird NICHT direkt per `setTimeout(CROSSFADE_MS)` ausgelöst: dieser
- * Timer liefe gegen die gleich lange CSS-Transition (die erst beim nächsten
- * Paint startet) und feuerte ein, zwei Frames zu früh — der alte Inhalt würde
- * getauscht, während er noch teil-sichtbar ist (kurze Überlagerung). Stattdessen
- * starten wir den Timer erst nach einem doppelten requestAnimationFrame, also
+ * Der Swap wird EREIGNISBASIERT ausgelöst, nicht über einen Timer: Konsumenten
+ * legen den zurückgegebenen `onTransitionEnd`-Handler auf ihr fadendes Element,
+ * und getauscht wird erst, wenn die Opacity-Transition tatsächlich bei 0
+ * angekommen ist. Ein reiner `setTimeout(CROSSFADE_MS)` liefe gegen die CSS-
+ * Transition — und auf iOS (standalone PWA) driften rAF-, Timer- und
+ * Compositor-Uhren nach einem Background/Resume auseinander, sodass der Timer
+ * abläuft, während das Ausblenden visuell noch mittendrin ist (kurze
+ * Überlagerung von altem und neuem Inhalt). `transitionend` ist gegen diese
+ * Drift immun. Ein Timer mit Puffer läuft nur noch als Fallback mit, falls das
+ * Event nie feuert; er startet erst nach doppeltem requestAnimationFrame, also
  * sobald der opacity-0-Zustand gepaintet (= die Ausblend-Transition begonnen)
- * ist. So spannt die volle CROSSFADE_MS garantiert die komplette Ausblendung ab.
+ * ist. Beide Pfade prüfen vor dem Swap, ob er noch aussteht — hängen mehrere
+ * Elemente an einer Maschine, tauscht nur das erste Event.
  *
  * Der Out-Effect hängt bewusst NUR am `token` (einem Primitive), nicht am
  * `value`: Die Karte übergibt `children` als `value` — neue Objekt-Identität bei
@@ -49,33 +67,55 @@ export function useCrossfade<T>(token: string, value: T) {
   const [visible, setVisible] = useState(true);
 
   // Neuesten value halten, ohne ihn in die Effect-Dependencies aufzunehmen.
-  // Der Sync läuft in einem Effect (kein Ref-Write während des Renders); der
-  // einzige Lesezugriff passiert später im setTimeout des Out-Effects — da ist
-  // dieser Effect garantiert schon gelaufen.
+  // Der Sync läuft in einem Effect (kein Ref-Write während des Renders); die
+  // Lesezugriffe passieren erst beim Swap (transitionend bzw. Fallback-Timer) —
+  // da ist dieser Effect garantiert schon gelaufen.
   const latestValue = useRef(value);
   useEffect(() => {
     latestValue.current = value;
   });
 
-  // Out → tauschen, sobald sich der Token ändert.
+  // Swap-Auslöser: feuert, wenn die Ausblend-Transition tatsächlich bei
+  // opacity 0 angekommen ist. Konsumenten legen den Handler auf das fadende
+  // Element (bei mehreren Elementen pro Maschine genügt eines als Taktgeber).
+  const onTransitionEnd = useCallback(
+    (event: TransitionEvent<HTMLElement>) => {
+      if (reduced) return;
+      if (event.target !== event.currentTarget) return;
+      if (event.propertyName !== "opacity") return;
+      if (visible) return; // nur das Ende des AUSblendens interessiert
+      setShown((prev) =>
+        prev.token === token ? prev : { token, value: latestValue.current },
+      );
+    },
+    [token, visible, reduced],
+  );
+
+  // Out → Fallback-Timer scharf stellen, sobald sich der Token ändert. Der
+  // eigentliche Swap kommt regulär über `onTransitionEnd`.
   useEffect(() => {
     if (reduced || token === shown.token) return;
 
     // eslint-disable-next-line react-hooks/set-state-in-effect -- bewusst post-paint: das Ausblenden darf erst starten, nachdem der alte Inhalt gepaintet wurde (s. Kommentar oben)
     setVisible(false); // läuft post-paint, blendet den sichtbaren Inhalt aus
 
-    // Den Swap erst nach VOLLSTÄNDIGEM Ausblenden auslösen: per doppeltem rAF
-    // warten, bis der opacity-0-Zustand tatsächlich gepaintet ist (= die CSS-
-    // Transition hat begonnen), und erst dann die volle Transition-Dauer. So
-    // läuft der Timer nicht mehr gegen die CSS-Transition — der alte Inhalt ist
-    // garantiert auf opacity 0, bevor getauscht wird.
+    // Fallback, falls `transitionend` nie feuert: per doppeltem rAF warten, bis
+    // der opacity-0-Zustand gepaintet ist (= die CSS-Transition hat begonnen),
+    // dann volle Transition-Dauer plus Puffer. Feuert das Event zuerst, räumt
+    // der Cleanup (Dependency `shown.token`) den Timer ab; der Guard im Updater
+    // verhindert einen Doppel-Swap in jedem Fall.
     let timer: ReturnType<typeof setTimeout> | undefined;
     let inner = 0;
     const outer = requestAnimationFrame(() => {
       inner = requestAnimationFrame(() => {
         timer = setTimeout(
-          () => setShown({ token, value: latestValue.current }),
-          CROSSFADE_MS,
+          () =>
+            setShown((prev) =>
+              prev.token === token
+                ? prev
+                : { token, value: latestValue.current },
+            ),
+          CROSSFADE_MS + FALLBACK_BUFFER_MS,
         );
       });
     });
@@ -86,9 +126,14 @@ export function useCrossfade<T>(token: string, value: T) {
     };
   }, [token, reduced, shown.token]);
 
-  // In → neuen Inhalt einblenden, nachdem getauscht (und opacity-0 gepaintet) wurde.
+  // In → einblenden, sobald Token und gezeigter Inhalt wieder übereinstimmen.
+  // Das passiert auf zwei Wegen: nach dem Swap (`shown.token` ändert sich) ODER
+  // wenn mitten im Ausblenden zurück zum ursprünglichen Token gewechselt wird
+  // (`token` ändert sich zurück). Ohne den zweiten Fall bliebe der Inhalt nach
+  // einem schnellen Hin-und-zurück dauerhaft unsichtbar: der Out-Effect bricht
+  // dann früh ab (Token stimmt ja wieder) und niemand blendet wieder ein.
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || token !== shown.token) return; // Ausblenden läuft noch
 
     let inner = 0;
     const outer = requestAnimationFrame(() => {
@@ -98,7 +143,7 @@ export function useCrossfade<T>(token: string, value: T) {
       cancelAnimationFrame(outer);
       cancelAnimationFrame(inner);
     };
-  }, [shown.token, reduced]);
+  }, [token, shown.token, reduced]);
 
-  return { shown, visible, reduced };
+  return { shown, visible, reduced, onTransitionEnd };
 }

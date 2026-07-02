@@ -75,7 +75,8 @@ export function DailyFocus({
     alternatives,
   };
 
-  const { shown, visible, reduced } = useCrossfade<FocusSnapshot>(tier, snapshot);
+  const { shown, visible, reduced, onTransitionEnd } =
+    useCrossfade<FocusSnapshot>(tier, snapshot);
   // Während der Ausblend-Phase den eingefrorenen alten Snapshot zeigen, sonst den
   // live berechneten (analog zur `Crossfade`-Komponente). Bei reduzierter Bewegung
   // immer live (kein Swap-Timing).
@@ -85,6 +86,9 @@ export function DailyFocus({
     <div className="space-y-3">
       <FocusQuestion question={view.question} visible={visible} />
 
+      {/* Karten-Wrapper ist der Taktgeber der Maschine: sein transitionend
+          löst den Swap aus (die Frage hängt an derselben Maschine und kann
+          null sein, daher kein eigener Handler). */}
       <div
         className={cn(
           "space-y-6",
@@ -94,6 +98,7 @@ export function DailyFocus({
         style={
           !reduced ? { transitionDuration: `${CROSSFADE_MS}ms` } : undefined
         }
+        onTransitionEnd={onTransitionEnd}
       >
         {view.primary ? (
           <Card variant="glass" className="border border-primary">

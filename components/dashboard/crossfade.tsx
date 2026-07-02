@@ -21,7 +21,10 @@ export function Crossfade({
   children: ReactNode;
   className?: string;
 }) {
-  const { shown, visible, reduced } = useCrossfade<ReactNode>(token, children);
+  const { shown, visible, reduced, onTransitionEnd } = useCrossfade<ReactNode>(
+    token,
+    children,
+  );
 
   if (reduced) {
     return <div className={className}>{children}</div>;
@@ -42,6 +45,7 @@ export function Crossfade({
         className,
       )}
       style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
+      onTransitionEnd={onTransitionEnd}
     >
       {content}
     </div>
