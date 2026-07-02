@@ -112,7 +112,7 @@ function buildSvg({ maskable }) {
   <g transform="${fg}">
     <!-- Wordmark: großes „AIC" -->
     <g fill="${INK}" font-family="Fraunces" font-weight="700" text-anchor="middle">
-      <text x="${CENTER}" y="400" font-size="320" letter-spacing="-6">AIC</text>
+      <text x="${CENTER}" y="430" font-size="400" letter-spacing="-6">AIC</text>
     </g>
 
     <!-- Maskottchen: von unten halb angeschnitten, Blick nach oben -->
