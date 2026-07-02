@@ -147,6 +147,11 @@ export function BillOfRightsMe({
         onSeen={() => setIntroDone(true)}
       >
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
+          <p className="text-center text-base leading-relaxed text-muted-foreground">
+            Diese Regeln hast du dir selbst gegeben – sie sind deine
+            persönlichen Rechte. Komm hierher zurück, wann immer du eine
+            Erinnerung brauchst, was du dir erlauben darfst.
+          </p>
           <FormError message={saveError} />
           {activeRights.length === 0 ? (
             <div className="flex flex-col gap-4">
