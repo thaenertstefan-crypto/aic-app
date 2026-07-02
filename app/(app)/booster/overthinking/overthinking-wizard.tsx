@@ -232,6 +232,12 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   // Hybrid-Intro (Schritt 6.10)
   const [introDismissed, setIntroDismissed] = useState(false);
 
+  // Laufende Nummer der KI-Frage-Requests: Bei überlappenden Fetches (schnelles
+  // Weiterklicken durch Schritte 3–6) darf nur der NEUESTE Request den
+  // Ladezustand beenden — sonst räumt das finally des älteren den Schimmer weg,
+  // während der neuere noch läuft (Fallback-Frage blitzt auf, KI-Frage ploppt nach).
+  const questionRequestRef = useRef(0);
+
   // Offline draft safety net
   const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
     useFormDraft<Answers>("overthinking");
@@ -314,6 +320,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
       if (target >= 5 && answers.step4.trim()) whyChain.push(answers.step4.trim());
     }
 
+    const requestId = ++questionRequestRef.current;
     setQuestionLoading(true);
     // Veraltete Frage für diesen Schritt verwerfen, damit der Schimmer greift.
     setGeneratedQuestions((prev) => {
@@ -334,12 +341,16 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
       });
       const data = await res.json();
       if (res.ok && data.question) {
+        // Pro Schritt gekeyt — auch eine "veraltete" Antwort landet beim
+        // richtigen target und ist damit harmlos.
         setGeneratedQuestions((prev) => ({ ...prev, [target]: data.question }));
       }
     } catch {
       // Stiller Fallback auf die statische Frage.
     } finally {
-      setQuestionLoading(false);
+      if (requestId === questionRequestRef.current) {
+        setQuestionLoading(false);
+      }
     }
   };
 

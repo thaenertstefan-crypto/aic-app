@@ -1,6 +1,29 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Basis-Härtung für alle Responses. Bewusst OHNE strikte Content-Security-
+  // Policy: die bräuchte in Next.js Nonce-Handling für Inline-Scripts —
+  // Aufwand/Risiko lohnt für diese App aktuell nicht.
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          // Verhindert das Einbetten der App in fremde iframes (Clickjacking).
+          { key: "X-Frame-Options", value: "DENY" },
+          // Browser dürfen Content-Types nicht erraten (MIME-Sniffing).
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          // Volle Referrer-URL nur same-origin, sonst nur der Origin.
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          // Die App nutzt keine dieser Browser-Features — explizit abschalten.
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       { source: "/recipes", destination: "/dashboard", permanent: false },
