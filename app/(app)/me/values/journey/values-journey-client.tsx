@@ -1,20 +1,15 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { Check, Lock } from "lucide-react";
+import gsap from "gsap";
+import { Lock } from "lucide-react";
 
 import { Mascot } from "@/components/brand/mascot";
+import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
-
-// ─── Geometrie ────────────────────────────────────────────────────────
-const DOT_PX = 34;
-const ROW_GAP = 28;
-const STEP_H = DOT_PX + ROW_GAP; // 62
-const DOT_CENTER = DOT_PX / 2; // 17
-const MASCOT_SM_PX = 56; // Mascot size="sm" = size-14 (intrinsische Größe)
-const MASCOT_PX = 40; // ~28% kleiner — überdeckt den Meilenstein-Text nicht mehr
 
 const STEP_LABELS = [
   "Wertehypothese aufstellen",
@@ -40,59 +35,86 @@ const STEP_LINKS = [
   "/me/values/journey/evaluation",
 ];
 
-// ─── Kompass: aufbauende Deltas ───────────────────────────────────────
-const ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
-const CX = 30;
-const CY = 27;
+// ─── Sternbild-Geometrie (viewBox 0 0 360 620) ────────────────────────
+// Unregelmäßiger Zickzack von unten (Start) nach oben (Auswertung); die
+// vertikalen Abstände (≥55 Units) verhindern Label-Kollisionen bei 360px.
+const VIEW_W = 360;
+const VIEW_H = 620;
 
-const COMPASS_TICKS = ANGLES.map((a) => {
-  const rad = (Math.PI * a) / 180;
-  const x1 = (CX + 21.5 * Math.sin(rad)).toFixed(2);
-  const y1 = (CY - 21.5 * Math.cos(rad)).toFixed(2);
-  const x2 = (CX + 19 * Math.sin(rad)).toFixed(2);
-  const y2 = (CY - 19 * Math.cos(rad)).toFixed(2);
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--primary)" stroke-width="1" opacity=".35"/>`;
-}).join("");
-
-const COMPASS_PETALS = ANGLES.map((a) => {
-  const rad = (Math.PI * a) / 180;
-  const perp = rad + Math.PI / 2;
-  const tipX = (CX + 14 * Math.sin(rad)).toFixed(1);
-  const tipY = (CY - 14 * Math.cos(rad)).toFixed(1);
-  const baseX = CX + 6 * Math.sin(rad);
-  const baseY = CY - 6 * Math.cos(rad);
-  const midX = CX + 10 * Math.sin(rad);
-  const midY = CY - 10 * Math.cos(rad);
-  const lX = (midX + 2.4 * Math.sin(perp)).toFixed(1);
-  const lY = (midY - 2.4 * Math.cos(perp)).toFixed(1);
-  const rX = (midX - 2.4 * Math.sin(perp)).toFixed(1);
-  const rY = (midY + 2.4 * Math.cos(perp)).toFixed(1);
-  return `<path d="M${tipX},${tipY} L${lX},${lY} L${baseX.toFixed(1)},${baseY.toFixed(1)} L${rX},${rY} Z" fill="var(--primary)" opacity=".28"/>`;
-}).join("");
-
-const COMPASS_DELTAS: string[] = [
-  /* 0 */ `<circle cx="30" cy="27" r="21" fill="none" stroke="var(--primary)" stroke-width="1.8" opacity=".9"/><circle cx="30" cy="27" r="18.5" fill="none" stroke="var(--primary)" stroke-width=".5" opacity=".2"/>`,
-  /* 1 */ `<polygon points="30,6 33.5,21 30,18 26.5,21" fill="var(--primary)"/><text x="30" y="3.5" text-anchor="middle" font-size="5.5" font-weight="700" fill="var(--primary)" font-family="sans-serif">N</text>`,
-  /* 2 */ `<line x1="51" y1="27" x2="43" y2="27" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" opacity=".7"/><text x="55" y="29.5" text-anchor="middle" font-size="5" fill="var(--primary)" font-family="sans-serif" opacity=".7">E</text>`,
-  /* 3 */ `<polygon points="30,48 26.5,33 30,36 33.5,33" fill="var(--primary)" opacity=".28"/><text x="30" y="55" text-anchor="middle" font-size="5" fill="var(--primary)" font-family="sans-serif" opacity=".45">S</text>`,
-  /* 4 */ `<line x1="9" y1="27" x2="17" y2="27" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" opacity=".7"/><text x="5" y="29.5" text-anchor="middle" font-size="5" fill="var(--primary)" font-family="sans-serif" opacity=".7">W</text>`,
-  /* 5 */ `<circle cx="30" cy="27" r="13" fill="none" stroke="var(--primary)" stroke-width=".8" opacity=".3"/>${COMPASS_TICKS}`,
-  /* 6 */ `<polygon points="30,7 33.5,27 30,22 26.5,27" fill="var(--primary)"/>`,
-  /* 7 */ `<polygon points="30,47 26.5,27 30,32 33.5,27" fill="var(--accent)" opacity=".75"/>`,
-  /* 8 */ `${COMPASS_PETALS}<circle cx="30" cy="27" r="6" fill="var(--primary)" opacity=".2"/><circle cx="30" cy="27" r="3.5" fill="var(--primary)"/>`,
+const CONSTELLATION: { x: number; y: number; side: "left" | "right" }[] = [
+  { x: 80, y: 575, side: "right" },
+  { x: 235, y: 515, side: "left" },
+  { x: 120, y: 455, side: "right" },
+  { x: 265, y: 400, side: "left" },
+  { x: 95, y: 345, side: "right" },
+  { x: 250, y: 285, side: "left" },
+  { x: 140, y: 225, side: "right" },
+  { x: 270, y: 160, side: "left" },
+  { x: 100, y: 80, side: "right" },
 ];
+
+/** Position des Maskottchens (untere linke Ecke) im viewBox-Raum — Bezugspunkt
+ *  für seine Blickrichtung zum aktuellen Stern. */
+const MASCOT_POS = { x: 40, y: 585 };
+
+/** Hintergrund-Funkelsterne — handgewählt abseits der Label-Bahnen. */
+const MICRO_STARS: { x: number; y: number; r: number }[] = [
+  { x: 20, y: 45, r: 1.2 },
+  { x: 330, y: 30, r: 0.9 },
+  { x: 45, y: 135, r: 1.0 },
+  { x: 318, y: 230, r: 1.3 },
+  { x: 14, y: 305, r: 0.8 },
+  { x: 338, y: 385, r: 1.1 },
+  { x: 28, y: 470, r: 1.0 },
+  { x: 332, y: 540, r: 1.2 },
+  { x: 185, y: 18, r: 0.9 },
+  { x: 255, y: 600, r: 1.0 },
+  { x: 120, y: 30, r: 1.4 },
+  { x: 90, y: 245, r: 0.8 },
+];
+
+/** 4-strahliger Stern in einer 16er-Box. */
+const STAR_PATH =
+  "M8 0 L9.8 6.2 L16 8 L9.8 9.8 L8 16 L6.2 9.8 L0 8 L6.2 6.2 Z";
 
 type State = "done" | "current" | "open";
 
-function compassInner(i: number, state: State): string | null {
-  if (state === "open") return null;
-  const base = COMPASS_DELTAS.slice(0, i).join("");
-  const delta = COMPASS_DELTAS[i] ?? "";
-  if (state === "done") {
-    return `<g opacity="0.2">${base}${delta}</g>`;
-  }
-  // current: Vorläufer stabil, nur das neue Delta blendet ein
-  return `<g>${base}</g><g class="compass-delta-new">${delta}</g>`;
+function clamp(v: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, v));
+}
+
+function StarGlyph({ state, reduced }: { state: State; reduced: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className={cn(
+        "size-5 shrink-0",
+        state === "open" && "scale-75 opacity-35",
+        state === "current" && !reduced && "star-pulse",
+      )}
+      style={
+        state === "done"
+          ? {
+              filter:
+                "drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 60%, transparent))",
+            }
+          : state === "current" && reduced
+            ? {
+                filter:
+                  "drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 75%, transparent))",
+              }
+            : undefined
+      }
+      aria-hidden="true"
+    >
+      <path
+        d={STAR_PATH}
+        fill={
+          state === "open" ? "var(--muted-foreground)" : "var(--primary)"
+        }
+      />
+    </svg>
+  );
 }
 
 export function ValuesJourneyClient({
@@ -105,140 +127,202 @@ export function ValuesJourneyClient({
   const reduced = useReducedMotion();
   const done = new Set(completedSteps);
   const lastIndex = STEP_LABELS.length - 1;
+  const allDone = done.size > lastIndex;
 
-  const trackHeight = lastIndex * STEP_H;
-  const fillHeight = Math.min(currentStep, lastIndex) * STEP_H;
-  const mascotTop = currentStep * STEP_H + DOT_CENTER - MASCOT_PX / 2;
+  // Die Reise startet unten: beim Laden ans Seitenende führen — als sanfte
+  // Kamerafahrt über den Nachthimmel (bewusste Ausnahme vom "oben starten"-
+  // Standard der App). Nutzer-Input bricht die Fahrt sofort ab; bei reduced
+  // motion landet man ohne Fahrt direkt unten.
+  useEffect(() => {
+    const target =
+      document.documentElement.scrollHeight - window.innerHeight;
+    if (target <= 0) return;
+
+    if (reduced) {
+      window.scrollTo(0, target);
+      return;
+    }
+
+    const proxy = { y: window.scrollY };
+    const tween = gsap.to(proxy, {
+      y: target,
+      duration: 1.5,
+      delay: 0.15,
+      ease: "power2.inOut",
+      onUpdate: () => window.scrollTo(0, proxy.y),
+    });
+
+    const cancel = () => tween.kill();
+    const opts = { once: true, passive: true } as const;
+    window.addEventListener("wheel", cancel, opts);
+    window.addEventListener("touchstart", cancel, opts);
+    window.addEventListener("keydown", cancel, opts);
+
+    return () => {
+      tween.kill();
+      window.removeEventListener("wheel", cancel);
+      window.removeEventListener("touchstart", cancel);
+      window.removeEventListener("keydown", cancel);
+    };
+  }, [reduced]);
+
+  // Gezeichnete Konstellation: Pfad durch die erledigten Sterne (der Server
+  // liefert sie lückenlos ab 0) — mindestens zwei Punkte nötig.
+  const maxDone = completedSteps.length ? Math.max(...completedSteps) : -1;
+  const drawnPoints = CONSTELLATION.slice(0, maxDone + 1);
+  const drawnPath =
+    drawnPoints.length >= 2
+      ? "M" + drawnPoints.map((p) => `${p.x},${p.y}`).join(" L")
+      : null;
+
+  const routeHint = CONSTELLATION.map((p) => `${p.x},${p.y}`).join(" ");
+
+  // Blick des Maskottchens zum aktuellen Stern
+  const cur = CONSTELLATION[clamp(currentStep, 0, lastIndex)];
+  const gazeX = clamp((cur.x - MASCOT_POS.x) / 140, -2, 2);
+  const gazeY = clamp((cur.y - MASCOT_POS.y) / 140, -2, 0.5);
 
   return (
     <div className="flex min-h-svh flex-col">
       <SubPageHeader backHref="/me/values" title="Werteentdeckung" />
-      <style>{`
-        .compass-delta-new { animation: compassIn 0.9s ease forwards; }
-        @keyframes compassIn { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes journeyPulse {
-          0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent); }
-          50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--primary) 0%, transparent); }
-        }
-        .journey-pulse { animation: journeyPulse 2.2s ease-in-out infinite; }
-      `}</style>
 
-      <div className="mx-auto w-full max-w-lg flex-1 px-6 py-8">
-        <div className="relative">
-          {/* Verbindungslinie + Fortschrittsstreifen */}
-          <span
-            className="absolute w-0.5 rounded bg-border"
-            style={{ left: DOT_CENTER - 1, top: DOT_CENTER, height: trackHeight }}
-          />
-          <span
-            className="absolute w-0.5 rounded bg-primary transition-[height] duration-700"
-            style={{ left: DOT_CENTER - 1, top: DOT_CENTER, height: fillHeight }}
-          />
-
-          {/* Mitwanderndes Maskottchen (auf MASCOT_PX herunterskaliert) */}
-          <div
-            className="absolute"
-            style={{
-              left: DOT_CENTER - MASCOT_PX / 2,
-              top: mascotTop,
-              width: MASCOT_PX,
-              height: MASCOT_PX,
-              zIndex: 20,
-              transition: reduced
-                ? "none"
-                : "top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
-            }}
-          >
+      <div className="mx-auto w-full max-w-lg flex-1 px-6 py-6">
+        <div
+          className="relative w-full"
+          style={{ aspectRatio: `${VIEW_W} / ${VIEW_H}` }}
+        >
+          {/* Leises Glühen hinter dem vollständigen Sternbild */}
+          {allDone && (
             <div
-              style={{
-                transform: `scale(${MASCOT_PX / MASCOT_SM_PX})`,
-                transformOrigin: "top left",
-              }}
-            >
-              <Mascot size="sm" expression="curious" gazeY={-1} />
-            </div>
-          </div>
+              aria-hidden="true"
+              className={cn(
+                "pointer-events-none absolute left-1/2 top-1/2 size-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-celebrate blur-3xl",
+                reduced ? "opacity-35" : "opacity-0 quiet-glow-in",
+              )}
+            />
+          )}
 
-          {/* Meilensteine */}
+          {/* Nachthimmel: Funkelsterne + Konstellationslinien */}
+          <svg
+            viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+            className="absolute inset-0 size-full"
+            aria-hidden="true"
+          >
+            {MICRO_STARS.map((s, i) => (
+              <circle
+                key={i}
+                cx={s.x}
+                cy={s.y}
+                r={s.r}
+                fill="var(--foreground)"
+                className={reduced ? undefined : "star-twinkle"}
+                style={
+                  reduced
+                    ? { opacity: 0.35 }
+                    : { animationDelay: `${(i % 6) * 0.6}s` }
+                }
+              />
+            ))}
+
+            {/* Angedeutete Route durch alle Sterne */}
+            <polyline
+              points={routeHint}
+              fill="none"
+              stroke="var(--muted-foreground)"
+              strokeWidth="1"
+              strokeDasharray="2 6"
+              opacity="0.12"
+            />
+
+            {/* Bereits gezeichneter Teil der Konstellation */}
+            {drawnPath && (
+              <path
+                d={drawnPath}
+                fill="none"
+                stroke="var(--primary)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                opacity="0.7"
+                pathLength={1}
+                strokeDasharray="1"
+                strokeDashoffset={reduced ? 0 : undefined}
+                className={reduced ? undefined : "constellation-draw"}
+              />
+            )}
+          </svg>
+
+          {/* Sterne (Etappen) — echte Links, 44px-Hit-Area */}
           {STEP_LABELS.map((label, i) => {
             const state: State = done.has(i)
               ? "done"
               : i === currentStep
                 ? "current"
                 : "open";
-            const inner = compassInner(i, state);
+            const { x, y, side } = CONSTELLATION[i];
             const clickable = state !== "open";
 
             const labelEl = (
               <span
                 className={cn(
-                  "font-heading text-sm",
+                  "absolute top-1/2 flex -translate-y-1/2 items-center gap-1 whitespace-nowrap font-heading text-sm",
+                  side === "right" ? "left-full ml-1" : "right-full mr-1",
                   state === "open"
                     ? "text-muted-foreground/60"
                     : "font-medium text-foreground",
                 )}
               >
+                {state === "open" && (
+                  <Lock className="size-3 shrink-0 text-muted-foreground" />
+                )}
                 {label}
               </span>
             );
 
-            return (
-              <div
+            const nodeClass =
+              "absolute z-10 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center";
+            const nodeStyle = {
+              left: `${(x / VIEW_W) * 100}%`,
+              top: `${(y / VIEW_H) * 100}%`,
+            };
+
+            return clickable ? (
+              <Link
                 key={i}
-                className="relative"
-                style={{ height: STEP_H }}
+                href={STEP_LINKS[i]}
+                className={nodeClass}
+                style={nodeStyle}
               >
-                {/* Dot */}
-                <div
-                  className={cn(
-                    "absolute left-0 top-0 z-10 flex items-center justify-center rounded-full",
-                    state === "done" && "bg-primary text-primary-foreground",
-                    state === "current" &&
-                      "border-2 border-primary bg-background",
-                    state === "current" && !reduced && "journey-pulse",
-                    state === "open" &&
-                      "border-2 border-muted-foreground/30 bg-background opacity-60",
-                  )}
-                  style={{ width: DOT_PX, height: DOT_PX }}
-                >
-                  {state === "done" && <Check className="size-4" />}
-                  {state === "open" && (
-                    <Lock className="size-3 text-muted-foreground" />
-                  )}
-                </div>
-
-                {/* Label (klickbar, wenn done/current) */}
-                <div
-                  className="absolute -translate-y-1/2"
-                  style={{ left: DOT_PX + 12, right: 72, top: DOT_CENTER }}
-                >
-                  {clickable ? (
-                    <Link href={STEP_LINKS[i]} className="hover:underline">
-                      {labelEl}
-                    </Link>
-                  ) : (
-                    labelEl
-                  )}
-                </div>
-
-                {/* Kompass */}
-                {inner && (
-                  <div
-                    className="absolute -translate-y-1/2"
-                    style={{ right: 0, top: DOT_CENTER, width: 62, height: 54 }}
-                  >
-                    <svg
-                      viewBox="0 0 60 54"
-                      width="62"
-                      height="54"
-                      dangerouslySetInnerHTML={{ __html: inner }}
-                    />
-                  </div>
-                )}
-              </div>
+                <StarGlyph state={state} reduced={reduced} />
+                {labelEl}
+              </Link>
+            ) : (
+              <span key={i} className={nodeClass} style={nodeStyle}>
+                <StarGlyph state={state} reduced={reduced} />
+                {labelEl}
+              </span>
             );
           })}
+
+          {/* Maskottchen schaut zu, wie sich der Himmel füllt */}
+          <div className="absolute bottom-1 left-1">
+            <Mascot
+              size="sm"
+              expression={allDone ? "radiant" : "curious"}
+              gazeX={gazeX}
+              gazeY={gazeY}
+            />
+          </div>
         </div>
+
+        {allDone && (
+          <Reveal delay={0.8} className="pt-4">
+            <p className="text-center text-sm leading-relaxed text-muted-foreground">
+              Dein Sternbild ist vollständig. ✨
+              <br />
+              Schau dir deine Erkenntnisse an.
+            </p>
+          </Reveal>
+        )}
       </div>
     </div>
   );

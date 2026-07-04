@@ -288,6 +288,56 @@
   /* Bill-of-Rights-Intro: Sequenz-Animationen laufen per SMIL direkt in
      bill-of-rights-intro-mascot.tsx (keine CSS-Keyframes nötig). */
 
+  /* ── Werteentdeckung: Sternbild-Journey ───────────────────────────── */
+
+  /* Mikro-Sterne am Nachthimmel funkeln leise; Versatz per animation-delay. */
+  @keyframes star-twinkle {
+    0%, 100% { opacity: 0.15; }
+    50%       { opacity: 0.6;  }
+  }
+  .star-twinkle { animation: star-twinkle 3.5s ease-in-out infinite; }
+
+  /* Aktueller Stern: sanftes Anschwellen mit goldenem Glühen. */
+  @keyframes star-pulse {
+    0%, 100% {
+      transform: scale(1);
+      filter: drop-shadow(0 0 3px color-mix(in srgb, var(--primary) 45%, transparent));
+    }
+    50% {
+      transform: scale(1.18);
+      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 75%, transparent));
+    }
+  }
+  .star-pulse { animation: star-pulse 2.2s ease-in-out infinite; }
+
+  /* Konstellationslinie zeichnet sich (Pfad mit pathLength={1}). */
+  @keyframes constellation-draw {
+    from { stroke-dashoffset: 1; }
+    to   { stroke-dashoffset: 0; }
+  }
+  .constellation-draw { animation: constellation-draw 1.4s ease-out forwards; }
+
+  /* Leises Glühen bei vollständigem Sternbild — Glow statt Konfetti. */
+  @keyframes quiet-glow-in {
+    from { opacity: 0;    }
+    to   { opacity: 0.35; }
+  }
+  .quiet-glow-in { animation: quiet-glow-in 1.5s ease-out forwards; }
+
+  /* Werte-Kompassrose: Detailkarte blendet beim Wertewechsel weich um. */
+  @keyframes fade-swap {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0);   }
+  }
+  .fade-swap { animation: fade-swap 0.25s ease-out; }
+
+  /* Bill of Rights: frisch "gestempeltes" Recht — kurzer Gold-Flash. */
+  @keyframes stamp-in {
+    from { transform: scale(1.08); background-color: color-mix(in srgb, var(--primary) 20%, transparent); }
+    to   { transform: scale(1);    background-color: transparent; }
+  }
+  .stamp-in { animation: stamp-in 0.6s ease-out forwards; }
+
   /* 4-7-8 breathing cycle (19s): inhale 4s, hold 7s, exhale 8s */
   @keyframes breathe478 {
     0% {

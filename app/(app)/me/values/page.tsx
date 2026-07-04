@@ -4,7 +4,6 @@ import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCachedUser } from "@/lib/supabase/get-user";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { getValueLabel } from "@/lib/utils/values-bank";
 import { getValueEmoji } from "@/lib/utils/values-emojis";
@@ -13,6 +12,7 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { hasSeenRecipeIntro } from "@/app/(app)/recipes/actions";
 import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
+import { ValuesCompass, type CompassValue } from "./values-compass";
 
 export default async function MeValuesPage() {
   const supabase = await createClient();
@@ -43,6 +43,15 @@ export default async function MeValuesPage() {
     values = (hypothesis?.values as string[] | null) ?? [];
     valuesStatus = progress?.status ?? "not_started";
   }
+
+  // Serverseitig zu einfachen Daten auflösen — die Client-Komponente
+  // (Kompassrose) bekommt nur noch fertige Strings.
+  const compassValues: CompassValue[] = values.map((id) => ({
+    id,
+    label: getValueLabel(id),
+    emoji: getValueEmoji(id),
+    description: getValueDescription(id),
+  }));
 
   const introCards = getRecipeIntro("values");
   const introSeen = await hasSeenRecipeIntro("values");
@@ -75,36 +84,9 @@ export default async function MeValuesPage() {
             mit Energie lädt, anstatt sie aus dir herauszusaugen. Welcher Wert
             ist dir heute besonders wichtig?
           </p>
-          {values.length > 0 ? (
-            <>
-              <div className="space-y-3">
-                {values.map((id) => (
-                  <Card key={id}>
-                    <CardContent className="flex items-start gap-3">
-                      <span className="text-2xl leading-none" aria-hidden="true">
-                        {getValueEmoji(id)}
-                      </span>
-                      <div className="min-w-0 space-y-1">
-                        <p className="font-heading text-base font-semibold text-foreground">
-                          {getValueLabel(id)}
-                        </p>
-                        <p className="text-base leading-relaxed text-muted-foreground">
-                          Dir ist wichtig, dass {getValueDescription(id)}.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              {cta("mt-auto w-full gap-2")}
-            </>
-          ) : (
-            <div className="flex flex-col gap-4">
-              <p className="text-center text-base text-muted-foreground">
-                Du hast noch keine Werte entdeckt.
-              </p>
-              {cta("w-full gap-2")}
-            </div>
+          <ValuesCompass values={compassValues} />
+          {cta(
+            compassValues.length > 0 ? "mt-auto w-full gap-2" : "w-full gap-2",
           )}
         </div>
       </RecipeIntroGate>
