@@ -36,7 +36,7 @@ export function SubPageHeader({
           <ChevronLeft className="size-5" />
         </Link>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate font-heading text-base font-semibold text-foreground">
+          <h1 className="truncate font-heading text-lg font-semibold text-foreground">
             {title}
           </h1>
           {subtitle && (
