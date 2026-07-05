@@ -120,12 +120,17 @@ export function Mascot({
         }}
       />
 
-      {/* Blob-Körper */}
+      {/* Blob-Körper. Der Gold-Schimmer liegt auf einer weitgehend deckenden
+          Grundierung in Hintergrundfarbe: So sieht der Blob auf jeder Fläche
+          gleich aus — ohne sie schien z. B. die milchige Glass-Card des
+          Dashboards durch und ließ ihn dort "gefüllter" wirken. */}
       <div
         className="absolute inset-0 overflow-hidden"
         style={{
           borderRadius: BLOB_RADIUS,
-          background: "rgba(231,182,94,0.10)",
+          background:
+            "linear-gradient(rgba(231,182,94,0.10), rgba(231,182,94,0.10)), " +
+            "color-mix(in srgb, var(--background) 80%, transparent)",
           border: "1px solid rgba(255,255,255,0.22)",
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",

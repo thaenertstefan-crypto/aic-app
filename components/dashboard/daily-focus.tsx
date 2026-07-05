@@ -75,7 +75,7 @@ export function DailyFocus({
     alternatives,
   };
 
-  const { shown, visible, reduced, onTransitionEnd } =
+  const { shown, visible, reduced, onTransitionEnd, fadeRef } =
     useCrossfade<FocusSnapshot>(tier, snapshot);
   // Während der Ausblend-Phase den eingefrorenen alten Snapshot zeigen, sonst den
   // live berechneten (analog zur `Crossfade`-Komponente). Bei reduzierter Bewegung
@@ -87,9 +87,13 @@ export function DailyFocus({
       <FocusQuestion question={view.question} visible={visible} />
 
       {/* Karten-Wrapper ist der Taktgeber der Maschine: sein transitionend
-          löst den Swap aus (die Frage hängt an derselben Maschine und kann
+          löst den Swap aus, und über die Ref liest der Fallback hier die
+          echte Opacity (die Frage hängt an derselben Maschine und kann
           null sein, daher kein eigener Handler). */}
       <div
+        ref={(el) => {
+          fadeRef.current = el;
+        }}
         className={cn(
           "space-y-6",
           !reduced && "transition-opacity",

@@ -20,6 +20,12 @@ export const CROSSFADE_MS = 250;
  */
 const FALLBACK_BUFFER_MS = 150;
 
+/** Nachprüf-Intervall des Fallbacks, solange die Opacity noch nicht bei 0 ist. */
+const FALLBACK_RECHECK_MS = 100;
+
+/** Harte Kappe: spätestens dann tauscht der Fallback auch bei opacity > 0. */
+const FALLBACK_MAX_WAIT_MS = 2000;
+
 /**
  * Geteilte Out→Swap→In-Überblendung. Beide Dashboard-Fader (Fokus-Frage und
  * Empfehlungskarte) laufen darüber, damit sie bei einem Stimmungswechsel exakt
@@ -42,8 +48,13 @@ const FALLBACK_BUFFER_MS = 150;
  * Drift immun. Ein Timer mit Puffer läuft nur noch als Fallback mit, falls das
  * Event nie feuert; er startet erst nach doppeltem requestAnimationFrame, also
  * sobald der opacity-0-Zustand gepaintet (= die Ausblend-Transition begonnen)
- * ist. Beide Pfade prüfen vor dem Swap, ob er noch aussteht — hängen mehrere
- * Elemente an einer Maschine, tauscht nur das erste Event.
+ * ist. Und weil dieselbe Uhren-Drift auch NACH einem Routenwechsel auftreten
+ * kann (Compositor startet die Transition verspätet, Wanduhr-Timer läuft ab,
+ * während der Fade visuell noch mittendrin ist), tauscht der Fallback nie
+ * blind: Er liest vorher die echte Opacity am Taktgeber-Element (`fadeRef`)
+ * und armiert sich neu, solange sie nicht bei 0 angekommen ist — bis zu einer
+ * harten Kappe. Beide Pfade prüfen vor dem Swap, ob er noch aussteht — hängen
+ * mehrere Elemente an einer Maschine, tauscht nur das erste Event.
  *
  * Der Out-Effect hängt bewusst NUR am `token` (einem Primitive), nicht am
  * `value`: Die Karte übergibt `children` als `value` — neue Objekt-Identität bei
@@ -65,6 +76,11 @@ export function useCrossfade<T>(token: string, value: T) {
     value,
   });
   const [visible, setVisible] = useState(true);
+
+  // Taktgeber-Element der Maschine — der Fallback liest hier die echte
+  // Opacity, bevor er tauscht (Konsumenten hängen die Ref an das Element,
+  // das auch `onTransitionEnd` trägt).
+  const fadeRef = useRef<HTMLElement | null>(null);
 
   // Neuesten value halten, ohne ihn in die Effect-Dependencies aufzunehmen.
   // Der Sync läuft in einem Effect (kein Ref-Write während des Renders); die
@@ -101,22 +117,35 @@ export function useCrossfade<T>(token: string, value: T) {
 
     // Fallback, falls `transitionend` nie feuert: per doppeltem rAF warten, bis
     // der opacity-0-Zustand gepaintet ist (= die CSS-Transition hat begonnen),
-    // dann volle Transition-Dauer plus Puffer. Feuert das Event zuerst, räumt
-    // der Cleanup (Dependency `shown.token`) den Timer ab; der Guard im Updater
-    // verhindert einen Doppel-Swap in jedem Fall.
+    // dann volle Transition-Dauer plus Puffer. Vor dem Tausch liest der
+    // Fallback die ECHTE Opacity am Taktgeber-Element: Läuft die Transition
+    // noch (Compositor hinkt der Wanduhr hinterher, z. B. nach Routenwechsel
+    // oder Resume), armiert er sich neu, statt mitten im Fade zu tauschen —
+    // sonst überlagerten sich alter und neuer Inhalt sichtbar. Erst nach der
+    // harten Kappe tauscht er bedingungslos. Feuert das Event zuerst, räumt
+    // der Cleanup (Dependency `shown.token`) den Timer ab; der Guard im
+    // Updater verhindert einen Doppel-Swap in jedem Fall.
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let waitedMs = 0;
+    const trySwap = () => {
+      const el = fadeRef.current;
+      const stillFading =
+        el !== null &&
+        waitedMs < FALLBACK_MAX_WAIT_MS &&
+        parseFloat(getComputedStyle(el).opacity || "0") > 0.02;
+      if (stillFading) {
+        waitedMs += FALLBACK_RECHECK_MS;
+        timer = setTimeout(trySwap, FALLBACK_RECHECK_MS);
+        return;
+      }
+      setShown((prev) =>
+        prev.token === token ? prev : { token, value: latestValue.current },
+      );
+    };
     let inner = 0;
     const outer = requestAnimationFrame(() => {
       inner = requestAnimationFrame(() => {
-        timer = setTimeout(
-          () =>
-            setShown((prev) =>
-              prev.token === token
-                ? prev
-                : { token, value: latestValue.current },
-            ),
-          CROSSFADE_MS + FALLBACK_BUFFER_MS,
-        );
+        timer = setTimeout(trySwap, CROSSFADE_MS + FALLBACK_BUFFER_MS);
       });
     });
     return () => {
@@ -145,5 +174,5 @@ export function useCrossfade<T>(token: string, value: T) {
     };
   }, [token, shown.token, reduced]);
 
-  return { shown, visible, reduced, onTransitionEnd };
+  return { shown, visible, reduced, onTransitionEnd, fadeRef };
 }

@@ -21,10 +21,8 @@ export function Crossfade({
   children: ReactNode;
   className?: string;
 }) {
-  const { shown, visible, reduced, onTransitionEnd } = useCrossfade<ReactNode>(
-    token,
-    children,
-  );
+  const { shown, visible, reduced, onTransitionEnd, fadeRef } =
+    useCrossfade<ReactNode>(token, children);
 
   if (reduced) {
     return <div className={className}>{children}</div>;
@@ -39,6 +37,9 @@ export function Crossfade({
 
   return (
     <div
+      ref={(el) => {
+        fadeRef.current = el;
+      }}
       className={cn(
         "transition-opacity",
         visible ? "opacity-100" : "opacity-0",
