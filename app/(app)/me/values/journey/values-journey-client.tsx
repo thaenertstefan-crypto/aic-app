@@ -35,42 +35,45 @@ const STEP_LINKS = [
   "/me/values/journey/evaluation",
 ];
 
-// ─── Sternbild-Geometrie (viewBox 0 0 360 620) ────────────────────────
+// ─── Sternbild-Geometrie (viewBox 0 0 360 880) ────────────────────────
 // Unregelmäßiger Zickzack von unten (Start) nach oben (Auswertung); die
-// vertikalen Abstände (≥55 Units) verhindern Label-Kollisionen bei 360px.
+// vertikalen Abstände (~85–90 Units) geben der Kamerafahrt Scrollweg und
+// verhindern Label-Kollisionen bei 360px.
 const VIEW_W = 360;
-const VIEW_H = 620;
+const VIEW_H = 880;
 
 const CONSTELLATION: { x: number; y: number; side: "left" | "right" }[] = [
-  { x: 80, y: 575, side: "right" },
-  { x: 235, y: 515, side: "left" },
-  { x: 120, y: 455, side: "right" },
-  { x: 265, y: 400, side: "left" },
-  { x: 95, y: 345, side: "right" },
-  { x: 250, y: 285, side: "left" },
-  { x: 140, y: 225, side: "right" },
-  { x: 270, y: 160, side: "left" },
-  { x: 100, y: 80, side: "right" },
+  { x: 80, y: 830, side: "right" },
+  { x: 235, y: 745, side: "left" },
+  { x: 120, y: 655, side: "right" },
+  { x: 265, y: 570, side: "left" },
+  { x: 95, y: 480, side: "right" },
+  { x: 250, y: 395, side: "left" },
+  { x: 140, y: 305, side: "right" },
+  { x: 270, y: 215, side: "left" },
+  { x: 100, y: 110, side: "right" },
 ];
 
 /** Position des Maskottchens (untere linke Ecke) im viewBox-Raum — Bezugspunkt
  *  für seine Blickrichtung zum aktuellen Stern. */
-const MASCOT_POS = { x: 40, y: 585 };
+const MASCOT_POS = { x: 40, y: 845 };
 
 /** Hintergrund-Funkelsterne — handgewählt abseits der Label-Bahnen. */
 const MICRO_STARS: { x: number; y: number; r: number }[] = [
-  { x: 20, y: 45, r: 1.2 },
-  { x: 330, y: 30, r: 0.9 },
-  { x: 45, y: 135, r: 1.0 },
-  { x: 318, y: 230, r: 1.3 },
-  { x: 14, y: 305, r: 0.8 },
-  { x: 338, y: 385, r: 1.1 },
-  { x: 28, y: 470, r: 1.0 },
-  { x: 332, y: 540, r: 1.2 },
-  { x: 185, y: 18, r: 0.9 },
-  { x: 255, y: 600, r: 1.0 },
-  { x: 120, y: 30, r: 1.4 },
-  { x: 90, y: 245, r: 0.8 },
+  { x: 20, y: 65, r: 1.2 },
+  { x: 330, y: 42, r: 0.9 },
+  { x: 45, y: 190, r: 1.0 },
+  { x: 318, y: 325, r: 1.3 },
+  { x: 14, y: 435, r: 0.8 },
+  { x: 338, y: 545, r: 1.1 },
+  { x: 28, y: 665, r: 1.0 },
+  { x: 332, y: 765, r: 1.2 },
+  { x: 185, y: 25, r: 0.9 },
+  { x: 255, y: 855, r: 1.0 },
+  { x: 120, y: 42, r: 1.4 },
+  { x: 90, y: 350, r: 0.8 },
+  { x: 200, y: 615, r: 0.9 },
+  { x: 60, y: 520, r: 1.1 },
 ];
 
 /** 4-strahliger Stern in einer 16er-Box. */
@@ -264,15 +267,15 @@ export function ValuesJourneyClient({
             const labelEl = (
               <span
                 className={cn(
-                  "absolute top-1/2 flex -translate-y-1/2 items-center gap-1 whitespace-nowrap font-heading text-sm",
-                  side === "right" ? "left-full ml-1" : "right-full mr-1",
+                  "absolute top-1/2 flex -translate-y-1/2 items-center gap-1 whitespace-nowrap font-heading text-base",
+                  side === "right" ? "left-full ml-1.5" : "right-full mr-1.5",
                   state === "open"
                     ? "text-muted-foreground/60"
-                    : "font-medium text-foreground",
+                    : "font-semibold text-foreground",
                 )}
               >
                 {state === "open" && (
-                  <Lock className="size-3 shrink-0 text-muted-foreground" />
+                  <Lock className="size-3.5 shrink-0 text-muted-foreground" />
                 )}
                 {label}
               </span>
