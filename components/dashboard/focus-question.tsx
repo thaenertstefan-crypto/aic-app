@@ -1,35 +1,17 @@
-import { CROSSFADE_MS } from "@/lib/hooks/use-crossfade";
-import { cn } from "@/lib/utils";
-
 const QUESTION_CLASS = "font-heading text-lg font-medium text-foreground/90";
 
 /**
- * Rein präsentationale Fokus-Frage. Text **und** Sichtbarkeit kommen von außen
- * (`daily-focus.tsx`), damit Frage und Empfehlungskarte über **dieselbe**
- * Crossfade-Maschine synchron überblenden. `null` = keine Frage anzeigen.
- * Die Opacity-Transition nutzt dasselbe Timing (`CROSSFADE_MS`) wie der restliche
- * Fokus-Block; bei reduzierter Bewegung bleibt `visible` konstant `true`, sodass
- * kein Übergang ausgelöst wird.
+ * Rein präsentationale Fokus-Frage. Sie liegt in `daily-focus.tsx` **innerhalb**
+ * des fadenden Taktgeber-Wrappers und erbt dessen Opacity — eigene Transition
+ * oder Sichtbarkeits-Logik braucht sie nicht. `null` = keine Frage anzeigen;
+ * Mount/Unmount passiert nur beim Swap der Crossfade-Maschine (Opacity 0),
+ * weil die Frage-Präsenz Teil des Fade-Tokens ist.
  */
-export function FocusQuestion({
-  question,
-  visible,
-}: {
-  question: string | null;
-  visible: boolean;
-}) {
+export function FocusQuestion({ question }: { question: string | null }) {
   if (question === null) return null;
 
   return (
-    <p
-      aria-live="polite"
-      className={cn(
-        QUESTION_CLASS,
-        "transition-opacity",
-        visible ? "opacity-100" : "opacity-0",
-      )}
-      style={{ transitionDuration: `${CROSSFADE_MS}ms` }}
-    >
+    <p aria-live="polite" className={QUESTION_CLASS}>
       {question}
     </p>
   );
