@@ -236,20 +236,29 @@ function formatMessyMoment(content: Record<string, unknown>): ContentSection[] {
 function formatOverthinking(
   content: Record<string, unknown>,
 ): ContentSection[] {
+  // Nur die tiefste Warum-Ebene — die Zwischenebenen sind Weg, nicht Ergebnis.
   const whyLevels = content["why_levels"];
-  const whyText = Array.isArray(whyLevels)
-    ? (whyLevels as string[]).join("\n")
-    : "";
+  const deepest = Array.isArray(whyLevels)
+    ? [...(whyLevels as string[])].reverse().find((v) => v?.trim())
+    : undefined;
 
   const sections: ContentSection[] = [
     { label: "Das Problem", value: stringField(content, "problem") },
   ];
 
-  if (whyText) sections.push({ label: "Warum-Ebenen", value: whyText });
+  if (deepest) {
+    sections.push({ label: "Das Problem auf der tiefsten Ebene", value: deepest });
+  }
+
+  // Die KI-Frage aus dem Perspektivwechsel (Alt-Einträge haben sie nicht).
+  const challengerQuestion = stringField(content, "challenger_question");
+  if (challengerQuestion) {
+    sections.push({ label: "Die Reframe-Frage", value: challengerQuestion });
+  }
 
   const whatIfWrong = stringField(content, "what_if_wrong");
   if (whatIfWrong) {
-    sections.push({ label: "Was wäre, wenn du falsch liegst?", value: whatIfWrong });
+    sections.push({ label: "Deine neue Perspektive", value: whatIfWrong });
   }
 
   const whatItWouldMean = stringField(content, "what_it_would_mean");
@@ -260,7 +269,7 @@ function formatOverthinking(
   const reframedProblem = stringField(content, "reframed_problem");
   if (reframedProblem) {
     sections.push({
-      label: "Was mit deinem Problem passiert, wenn du falsch liegst",
+      label: "Was würde diese Perspektive für dein Problem bedeuten?",
       value: reframedProblem,
     });
   }

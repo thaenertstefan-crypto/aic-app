@@ -23,6 +23,7 @@ import { OverthinkingIntroMascot } from "@/components/recipes/overthinking-intro
 import type { MascotExpression } from "@/components/brand/mascot";
 import { Reveal } from "@/components/ui/reveal";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
+import { PAGE_TITLES } from "@/lib/content/labels";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 
@@ -386,6 +387,9 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
     const formData = new FormData();
     formData.set("problem", answers.step2);
     formData.set("why_levels", JSON.stringify([answers.step3, answers.step4, answers.step5]));
+    // Die in Schritt 6 angezeigte KI-Frage wandert mit ins Journal; nach
+    // Draft-Restore oder KI-Ausfall ggf. leer — dann ohne diese Sektion.
+    formData.set("challenger_question", generatedQuestions[6] ?? "");
     formData.set("what_if_wrong", answers.whatIfWrong);
     formData.set("reframed_problem", answers.reframedProblem);
     formData.set("decision", answers.decision);
@@ -575,7 +579,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
             <div className="space-y-3">
               <Label htmlFor="reframed-problem" className="text-base font-medium leading-relaxed">
-                Was würde das für dein ursprüngliches Problem bedeuten, wenn du falsch liegst?
+                Was würde diese Perspektive für dein Problem bedeuten?
               </Label>
 
               {/* Ursprüngliches Problem */}
@@ -695,7 +699,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
           <div className="flex w-full flex-col gap-3 pt-4">
             <Button className="w-full" size="lg" render={<Link href="/booster" />}>
-              Zurück zur Übersicht
+              Zurück zur {PAGE_TITLES.booster}
             </Button>
             <Button
               variant="outline"

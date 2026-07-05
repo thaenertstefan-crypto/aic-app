@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
+import type { OverthinkingContent } from "@/lib/types/db-json";
 
 // Die Warum-Leiter hat im Wizard max. 3 Ebenen; 10 lässt Luft für Formate von
 // morgen, blockt aber manipulierte Riesen-Arrays.
@@ -34,6 +35,7 @@ export async function saveOverthinkingAction(
 
   const problem = formData.get("problem") as string | null;
   const whyLevelsRaw = formData.get("why_levels") as string | null;
+  const challengerQuestion = formData.get("challenger_question") as string | null;
   const whatIfWrong = formData.get("what_if_wrong") as string | null;
   const reframedProblem = formData.get("reframed_problem") as string | null;
   const decision = formData.get("decision") as string | null;
@@ -47,6 +49,7 @@ export async function saveOverthinkingAction(
 
   const lengthError =
     tooLong(problem, TEXT_MAX_LONG) ??
+    tooLong(challengerQuestion ?? "", TEXT_MAX_LONG) ??
     tooLong(whatIfWrong ?? "", TEXT_MAX_LONG) ??
     tooLong(reframedProblem ?? "", TEXT_MAX_LONG) ??
     tooLong(decision, TEXT_MAX_LONG);
@@ -67,9 +70,10 @@ export async function saveOverthinkingAction(
     // ignore parse errors, default to empty
   }
 
-  const content = {
+  const content: OverthinkingContent = {
     problem,
     why_levels: whyLevels,
+    challenger_question: challengerQuestion ?? "",
     what_if_wrong: whatIfWrong ?? "",
     reframed_problem: reframedProblem ?? "",
     decision,
