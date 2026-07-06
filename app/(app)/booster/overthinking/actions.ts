@@ -44,7 +44,7 @@ export async function saveOverthinkingAction(
     return { error: "Bitte beschreib dein Problem kurz.", success: false };
   }
   if (!decision) {
-    return { error: "Bitte triff eine Entscheidung, bevor du abschließt.", success: false };
+    return { error: "Bitte notier deinen nächsten Schritt, bevor du abschließt.", success: false };
   }
 
   const lengthError =

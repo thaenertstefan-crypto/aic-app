@@ -263,6 +263,12 @@ export function ValuesJourneyClient({
                 : "open";
             const { x, y, side } = CONSTELLATION[i];
             const clickable = state !== "open";
+            // Bereits abgeschlossene Reflexionstage öffnen ihren eigenen
+            // Eintrag (?day=N) statt des heutigen Formulars.
+            const href =
+              i >= 1 && i <= 7 && state === "done"
+                ? `${STEP_LINKS[i]}?day=${i}`
+                : STEP_LINKS[i];
 
             const labelEl = (
               <span
@@ -291,7 +297,7 @@ export function ValuesJourneyClient({
             return clickable ? (
               <Link
                 key={i}
-                href={STEP_LINKS[i]}
+                href={href}
                 className={nodeClass}
                 style={nodeStyle}
               >

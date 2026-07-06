@@ -280,7 +280,7 @@ function formatOverthinking(
   const newProblem = stringField(content, "new_problem");
   if (newProblem) sections.push({ label: "Das neue Problem", value: newProblem });
 
-  sections.push({ label: "Deine Entscheidung", value: stringField(content, "decision") });
+  sections.push({ label: "Dein nächster Schritt", value: stringField(content, "decision") });
 
   return sections;
 }

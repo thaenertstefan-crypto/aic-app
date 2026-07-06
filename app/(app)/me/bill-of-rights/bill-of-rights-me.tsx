@@ -2,11 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Pencil, PenLine, Sparkles, Trash2, X } from "lucide-react";
+import { Pencil, PenLine, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FormError } from "@/components/ui/form-error";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
@@ -258,6 +266,12 @@ export function BillOfRightsMe({
         onSeen={() => setIntroDone(true)}
       >
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
+          <p className="text-center text-sm leading-relaxed text-muted-foreground">
+            Diese Regeln hast du dir selbst gegeben – sie sind deine
+            persönlichen Rechte. Komm hierher zurück, wann immer du eine
+            Erinnerung brauchst, was du dir erlauben darfst.
+          </p>
+
           {/* Die Urkunde: ein zusammenhängendes Dokument statt Einzelkarten,
               der Richter sitzt frei darüber. */}
           <GlassPanel
@@ -316,56 +330,18 @@ export function BillOfRightsMe({
                         § {i + 1}
                       </span>
                       <div className="flex flex-1 items-start gap-2">
-                        {editingId === r.id ? (
-                          <>
-                            <Input
-                              value={editText}
-                              onChange={(e) => setEditText(e.target.value)}
-                              className="flex-1"
-                              autoFocus
-                            />
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={saveEdit}
-                              aria-label="Speichern"
-                            >
-                              <Check className="size-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => setEditingId(null)}
-                              aria-label="Abbrechen"
-                            >
-                              <X className="size-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <p className="flex-1 text-base leading-relaxed text-foreground">
-                              {asAffirmation(r.text)}
-                            </p>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="text-muted-foreground/70"
-                              onClick={() => startEdit(r)}
-                              aria-label="Bearbeiten"
-                            >
-                              <Pencil className="size-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="text-muted-foreground/70"
-                              onClick={() => deleteRight(r.id)}
-                              aria-label="Löschen"
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </>
-                        )}
+                        <p className="flex-1 text-base leading-relaxed text-foreground">
+                          {asAffirmation(r.text)}
+                        </p>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-muted-foreground/70"
+                          onClick={() => startEdit(r)}
+                          aria-label="Bearbeiten"
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -379,14 +355,49 @@ export function BillOfRightsMe({
           </GlassPanel>
 
           <FormError message={saveError} />
-          <p className="text-center text-sm leading-relaxed text-muted-foreground">
-            Diese Regeln hast du dir selbst gegeben – sie sind deine
-            persönlichen Rechte. Komm hierher zurück, wann immer du eine
-            Erinnerung brauchst, was du dir erlauben darfst.
-          </p>
 
           {/* Immer sichtbar: zwei Wege, ein Recht hinzuzufügen */}
           <ActionTiles className="mt-auto pt-4" />
+
+          {/* Bearbeiten-Dialog: Recht umformulieren oder löschen */}
+          <Dialog
+            open={editingId !== null}
+            onOpenChange={(open) => {
+              if (!open) setEditingId(null);
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Recht bearbeiten</DialogTitle>
+              </DialogHeader>
+              <Textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                rows={3}
+                autoFocus
+                className="resize-y"
+                aria-label="Text des Rechts"
+              />
+              <DialogFooter>
+                <Button
+                  variant="destructive"
+                  className="sm:mr-auto"
+                  onClick={() => {
+                    if (editingId) deleteRight(editingId);
+                    setEditingId(null);
+                  }}
+                >
+                  Recht löschen
+                </Button>
+                <DialogClose render={<Button variant="outline" />}>
+                  Abbrechen
+                </DialogClose>
+                <Button onClick={saveEdit} disabled={!editText.trim()}>
+                  Speichern
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </RecipeIntroGate>
     </div>

@@ -14,7 +14,7 @@ import {
 const OVERTHINKING_PRIMARY: PrimaryRecommendation = {
   key: "overthinking",
   title: "Raus aus dem Gedankenkarussell",
-  subtitle: "Sortiere deine Gedanken und komm zu einer klaren Entscheidung",
+  subtitle: "Sortiere deine Gedanken und finde deinen nächsten Schritt",
   cta: "Los geht's",
   href: "/booster/overthinking",
 };

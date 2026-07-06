@@ -68,7 +68,20 @@ export default function GenerateRightPage() {
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
         {phase === "reflect" ? (
           <>
-            <p className="text-sm text-muted-foreground">Deine inneren Konflikte</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Die Regeln, nach denen du leben willst zeigen sich häufig, wenn
+              du einen inneren Konflikt spürst, z.B., wenn dein Manager auf
+              Arbeit dich kurz vor Feierabend fragt, ob du noch eine extra
+              Aufgabe erledigen kannst, die noch heute fertig werden muss, und
+              du - schon in deinen Laufschuhen vor dem Laptop sitzend - mit dir
+              haderst, ob du ja oder nein sagst. In diesem Moment kämpfen zwei
+              innere Regeln gegeneinander, jene, die besagt, dass man immer
+              seinen Chef zufriedenstellen muss und jene, die besagt, dass man
+              das Recht hat seiner Freizeit dieselbe Wichtigkeit wie seiner
+              Arbeit zuzumessen und daher nach Feierabend seine persönlichen
+              Ziele, wie eine bessere Fitness zu priorisieren. Nach welcher
+              Regel du leben willst, entscheidest du.
+            </p>
 
             <div className="space-y-2">
               <Label htmlFor="p1" className="text-base font-medium">

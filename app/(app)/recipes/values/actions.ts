@@ -302,6 +302,37 @@ export async function saveJournalEntryAction(
 
   const content = { happenings, response };
 
+  // Bearbeitung eines bestehenden (auch vergangenen) Eintrags: update-only per
+  // id — kein Insert, damit das Tages-Gating nicht über ein Client-Datum
+  // umgangen werden kann. Der Eintrag muss dem User gehören.
+  const entryIdRaw = formData.get("entry_id");
+  if (typeof entryIdRaw === "string" && entryIdRaw.length > 0) {
+    const { data: target } = await supabase
+      .from("journal_entries")
+      .select("id")
+      .eq("id", entryIdRaw)
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "values")
+      .eq("template_type", "daily_value")
+      .maybeSingle();
+
+    if (!target) {
+      return { error: "Der Eintrag konnte nicht gefunden werden." };
+    }
+
+    const { error: updateError } = await supabase
+      .from("journal_entries")
+      .update({ content })
+      .eq("id", target.id);
+
+    if (updateError) {
+      return { error: dbError(updateError, "values") };
+    }
+
+    revalidatePath("/me/values/journey/journal");
+    return { error: null };
+  }
+
   // Check if an entry already exists for this date
   const { data: existingEntry } = await supabase
     .from("journal_entries")

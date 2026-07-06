@@ -14,6 +14,7 @@ import { formatDateDE, localDateKey } from "@/lib/utils/date";
 
 import {
   saveJournalEntryAction,
+  type JournalEntry,
   type JournalPageData,
 } from "@/app/(app)/recipes/values/actions";
 import type { ActionState } from "@/lib/types/action-state";
@@ -40,11 +41,16 @@ function randomEncouragement(): string {
 
 interface JournalFormProps {
   initialData: JournalPageData;
+  /** Vergangener Reflexionstag (?day=N): dieser Eintrag wird angezeigt und
+   *  bearbeitet statt des heutigen Formulars. */
+  viewEntry?: JournalEntry | null;
+  /** Tagesnummer (1–7) zu viewEntry — für die Überschrift. */
+  viewDay?: number;
 }
 
 // ─── Component ──────────────────────────────────────────────────────
 
-export function JournalForm({ initialData }: JournalFormProps) {
+export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalFormProps) {
   const { entries, currentStep } = initialData;
   const todayKey = localDateKey();
 
@@ -67,13 +73,24 @@ export function JournalForm({ initialData }: JournalFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [encouragement] = useState(randomEncouragement);
 
+  // Vergangener Tag (?day=N): dessen Eintrag hat Vorrang vor Heute-Formular,
+  // Completion-Screen und Draft-Mechanik.
+  const pastEntry = viewEntry
+    ? {
+        id: viewEntry.id,
+        happenings: viewEntry.content?.happenings ?? "",
+        response: viewEntry.content?.response ?? "",
+      }
+    : null;
+  const activeEntry = pastEntry ?? todayEntry;
+
   // Reset editing state when today's entry changes (after revalidate)
   useEffect(() => {
-    if (!todayEntry) {
+    if (!viewEntry && !todayEntry) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync mit dem Server-Stand nach revalidatePath; feuert nur beim Verschwinden des Tageseintrags
       setIsEditing(false);
     }
-  }, [todayEntry]);
+  }, [viewEntry, todayEntry]);
 
   // Offline draft safety net
   const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
@@ -102,7 +119,9 @@ export function JournalForm({ initialData }: JournalFormProps) {
         response: (formData.get("response") as string) ?? "",
       };
 
-      if (typeof navigator !== "undefined" && !navigator.onLine) {
+      // Beim Bearbeiten eines vergangenen Tages keine Drafts anlegen — die
+      // würden sonst später ins heutige Formular restauriert.
+      if (!pastEntry && typeof navigator !== "undefined" && !navigator.onLine) {
         saveDraft(draft);
         return {
           error:
@@ -112,9 +131,17 @@ export function JournalForm({ initialData }: JournalFormProps) {
 
       try {
         const result = await saveJournalEntryAction(prev, formData);
-        if (!result.error) clearDraft();
+        if (!result.error) {
+          if (!pastEntry) clearDraft();
+          setIsEditing(false);
+        }
         return result;
       } catch {
+        if (pastEntry) {
+          return {
+            error: "Speichern fehlgeschlagen – versuch es später noch einmal.",
+          };
+        }
         saveDraft(draft);
         return {
           error:
@@ -129,17 +156,17 @@ export function JournalForm({ initialData }: JournalFormProps) {
 
   return (
     <div className="flex flex-1 flex-col px-4 py-6">
-      {/* Header */}
-      <header className="mb-6">
-        <p className="max-w-prose text-base text-muted-foreground">
-          {isComplete
-            ? "Du hast alle 7 Tage ausgefüllt!"
-            : "Halt deine Gedanken fest – ganz ohne Druck."}
-        </p>
-      </header>
+      {/* Header — nur noch im Abschluss-Zustand */}
+      {!pastEntry && isComplete && (
+        <header className="mb-6">
+          <p className="max-w-prose text-base text-muted-foreground">
+            Du hast alle 7 Tage ausgefüllt!
+          </p>
+        </header>
+      )}
 
       {/* Draft restore prompt */}
-      {pendingDraft && (
+      {!pastEntry && pendingDraft && (
         <div className="mb-6">
           <DraftRestoreBanner onRestore={handleRestoreDraft} onDiscard={clearDraft} />
         </div>
@@ -148,8 +175,9 @@ export function JournalForm({ initialData }: JournalFormProps) {
       {/* Error banner */}
       <FormError message={state.error} className="mb-6" />
 
-      {/* Completion state */}
-      {isComplete ? (
+      {/* Completion state — die Day-View (?day=N) hat Vorrang, damit alte
+          Einträge auch nach 7/7 Tagen einsehbar bleiben */}
+      {!pastEntry && isComplete ? (
         <div className="mt-4 space-y-6">
           <Card className="border-primary/30">
             <CardContent className="space-y-3 pt-(--card-spacing)">
@@ -171,13 +199,15 @@ export function JournalForm({ initialData }: JournalFormProps) {
         <>
           {/* Journal entry form / read-only view */}
           <div className="space-y-4">
-            {todayEntry && !isEditing ? (
+            {activeEntry && !isEditing ? (
               /* ── Read-only view ── */
               <Card>
                 <CardContent className="space-y-4 pt-(--card-spacing)">
                   <div className="flex items-center justify-between">
                     <h2 className="font-heading text-base font-semibold">
-                      Heute, {formatDateDE(todayKey)}
+                      {pastEntry && viewEntry
+                        ? `Tag ${viewDay}, ${formatDateDE(viewEntry.entry_date)}`
+                        : `Heute, ${formatDateDE(todayKey)}`}
                     </h2>
                     <Button
                       variant="outline"
@@ -193,7 +223,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
                       Was ist heute passiert?
                     </Label>
                     <p className="whitespace-pre-wrap rounded-lg bg-muted/50 px-3 py-2 text-base leading-relaxed">
-                      {todayEntry.happenings || "—"}
+                      {activeEntry.happenings || "—"}
                     </p>
                   </div>
 
@@ -202,7 +232,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
                       Welche Gedanken, Gefühle, Reaktionen kamen dabei auf?
                     </Label>
                     <p className="whitespace-pre-wrap rounded-lg bg-muted/50 px-3 py-2 text-base leading-relaxed">
-                      {todayEntry.response || "—"}
+                      {activeEntry.response || "—"}
                     </p>
                   </div>
                 </CardContent>
@@ -210,9 +240,17 @@ export function JournalForm({ initialData }: JournalFormProps) {
             ) : (
               /* ── Form ── */
               <form key={formKey} action={formAction} className="space-y-5">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">{encouragement}</p>
-                </div>
+                {!pastEntry && (
+                  <div className="space-y-2">
+                    <p className="text-base leading-relaxed text-muted-foreground">
+                      {encouragement}
+                    </p>
+                  </div>
+                )}
+
+                {pastEntry && (
+                  <input type="hidden" name="entry_id" value={pastEntry.id} />
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="happenings" className="text-sm font-medium">
@@ -222,7 +260,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
                     id="happenings"
                     name="happenings"
                     placeholder="z. B. ein Gespräch, eine Situation, ein Moment, der hängen geblieben ist …"
-                    defaultValue={restoredDraft?.happenings ?? todayEntry?.happenings ?? ""}
+                    defaultValue={restoredDraft?.happenings ?? activeEntry?.happenings ?? ""}
                     rows={4}
                     required
                     disabled={pending}
@@ -238,7 +276,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
                     id="response"
                     name="response"
                     placeholder="Hast du was gefühlt, das dich überrascht hat? War da Freude, Frust, Stolz, Verwirrung?"
-                    defaultValue={restoredDraft?.response ?? todayEntry?.response ?? ""}
+                    defaultValue={restoredDraft?.response ?? activeEntry?.response ?? ""}
                     rows={4}
                     required
                     disabled={pending}
@@ -254,7 +292,7 @@ export function JournalForm({ initialData }: JournalFormProps) {
                 >
                   {pending
                     ? "Wird gespeichert …"
-                    : todayEntry
+                    : activeEntry
                       ? "Änderungen speichern"
                       : "Eintrag speichern"}
                 </Button>
@@ -275,11 +313,13 @@ export function JournalForm({ initialData }: JournalFormProps) {
           </div>
 
           {/* Entry count progress note */}
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            {entryCount < 7
-              ? `Noch ${7 - entryCount} ${7 - entryCount === 1 ? "Eintrag" : "Einträge"} bis zur Auswertung`
-              : ""}
-          </p>
+          {!pastEntry && (
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              {entryCount < 7
+                ? `Noch ${7 - entryCount} ${7 - entryCount === 1 ? "Eintrag" : "Einträge"} bis zur Auswertung`
+                : ""}
+            </p>
+          )}
         </>
       )}
     </div>

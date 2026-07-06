@@ -71,7 +71,7 @@ const STEP_HEADERS = [
   "Die tiefste Ebene.",
   "Perspektivwechsel.",
   "Reframing.",
-  "Deine Entscheidung.",
+  "Dein nächster Schritt.",
 ];
 
 // ─── Progress Dots ────────────────────────────────────────────────────
@@ -377,7 +377,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
   const handleSubmit = async () => {
     if (!answers.decision.trim()) {
-      setError("Magst du deine Entscheidung kurz notieren, bevor es weitergeht?");
+      setError("Magst du deinen nächsten Schritt kurz notieren, bevor es weitergeht?");
       return;
     }
 
@@ -435,24 +435,32 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   const renderStepContent = () => {
     switch (step) {
       case 1:
+        // Volle Spaltenhöhe: der Intro-Text zentriert sich im freien Raum
+        // zwischen Header und Countdown-Block; der Block selbst sitzt unten
+        // nah am "Weiter"-Button.
         return (
-          <div className="flex flex-col items-center gap-8 text-center">
-            <p className="text-base leading-relaxed text-muted-foreground">
-              Dein Kopf dreht gerade Runden? Man kennt&apos;s – lass uns
-              gemeinsam aus dem Gedankenkarussell aussteigen!
-            </p>
-            <p className="text-xl font-medium leading-relaxed text-foreground sm:text-2xl">
-              Zähle von 5 runter und sage dann laut{" "}
-              <span className="font-bold text-primary">Stopp</span>.
-            </p>
-
-            <CountdownCircle duration={5} onComplete={() => setCountdownDone(true)} />
-
-            {countdownDone && (
-              <p className="text-base text-muted-foreground animate-in fade-in slide-in-from-bottom-2 duration-500">
-                Gut gemacht. Der Gedankenkarussell ist kurz gestoppt — nutzen wir diesen Moment.
+          <div className="flex w-full flex-1 flex-col items-center self-stretch text-center">
+            <div className="flex flex-1 items-center">
+              <p className="text-base leading-relaxed text-muted-foreground">
+                Dein Kopf dreht gerade Runden? Man kennt&apos;s – lass uns
+                gemeinsam aus dem Gedankenkarussell aussteigen!
               </p>
-            )}
+            </div>
+
+            <div className="flex flex-col items-center gap-8">
+              <p className="text-xl font-medium leading-relaxed text-foreground sm:text-2xl">
+                Zähle von 5 runter und sage dann laut{" "}
+                <span className="font-bold text-primary">Stopp</span>.
+              </p>
+
+              <CountdownCircle duration={5} onComplete={() => setCountdownDone(true)} />
+
+              {countdownDone && (
+                <p className="text-base text-muted-foreground animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  Gut gemacht. Der Gedankenkarussell ist kurz gestoppt — nutzen wir diesen Moment.
+                </p>
+              )}
+            </div>
           </div>
         );
 
@@ -605,11 +613,11 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
         );
 
       case 8:
-        // Schritt 8 – Deine Entscheidung.
+        // Schritt 8 – Dein nächster Schritt.
         return (
           <div className="flex w-full flex-col gap-2">
             <Label htmlFor="decision" className="text-base font-medium leading-relaxed">
-              Deine Entscheidung
+              Dein nächster Schritt
             </Label>
             <Textarea
               id="decision"
@@ -665,8 +673,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
           </h1>
 
           <p className="text-muted-foreground">
-            Du hast den Gedankenkarussell durchbrochen und eine klare Entscheidung getroffen. Das
-            war mutig – nimm diesen Moment mit.
+            Du hast den Gedankenkarussell durchbrochen und einen klaren nächsten Schritt
+            festgelegt. Das war mutig – nimm diesen Moment mit.
           </p>
 
           {/* Reframe als ruhiger Schlusspunkt — erscheint nach dem Icon */}
@@ -688,7 +696,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
             <Card className="w-full border-primary/30">
               <CardContent className="space-y-2 pt-(--card-spacing)">
                 <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                  Deine Entscheidung
+                  Dein nächster Schritt
                 </p>
                 <p className="whitespace-pre-wrap text-left text-base leading-relaxed text-foreground">
                   {answers.decision}

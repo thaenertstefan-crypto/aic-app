@@ -92,7 +92,7 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
         className="text-lg font-medium text-primary"
         style={{ textShadow: "0 0 18px rgba(231,182,94,0.55)" }}
       >
-        Kurzer Reminder
+        Heutiger Reminder
       </p>
 
       <p
@@ -111,7 +111,6 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
       </p>
 
       <Button
-        variant="ghost"
         aria-hidden={!showButton}
         tabIndex={showButton ? undefined : -1}
         onClick={(e) => {
