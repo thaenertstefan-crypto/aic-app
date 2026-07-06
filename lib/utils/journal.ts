@@ -139,11 +139,23 @@ export function getJournalConfig(templateType: string): TemplateConfig {
  * Finds the first non-empty string value (or first element of a string array),
  * then truncates to maxLen characters.
  */
+/** Bevorzugte Erzähl-Felder für die Vorschau. Nötig, weil Postgres-JSONB die
+ *  Keys umsortiert (Länge, dann Bytes) — ohne Priorität landet sonst z.B. bei
+ *  messy_moment das kurze Enum-Feld guilt_type ("unhealthy") vor messy_when. */
+const PREVIEW_PREFERRED_KEYS = ["messy_when", "happenings", "problem", "body"];
+
 export function extractPreview(
   content: Record<string, unknown>,
   maxLen = 80,
 ): string {
   if (!content || typeof content !== "object") return "";
+
+  for (const key of PREVIEW_PREFERRED_KEYS) {
+    const val = content[key];
+    if (typeof val === "string" && val.trim().length > 0) {
+      return truncate(val.trim(), maxLen);
+    }
+  }
 
   const values = Object.values(content);
 
@@ -209,28 +221,58 @@ function formatBillOfRights(
 }
 
 function formatMessyMoment(content: Record<string, unknown>): ContentSection[] {
-  const guiltLabels: Record<string, string> = {
-    healthy: "Gesundes Schuldgefühl",
-    unhealthy: "Ungesundes Schuldgefühl",
-    unsure: "Bin mir nicht sicher",
-  };
-
+  // Alt-Einträge (Formular bis Juli 2026) haben guilt_type vom User selbst —
+  // sie rendern unverändert. Neue Einträge tragen stattdessen die KI-Felder
+  // ai_guilt_guess/ai_rules_conflict (+ guilt_feedback vom Bestätigungs-Tap).
   const guiltRaw = stringField(content, "guilt_type");
-  const guiltLabel = guiltRaw
-    ? guiltLabels[guiltRaw] ?? guiltRaw
-    : "—";
 
-  return [
+  if (guiltRaw) {
+    const guiltLabels: Record<string, string> = {
+      healthy: "Gesundes Schuldgefühl",
+      unhealthy: "Ungesundes Schuldgefühl",
+      unsure: "Bin mir nicht sicher",
+    };
+
+    return [
+      {
+        label: "Was war die Situation?",
+        value: stringField(content, "messy_when"),
+      },
+      {
+        label: "Welche Regeln standen im Konflikt?",
+        value: stringField(content, "conflicting_rules"),
+      },
+      { label: "Art des Schuldgefühls", value: guiltLabels[guiltRaw] ?? guiltRaw },
+    ];
+  }
+
+  const sections: ContentSection[] = [
     {
       label: "Was war die Situation?",
       value: stringField(content, "messy_when"),
     },
-    {
-      label: "Welche Regeln standen im Konflikt?",
-      value: stringField(content, "conflicting_rules"),
-    },
-    { label: "Art des Schuldgefühls", value: guiltLabel },
   ];
+
+  const rules = stringField(content, "ai_rules_conflict");
+  if (rules) {
+    sections.push({ label: "Die Regeln im Konflikt", value: rules });
+  }
+
+  const guess = stringField(content, "ai_guilt_guess");
+  if (guess === "healthy" || guess === "unhealthy") {
+    const base =
+      guess === "healthy" ? "Vermutlich gesunde Schuld" : "Vermutlich ungesunde Schuld";
+    const feedback = stringField(content, "guilt_feedback");
+    const suffix =
+      feedback === "agree"
+        ? " — du fandest: passt"
+        : feedback === "disagree"
+          ? " — du fandest: passt eher nicht"
+          : "";
+    sections.push({ label: "Einschätzung deines Begleiters", value: base + suffix });
+  }
+
+  return sections;
 }
 
 function formatOverthinking(

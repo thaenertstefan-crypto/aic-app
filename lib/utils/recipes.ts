@@ -1,9 +1,12 @@
+import { PAGE_TITLES } from "@/lib/content/labels";
+
 export type RecipeSlug =
   | "values"
   | "wants"
   | "bill-of-rights"
   | "saying-no"
   | "overthinking"
+  | "things-got-messy"
   | "shadow";
 
 export type Recipe = {
@@ -98,6 +101,16 @@ export const RECIPES: readonly Recipe[] = [
     duration: "15 Minuten",
     available: true,
     startPath: "/booster/overthinking",
+  },
+  {
+    slug: "things-got-messy",
+    title: PAGE_TITLES.thingsGotMessy,
+    description:
+      "Wenn du in ein altes Muster zurückgefallen bist: Reflektiere den Moment, versteh deine Schuld — und leite ein neues Recht daraus ab.",
+    icon: "Flame",
+    duration: "5–10 Minuten",
+    available: true,
+    startPath: "/booster/things-got-messy",
   },
   {
     slug: "shadow",

@@ -5,6 +5,7 @@ import {
   Shield,
   XCircle,
   Brain,
+  Flame,
   Moon,
   Clock,
   type LucideIcon,
@@ -30,6 +31,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Shield,
   XCircle,
   Brain,
+  Flame,
   Moon,
 };
 

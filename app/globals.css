@@ -288,6 +288,48 @@
   /* Bill-of-Rights-Intro: Sequenz-Animationen laufen per SMIL direkt in
      bill-of-rights-intro-mascot.tsx (keine CSS-Keyframes nötig). */
 
+  /* ── Things-Got-Messy-Intro Animationen (Knäuel → Schuld-Kompass) ──── */
+
+  /* Karte 0: unruhiges Schwanken nach dem messy Moment */
+  @keyframes tgm-sway {
+    0%, 100% { transform: rotate(-1.6deg); }
+    30%       { transform: rotate(1.2deg);  }
+    60%       { transform: rotate(-0.6deg); }
+    82%       { transform: rotate(0.9deg);  }
+  }
+
+  /* Karte 0: Gedanken-Knäuel zeichnet sich verworren über dem Kopf */
+  @keyframes tgm-scribble {
+    0%        { stroke-dashoffset: 30; opacity: 0.15; }
+    55%       { stroke-dashoffset: 0;  opacity: 0.55; }
+    85%, 100% { stroke-dashoffset: 0;  opacity: 0.55; }
+  }
+
+  /* Karte 0: Schweißtropfen perlt herab und verblasst */
+  @keyframes tgm-drop {
+    0%, 35%   { transform: translateY(0);     opacity: 0;   }
+    55%       { transform: translateY(0.5px); opacity: 0.9; }
+    90%, 100% { transform: translateY(3px);   opacity: 0;   }
+  }
+
+  /* Karte 1: Nadel pendelt zwischen gesund (oben) und ungesund (unten)
+     und rastet gedämpft auf dem Gesund-Pol ein */
+  @keyframes tgm-needle-decide {
+    0%        { transform: rotate(150deg);  }
+    22%       { transform: rotate(-120deg); }
+    42%       { transform: rotate(60deg);   }
+    58%       { transform: rotate(-25deg);  }
+    70%       { transform: rotate(10deg);   }
+    82%, 100% { transform: rotate(0deg);    }
+  }
+
+  /* Karte 1: Kurzer goldener Puls am Gesund-Pol im Einrast-Moment */
+  @keyframes tgm-pole-pulse {
+    0%, 70% { opacity: 0;   transform: scale(0.4); }
+    85%     { opacity: 0.9; transform: scale(1.5); }
+    100%    { opacity: 0;   transform: scale(1);   }
+  }
+
   /* ── Werteentdeckung: Sternbild-Journey ───────────────────────────── */
 
   /* Mikro-Sterne am Nachthimmel funkeln leise; Versatz per animation-delay. */

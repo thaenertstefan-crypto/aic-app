@@ -1,8 +1,10 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
@@ -69,6 +71,9 @@ export default function GenerateRightPage() {
         {phase === "reflect" ? (
           <>
             <p className="text-sm leading-relaxed text-muted-foreground">
+              Hier baust du in Ruhe an deinem Bill of Rights — ohne dass gerade
+              etwas passiert sein muss.
+              {" "}
               Die Regeln, nach denen du leben willst zeigen sich häufig, wenn
               du einen inneren Konflikt spürst, z.B., wenn dein Manager auf
               Arbeit dich kurz vor Feierabend fragt, ob du noch eine extra
@@ -121,6 +126,22 @@ export default function GenerateRightPage() {
             >
               {loading ? "Wird erstellt …" : "Vorschlag generieren"}
             </Button>
+
+            {/* Verzahnung: für den akuten Moment ist Things Got Messy da. */}
+            <Card className="border-dashed">
+              <CardContent className="pt-(--card-spacing)">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Ist gerade etwas passiert, das dir nachhängt?{" "}
+                  <Link
+                    href="/booster/things-got-messy"
+                    className="font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    Things Got Messy
+                  </Link>{" "}
+                  ist das Rezept für den akuten Moment.
+                </p>
+              </CardContent>
+            </Card>
           </>
         ) : (
           <form action={formAction} className="flex flex-1 flex-col gap-5">

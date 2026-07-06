@@ -33,11 +33,23 @@ export type FreeEntryContent = {
   body: string;
 };
 
-/** `journal_entries.content` bei template_type "messy_moment" (Things Got Messy). */
+/** `journal_entries.content` bei template_type "messy_moment" (Things Got Messy).
+ *  Alt-Einträge (Formular-Version bis Juli 2026) haben `guilt_type` (+ ggf.
+ *  `conflicting_rules`) vom User selbst; neue Einträge stattdessen die
+ *  KI-Felder (von /api/messy-guilt-coach nachgetragen) + das User-Feedback.
+ *  Diskriminator alt/neu: Präsenz von `guilt_type`. */
 export type MessyMomentContent = {
   messy_when: string;
-  conflicting_rules: string;
-  guilt_type: "healthy" | "unhealthy" | "unsure";
+  /** Nur Alt-Einträge: vom User benannte Regeln im Konflikt. */
+  conflicting_rules?: string;
+  /** Nur Alt-Einträge: Selbst-Einordnung des Users. */
+  guilt_type?: "healthy" | "unhealthy" | "unsure";
+  /** Neue Einträge: KI-Vermutung; null, wenn die KI keinen validen Wert lieferte. */
+  ai_guilt_guess?: "healthy" | "unhealthy" | null;
+  /** Neue Einträge: KI-Benennung der zwei Regeln im Konflikt (ein Satz). */
+  ai_rules_conflict?: string | null;
+  /** Neue Einträge: Antwort auf „Fühlt sich das stimmig an?". */
+  guilt_feedback?: "agree" | "disagree" | null;
 };
 
 /** `journal_entries.content` bei template_type "overthinking" (Grübelspirale).

@@ -7,9 +7,10 @@
  * informellen AIC-Stimme ("du") und können frei editiert werden — die
  * Komponente bleibt generisch.
  *
- * Slugs gegen lib/utils/recipes.ts geprüft: "values", "bill-of-rights" und
- * "overthinking" sind die aktuell verfügbaren Rezepte. Weitere Rezepte
- * (wants, saying-no, shadow) bekommen ihre Intro, sobald sie verfügbar sind.
+ * Slugs gegen lib/utils/recipes.ts geprüft: "values", "bill-of-rights",
+ * "overthinking" und "things-got-messy" sind die aktuell verfügbaren Rezepte.
+ * Weitere Rezepte (wants, saying-no, shadow) bekommen ihre Intro, sobald sie
+ * verfügbar sind.
  */
 
 export type IntroCard = { title: string; body: string };
@@ -55,6 +56,20 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
     {
       title: "Was dich erwartet",
       body: "Die Folgende Übung soll Dir dabei helfen, dieses Manko deines Unterbewusstseins zu händeln und aus deinen Gedankenspiralen auszubrechen. Ziel ist es zuerst durch ein sogenanntes „Pattern Interrupt“ dein Unterbewusstsein bei seiner kreativen Schwarzmalerei zu unterbrechen indem du von 5 runterzählts oder laut „Stop“ sagst (ja das meine ich ernst). Dann gräbst du dich mit ein paar ehrlichen „Warum?“-Fragen zur Wurzel des Problems durch, das deine Gedankenspirale ausgelöst hat. Am Ende der Frage-Runde werde ich dich dazu challengen, das Problem aus einer anderen Perspektive zu betrachten, die der Schwarzmalerei deines Unterbewusstseins entgegensteht. Auf der Basis sollst Du dann in der Lage sein, einen klaren nächsten Schritt festzulegen, wie Du mit dem Problem umgehst - und zwar gemessen daran, was das Problem wirklich ist, nicht gemessen daran was Dein Unterbewusstsein dir vormacht. Bist Du bereit?",
+    },
+  ],
+  "things-got-messy": [
+    {
+      title: "Es ist passiert.",
+      body: "Du arbeitest an deinen neuen inneren Regeln — und dann kommt so ein Tag: Du hast wieder Ja gesagt, obwohl du Nein meintest. Oder du hast Nein gesagt und dich danach schrecklich gefühlt. Jetzt sitzt da dieses nagende Gefühl in deiner Brust: Schuld. Bevor du dich dafür verurteilst, lohnt sich ein genauer Blick. Denn Schuld ist nicht gleich Schuld:",
+    },
+    {
+      title: "Gesunde und ungesunde Schuld.",
+      body: "Gesunde Schuld ist ein Kompass. Sie meldet sich, wenn du gegen deine eigenen Werte gehandelt hast — und sie zeigt dir den Weg zur Wiedergutmachung. Sie will nicht, dass du dich schlecht fühlst, sondern dass du etwas in Ordnung bringst. Ungesunde Schuld dagegen ist ein altes People-Pleaser-Programm: Sie bestraft dich ausgerechnet dann, wenn du dich geschützt hast — für ein Nein, eine Grenze, eine ehrliche Meinung. Sie zeigt nicht auf einen Fehler, sondern auf eine alte Regel, die du gar nicht mehr leben willst.",
+    },
+    {
+      title: "Was dich erwartet",
+      body: "Du erzählst kurz, was passiert ist — mehr musst du nicht tun. Dein Begleiter schaut dann mit dir drauf: Welche Art von Schuld hat sich da vermutlich gemeldet? Welche zwei Regeln haben in dir gerungen? Und er wirft einen Blick in dein Bill of Rights: Vielleicht hast du dir das passende Recht schon gegeben und musst dich nur daran erinnern — vielleicht formulieren wir zusammen ein neues, das dich beim nächsten Mal schützt. Das Ganze dauert 2–3 Minuten. Bist du dabei?",
     },
   ],
 };
