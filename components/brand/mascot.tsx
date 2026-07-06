@@ -129,7 +129,7 @@ export function Mascot({
         style={{
           borderRadius: BLOB_RADIUS,
           background:
-            "linear-gradient(rgba(231,182,94,0.40), rgba(231,182,94,0.40)), " +
+            "linear-gradient(rgba(231,182,94,0.50), rgba(231,182,94,0.50)), " +
             "color-mix(in srgb, var(--background) 85%, transparent)",
           border: "1px solid rgba(255,255,255,0.22)",
           backdropFilter: "blur(8px)",
