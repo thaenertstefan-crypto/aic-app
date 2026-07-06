@@ -96,14 +96,20 @@ export function DailyFocus({
   return (
     /* Der ganze Block ist der Taktgeber der Maschine: sein transitionend löst
        den Swap aus, und über die Ref liest der Fallback hier die echte Opacity.
-       Frage, Karte und CTAs faden damit als ein Teilbaum. */
+       Frage, Karte und CTAs faden damit als ein Teilbaum.
+
+       transform-gpu + will-change + isolate zwingen WebKit, den fadenden
+       Teilbaum als eigenen, sauber invalidierten Compositor-Layer zu führen:
+       Der Opacity-Fade läuft über der backdrop-gefilterten Glass-Card, und
+       iOS zeigt dort sonst einen veralteten Layer-Snapshot — der alte Inhalt
+       bleibt als „Ghost" über dem neuen sichtbar (nur iOS-PWA, nicht Desktop). */
     <div
       ref={(el) => {
         fadeRef.current = el;
       }}
       className={cn(
         "space-y-3",
-        !reduced && "transition-opacity",
+        !reduced && "isolate transform-gpu transition-opacity will-change-[opacity]",
         !reduced && (visible ? "opacity-100" : "opacity-0"),
       )}
       style={

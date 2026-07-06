@@ -41,7 +41,10 @@ export function Crossfade({
         fadeRef.current = el;
       }}
       className={cn(
-        "transition-opacity",
+        // isolate/transform-gpu/will-change: eigener Compositor-Layer gegen
+        // iOS-Ghosting beim Opacity-Fade über backdrop-filter-Inhalten
+        // (Glass-Cards) — siehe daily-focus.tsx.
+        "isolate transform-gpu transition-opacity will-change-[opacity]",
         visible ? "opacity-100" : "opacity-0",
         className,
       )}
