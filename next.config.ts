@@ -67,7 +67,13 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/cleansers/mantra",
-        destination: "/booster/mantra",
+        destination: "/booster/confidence",
+        permanent: false,
+      },
+      // Mantra Cleanser + Showstopper Confidence zum Confidence-Boost fusioniert
+      {
+        source: "/booster/mantra",
+        destination: "/booster/confidence",
         permanent: false,
       },
       {

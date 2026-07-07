@@ -105,6 +105,18 @@ export type SayingNoContent = {
   final_source?: "own" | "ai" | "edited";
 };
 
+/** `journal_entries.content` bei template_type "shadow" (Schattenseite).
+ *  Privatsphäre-Garantie: Diese Einträge werden NIE an die KI geschickt —
+ *  keine KI-Route liest template_type "shadow", und `private: true` schaltet
+ *  zusätzlich die Text-Vorschau in der Journal-Liste ab (extractPreview). */
+export type ShadowContent = {
+  body: string;
+  /** Immer true — Marker für Vorschau-Unterdrückung + KI-Ausschluss. */
+  private: true;
+  /** Woher der Eintrag stammt: Schreibfläche oder Notiz nach dem Rage Walk. */
+  mode?: "journal" | "walk";
+};
+
 /** `journal_entries.content` bei template_type "overthinking" (Grübelspirale).
  *  Alt-Einträge können zusätzlich `what_it_would_mean`, `current_problem` und
  *  `new_problem` enthalten (nur noch lesend in formatOverthinking). */

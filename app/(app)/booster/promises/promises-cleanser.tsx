@@ -99,10 +99,31 @@ export function PromisesCleanser({
   );
 }
 
+/** Starter-Ideen aus dem Cookbook — Tap füllt die Textarea vor (frei editierbar). */
+const PROMISE_TEMPLATES: { label: string; text: string }[] = [
+  {
+    label: "Bett machen",
+    text: "Ich mache jeden Morgen direkt nach dem Zähneputzen mein Bett.",
+  },
+  {
+    label: "Spaziergang",
+    text: "Ich gehe an Homeoffice-Tagen direkt nach der Arbeit 30 Minuten im Park spazieren.",
+  },
+  {
+    label: "Lern-Lektion",
+    text: "Ich mache abends eine Duolingo- oder Lern-Lektion, bevor ich Social Media öffne.",
+  },
+  {
+    label: "Ein Pflicht-To-do",
+    text: "Ich erledige jeden Tag ein To-do, das ich sonst aufschieben würde.",
+  },
+];
+
 function NewPromiseDialog() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [description, setDescription] = useState("");
 
   // Form actions run inside a transition, so closing + refreshing here (rather
   // than in an effect) is the idiomatic, lint-clean way to react to success.
@@ -121,7 +142,10 @@ function NewPromiseDialog() {
       open={open}
       onOpenChange={(o) => {
         setOpen(o);
-        if (!o) setError(null);
+        if (!o) {
+          setError(null);
+          setDescription("");
+        }
       }}
     >
       <DialogTrigger
@@ -142,10 +166,30 @@ function NewPromiseDialog() {
         </DialogHeader>
 
         <form action={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">
+              Oder starte mit einer Vorlage:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {PROMISE_TEMPLATES.map((template) => (
+                <button
+                  key={template.label}
+                  type="button"
+                  onClick={() => setDescription(template.text)}
+                  className="rounded-full border border-border bg-card px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-muted/60"
+                >
+                  {template.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <Textarea
               name="description"
               rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="z.B. 'Ich gehe an Homeoffice-Tagen direkt nach der Arbeit 30 Min im Park spazieren'"
               aria-label="Promise-Beschreibung"
             />

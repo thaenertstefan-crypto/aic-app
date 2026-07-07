@@ -120,11 +120,15 @@ export const RECIPES: readonly Recipe[] = [
     slug: "shadow",
     title: "Deine Schattenseite",
     description:
-      "Was du an dir selbst nicht sehen willst, hat mehr Macht über dich. Lerne deine Schattenseite kennen und integriere sie.",
+      "Wut, Groll, dunkle Gedanken — sicher rauslassen statt runterschlucken. Schreib oder sprich dich frei; danach entscheidest du: behalten oder verbrennen.",
+    intro: [
+      "Unterdrückte Wut verschwindet nicht — sie wächst und frisst dich von innen auf. Dieses Ventil gibt deiner Schattenseite einen sicheren Ort: das Shadow Journal (alles rauslassen, was raus muss) oder der Rage Walk (laut aussprechen, wo dich niemand hört).",
+      "Das Wichtigste: Hier liest niemand mit. Die KI bekommt diese Einträge nie zu sehen — und wenn du willst, verbrennst du das Geschriebene einfach, statt es zu speichern.",
+    ],
     icon: "Moon",
-    duration: "14–21 Tage",
-    available: false,
-    startPath: "/recipes/shadow",
+    duration: "5–15 Minuten",
+    available: true,
+    startPath: "/booster/shadow",
   },
 ] as const;
 

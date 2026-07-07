@@ -8,9 +8,9 @@
  * Komponente bleibt generisch.
  *
  * Slugs gegen lib/utils/recipes.ts geprüft: "values", "bill-of-rights",
- * "overthinking", "things-got-messy" und "saying-no" sind die aktuell
- * verfügbaren Rezepte. Weitere Rezepte (wants, shadow) bekommen ihre Intro,
- * sobald sie verfügbar sind.
+ * "overthinking", "things-got-messy", "saying-no" und "shadow" sind die
+ * aktuell verfügbaren Rezepte. Das letzte Rezept (wants) bekommt seine Intro,
+ * sobald es verfügbar ist.
  */
 
 export type IntroCard = { title: string; body: string };
@@ -78,6 +78,24 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
     {
       title: "Was dich erwartet",
       body: "Du hast zwei Wege: Bei einer echten Anfrage, die gerade auf deinem Tisch liegt, formulieren wir dein Nein gemeinsam — Wort für Wort, bis du es abschicken kannst. Oder du trainierst im Übungsmodus an realistischen Szenarien, so oft du magst. In beiden Fällen lege ich deinen Entwurf auf den Blueprint: Welche Schichten sitzen schon, wo verschenkst du Kraft? Du bekommst eine verbesserte Version zum Anpassen — und wenn dein Nein eine Grenze zeigt, die in dein Bill of Rights gehört, schlage ich dir ein neues Recht vor. Das Ganze dauert 5–10 Minuten. Bist du dabei?",
+    },
+  ],
+  shadow: [
+    {
+      title: "Da ist etwas, das du nicht zeigst.",
+      body: "Der Kollege, der sich mit deiner Arbeit schmückt. Die Freundin, die immer nur nimmt. Der Satz von damals, der immer noch brennt. Du bist doch nicht nachtragend, du bist doch nicht so — also lächelst du und schluckst es runter. Das Problem: Runtergeschluckte Wut verschwindet nicht. Sie sammelt sich, wächst im Dunkeln und frisst dich leise von innen auf — als Groll, als Erschöpfung, als dieses Gefühl, ständig kurz vorm Platzen zu sein.",
+    },
+    {
+      title: "Deine Schattenseite darf mal raus.",
+      body: "In dir wohnt nicht nur die vernünftige, freundliche Version von dir. Da ist auch ein Teil, der wütend ist, verletzt, ungerecht, kleinlich — Psychologen nennen ihn das Es, den inneren Urmenschen. Dieser Teil ist nicht dein Feind. Er braucht nur ab und zu ein Ventil: einen sicheren Ort, an dem er alles sagen darf, ungefiltert und unzensiert. Denn was ausgesprochen ist, verliert seine Macht — und oft zeigt sich dahinter erst das eigentliche Problem.",
+    },
+    {
+      title: "Hier liest niemand mit. Versprochen.",
+      body: "Dieses Ventil ist der privateste Ort der App. Was du hier schreibst oder sagst, bekommt die KI nie zu sehen — kein Feedback, keine Analyse, kein Mitlesen. Und du entscheidest am Ende selbst, was mit deinen Worten passiert: privat behalten, mit Schloss im Journal, nur für dich. Oder verbrennen — dann wird nichts gespeichert, kein einziges Zeichen. Rauslassen und loslassen.",
+    },
+    {
+      title: "Was dich erwartet",
+      body: "Zwei Wege, such dir aus, was heute passt: Das Shadow Journal ist eine leere, dunkle Seite — kipp alles drauf, was sich angestaut hat, so hässlich und unfertig es sein darf. Oder du gehst auf einen Rage Walk: Raus an die Luft (oder im Kreis um den Küchentisch), und sprich deinen Groll laut aus, wo dich niemand hört — die App begleitet dich mit einem Timer und sanften Fragen. Danach entscheidest du: behalten oder verbrennen. Das Ganze dauert so lange, wie es eben braucht. Bereit?",
     },
   ],
   "things-got-messy": [

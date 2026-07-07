@@ -355,6 +355,46 @@
     88%, 100% { opacity: 0;    }
   }
 
+  /* ── Schattenseiten-Intro + Verbrenn-Ritual ───────────────────────── */
+
+  /* Intro Karte 0: die dunkle Wolke verdichtet sich pulsierend */
+  @keyframes sh-cloud {
+    0%, 100% { opacity: 0.35; transform: scale(0.92); }
+    50%      { opacity: 0.6;  transform: scale(1.06); }
+  }
+
+  /* Intro Karte 1: der Schatten-Blob lugt schüchtern hervor */
+  @keyframes sh-peek {
+    0%, 100% { transform: translate(1.5px, 1.5px) scale(0.94); opacity: 0.75; }
+    50%      { transform: translate(0, 0) scale(1);            opacity: 1;    }
+  }
+
+  /* Intro Karte 3: sanftes Flammen-Flackern */
+  @keyframes sh-flicker {
+    0%, 100% { transform: scale(1) rotate(-1.5deg);    }
+    35%      { transform: scale(1.08) rotate(1deg);    }
+    70%      { transform: scale(0.96) rotate(-0.5deg); }
+  }
+
+  /* Verbrenn-Ritual: die Karte glüht auf, steigt und verascht */
+  @keyframes sh-burn {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: none;
+    }
+    35% {
+      opacity: 0.9;
+      transform: translateY(-6px) scale(1.01) rotate(0.6deg);
+      filter: sepia(0.55) hue-rotate(-18deg) saturate(2.2) brightness(1.12);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-46px) scale(0.82) rotate(-2.5deg);
+      filter: sepia(0.85) hue-rotate(-28deg) saturate(2.6) brightness(1.35) blur(5px);
+    }
+  }
+
   /* ── Werteentdeckung: Sternbild-Journey ───────────────────────────── */
 
   /* Mikro-Sterne am Nachthimmel funkeln leise; Versatz per animation-delay. */

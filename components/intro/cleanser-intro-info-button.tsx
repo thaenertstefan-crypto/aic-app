@@ -14,7 +14,7 @@ type CleanserIntroInfoButtonProps = {
 };
 
 /**
- * Info-Icon für Cleanser (mantra/promises/confidence) inkl. "schon gesehen?"-
+ * Info-Icon für Cleanser (confidence-boost/promises) inkl. "schon gesehen?"-
  * Status (DB, geräteübergreifend). Ersetzt die frühere CleanserIntroSection.
  *
  * - Erstbesuch (Slug noch nicht in cleanser_intro_seen): Overlay öffnet sich

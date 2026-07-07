@@ -18,5 +18,7 @@ export const PAGE_TITLES = {
   booster: "Kopf-Apotheke",
   thingsGotMessy: "Things Got Messy",
   sayingNo: "Nein-Trainer",
+  confidence: "Confidence-Boost",
+  shadow: "Schattenseite",
   me: "Me",
 } as const;

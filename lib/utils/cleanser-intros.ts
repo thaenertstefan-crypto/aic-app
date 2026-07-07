@@ -8,24 +8,23 @@
  * informellen AIC-Stimme ("du") und vom Nutzer frei pflegbar — die
  * Komponente bleibt generisch.
  *
- * Slugs gegen app/(app)/cleansers/* geprüft: "mantra", "promises" und
- * "confidence" sind die aktuell verfügbaren Cleanser.
+ * Aktuelle Slugs: "confidence-boost" (Merge aus Mantra Cleanser + Showstopper
+ * Confidence, lebt unter /booster/confidence) und "promises". Der neue Slug
+ * nach dem Merge ist Absicht: so sehen auch Nutzer, die die alten Intros
+ * kannten, die Merged-Intro genau einmal automatisch (cleanser_intro_seen
+ * trackt pro Slug; verwaiste "mantra"/"confidence"-Zeilen sind harmlos).
  */
 
 export type CleanserIntro = { title: string; body: string };
 
 export const CLEANSER_INTROS: Record<string, CleanserIntro> = {
-  mantra: {
+  "confidence-boost": {
     title: "Worum geht's?",
-    body: "Eine kurze tägliche Reflexion: Du liest dein eigenes Mantra, gehst ein paar Reframe-Karten durch und hakst ab. So festigst du Tag für Tag eine liebevollere innere Stimme — in nur ein, zwei Minuten.",
+    body: "Zwei Werkzeuge in einem: Der „Gleich bin ich dran“-Flow macht dich in fünf Minuten bereit, wenn du gleich auftrittst — Atmung, Körper, Stimme, dein Mantra. Und das tägliche Ritual festigt nebenbei deine liebevollere innere Stimme: Mantra lesen, Reframe-Karten durchgehen, abhaken.",
   },
   promises: {
     title: "Worum geht's?",
     body: "Kleine, konkrete Versprechen an dich selbst, die du Tag für Tag hältst. Jedes gehaltene Versprechen ist ein Beweis: Du kannst dich auf dich verlassen. Fang klein an — Hauptsache, du ziehst es wirklich durch.",
-  },
-  confidence: {
-    title: "Worum geht's?",
-    body: "Fünf kleine Tricks für mehr Präsenz im Moment: kurz innehalten, ehrlich „Ich weiß es nicht“ sagen, kleinmachende Füllwörter streichen, deine Stimme ruhig führen und mit der 4-7-8-Atmung runterfahren. Tipp dich durch und probier sie vor deinem nächsten Auftritt aus.",
   },
 };
 

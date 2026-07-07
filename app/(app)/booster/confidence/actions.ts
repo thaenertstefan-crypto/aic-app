@@ -14,7 +14,7 @@ export type CleanserCheckinState = {
 
 const MANTRA_MAX = 120;
 const CARD_MAX = 200;
-const REVALIDATE_PATH = "/booster/mantra";
+const REVALIDATE_PATH = "/booster/confidence";
 
 export type MantraActionState = { error: string | null; success: boolean };
 
@@ -30,9 +30,13 @@ const defaultCards = (): MantraCardData[] =>
   DEFAULT_CARDS.map((c) => ({ id: null, thought: c.thought, reframe: c.reframe }));
 
 /**
- * Log today's "Heute reflektiert" check-in for the mantra cleanser.
+ * Log today's "Heute reflektiert" check-in for the daily mantra ritual.
  * Idempotent: a unique constraint on (user_id, cleanser_slug, date) means
  * a second insert for the same day is treated as "already done", not an error.
+ *
+ * WICHTIG: Der Slug bleibt "mantra", obwohl das Ritual seit dem Merge unter
+ * /booster/confidence lebt — so bleiben die bestehenden Streaks der Nutzer
+ * erhalten. Nicht "aufräumen"!
  */
 export async function logCleanserCheckinAction(
   _prevState: CleanserCheckinState,
@@ -62,6 +66,30 @@ export async function logCleanserCheckinAction(
   }
 
   return { error: null, success: true };
+}
+
+/**
+ * Stiller Check-in beim Abschluss des Moment-Flows („Gleich bin ich dran").
+ * Bewusst OHNE Streak-UI — ein Akut-Werkzeug soll keinen Täglich-Nutzen-Anreiz
+ * setzen; die Daten liegen nur für spätere Statistiken vor. Fire-and-forget
+ * vom Client, deshalb keine Fehlermeldung an den User (23505 = heute schon
+ * geloggt ist hier schlicht egal).
+ */
+export async function logMomentFlowCheckin(): Promise<void> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const today = await serverTodayKey();
+
+  await supabase.from("cleanser_checkins").insert({
+    user_id: user.id,
+    cleanser_slug: "confidence",
+    date: today,
+  });
 }
 
 /**

@@ -2,9 +2,9 @@ import Link from "next/link";
 import {
   Brain,
   Flame,
+  Moon,
   ShieldOff,
   Sparkles,
-  Quote,
   CheckCircle2,
   type LucideIcon,
 } from "lucide-react";
@@ -42,16 +42,16 @@ const TILES: Tile[] = [
     href: "/booster/saying-no",
   },
   {
-    title: "Showstopper Confidence",
-    desc: "Selbstbewusstsein in 5 Minuten",
-    icon: Sparkles,
-    href: "/booster/confidence",
+    title: PAGE_TITLES.shadow,
+    desc: "Wut & Groll sicher rauslassen",
+    icon: Moon,
+    href: "/booster/shadow",
   },
   {
-    title: "Mantra Cleanser",
-    desc: "Innere Kritik umschreiben",
-    icon: Quote,
-    href: "/booster/mantra",
+    title: PAGE_TITLES.confidence,
+    desc: "Für den Moment & für jeden Tag",
+    icon: Sparkles,
+    href: "/booster/confidence",
   },
   {
     title: "Promise Keeper",

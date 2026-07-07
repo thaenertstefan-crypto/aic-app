@@ -185,7 +185,7 @@ export default async function DashboardPage() {
   const fallbackMessage =
     "Schön, dass du dranbleibst! Stöbere durch die Rezepte für deinen nächsten Schritt.";
 
-  // Feste Liste aller sechs Anlaufstellen (handgeschriebene Ich-Sätze, daher
+  // Feste Liste aller sieben Anlaufstellen (handgeschriebene Ich-Sätze, daher
   // bewusst nicht aus RECIPES generiert). DashboardFocus filtert die aktuelle
   // Primary-Empfehlung client-seitig heraus.
   const allDestinations: Destination[] = [
@@ -207,9 +207,11 @@ export default async function DashboardPage() {
       href: "/me/bill-of-rights",
     },
     {
+      // Führt zum täglichen Mantra-Ritual (lebt seit dem Merge auf der
+      // Confidence-Boost-Landing, direkt unter der Hero-Karte).
       key: "mantra",
       sentence: "Ich fühl mich grad nicht gut genug",
-      href: "/booster/mantra",
+      href: "/booster/confidence",
     },
     {
       key: "promises",
@@ -217,9 +219,15 @@ export default async function DashboardPage() {
       href: "/booster/promises",
     },
     {
+      // Führt direkt in den akuten Moment-Flow „Gleich bin ich dran".
       key: "confidence",
       sentence: "Ich brauch 'n schnellen Confidence-Boost",
-      href: "/booster/confidence",
+      href: "/booster/confidence/moment",
+    },
+    {
+      key: "shadow",
+      sentence: "Ich muss gerade richtig Dampf ablassen",
+      href: "/booster/shadow",
     },
   ];
 

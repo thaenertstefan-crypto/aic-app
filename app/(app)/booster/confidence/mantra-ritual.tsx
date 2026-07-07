@@ -4,8 +4,6 @@ import { useActionState, useEffect, useRef, useState, useTransition } from "reac
 import { useRouter } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 
-import { CleanserIntroInfoButton } from "@/components/intro/cleanser-intro-info-button";
-import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -71,7 +69,7 @@ function MantraBlock({ mantra }: { mantra: string }) {
 
   return (
     <Card className="w-full border-primary/30 bg-card">
-      <CardContent className="flex min-h-[40svh] flex-col items-center justify-center gap-4 py-6 text-center">
+      <CardContent className="flex min-h-[32svh] flex-col items-center justify-center gap-4 py-6 text-center">
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
           Dein Mantra
         </p>
@@ -490,10 +488,10 @@ function SituationCarousel({ situations }: { situations: MantraCardData[] }) {
 }
 
 // ---------------------------------------------------------------------------
-// Seite
+// Section-Komponente (Seiten-Chrome liefert confidence-booster.tsx)
 // ---------------------------------------------------------------------------
 
-export function MantraCleanser({
+export function MantraRitual({
   doneToday,
   streak,
   mantra,
@@ -522,55 +520,46 @@ export function MantraCleanser({
   }, [state.success, doneToday, router]);
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <SubPageHeader
-        backHref="/booster"
-        title="Mantra Cleanser"
-        action={<CleanserIntroInfoButton slug="mantra" />}
-      />
-      <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-10">
-      <div className="flex w-full max-w-md flex-col items-center gap-8">
-        <p className="text-center text-sm text-muted-foreground/80">
-          Mach dieses Cleanser zu deinem — Mantra und Karten kannst du anpassen.
-        </p>
+    <div className="flex w-full flex-col items-center gap-8">
+      <p className="text-center text-sm text-muted-foreground/80">
+        Mach dieses Ritual zu deinem — Mantra und Karten kannst du anpassen.
+      </p>
 
-        {/* Mantra */}
-        <MantraBlock mantra={mantra} />
+      {/* Mantra */}
+      <MantraBlock mantra={mantra} />
 
-        {/* Reframe-Karten */}
-        <SituationCarousel situations={cards} />
+      {/* Reframe-Karten */}
+      <SituationCarousel situations={cards} />
 
-        {/* Check-in */}
-        <div className="flex w-full flex-col items-center gap-3">
-          {done ? (
-            <Button
-              size="lg"
-              variant="outline"
-              className="w-full gap-2"
-              disabled
-            >
-              <Check className="text-primary" />
-              Schon erledigt heute
+      {/* Check-in */}
+      <div className="flex w-full flex-col items-center gap-3">
+        {done ? (
+          <Button
+            size="lg"
+            variant="outline"
+            className="w-full gap-2"
+            disabled
+          >
+            <Check className="text-primary" />
+            Schon erledigt heute
+          </Button>
+        ) : (
+          <form action={formAction} className="w-full">
+            <Button type="submit" size="lg" className="w-full" disabled={isPending}>
+              {isPending ? "Einen Moment…" : "Heute reflektiert"}
             </Button>
-          ) : (
-            <form action={formAction} className="w-full">
-              <Button type="submit" size="lg" className="w-full" disabled={isPending}>
-                {isPending ? "Einen Moment…" : "Heute reflektiert"}
-              </Button>
-            </form>
-          )}
+          </form>
+        )}
 
-          {displayStreak > 0 ? (
-            <p className="text-sm text-muted-foreground">
-              🔥 {displayStreak} {displayStreak === 1 ? "Tag" : "Tage"} in Folge
-            </p>
-          ) : (
-            <p className="text-sm text-muted-foreground/70">Heute startest du.</p>
-          )}
+        {displayStreak > 0 ? (
+          <p className="text-sm text-muted-foreground">
+            🔥 {displayStreak} {displayStreak === 1 ? "Tag" : "Tage"} in Folge
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground/70">Heute startest du.</p>
+        )}
 
-          <FormError message={state.error} />
-        </div>
-      </div>
+        <FormError message={state.error} />
       </div>
     </div>
   );

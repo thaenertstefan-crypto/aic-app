@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   Brain,
   Heart,
+  Lock,
   Notebook,
   NotebookPen,
   Shield,
@@ -22,6 +23,7 @@ export type TemplateType =
   | "messy_moment"
   | "overthinking"
   | "saying_no"
+  | "shadow"
   | "free";
 
 export type JournalEntryRow = {
@@ -119,6 +121,12 @@ export const JOURNAL_TEMPLATE_MAP: Record<string, TemplateConfig> = {
     label: PAGE_TITLES.sayingNo,
     recipeSlug: "saying-no",
   },
+  shadow: {
+    // Schloss statt Rezept-Icon: signalisiert in der Liste "privat".
+    icon: Lock,
+    label: PAGE_TITLES.shadow,
+    recipeSlug: "shadow",
+  },
   free: {
     icon: NotebookPen,
     label: "Freier Eintrag",
@@ -162,6 +170,13 @@ export function extractPreview(
   maxLen = 80,
 ): string {
   if (!content || typeof content !== "object") return "";
+
+  // Private Einträge (Schattenseite): fester Hinweis statt Text-Vorschau —
+  // der Inhalt bleibt der Detailansicht vorbehalten. MUSS vor dem
+  // Preferred-Key-Scan stehen ("body" ist ein bevorzugter Key).
+  if (content["private"] === true) {
+    return "Privater Eintrag — nur für dich.";
+  }
 
   for (const key of PREVIEW_PREFERRED_KEYS) {
     const val = content[key];
@@ -385,6 +400,12 @@ function formatSayingNo(content: Record<string, unknown>): ContentSection[] {
   return sections;
 }
 
+function formatShadow(content: Record<string, unknown>): ContentSection[] {
+  // Nur der rohe Text — bewusst ohne KI-Felder (gibt es hier nie) und ohne
+  // weitere Aufbereitung: das Shadow Journal gehört ganz dem User.
+  return [{ label: "Dein Eintrag", value: stringField(content, "body") }];
+}
+
 function formatFree(content: Record<string, unknown>): ContentSection[] {
   const sections: ContentSection[] = [];
   const title = stringField(content, "title");
@@ -410,6 +431,7 @@ const FORMATTERS: Record<
   messy_moment: formatMessyMoment,
   overthinking: formatOverthinking,
   saying_no: formatSayingNo,
+  shadow: formatShadow,
   free: formatFree,
 };
 
@@ -473,6 +495,11 @@ export function getFilterTabs(): FilterTab[] {
       value: "saying-no",
       label: PAGE_TITLES.sayingNo,
       icon: ShieldOff,
+    },
+    {
+      value: "shadow",
+      label: PAGE_TITLES.shadow,
+      icon: Lock,
     },
   ];
 }
