@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
+import { GlassPanel } from "@/components/ui/glass-panel";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
@@ -19,16 +20,20 @@ import { saveGeneratedRightAction } from "../actions";
 
 const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
 
-/** Antippbare Regel-Karte im Duell: alte Regel oder neues Recht. */
+/** Antippbare Regel-Karte im Duell: alte Regel oder neues Recht.
+ *  Solange keine Auswahl getroffen ist (awaiting), pulsiert ein goldener
+ *  Rand als Hinweis, dass eine der Karten angetippt werden soll. */
 function RuleCard({
   label,
   text,
   selected,
+  awaiting,
   onSelect,
 }: {
   label: string;
   text: string;
   selected: boolean;
+  awaiting: boolean;
   onSelect: () => void;
 }) {
   return (
@@ -43,7 +48,9 @@ function RuleCard({
           "transition-colors",
           selected
             ? "border-primary ring-2 ring-primary/30"
-            : "border-border hover:border-primary/40",
+            : awaiting
+              ? "duel-glow border-border"
+              : "border-border hover:border-primary/40",
         )}
       >
         <CardContent className="flex flex-col gap-1 pt-(--card-spacing)">
@@ -159,16 +166,14 @@ export default function GenerateRightPage() {
         ) : (
           <>
             {analysis && (
-              <Card>
-                <CardContent className="space-y-3 pt-(--card-spacing)">
-                  <p className="font-heading text-sm font-semibold text-foreground">
-                    Meine Einschätzung
-                  </p>
-                  <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                    {analysis}
-                  </p>
-                </CardContent>
-              </Card>
+              <GlassPanel contentClassName="space-y-3">
+                <p className="font-heading text-lg font-semibold text-primary">
+                  Meine Einschätzung
+                </p>
+                <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                  {analysis}
+                </p>
+              </GlassPanel>
             )}
 
             {oldRule ? (
@@ -182,6 +187,7 @@ export default function GenerateRightPage() {
                     label="Die alte Regel"
                     text={oldRule}
                     selected={chosen === "old"}
+                    awaiting={chosen === null}
                     onSelect={() => setChosen("old")}
                   />
                   <div className="flex justify-center" aria-hidden="true">
@@ -191,6 +197,7 @@ export default function GenerateRightPage() {
                     label="Dein neues Recht"
                     text={suggestion}
                     selected={chosen === "new"}
+                    awaiting={chosen === null}
                     onSelect={() => setChosen("new")}
                   />
                 </div>

@@ -482,7 +482,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
 
         {/* Begleiter + Einstieg */}
         <div className="flex flex-col items-center gap-3 text-center">
-          <Mascot expression="thinking" size="sm" />
+          <Mascot expression="smile" size="md" />
           <p className="text-base leading-relaxed text-muted-foreground">
             Es ist messy geworden — das passiert. Erzähl einfach, was passiert
             ist — die Einordnung übernehmen wir danach gemeinsam.

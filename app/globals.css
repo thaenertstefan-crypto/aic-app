@@ -352,6 +352,26 @@
   }
   .star-pulse { animation: star-pulse 2.2s ease-in-out infinite; }
 
+  /* Goldener Puls-Rand der Duell-Kacheln (Regel-Duell), solange keine Auswahl
+     getroffen wurde — signalisiert "tipp eine an". */
+  @keyframes duel-glow {
+    0%, 100% {
+      border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+      box-shadow: 0 0 4px color-mix(in srgb, var(--primary) 25%, transparent);
+    }
+    50% {
+      border-color: color-mix(in srgb, var(--primary) 80%, transparent);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 55%, transparent);
+    }
+  }
+  .duel-glow { animation: duel-glow 2.2s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .duel-glow {
+      animation: none;
+      border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+    }
+  }
+
   /* Konstellationslinie zeichnet sich (Pfad mit pathLength={1}). */
   @keyframes constellation-draw {
     from { stroke-dashoffset: 1; }
