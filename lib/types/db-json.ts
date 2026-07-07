@@ -34,6 +34,8 @@ export type ValueEvalContent = {
  *  in formatBillOfRights). */
 export type BillOfRightsContent = {
   prompt1?: string;
+  /** Neue Einträge: einfühlsame KI-Einschätzung der Situation. */
+  ai_analysis?: string;
   /** Neue Einträge: die alte Regel, gegen die das Recht formuliert wurde. */
   old_rule?: string;
   /** Nur Alt-Einträge. */

@@ -76,6 +76,7 @@ export async function saveGeneratedRightAction(
   formData: FormData,
 ): Promise<MeRightsState> {
   const prompt1 = (formData.get("prompt1") as string | null)?.trim() ?? "";
+  const aiAnalysis = (formData.get("ai_analysis") as string | null)?.trim() ?? "";
   const oldRule = (formData.get("old_rule") as string | null)?.trim() ?? "";
   const text = (formData.get("text") as string | null)?.trim() ?? "";
 
@@ -83,6 +84,7 @@ export async function saveGeneratedRightAction(
   const lengthError =
     tooLong(text, TEXT_MAX_SHORT) ??
     tooLong(prompt1, TEXT_MAX_LONG) ??
+    tooLong(aiAnalysis, TEXT_MAX_LONG) ??
     tooLong(oldRule, TEXT_MAX_SHORT);
   if (lengthError) return { error: lengthError };
 
@@ -94,6 +96,7 @@ export async function saveGeneratedRightAction(
 
   const content: BillOfRightsContent = {
     prompt1,
+    ...(aiAnalysis ? { ai_analysis: aiAnalysis } : {}),
     ...(oldRule ? { old_rule: oldRule } : {}),
   };
 

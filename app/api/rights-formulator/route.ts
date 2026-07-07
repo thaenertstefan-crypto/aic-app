@@ -16,18 +16,20 @@ const MAX_INPUT_LEN = 2000;
 const AI_ERROR_MESSAGE =
   "Wir konnten gerade keinen Vorschlag erstellen. Versuch es noch einmal.";
 
-/** Geparste Modell-Antwort: die alte Regel (kann bei kaputtem JSON fehlen)
- *  und das neue Recht. */
+/** Geparste Modell-Antwort: einfühlsame Analyse und alte Regel (können bei
+ *  kaputtem JSON fehlen) sowie das neue Recht. */
 type FormulatorResult = {
+  analysis: string | null;
   oldRule: string | null;
   newRight: string;
 };
 
 /**
  * Parse the model output. Preferred path: strict JSON per system prompt
- * ({"old_rule": …, "new_right": …}). Fallback keeps the UI functional: an
- * "Ich habe das Recht …" sentence in free text becomes the new right and the
- * old rule stays null (the duel view then shows the right without opponent).
+ * ({"analysis": …, "old_rule": …, "new_right": …}). Fallback keeps the UI
+ * functional: an "Ich habe das Recht …" sentence in free text becomes the new
+ * right; analysis and old rule stay null (the duel view then shows the right
+ * without intro text and opponent).
  */
 function parseModelOutput(raw: string): FormulatorResult | null {
   const stripped = raw
@@ -39,6 +41,7 @@ function parseModelOutput(raw: string): FormulatorResult | null {
   try {
     const parsed: unknown = JSON.parse(stripped);
     if (parsed && typeof parsed === "object") {
+      const rawAnalysis = (parsed as { analysis?: unknown }).analysis;
       const rawOld = (parsed as { old_rule?: unknown }).old_rule;
       const rawNew = (parsed as { new_right?: unknown }).new_right;
       const newRight =
@@ -47,6 +50,10 @@ function parseModelOutput(raw: string): FormulatorResult | null {
           : null;
       if (newRight) {
         return {
+          analysis:
+            typeof rawAnalysis === "string" && rawAnalysis.trim()
+              ? rawAnalysis.trim()
+              : null,
           oldRule:
             typeof rawOld === "string" && rawOld.trim()
               ? rawOld.trim().slice(0, TEXT_MAX_SHORT)
@@ -61,7 +68,7 @@ function parseModelOutput(raw: string): FormulatorResult | null {
 
   const sentence = stripped.match(/Ich habe das Recht[^.!\n]*[.!]?/)?.[0]?.trim();
   if (sentence) {
-    return { oldRule: null, newRight: sentence.slice(0, TEXT_MAX_SHORT) };
+    return { analysis: null, oldRule: null, newRight: sentence.slice(0, TEXT_MAX_SHORT) };
   }
 
   return null;
@@ -70,8 +77,8 @@ function parseModelOutput(raw: string): FormulatorResult | null {
 /**
  * Name the two inner rules behind a moment of inner conflict (Recipe #3 –
  * Bill of Rights): the old people-pleaser rule and a new empowering
- * "Ich habe das Recht, …" statement. Accepts { situation } and returns
- * { oldRule, newRight }.
+ * "Ich habe das Recht, …" statement, plus a short empathetic analysis.
+ * Accepts { situation } and returns { analysis, oldRule, newRight }.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -125,7 +132,7 @@ export async function POST(request: Request) {
 
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5",
-      max_tokens: 300,
+      max_tokens: 450,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });

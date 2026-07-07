@@ -207,15 +207,17 @@ function formatValueEval(content: Record<string, unknown>): ContentSection[] {
 function formatBillOfRights(
   content: Record<string, unknown>,
 ): ContentSection[] {
-  // Neue Einträge (Regel-Duell): prompt1 + old_rule.
+  // Neue Einträge (Regel-Duell): prompt1 + ai_analysis + old_rule.
   // Alt-Einträge: prompt1, prompt2, prompt3 (nur noch lesend).
   const sections: ContentSection[] = [];
   const p1 = stringField(content, "prompt1");
+  const analysis = stringField(content, "ai_analysis");
   const oldRule = stringField(content, "old_rule");
   const p2 = stringField(content, "prompt2");
   const p3 = stringField(content, "prompt3");
 
   if (p1) sections.push({ label: "Deine Reflexion", value: p1 });
+  if (analysis) sections.push({ label: "Meine Einschätzung", value: analysis });
   if (oldRule) sections.push({ label: "Die alte Regel", value: oldRule });
   if (p2) sections.push({ label: "Was dir wichtig ist", value: p2 });
   if (p3) sections.push({ label: "Was du dir vornimmst", value: p3 });

@@ -61,6 +61,7 @@ export default function GenerateRightPage() {
   const [phase, setPhase] = useState<"reflect" | "duel">("reflect");
   useScrollTopOnChange(phase);
   const [p1, setP1] = useState("");
+  const [analysis, setAnalysis] = useState<string | null>(null);
   const [oldRule, setOldRule] = useState<string | null>(null);
   const [suggestion, setSuggestion] = useState("");
   const [chosen, setChosen] = useState<"old" | "new" | null>(null);
@@ -87,6 +88,7 @@ export default function GenerateRightPage() {
         setGenError(data.error ?? "Wir konnten gerade keinen Vorschlag erstellen.");
         return;
       }
+      setAnalysis(data.analysis ?? null);
       setOldRule(data.oldRule ?? null);
       setSuggestion(data.newRight ?? "");
       // Ohne benannte alte Regel gibt es kein Duell — direkt zum Recht.
@@ -101,6 +103,7 @@ export default function GenerateRightPage() {
 
   function resetToReflect() {
     setP1("");
+    setAnalysis(null);
     setOldRule(null);
     setSuggestion("");
     setChosen(null);
@@ -155,6 +158,19 @@ export default function GenerateRightPage() {
           </>
         ) : (
           <>
+            {analysis && (
+              <Card>
+                <CardContent className="space-y-3 pt-(--card-spacing)">
+                  <p className="font-heading text-sm font-semibold text-foreground">
+                    Meine Einschätzung
+                  </p>
+                  <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                    {analysis}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
             {oldRule ? (
               <>
                 <p className="text-sm leading-relaxed text-muted-foreground">
@@ -198,6 +214,7 @@ export default function GenerateRightPage() {
                 </p>
 
                 <input type="hidden" name="prompt1" value={p1} />
+                <input type="hidden" name="ai_analysis" value={analysis ?? ""} />
                 <input type="hidden" name="old_rule" value={oldRule ?? ""} />
 
                 <Textarea

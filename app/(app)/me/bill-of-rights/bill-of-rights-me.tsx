@@ -363,14 +363,14 @@ export function BillOfRightsMe({
           <Card className="border-dashed">
             <CardContent className="pt-(--card-spacing)">
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Ist gerade etwas passiert, das dir nachhängt?{" "}
+                Kommen beim Leben deiner Regeln Schuldgefühle auf?{" "}
                 <Link
                   href="/booster/things-got-messy"
                   className="font-medium text-primary underline-offset-4 hover:underline"
                 >
                   Things Got Messy
                 </Link>{" "}
-                ist das Rezept für den akuten Moment.
+                hilft dir herauszufinden, was sie dir sagen wollen.
               </p>
             </CardContent>
           </Card>

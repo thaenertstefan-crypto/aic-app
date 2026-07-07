@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormError } from "@/components/ui/form-error";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
@@ -220,24 +219,6 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
     }
   }
 
-  const reset = () => {
-    setPhase("reflect");
-    setMessyWhen("");
-    setError(null);
-    setEntryId(null);
-    setAnalysis("");
-    setGuilt(null);
-    setRules(null);
-    setRight(null);
-    setAiError(null);
-    setSuggestionText("");
-    setAcceptError(null);
-    setAccepted(false);
-    setFeedback(null);
-    setFeedbackPending(false);
-    setFeedbackError(null);
-  };
-
   // ── Render: Intro-Sequenz (erster Besuch) ───────────────────────
 
   const handleIntroSeen = () => {
@@ -292,11 +273,11 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
 
           <div className="space-y-2">
             <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
-              Gut hingeschaut.
+              Das war der wichtigste Schritt.
             </h1>
             <p className="text-muted-foreground">
-              Dein Moment ist gespeichert. Ehrlich hinzuschauen, statt dich zu
-              verurteilen — genau darum ging&apos;s.
+              Ehrlich hinzuschauen, statt dich zu verurteilen — genau darum
+              geht&apos;s.
             </p>
           </div>
 
@@ -323,28 +304,16 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
                 <Reveal delay={0.4} className="w-full">
                   <Card className="w-full">
                     <CardContent className="space-y-3 pt-(--card-spacing)">
-                      <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                        Was dein Begleiter dazu sagt
+                      <p className="text-left font-heading text-sm font-semibold text-foreground">
+                        Meine Einschätzung
                       </p>
-
-                      {guilt && (
-                        // Eigener Flex-Wrapper: der Ergebnis-Screen ist text-center,
-                        // das Badge soll aber links am Kartenrand sitzen.
-                        <div className="flex justify-start">
-                          <Badge variant="secondary">
-                            {guilt === "healthy"
-                              ? "Vermutlich: gesunde Schuld"
-                              : "Vermutlich: ungesunde Schuld"}
-                          </Badge>
-                        </div>
-                      )}
 
                       <p className="whitespace-pre-wrap text-left text-base leading-relaxed text-foreground">
                         {analysis}
                       </p>
 
                       {rules && (
-                        <p className="text-left text-sm leading-relaxed text-muted-foreground">
+                        <p className="text-left text-base leading-relaxed text-muted-foreground">
                           <span className="font-medium text-foreground">
                             Die zwei Regeln, die da gerungen haben:
                           </span>{" "}
@@ -485,9 +454,6 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
               render={<Link href="/me/bill-of-rights" />}
             >
               Meine Rechte ansehen
-            </Button>
-            <Button variant="outline" className="w-full" size="lg" onClick={reset}>
-              Neuen Moment reflektieren
             </Button>
           </div>
         </div>
