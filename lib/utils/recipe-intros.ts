@@ -8,9 +8,9 @@
  * Komponente bleibt generisch.
  *
  * Slugs gegen lib/utils/recipes.ts geprüft: "values", "bill-of-rights",
- * "overthinking" und "things-got-messy" sind die aktuell verfügbaren Rezepte.
- * Weitere Rezepte (wants, saying-no, shadow) bekommen ihre Intro, sobald sie
- * verfügbar sind.
+ * "overthinking", "things-got-messy" und "saying-no" sind die aktuell
+ * verfügbaren Rezepte. Weitere Rezepte (wants, shadow) bekommen ihre Intro,
+ * sobald sie verfügbar sind.
  */
 
 export type IntroCard = { title: string; body: string };
@@ -60,6 +60,24 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
     {
       title: "Was dich erwartet",
       body: "Die Folgende Übung soll Dir dabei helfen, dieses Manko deines Unterbewusstseins zu händeln und aus deinen Gedankenspiralen auszubrechen. Ziel ist es zuerst durch ein sogenanntes „Pattern Interrupt“ dein Unterbewusstsein bei seiner kreativen Schwarzmalerei zu unterbrechen indem du von 5 runterzählts oder laut „Stop“ sagst (ja das meine ich ernst). Dann gräbst du dich mit ein paar ehrlichen „Warum?“-Fragen zur Wurzel des Problems durch, das deine Gedankenspirale ausgelöst hat. Am Ende der Frage-Runde werde ich dich dazu challengen, das Problem aus einer anderen Perspektive zu betrachten, die der Schwarzmalerei deines Unterbewusstseins entgegensteht. Auf der Basis sollst Du dann in der Lage sein, einen klaren nächsten Schritt festzulegen, wie Du mit dem Problem umgehst - und zwar gemessen daran, was das Problem wirklich ist, nicht gemessen daran was Dein Unterbewusstsein dir vormacht. Bist Du bereit?",
+    },
+  ],
+  "saying-no": [
+    {
+      title: "Kennst du das?",
+      body: "„Klar, mach ich!“ — das Ja ist schon draußen, bevor du überhaupt nachgedacht hast. Auf dem Heimweg merkst du dann: Du wolltest eigentlich Nein sagen. Schon wieder. Und jetzt sitzt du da mit einem vollen Kalender, einem leeren Akku und diesem leisen Frust auf dich selbst. Das liegt nicht daran, dass du zu nett bist. Es liegt daran, dass Nein sagen eine Fähigkeit ist — und die hat dir einfach noch niemand beigebracht.",
+    },
+    {
+      title: "Wenn es kein „Hell yes!“ ist, ist es ein Nein.",
+      body: "Diese simple Regel (nach Dr. Aziz Gazipura) ist dein neuer Kompass: Spürst du bei einer Anfrage kein klares, freudiges „Hell yes!“, dann ist die ehrliche Antwort ein Nein. Das ist kein Egoismus — im Gegenteil: Dein Ja ist nur so viel wert wie dein Nein. Wer zu allem Ja sagt, sagt in Wahrheit zu nichts richtig Ja. Jedes ehrliche Nein macht Platz für die Dinge und Menschen, die dir wirklich wichtig sind.",
+    },
+    {
+      title: "Die vier Schichten eines guten Neins",
+      body: "Ein gutes Nein ist kein hartes Nein — es hat vier Schichten: Erstens: „Nein.“ ist ein vollständiger Satz — du schuldest niemandem einen Rechtfertigungs-Marathon. Zweitens: keine Entschuldigungen — ein Nein ist kein Vergehen, du füllst nur zuerst dein eigenes Glas. Drittens: Wärme zuerst — „Danke, dass du an mich denkst“ nimmt dem Nein die Härte, ohne es aufzuweichen. Und viertens: das sanfte Nein — beginne mit „Leider …“ und lass das Wort „aber“ weg, denn es radiert deine Wärme wieder aus.",
+    },
+    {
+      title: "Was dich erwartet",
+      body: "Du hast zwei Wege: Bei einer echten Anfrage, die gerade auf deinem Tisch liegt, formulieren wir dein Nein gemeinsam — Wort für Wort, bis du es abschicken kannst. Oder du trainierst im Übungsmodus an realistischen Szenarien, so oft du magst. In beiden Fällen lege ich deinen Entwurf auf den Blueprint: Welche Schichten sitzen schon, wo verschenkst du Kraft? Du bekommst eine verbesserte Version zum Anpassen — und wenn dein Nein eine Grenze zeigt, die in dein Bill of Rights gehört, schlage ich dir ein neues Recht vor. Das Ganze dauert 5–10 Minuten. Bist du dabei?",
     },
   ],
   "things-got-messy": [

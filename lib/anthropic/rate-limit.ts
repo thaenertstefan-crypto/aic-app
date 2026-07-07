@@ -10,6 +10,9 @@ export const RIGHTS_FORMULATOR_LIMIT = 20;
 export const OVERTHINKING_QUESTION_LIMIT = 40;
 // Ein Call pro Things-Got-Messy-Eintrag (+ Retries nach Fehlern).
 export const MESSY_GUILT_LIMIT = 10;
+// Nein-Trainer: pro Durchlauf ≤2 Szenarien + ≤2 Feedback-Runden → mehrere
+// Durchläufe pro Stunde bleiben möglich.
+export const SAYING_NO_LIMIT = 30;
 
 // Friendly German message returned with a 429 when a cap is hit.
 export const RATE_LIMIT_MESSAGE =

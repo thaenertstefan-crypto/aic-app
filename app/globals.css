@@ -330,6 +330,31 @@
     100%    { opacity: 0;   transform: scale(1);   }
   }
 
+  /* ── Nein-Trainer-Intro Animationen (Ja-Blase → Stern → Schichten) ── */
+
+  /* Karte 0: die „Ja!"-Sprechblase ploppt auf, bevor nachgedacht wurde */
+  @keyframes sn-blurt {
+    0%        { opacity: 0;   transform: scale(0.3); }
+    12%       { opacity: 0.95; transform: scale(1.1); }
+    20%       { opacity: 0.9; transform: scale(1);   }
+    62%       { opacity: 0.9; transform: scale(1);   }
+    78%, 100% { opacity: 0;   transform: scale(0.85); }
+  }
+
+  /* Karte 1: der goldene Hell-yes-Stern schwillt sanft an */
+  @keyframes sn-star-swell {
+    0%, 100% { transform: scale(1);    opacity: 0.85; }
+    50%      { transform: scale(1.18); opacity: 1;    }
+  }
+
+  /* Karte 2: die Blueprint-Schichten blenden nacheinander ein */
+  @keyframes sn-layer-in {
+    0%        { opacity: 0;    }
+    8%        { opacity: 0.75; }
+    72%       { opacity: 0.75; }
+    88%, 100% { opacity: 0;    }
+  }
+
   /* ── Werteentdeckung: Sternbild-Journey ───────────────────────────── */
 
   /* Mikro-Sterne am Nachthimmel funkeln leise; Versatz per animation-delay. */

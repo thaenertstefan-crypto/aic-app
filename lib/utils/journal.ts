@@ -5,6 +5,7 @@ import {
   Notebook,
   NotebookPen,
   Shield,
+  ShieldOff,
   type LucideIcon,
 } from "lucide-react";
 
@@ -20,6 +21,7 @@ export type TemplateType =
   | "bill_of_rights"
   | "messy_moment"
   | "overthinking"
+  | "saying_no"
   | "free";
 
 export type JournalEntryRow = {
@@ -112,6 +114,11 @@ export const JOURNAL_TEMPLATE_MAP: Record<string, TemplateConfig> = {
     label: "Grübelspirale durchbrochen",
     recipeSlug: "overthinking",
   },
+  saying_no: {
+    icon: ShieldOff,
+    label: PAGE_TITLES.sayingNo,
+    recipeSlug: "saying-no",
+  },
   free: {
     icon: NotebookPen,
     label: "Freier Eintrag",
@@ -142,7 +149,13 @@ export function getJournalConfig(templateType: string): TemplateConfig {
 /** Bevorzugte Erzähl-Felder für die Vorschau. Nötig, weil Postgres-JSONB die
  *  Keys umsortiert (Länge, dann Bytes) — ohne Priorität landet sonst z.B. bei
  *  messy_moment das kurze Enum-Feld guilt_type ("unhealthy") vor messy_when. */
-const PREVIEW_PREFERRED_KEYS = ["messy_when", "happenings", "problem", "body"];
+const PREVIEW_PREFERRED_KEYS = [
+  "messy_when",
+  "happenings",
+  "problem",
+  "situation",
+  "body",
+];
 
 export function extractPreview(
   content: Record<string, unknown>,
@@ -332,6 +345,46 @@ function formatOverthinking(
   return sections;
 }
 
+function formatSayingNo(content: Record<string, unknown>): ContentSection[] {
+  const isPractice = stringField(content, "mode") === "practice";
+  const draft = stringField(content, "draft");
+  const draft2 = stringField(content, "draft2");
+  const finalNo =
+    stringField(content, "final_no") || draft2 || draft;
+
+  const sections: ContentSection[] = [
+    {
+      label: isPractice ? "Das Übungsszenario" : "Die Anfrage",
+      value: stringField(content, "situation"),
+    },
+  ];
+
+  // Der erste Entwurf ist nur interessant, wenn er nicht ohnehin das
+  // finale Nein geworden ist.
+  if (draft && draft !== finalNo) {
+    sections.push({ label: "Dein erster Entwurf", value: draft });
+  }
+
+  sections.push({ label: "Dein Nein", value: finalNo });
+
+  // Kompakte Blueprint-Bilanz aus den KI-Verdicts (fehlt bei Alt-/Offline-Einträgen).
+  const checklist = content["ai_checklist"];
+  if (checklist && typeof checklist === "object") {
+    const values = Object.values(checklist as Record<string, unknown>).filter(
+      (v): v is boolean => typeof v === "boolean",
+    );
+    if (values.length > 0) {
+      const passed = values.filter(Boolean).length;
+      sections.push({
+        label: "Blueprint-Check",
+        value: `${passed} von ${values.length} Schichten ✓`,
+      });
+    }
+  }
+
+  return sections;
+}
+
 function formatFree(content: Record<string, unknown>): ContentSection[] {
   const sections: ContentSection[] = [];
   const title = stringField(content, "title");
@@ -356,6 +409,7 @@ const FORMATTERS: Record<
   bill_of_rights: formatBillOfRights,
   messy_moment: formatMessyMoment,
   overthinking: formatOverthinking,
+  saying_no: formatSayingNo,
   free: formatFree,
 };
 
@@ -414,6 +468,11 @@ export function getFilterTabs(): FilterTab[] {
       value: "things-got-messy",
       label: PAGE_TITLES.thingsGotMessy,
       icon: AlertTriangle,
+    },
+    {
+      value: "saying-no",
+      label: PAGE_TITLES.sayingNo,
+      icon: ShieldOff,
     },
   ];
 }

@@ -84,13 +84,17 @@ export const RECIPES: readonly Recipe[] = [
   },
   {
     slug: "saying-no",
-    title: "Nein sagen lernen",
+    title: PAGE_TITLES.sayingNo,
     description:
-      "Übe, Grenzen zu setzen, ohne Schuldgefühle. Für alle, die oft Ja sagen, obwohl sie Nein meinen.",
-    icon: "XCircle",
-    duration: "14 Tage",
-    available: false,
-    startPath: "/recipes/saying-no",
+      "Formuliere dein nächstes Nein — für eine echte Anfrage oder zum Üben am Szenario. Mit Feedback nach dem Saying-'No'-Blueprint.",
+    intro: [
+      "Wenn es kein „Hell yes!“ ist, ist es ein Nein. Klingt hart? Ist es nicht — es bedeutet nur: Dein Ja ist erst dann etwas wert, wenn du auch Nein sagen kannst.",
+      "Im Nein-Trainer formulierst du dein Nein für eine echte Anfrage oder übst an realistischen Szenarien. Dein Entwurf wird nach den vier Schichten eines guten Neins gecheckt — herzlich, ohne Entschuldigung, ohne „aber“ — und du bekommst eine Version, die du direkt verwenden kannst.",
+    ],
+    icon: "ShieldOff",
+    duration: "5–10 Minuten",
+    available: true,
+    startPath: "/booster/saying-no",
   },
   {
     slug: "overthinking",

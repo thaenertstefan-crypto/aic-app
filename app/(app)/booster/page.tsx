@@ -36,10 +36,10 @@ const TILES: Tile[] = [
     href: "/booster/things-got-messy",
   },
   {
-    title: "Saying No",
-    desc: "Nein sagen ohne schlechtes Gewissen",
+    title: PAGE_TITLES.sayingNo,
+    desc: "Dein Nein finden — ohne schlechtes Gewissen",
     icon: ShieldOff,
-    soon: true,
+    href: "/booster/saying-no",
   },
   {
     title: "Showstopper Confidence",

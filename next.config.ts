@@ -54,6 +54,11 @@ const nextConfig: NextConfig = {
         destination: "/booster/overthinking",
         permanent: false,
       },
+      {
+        source: "/recipes/saying-no",
+        destination: "/booster/saying-no",
+        permanent: false,
+      },
       { source: "/cleansers", destination: "/booster", permanent: false },
       {
         source: "/cleansers/confidence",

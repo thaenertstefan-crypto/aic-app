@@ -69,6 +69,42 @@ export type MessyMomentContent = {
   guilt_feedback?: "agree" | "disagree" | null;
 };
 
+/** Blueprint-Check des Nein-Trainers: pro Schicht true = eingehalten. */
+export type SayingNoChecklist = {
+  /** Schicht 1: keine langen Rechtfertigungs-Ketten. */
+  complete_sentence: boolean;
+  /** Schicht 2: keine Entschuldigungen. */
+  no_apology: boolean;
+  /** Schicht 3: Wärme/Wertschätzung vorhanden. */
+  warmth: boolean;
+  /** Schicht 4: kein „aber" nach der Wärme. */
+  no_but: boolean;
+};
+
+/** `journal_entries.content` bei template_type "saying_no" (Nein-Trainer).
+ *  Die KI-Felder trägt /api/saying-no-coach nach dem ersten Speichern nach
+ *  (null, wenn die KI keinen validen Wert lieferte). */
+export type SayingNoContent = {
+  mode: "real" | "practice";
+  /** real: die echte Anfrage; practice: das angezeigte Szenario. */
+  situation: string;
+  /** Nur practice: kam das Szenario von der KI oder aus dem statischen Pool? */
+  scenario_source?: "ai" | "static";
+  /** Nur real: Antwort auf die Hell-yes-Frage (false = es ist ein Nein). */
+  hell_yes?: boolean;
+  /** Erster Entwurf des Neins. */
+  draft: string;
+  /** Zweitversuch nach dem KI-Feedback (max. ein Re-Submit). */
+  draft2?: string;
+  ai_checklist?: SayingNoChecklist | null;
+  /** Verbesserte Version der KI. */
+  ai_improved?: string | null;
+  /** Das final gewählte Nein. */
+  final_no?: string;
+  /** Woher final_no stammt: eigener Entwurf, KI-Version oder editierte KI-Version. */
+  final_source?: "own" | "ai" | "edited";
+};
+
 /** `journal_entries.content` bei template_type "overthinking" (Grübelspirale).
  *  Alt-Einträge können zusätzlich `what_it_would_mean`, `current_problem` und
  *  `new_problem` enthalten (nur noch lesend in formatOverthinking). */
