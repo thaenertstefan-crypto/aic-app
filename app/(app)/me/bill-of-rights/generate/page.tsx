@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,17 +13,57 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
+import { cn } from "@/lib/utils";
 
 import { saveGeneratedRightAction } from "../actions";
 
 const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
 
+/** Antippbare Regel-Karte im Duell: alte Regel oder neues Recht. */
+function RuleCard({
+  label,
+  text,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  text: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className="w-full text-left"
+    >
+      <Card
+        className={cn(
+          "transition-colors",
+          selected
+            ? "border-primary ring-2 ring-primary/30"
+            : "border-border hover:border-primary/40",
+        )}
+      >
+        <CardContent className="flex flex-col gap-1 pt-(--card-spacing)">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {label}
+          </span>
+          <p className="text-base leading-relaxed text-foreground">{text}</p>
+        </CardContent>
+      </Card>
+    </button>
+  );
+}
+
 export default function GenerateRightPage() {
-  const [phase, setPhase] = useState<"reflect" | "result">("reflect");
+  const [phase, setPhase] = useState<"reflect" | "duel">("reflect");
   useScrollTopOnChange(phase);
   const [p1, setP1] = useState("");
-  const [p3, setP3] = useState("");
+  const [oldRule, setOldRule] = useState<string | null>(null);
   const [suggestion, setSuggestion] = useState("");
+  const [chosen, setChosen] = useState<"old" | "new" | null>(null);
   const [loading, setLoading] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
 
@@ -30,30 +71,41 @@ export default function GenerateRightPage() {
     error: null,
   });
 
-  const canGenerate = (p1.trim() || p3.trim()).length > 0 && !loading;
+  const canGenerate = p1.trim().length > 0 && !loading;
 
   async function generate() {
     setLoading(true);
     setGenError(null);
     try {
-      const situation = p1.trim();
       const res = await fetch("/api/rights-formulator", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ situation, idealReaction: p3.trim() }),
+        body: JSON.stringify({ situation: p1.trim() }),
       });
       const data = await res.json();
       if (!res.ok) {
         setGenError(data.error ?? "Wir konnten gerade keinen Vorschlag erstellen.");
         return;
       }
-      setSuggestion(data.suggestion ?? "");
-      setPhase("result");
+      setOldRule(data.oldRule ?? null);
+      setSuggestion(data.newRight ?? "");
+      // Ohne benannte alte Regel gibt es kein Duell — direkt zum Recht.
+      setChosen(data.oldRule ? null : "new");
+      setPhase("duel");
     } catch {
       setGenError("Wir konnten gerade keinen Vorschlag erstellen. Versuch es noch einmal.");
     } finally {
       setLoading(false);
     }
+  }
+
+  function resetToReflect() {
+    setP1("");
+    setOldRule(null);
+    setSuggestion("");
+    setChosen(null);
+    setGenError(null);
+    setPhase("reflect");
   }
 
   return (
@@ -71,21 +123,9 @@ export default function GenerateRightPage() {
         {phase === "reflect" ? (
           <>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Hier baust du in Ruhe an deinem Bill of Rights — ohne dass gerade
-              etwas passiert sein muss.
-              {" "}
-              Die Regeln, nach denen du leben willst zeigen sich häufig, wenn
-              du einen inneren Konflikt spürst, z.B., wenn dein Manager auf
-              Arbeit dich kurz vor Feierabend fragt, ob du noch eine extra
-              Aufgabe erledigen kannst, die noch heute fertig werden muss, und
-              du - schon in deinen Laufschuhen vor dem Laptop sitzend - mit dir
-              haderst, ob du ja oder nein sagst. In diesem Moment kämpfen zwei
-              innere Regeln gegeneinander, jene, die besagt, dass man immer
-              seinen Chef zufriedenstellen muss und jene, die besagt, dass man
-              das Recht hat seiner Freizeit dieselbe Wichtigkeit wie seiner
-              Arbeit zuzumessen und daher nach Feierabend seine persönlichen
-              Ziele, wie eine bessere Fitness zu priorisieren. Nach welcher
-              Regel du leben willst, entscheidest du.
+              Hier baust du in Ruhe an deiner Bill of Rights. Beschreib kurz
+              einen Moment, in dem du einen inneren Konflikt gespürt hast — ich
+              zeige dir dann, welche zwei Regeln da in dir gekämpft haben.
             </p>
 
             <div className="space-y-2">
@@ -96,21 +136,7 @@ export default function GenerateRightPage() {
                 id="p1"
                 value={p1}
                 onChange={(e) => setP1(e.target.value)}
-                rows={3}
-                className="resize-y"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="p3" className="text-base font-medium">
-                Wie würdest du handeln, wenn du frei von Angst, Schuld und Zweifel
-                wärst?
-              </Label>
-              <Textarea
-                id="p3"
-                value={p3}
-                onChange={(e) => setP3(e.target.value)}
-                rows={3}
+                rows={5}
                 className="resize-y"
               />
             </div>
@@ -126,52 +152,106 @@ export default function GenerateRightPage() {
             >
               {loading ? "Wird erstellt …" : "Vorschlag generieren"}
             </Button>
-
-            {/* Verzahnung: für den akuten Moment ist Things Got Messy da. */}
-            <Card className="border-dashed">
-              <CardContent className="pt-(--card-spacing)">
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Ist gerade etwas passiert, das dir nachhängt?{" "}
-                  <Link
-                    href="/booster/things-got-messy"
-                    className="font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    Things Got Messy
-                  </Link>{" "}
-                  ist das Rezept für den akuten Moment.
-                </p>
-              </CardContent>
-            </Card>
           </>
         ) : (
-          <form action={formAction} className="flex flex-1 flex-col gap-5">
-            <FormError message={state.error} />
+          <>
+            {oldRule ? (
+              <>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Diese zwei Regeln haben da vermutlich in dir gekämpft:
+                </p>
 
-            <p className="text-sm text-muted-foreground">
-              Dein Vorschlag — du kannst ihn noch anpassen:
-            </p>
+                <div className="flex flex-col gap-2">
+                  <RuleCard
+                    label="Die alte Regel"
+                    text={oldRule}
+                    selected={chosen === "old"}
+                    onSelect={() => setChosen("old")}
+                  />
+                  <div className="flex justify-center" aria-hidden="true">
+                    <Zap className="size-5 text-destructive" fill="currentColor" />
+                  </div>
+                  <RuleCard
+                    label="Dein neues Recht"
+                    text={suggestion}
+                    selected={chosen === "new"}
+                    onSelect={() => setChosen("new")}
+                  />
+                </div>
 
-            <input type="hidden" name="prompt1" value={p1} />
-            <input type="hidden" name="prompt3" value={p3} />
+                <p className="text-center text-base font-medium text-foreground">
+                  Nach welcher Regel willst du leben?
+                </p>
+              </>
+            ) : (
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Aus deiner Situation habe ich dir dieses neue Recht formuliert:
+              </p>
+            )}
 
-            <Textarea
-              name="text"
-              value={suggestion}
-              onChange={(e) => setSuggestion(e.target.value)}
-              required
-              disabled={pending}
-              className="min-h-[120px] resize-y"
-            />
+            {chosen === "new" && (
+              <form action={formAction} className="flex flex-col gap-5">
+                <FormError message={state.error} />
 
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full"
-              disabled={pending || !suggestion.trim()}
-            >
-              {pending ? "Wird gespeichert …" : "Zu meinen Bill of Rights hinzufügen"}
-            </Button>
-          </form>
+                <p className="text-sm text-muted-foreground">
+                  Dein neues Recht — du kannst es noch anpassen:
+                </p>
+
+                <input type="hidden" name="prompt1" value={p1} />
+                <input type="hidden" name="old_rule" value={oldRule ?? ""} />
+
+                <Textarea
+                  name="text"
+                  value={suggestion}
+                  onChange={(e) => setSuggestion(e.target.value)}
+                  required
+                  disabled={pending}
+                  className="min-h-[120px] resize-y"
+                />
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full"
+                  disabled={pending || !suggestion.trim()}
+                >
+                  {pending ? "Wird gespeichert …" : "Zu meiner Bill of Rights hinzufügen"}
+                </Button>
+              </form>
+            )}
+
+            {chosen === "old" && (
+              <div className="flex flex-col gap-5">
+                <Card className="border-dashed">
+                  <CardContent className="pt-(--card-spacing)">
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      Auch das ist eine bewusste Entscheidung — und genau darum
+                      geht es: Du entscheidest. Wenn sich das irgendwann anders
+                      anfühlt, bin ich hier.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="lg"
+                  className="w-full"
+                  onClick={resetToReflect}
+                >
+                  Andere Situation reflektieren
+                </Button>
+
+                <Button
+                  size="lg"
+                  className="w-full"
+                  render={<Link href="/me/bill-of-rights" />}
+                >
+                  Zurück zu deiner Bill of Rights
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

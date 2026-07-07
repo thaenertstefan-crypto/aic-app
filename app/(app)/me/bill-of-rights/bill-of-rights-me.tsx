@@ -359,6 +359,22 @@ export function BillOfRightsMe({
           {/* Immer sichtbar: zwei Wege, ein Recht hinzuzufügen */}
           <ActionTiles className="mt-auto pt-4" />
 
+          {/* Verzahnung: für den akuten Moment ist Things Got Messy da. */}
+          <Card className="border-dashed">
+            <CardContent className="pt-(--card-spacing)">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Ist gerade etwas passiert, das dir nachhängt?{" "}
+                <Link
+                  href="/booster/things-got-messy"
+                  className="font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  Things Got Messy
+                </Link>{" "}
+                ist das Rezept für den akuten Moment.
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Bearbeiten-Dialog: Recht umformulieren oder löschen */}
           <Dialog
             open={editingId !== null}

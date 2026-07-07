@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
-import type { RightItem } from "@/lib/types/db-json";
+import type { BillOfRightsContent, RightItem } from "@/lib/types/db-json";
 import {
   TEXT_MAX_LONG,
   TEXT_MAX_SHORT,
@@ -67,22 +67,23 @@ export async function appendRightAction(
 }
 
 /**
- * KI-Vorschlag übernehmen: Reflexion (prompt1..3) + finalen Vorschlag als
- * Journaleintrag (mit ai_insights) speichern und das Recht ans Array anhängen.
+ * KI-Vorschlag übernehmen: Reflexion (Situation + alte Regel) + gewähltes
+ * Recht als Journaleintrag (mit ai_insights) speichern und das Recht ans
+ * Array anhängen.
  */
 export async function saveGeneratedRightAction(
   _prev: MeRightsState,
   formData: FormData,
 ): Promise<MeRightsState> {
   const prompt1 = (formData.get("prompt1") as string | null)?.trim() ?? "";
-  const prompt3 = (formData.get("prompt3") as string | null)?.trim() ?? "";
+  const oldRule = (formData.get("old_rule") as string | null)?.trim() ?? "";
   const text = (formData.get("text") as string | null)?.trim() ?? "";
 
   if (!text) return { error: "Der Vorschlag ist leer." };
   const lengthError =
     tooLong(text, TEXT_MAX_SHORT) ??
     tooLong(prompt1, TEXT_MAX_LONG) ??
-    tooLong(prompt3, TEXT_MAX_LONG);
+    tooLong(oldRule, TEXT_MAX_SHORT);
   if (lengthError) return { error: lengthError };
 
   const supabase = await createClient();
@@ -91,7 +92,10 @@ export async function saveGeneratedRightAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Du musst angemeldet sein." };
 
-  const content = { prompt1, prompt3 };
+  const content: BillOfRightsContent = {
+    prompt1,
+    ...(oldRule ? { old_rule: oldRule } : {}),
+  };
 
   // Journaleintrag upserten (ein bill_of_rights-Eintrag pro User) — mit ai_insights.
   const { data: existingEntry } = await supabase

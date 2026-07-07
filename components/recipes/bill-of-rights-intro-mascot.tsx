@@ -5,10 +5,11 @@ import { useId, type CSSProperties } from "react";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { Mascot } from "@/components/brand/mascot";
 
-// Leitmotiv über alle 3 Karten:
+// Leitmotiv über alle 4 Karten:
 //   geschlucktes „Nein" → „ja" (Karte 0) → alte Regeln (Karte 1) → altes Regelwerk
-//   wird durchgestrichen & neues geschrieben (Karte 2).
-// Karte 0 nutzt das Mascot-Overlay (kleine Sprechblase im Blob). Karten 1 & 2
+//   wird durchgestrichen & neues geschrieben (Karte 2) → zwei Regeln im Duell
+//   (Karte 3, „Vorschlag generieren").
+// Karte 0 nutzt das Mascot-Overlay (kleine Sprechblase im Blob). Karten 1–3
 // rendern Schriftrollen als Geschwister VOR/UNTER dem Blob (nicht geclippt),
 // damit sie über das Maskottchen hinausragen können und das Gesicht oben frei
 // bleibt. Sequenz-Animationen laufen per SMIL (spielen einmal, frieren ein);
@@ -276,18 +277,60 @@ function Card2Mascot({ reduced }: { reduced: boolean }) {
   );
 }
 
+// ─── Karte 3: „Wie du deine Regeln entdeckst" — Regel-Duell ───────────
+// Zwei Schriftrollen stehen sich gegenüber, dazwischen blitzt ein Konflikt-
+// Blitz auf: zwei innere Regeln kämpfen gegeneinander. Besorgtes Gesicht.
+
+function ConflictBolt({ reduced }: { reduced: boolean }) {
+  return (
+    <svg width={18} height={18} viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <path
+        d="M10.5,1 L4,10.5 L8,10.5 L6.5,17 L14,7.5 L9.5,7.5 Z"
+        fill="var(--destructive)"
+        stroke="#E7B65E"
+        strokeWidth={0.8}
+        strokeLinejoin="round"
+      >
+        {!reduced && (
+          <animate
+            attributeName="opacity"
+            values="1;1;0.25;1;0.25;1;1"
+            keyTimes="0;0.42;0.47;0.52;0.57;0.62;1"
+            dur="4s"
+            repeatCount="indefinite"
+          />
+        )}
+      </path>
+    </svg>
+  );
+}
+
+function Card3Mascot({ reduced }: { reduced: boolean }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative z-10 flex items-center gap-1" style={breathingStyle(reduced)}>
+        <Scroll width={50} lines={2} mode="none" reduced={reduced} />
+        <ConflictBolt reduced={reduced} />
+        <Scroll width={50} lines={2} mode="none" reduced={reduced} />
+      </div>
+      <Mascot expression="sorrowMild" size="md" className="-mt-8" />
+    </div>
+  );
+}
+
 // ─── Öffentliche Komponente ───────────────────────────────────────────
 
 /**
  * Rendert den zum jeweiligen Intro-Karten-Index passenden animierten
  * Mascot für das Bill-of-Rights-Rezept (Nein→ja → alte Regeln → altes Regelwerk
- * durchstreichen & neues schreiben). Wird als renderMascot-Prop an <RecipeIntro>
- * übergeben.
+ * durchstreichen & neues schreiben → Regel-Duell). Wird als renderMascot-Prop
+ * an <RecipeIntro> übergeben.
  */
 export function BillOfRightsIntroMascot({ index }: { index: number }) {
   const reduced = useReducedMotion();
 
   if (index === 0) return <Card0Mascot reduced={reduced} />;
   if (index === 1) return <Card1Mascot reduced={reduced} />;
-  return <Card2Mascot reduced={reduced} />;
+  if (index === 2) return <Card2Mascot reduced={reduced} />;
+  return <Card3Mascot reduced={reduced} />;
 }

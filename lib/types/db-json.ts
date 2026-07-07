@@ -27,6 +27,21 @@ export type ValueEvalContent = {
   negative_reflection: string;
 };
 
+/** `journal_entries.content` bei template_type "bill_of_rights" (Vorschlag
+ *  generieren). Neue Einträge (Regel-Duell ab Juli 2026): `prompt1` (Situation)
+ *  + `old_rule` (KI-benannte alte Regel). Alt-Einträge können stattdessen
+ *  `prompt2`/`prompt3` aus früheren Formular-Versionen tragen (nur noch lesend
+ *  in formatBillOfRights). */
+export type BillOfRightsContent = {
+  prompt1?: string;
+  /** Neue Einträge: die alte Regel, gegen die das Recht formuliert wurde. */
+  old_rule?: string;
+  /** Nur Alt-Einträge. */
+  prompt2?: string;
+  /** Nur Alt-Einträge: „Wie hättest du idealerweise gehandelt?". */
+  prompt3?: string;
+};
+
 /** `journal_entries.content` bei template_type "free" (freier Eintrag). */
 export type FreeEntryContent = {
   title?: string;
