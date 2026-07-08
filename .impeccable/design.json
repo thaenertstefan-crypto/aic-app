@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-08T00:00:00.000Z",
+  "title": "Design System: Anti Imposter Club",
+  "extensions": {
+    "colorMeta": {
+      "aubergine-night": { "role": "neutral", "displayName": "Aubergine Night", "canonical": "#1B1726", "tonalRamp": ["#100D18", "#14111C", "#1B1726", "#221C30", "#2A2438", "#3A3350", "#5A5070", "#8C81A6"] },
+      "plum-surface": { "role": "neutral", "displayName": "Plum Surface", "canonical": "#221C30", "tonalRamp": ["#14111C", "#1B1726", "#221C30", "#2A2438", "#332B47", "#443A5C", "#6A5E86", "#9C90B6"] },
+      "candle-gold": { "role": "primary", "displayName": "Candle Gold", "canonical": "#E7B65E", "tonalRamp": ["#4A3413", "#6E4E1C", "#946A28", "#B98A3C", "#D6A24C", "#E7B65E", "#F0CD8C", "#F8E6C2"] },
+      "sage-success": { "role": "secondary", "displayName": "Sage Success", "canonical": "#6FAE8A", "tonalRamp": ["#16241D", "#20362C", "#2E4E40", "#3E6857", "#548A70", "#6FAE8A", "#97C7AC", "#C4E0D2"] },
+      "rose-celebrate": { "role": "secondary", "displayName": "Rose Celebrate", "canonical": "#C97B84", "tonalRamp": ["#2E181B", "#452428", "#63343A", "#84454D", "#A65C64", "#C97B84", "#DBA3A9", "#EDCED2"] },
+      "lilac-confidence": { "role": "tertiary", "displayName": "Lilac Confidence", "canonical": "#9C7FB0", "tonalRamp": ["#241C2C", "#342842", "#48385C", "#5E4A78", "#7A6394", "#9C7FB0", "#BCA6CB", "#DCCEE6"] },
+      "moonlight": { "role": "neutral", "displayName": "Moonlight", "canonical": "#F3EFFA", "tonalRamp": ["#302B3C", "#4A4458", "#665E76", "#847B96", "#A79EBB", "#C9C1DB", "#E1DAEE", "#F3EFFA"] },
+      "lavender-muted": { "role": "neutral", "displayName": "Lavender Muted", "canonical": "#A89FBE", "tonalRamp": ["#28243016", "#3A3448", "#524A64", "#6E6484", "#8A80A2", "#A89FBE", "#C6BFD6", "#E4DFEE"] },
+      "ember-destructive": { "role": "secondary", "displayName": "Ember Destructive", "canonical": "#E5484D", "tonalRamp": ["#2E1416", "#481C1F", "#68282B", "#8C363A", "#B83C41", "#E5484D", "#F08488", "#F8BEC0"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Greeting / page H1. Fraunces serif, one per screen." },
+      "headline": { "displayName": "Headline", "purpose": "Section headings within a flow. Fraunces." },
+      "title": { "displayName": "Title", "purpose": "Card titles and affirmations. Fraunces, the app's voice." },
+      "body": { "displayName": "Body", "purpose": "Default UI + prose. Geist. Cap prose at 65-75ch." },
+      "label": { "displayName": "Label", "purpose": "Meta text and small captions. Geist." }
+    },
+    "shadows": [
+      { "name": "hairline-ring", "value": "0 0 0 1px rgba(243,239,250,0.10)", "purpose": "The only 'elevation' — a light-on-dark 1px ring that separates a surface from the aubergine ground. Depth is tonal, not cast." }
+    ],
+    "motion": [
+      { "name": "ease-out-standard", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Default ease-out for state transitions and reveals (~150-250ms)." },
+      { "name": "nav-indicator", "value": "power2.out over 0.4s", "purpose": "GSAP slide of the bottom-nav active indicator; snaps instantly under reduced motion." },
+      { "name": "breathe", "value": "ease-in-out, long-duration, infinite", "purpose": "The mascot / mood-avatar 'breathing' pulse. Always paired with a reduced-motion off switch." }
+    ],
+    "breakpoints": [
+      { "name": "base", "value": "375px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Translucent gold primary action — glows rather than blocks. One primary per screen.",
+      "html": "<button class=\"ds-btn-primary\">Jetzt starten</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 12px; border-radius: 10px; border: 1px solid color-mix(in oklch, var(--primary, #E7B65E) 55%, transparent); background: color-mix(in oklch, var(--primary, #E7B65E) 15%, transparent); color: var(--foreground, #F3EFFA); font: 500 0.875rem Geist, system-ui, sans-serif; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); cursor: pointer; transition: background 0.2s, transform 0.1s; } .ds-btn-primary:hover { background: color-mix(in oklch, var(--primary, #E7B65E) 25%, transparent); } .ds-btn-primary:focus-visible { outline: none; border-color: var(--primary, #E7B65E); box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary, #E7B65E) 50%, transparent); } .ds-btn-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "The workhorse secondary action — aubergine-tinted transparent fill with a hairline edge.",
+      "html": "<button class=\"ds-btn-outline\">Bill of Rights starten</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.16); background: color-mix(in oklch, var(--background, #1B1726) 40%, transparent); color: var(--foreground, #F3EFFA); font: 500 0.875rem Geist, system-ui, sans-serif; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); cursor: pointer; transition: background 0.2s; } .ds-btn-outline:hover { background: #251F32; } .ds-btn-outline:focus-visible { outline: none; border-color: var(--primary, #E7B65E); box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary, #E7B65E) 50%, transparent); }"
+    },
+    {
+      "name": "Card (solid)",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "Default plum surface card, separated from the ground by a hairline ring — no shadow.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Deine Werte</div><p class=\"ds-card-desc\">Ein kurzer Schritt, der dein Selbstvertrauen stärkt.</p></div>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 14px; background: var(--card, #221C30); color: var(--card-foreground, #F3EFFA); box-shadow: 0 0 0 1px rgba(243,239,250,0.10); overflow: hidden; } .ds-card-title { font: 500 1rem Fraunces, Georgia, serif; line-height: 1.35; } .ds-card-desc { font: 400 0.875rem Geist, system-ui, sans-serif; line-height: 1.5; color: var(--muted-foreground, #A89FBE); margin: 0; }"
+    },
+    {
+      "name": "Card (glass)",
+      "kind": "card",
+      "refersTo": "card-glass",
+      "description": "Frosted hero card — reserved for 1-2 moments per screen so the ambient blobs glow through.",
+      "html": "<div class=\"ds-card-glass\"><div class=\"ds-card-eyebrow\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 11H6a1 1 0 0 1-1-1V7a3 3 0 0 1 3-3\"/><path d=\"M19 11h-4a1 1 0 0 1-1-1V7a3 3 0 0 1 3-3\"/></svg></div><p class=\"ds-affirm\">Ich habe das Recht, um Hilfe zu bitten.</p></div>",
+      "css": ".ds-card-glass { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); color: #F3EFFA; } .ds-card-eyebrow { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 999px; background: color-mix(in oklch, var(--primary, #E7B65E) 15%, transparent); color: var(--primary, #E7B65E); } .ds-affirm { margin: 0; font: 500 1.125rem Fraunces, Georgia, serif; line-height: 1.6; color: rgba(243,239,250,0.9); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Transparent-on-aubergine field with a hairline stroke; gold focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Wie heißt du?\" />",
+      "css": ".ds-input { width: 100%; height: 32px; padding: 4px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.16); background: color-mix(in oklch, #251F32 30%, transparent); color: var(--foreground, #F3EFFA); font: 400 1rem Geist, system-ui, sans-serif; outline: none; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input::placeholder { color: var(--muted-foreground, #A89FBE); } .ds-input:focus-visible { border-color: var(--primary, #E7B65E); box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary, #E7B65E) 50%, transparent); }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge-default",
+      "description": "Solid gold pill for status/counts — Gold Ink text, never white.",
+      "html": "<span class=\"ds-badge\">Neu</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; justify-content: center; height: 20px; padding: 2px 8px; border-radius: 26px; background: var(--primary, #E7B65E); color: #2B1B06; font: 500 0.75rem Geist, system-ui, sans-serif; white-space: nowrap; }"
+    },
+    {
+      "name": "Bottom Nav Tab",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Mobile tab: icon + text-xs label, gold when active with a sliding gold indicator.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-tab ds-nav-active\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" fill-opacity=\"0.1\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 9.5 12 3l9 6.5V21a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z\"/></svg><span>Start</span></a><a class=\"ds-nav-tab\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21a8 8 0 0 1 16 0\"/></svg><span>Ich</span></a></nav>",
+      "css": ".ds-nav { position: relative; display: flex; align-items: center; justify-content: space-around; max-width: 32rem; margin: 0 auto; height: 64px; background: color-mix(in oklch, #1B1726 70%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.12); } .ds-nav-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 12px; font: 500 0.75rem Geist, system-ui, sans-serif; color: var(--muted-foreground, #A89FBE); text-decoration: none; transition: color 0.2s; } .ds-nav-tab:hover { color: var(--foreground, #F3EFFA); } .ds-nav-active { color: var(--primary, #E7B65E); position: relative; } .ds-nav-active::after { content: \"\"; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 32px; height: 2px; border-radius: 999px; background: var(--primary, #E7B65E); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Candlelight in a Quiet Room",
+    "overview": "Anti Imposter Club is a companion, not a coach. The whole surface sits in a deep aubergine night (#1B1726) — the app you open late, after the day, when the inner critic is loudest. Into that dark room falls a single warm light: a candle-gold accent (#E7B65E) that marks the one thing worth doing next. Nothing shouts. Warmth is carried by the light and the voice, never by loud color everywhere. A soft, procedural mascot breathes in the corners; motion is gentle and 'alive,' never busy. It is a tool you're in — a guided exercise — but a tool with a heartbeat. It explicitly rejects the cold clinical health app, the hustle/productivity coach, the generic SaaS dashboard, and kitschy wellness esoterica.",
+    "keyCharacteristics": [
+      "Dark aubergine surface throughout — one theme, no light mode.",
+      "A single candle-gold accent used sparingly, for the next step and current state.",
+      "Serif (Fraunces) for warmth and voice; sans (Geist) for the working UI.",
+      "Translucent, frosted glass on hero moments; solid plum on everything else.",
+      "Gentle, breathing motion with a reduced-motion fallback everywhere.",
+      "Mobile-first, ~375px, safe-area aware."
+    ],
+    "rules": [
+      { "name": "The One Candle Rule", "body": "Candle Gold appears on roughly one thing per screen — the primary action or the current state. If two elements are gold, one of them is wrong. The dark room has one light.", "section": "colors" },
+      { "name": "The Warm-White Rule", "body": "Text is Moonlight (#F3EFFA), never #FFFFFF. Pure white on aubergine is a cold spike; the warm off-white belongs to the room.", "section": "colors" },
+      { "name": "The Serif-Is-Voice Rule", "body": "Fraunces is for language the user should feel — names, affirmations, encouragements. Never set a button, a data value, or a form label in the serif.", "section": "typography" },
+      { "name": "The Fixed-Scale Rule", "body": "This is product UI: type sizes are fixed rem steps, not fluid clamp(). A heading that shrinks with the viewport looks worse in a phone-width column, not better.", "section": "typography" },
+      { "name": "The Glass-Is-Rare Rule", "body": "Frosted glass is reserved for one or two hero moments per screen. Stacked backdrop-filter layers are expensive on older phones and, used everywhere, they stop meaning 'this one matters.'", "section": "elevation" },
+      { "name": "The Hairline Rule", "body": "Separation is a 1px rgba(255,255,255,0.12) edge, never a shadow and never a hard opaque line.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep the aubergine night (#1B1726) as the ground on every surface. One theme, no light mode.",
+      "Do obey the One Candle Rule — Candle Gold on ~one element per screen (the next step or current state).",
+      "Do use Moonlight (#F3EFFA) for text, and Gold Ink (#2B1B06) on gold fills. Never pure #FFFFFF.",
+      "Do set voice — greetings, affirmations, encouragements — in Fraunces; set actions, labels, and data in Geist.",
+      "Do build depth from tonal layers + a 1px hairline; reserve frosted glass for 1-2 hero moments per screen.",
+      "Do give every animation a prefers-reduced-motion: reduce fallback (crossfade or instant), the breathing mascot included.",
+      "Do verify Lavender-Muted (#A89FBE) text against its surface; if a string must be read comfortably, move it toward Moonlight."
+    ],
+    "donts": [
+      "Don't ship the cold clinical health app: no medical white, no hospital blue, no wall of form fields.",
+      "Don't ship the hustle/productivity coach: no streak-as-pressure, no 'no excuses' alarm-red, no shaming empty states.",
+      "Don't ship the generic SaaS dashboard: no interchangeable icon+heading+text card grids, no hero-metric tiles, no corporate-neutral filler.",
+      "Don't ship kitschy wellness esoterica: no oversweet pastels, no incense-and-affirmation cliches, no empty mindfulness fluff.",
+      "Don't put two gold elements on one screen, or use gold as decoration.",
+      "Don't use border-left/border-right >1px as a colored accent stripe on cards or callouts.",
+      "Don't use gradient text (background-clip: text) or glassmorphism as a default surface.",
+      "Don't reach for a solitary tiny tracked-uppercase eyebrow above every section as scaffolding.",
+      "Don't nest cards, and don't fluid-clamp() product type — fixed rem steps only."
+    ]
+  }
+}

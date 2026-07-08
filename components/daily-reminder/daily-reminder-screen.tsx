@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
@@ -30,9 +30,13 @@ function asAffirmation(text: string): string {
  */
 export function DailyReminderScreen({ rights }: { rights: string[] }) {
   const reduced = useReducedMotion();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [right, setRight] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
   const [showButton, setShowButton] = useState(false);
+
+  // Schließt den Reminder; das native `close`-Event räumt den State auf (unten).
+  const dismiss = () => dialogRef.current?.close();
 
   // Entscheiden, ob heute angezeigt wird (einmal beim Mount).
   useEffect(() => {
@@ -63,6 +67,11 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
   useEffect(() => {
     if (!right) return;
 
+    // Als echtes modales <dialog> öffnen → Fokus-Trap, Esc-to-close und
+    // Top-Layer-Stacking übernimmt der Browser.
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+
     if (reduced) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Reduced-Motion-Zweig: sofort sichtbar statt Fade-in, feuert einmal pro gewähltem Recht
       setVisible(true);
@@ -82,48 +91,61 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
   if (!right) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      onClick={() => setRight(null)}
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-background px-6"
+    <dialog
+      ref={dialogRef}
+      aria-label="Heutiger Reminder"
+      onClose={() => {
+        setRight(null);
+        setVisible(false);
+        setShowButton(false);
+      }}
+      className="m-0 max-h-none max-w-none border-0 bg-transparent p-0 text-foreground backdrop:bg-background"
     >
-      <p
-        className="text-lg font-medium text-primary"
-        style={{ textShadow: "0 0 18px rgba(231,182,94,0.55)" }}
+      {/* Tap überall schließt (wie zuvor); Esc greift jetzt zusätzlich nativ. */}
+      <div
+        onClick={dismiss}
+        className="fixed inset-0 flex flex-col items-center justify-center gap-6 bg-background px-6"
       >
-        Heutiger Reminder
-      </p>
+        <p
+          className="text-lg font-medium text-primary"
+          style={{ textShadow: "0 0 18px rgba(231,182,94,0.55)" }}
+        >
+          Heutiger Reminder
+        </p>
 
-      <p
-        className={cn(
-          "mx-auto max-w-sm text-center font-heading text-2xl leading-relaxed text-foreground",
-          !reduced && "transition-opacity",
-          visible ? "opacity-100" : "opacity-0",
-        )}
-        style={
-          reduced
-            ? undefined
-            : { transitionDuration: "3000ms", transitionTimingFunction: "ease-in" }
-        }
-      >
-        {asAffirmation(right)}
-      </p>
+        <p
+          className={cn(
+            "mx-auto max-w-sm text-center font-heading text-2xl leading-relaxed text-foreground",
+            !reduced && "transition-opacity",
+            visible ? "opacity-100" : "opacity-0",
+          )}
+          style={
+            reduced
+              ? undefined
+              : {
+                  transitionDuration: "3000ms",
+                  transitionTimingFunction: "ease-in",
+                }
+          }
+        >
+          {asAffirmation(right)}
+        </p>
 
-      <Button
-        aria-hidden={!showButton}
-        tabIndex={showButton ? undefined : -1}
-        onClick={(e) => {
-          e.stopPropagation();
-          setRight(null);
-        }}
-        className={cn(
-          !reduced && "transition-opacity duration-500",
-          showButton ? "opacity-100" : "pointer-events-none opacity-0",
-        )}
-      >
-        Weiter
-      </Button>
-    </div>
+        <Button
+          aria-hidden={!showButton}
+          tabIndex={showButton ? undefined : -1}
+          onClick={(e) => {
+            e.stopPropagation();
+            dismiss();
+          }}
+          className={cn(
+            !reduced && "transition-opacity duration-500",
+            showButton ? "opacity-100" : "pointer-events-none opacity-0",
+          )}
+        >
+          Weiter
+        </Button>
+      </div>
+    </dialog>
   );
 }

@@ -50,7 +50,7 @@ export function MoodCheckin({
   const [selected, setSelected] = useState<number | null>(initialScore ?? 3);
 
   return (
-    <Card variant="glass">
+    <Card>
       <CardContent className="space-y-8">
         <div>
           <p className="font-heading text-lg font-medium text-foreground">

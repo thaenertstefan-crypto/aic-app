@@ -264,13 +264,13 @@ export default async function DashboardPage() {
       />
 
       {/* Heutiges Recht */}
-      <Card variant="glass">
+      <Card>
         <CardContent className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
               <Quote className="size-4" />
             </div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
+            <p className="text-xs font-medium text-muted-foreground">
               Heutiges Recht
             </p>
           </div>

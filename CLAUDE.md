@@ -3,6 +3,10 @@
 ## About
 A self-development companion app that turns workbook exercises into interactive guided modules.
 
+## Design Context
+- **Strategy (who/what/why):** siehe [PRODUCT.md](PRODUCT.md) — Register (`product`), Zielgruppe, Markenpersönlichkeit (warm · ermutigend · nahbar), Anti-Referenzen, Design-Prinzipien, Accessibility.
+- **Visual system (how it looks):** siehe [DESIGN.md](DESIGN.md) — Palette, Typografie, Komponenten, Elevation. Vor neuen Screens/Redesigns beide lesen, damit die Arbeit on-brand bleibt.
+
 ## Tech Stack
 - **Framework:** Next.js 16 App Router
 - **Database & Auth:** Supabase (auth + db)

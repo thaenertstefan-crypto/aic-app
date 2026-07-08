@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -65,6 +66,12 @@ export function DailyFocus({
   showQuestion,
   alternatives,
 }: DailyFocusProps) {
+  // Nur die ersten paar Alternativen zeigen — der Rest liegt hinter „mehr".
+  // Auf einem Screen, der Überforderung nehmen soll, ist eine kurze Liste
+  // ruhiger als eine Wand aus sieben gleichwertigen Zeilen.
+  const ALTERNATIVES_PREVIEW = 3;
+  const [showAllAlternatives, setShowAllAlternatives] = useState(false);
+
   // Frage aus dem Tier ableiten (nicht an primary.key koppeln), damit sie auch
   // bei künftigen "low"-Empfehlungen stimmig bleibt.
   const question =
@@ -163,7 +170,10 @@ export function DailyFocus({
               …oder brauchst du gerade was anderes?
             </p>
             <ul className="space-y-2">
-              {view.alternatives.map((destination) => (
+              {(showAllAlternatives
+                ? view.alternatives
+                : view.alternatives.slice(0, ALTERNATIVES_PREVIEW)
+              ).map((destination) => (
                 <li key={destination.key}>
                   <Link
                     href={destination.href}
@@ -182,6 +192,19 @@ export function DailyFocus({
                 </li>
               ))}
             </ul>
+
+            {!showAllAlternatives &&
+              view.alternatives.length > ALTERNATIVES_PREVIEW && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllAlternatives(true)}
+                  className="flex w-full items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {view.alternatives.length - ALTERNATIVES_PREVIEW} weitere
+                  anzeigen
+                  <ChevronDown className="size-4 shrink-0" />
+                </button>
+              )}
           </div>
         )}
       </div>
