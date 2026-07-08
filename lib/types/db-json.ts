@@ -15,6 +15,57 @@ export type RightItem = {
   active: boolean;
 };
 
+/** Element von `wants.wants` (JSONB-Array): ein bestätigtes Want. */
+export type WantItem = {
+  id: string;
+  /** „Ich will …"-Formulierung. */
+  text: string;
+  active: boolean;
+  /** Verlinkter bestätigter Wert (values-bank-id bzw. "custom:…"); null ohne Passung. */
+  valueId?: string | null;
+  /** Herkunft: KI-Hypothese oder selbst formuliert. */
+  source?: "ai" | "own";
+};
+
+/** Element von `wants.bets` (JSONB-Array): ein Little-Bet-Experiment. */
+export type BetItem = {
+  id: string;
+  text: string;
+  /** Want, aus dem das Experiment abgeleitet ist; null bei freien Bets. */
+  wantId?: string | null;
+  status: "open" | "tried";
+  /** Reflexions-Eintrag (template_type "little_bet"), sobald reflektiert. */
+  journalEntryId?: string | null;
+  /** Herkunft: KI-Vorschlag oder selbst angelegt. */
+  source?: "ai" | "own";
+};
+
+/** `journal_entries.content` bei template_type "yin_yang" (Wants-Audit). */
+export type YinYangContent = {
+  /** „Wofür nimmst du Mühsal in Kauf?" */
+  yin: string;
+  /** „Was bringt dich in Flow?" */
+  yang: string;
+  /** Optional: kognitive Prinzipien hinter den Flow-Aktivitäten. */
+  principles?: string;
+  /** Von /api/wants-distiller nachgetragen: die KI-Hypothesen (Provenienz). */
+  ai_wants?: { text: string; value_id: string | null }[];
+};
+
+/** `journal_entries.content` bei template_type "little_bet" (Bet-Reflexion). */
+export type LittleBetContent = {
+  /** Snapshot des Bet-Texts zum Reflexionszeitpunkt. */
+  bet_text: string;
+  /** Wie war das Erlebnis? Erwartungen erfüllt, Sicht verändert? */
+  experience: string;
+  liked?: string;
+  disliked?: string;
+  /** Leute & Vibe als 3-Wege-Einschätzung. */
+  vibe?: "energized" | "neutral" | "drained";
+  /** Hat der Bet deine Wants verändert oder bestätigt? */
+  changed_wants?: string;
+};
+
 /** `journal_entries.content` bei template_type "daily_value" (Werte-Tagebuch). */
 export type DailyValueContent = {
   happenings: string;

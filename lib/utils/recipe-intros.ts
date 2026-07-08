@@ -7,10 +7,9 @@
  * informellen AIC-Stimme ("du") und können frei editiert werden — die
  * Komponente bleibt generisch.
  *
- * Slugs gegen lib/utils/recipes.ts geprüft: "values", "bill-of-rights",
- * "overthinking", "things-got-messy", "saying-no" und "shadow" sind die
- * aktuell verfügbaren Rezepte. Das letzte Rezept (wants) bekommt seine Intro,
- * sobald es verfügbar ist.
+ * Slugs gegen lib/utils/recipes.ts geprüft: "values", "wants",
+ * "bill-of-rights", "overthinking", "things-got-messy", "saying-no" und
+ * "shadow" — damit haben alle Rezepte ihre Intro.
  */
 
 export type IntroCard = { title: string; body: string };
@@ -28,6 +27,24 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
     {
       title: "Was dich erwartet",
       body: "In diesem Rezept findest du deine Werte nicht durch stundenlange Selbstreflexion — sondern durch echte Beobachtung von dir selbst. Wie ein Wissenschaftler. Du startest mit deiner Hypothese: 5 Werte, von denen du vermutest, dass sie deine sind — ohne zu viel nachzudenken. Dann beobachtest du dich selbst für 7 Tage mit kurzen Tagebuch-Einträgen: Was hat dich heute wirklich bewegt? Was hat dich genervt? Was hat dir Energie gegeben oder gekostet? Und vor allem: warum? Am Ende wertest du aus, ob deine Hypothese stimmt — oder ob du dich selbst überrascht hast. Pro Tag brauchst du dafür nur 2–3 Minuten. Bist du dabei?",
+    },
+  ],
+  wants: [
+    {
+      title: "Wessen Ziele jagst du eigentlich?",
+      body: "Der Job, der auf LinkedIn gut aussieht. Das Hobby, das gerade alle anfangen. Die Reise, die man „mal gemacht haben muss“. Wir werden täglich mit Zielen bombardiert, die wir wollen sollen — von Werbung, Trends und den Leuten um uns herum. Psychologen nennen das mimetisches Begehren: Wir übernehmen ganz automatisch die Wünsche unseres Umfelds, ohne es zu merken. Das Problem: Wenn andere bestimmen, was du willst — wer bestimmt dann, wer du bist?",
+    },
+    {
+      title: "Du bist, was du willst.",
+      body: "Was du wirklich willst, entscheidet viel mehr als deine nächste Essensbestellung: Es bestimmt, welche Ziele du dir setzt, mit welchen Menschen du dich umgibst, wofür du morgens aufstehst — und damit, wer du wirst. Die gute Nachricht: Deine echten, intrinsischen Wants sind längst da. Sie liegen nur begraben unter dem Berg an Erwartungen, den die Welt auf dir abgeladen hat. Wir müssen sie nur freilegen.",
+    },
+    {
+      title: "Yin & Yang: die zwei ehrlichen Fragen",
+      body: "Statt der langweiligen Frage „Was magst du denn so?“ stellen wir zwei ehrlichere: Yin — Wofür nimmst du freiwillig Mühsal in Kauf? Denn wofür du bereit bist zu leiden, das ist dir wirklich wichtig. Und Yang — Was bringt dich in Flow? Bei welchen Aktivitäten vergisst du die Zeit, blendest die Welt aus und gehst ganz in dem auf, was du tust? Deine Antworten auf diese zwei Fragen verraten mehr über deine echten Wants als jede Grübelnacht.",
+    },
+    {
+      title: "Was dich erwartet",
+      body: "Zuerst machst du das Yin-&-Yang-Audit: zwei Fragen, ehrliche Antworten, etwa 10 Minuten. Daraus destilliere ich gemeinsam mit dir deine Wants-Hypothesen — verknüpft mit den Werten, die du schon entdeckt hast. Aber eine Hypothese ist nur eine Vermutung. Deshalb kommt danach der wichtigste Teil: Little Bets. Kleine, risikofreie Experimente — eine Schnupperstunde, ein Event, ein Abend — mit denen du im echten Leben testest, ob das, was du zu wollen glaubst, wirklich das ist, was du willst. Bist du dabei?",
     },
   ],
   "bill-of-rights": [

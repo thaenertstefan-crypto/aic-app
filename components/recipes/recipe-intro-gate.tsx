@@ -5,6 +5,7 @@ import { useState } from "react";
 import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { ValuesIntroMascot } from "@/components/recipes/values-intro-mascot";
+import { WantsIntroMascot } from "@/components/recipes/wants-intro-mascot";
 import { BillOfRightsIntroMascot } from "@/components/recipes/bill-of-rights-intro-mascot";
 import { ThingsGotMessyIntroMascot } from "@/components/recipes/things-got-messy-intro-mascot";
 import { SayingNoIntroMascot } from "@/components/recipes/saying-no-intro-mascot";
@@ -59,6 +60,8 @@ export function RecipeIntroGate({
     const renderMascot =
       slug === "values"
         ? (i: number) => <ValuesIntroMascot index={i} />
+        : slug === "wants"
+        ? (i: number) => <WantsIntroMascot index={i} />
         : slug === "bill-of-rights"
           ? (i: number) => <BillOfRightsIntroMascot index={i} />
           : slug === "things-got-messy"

@@ -64,13 +64,18 @@ export const RECIPES: readonly Recipe[] = [
   },
   {
     slug: "wants",
-    title: "Was du wirklich willst",
+    title: PAGE_TITLES.wants,
     description:
       "Lerne deine eigenen Wünsche von fremden Erwartungen zu unterscheiden und herauszufinden, wohin du dich entwickeln möchtest.",
+    intro: [
+      "Was du wirklich willst, entscheidet weit mehr als deine nächste Essensbestellung: Es bestimmt, welche Ziele du dir setzt, mit welchen Menschen du dich umgibst und wer du wirst. Das Problem: Die meisten Menschen jagen unbewusst die Wünsche ihres Umfelds hinterher — von Werbung, Trends und Erwartungen übernommen — statt ihre eigenen.",
+      "Die gute Nachricht: Deine echten, intrinsischen Wants sind längst da. Sie liegen nur begraben unter dem Berg an Erwartungen, den die Welt auf dir abgeladen hat. Mit dem Yin-&-Yang-Audit legst du sie frei — und mit kleinen Experimenten, den „Little Bets“, testest du im echten Leben, ob das, was du zu wollen glaubst, wirklich das ist, was du willst.",
+    ],
     icon: "Compass",
-    duration: "14–21 Tage",
-    available: false,
-    startPath: "/recipes/wants",
+    duration: "20 Min + laufende Experimente",
+    available: true,
+    startPath: "/me/wants/journey",
+    stepPaths: ["/me/wants/journey", "/me/wants"],
   },
   {
     slug: "bill-of-rights",

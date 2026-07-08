@@ -6,6 +6,7 @@ import { getCachedUser } from "@/lib/supabase/get-user";
 import { getRecipeBySlug } from "@/lib/utils/recipes";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { getValueLabel } from "@/lib/utils/values-bank";
+import type { WantItem } from "@/lib/types/db-json";
 import { getJournalData } from "@/app/(app)/recipes/values/actions";
 import { hasSeenRecipeIntro } from "@/app/(app)/recipes/actions";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,7 @@ export default async function RecipeDetailPage(props: {
   const user = await getCachedUser();
   const userId = user?.id ?? "";
   const isValues = slug === "values";
+  const isWants = slug === "wants";
 
   // Hybrid-Intro (Schritt 6.10): beim ersten Mal Sequenz, danach Collapsible.
   // cards ist nur für Rezepte mit hinterlegter Intro gesetzt (aktuell "values").
@@ -80,8 +82,13 @@ export default async function RecipeDetailPage(props: {
   // Alle voneinander unabhängigen Reads in einer Welle parallelisieren, statt
   // sie seriell hintereinander zu awaiten (Waterfall, P-1). Die values_hypothesis
   // wird nur für das Werte-Rezept gebraucht.
-  const [{ data: profile }, { data: progress }, introSeen, hypothesisRow] =
-    await Promise.all([
+  const [
+    { data: profile },
+    { data: progress },
+    introSeen,
+    hypothesisRow,
+    wantsRow,
+  ] = await Promise.all([
       // Fetch the user's name for a warm greeting
       supabase.from("profiles").select("name").eq("id", userId).maybeSingle(),
       // Existing progress — highest cycle_number wins. started_at wird unten an
@@ -105,10 +112,24 @@ export default async function RecipeDetailPage(props: {
             .maybeSingle()
             .then((r) => r.data)
         : Promise.resolve(null),
+      isWants
+        ? supabase
+            .from("wants")
+            .select("wants")
+            .eq("user_id", userId)
+            .maybeSingle()
+            .then((r) => r.data)
+        : Promise.resolve(null),
     ]);
 
   const hasProgress = progress && progress.status !== "not_started";
   const isCompleted = progress?.status === "completed";
+
+  // For the wants recipe, surface the user's confirmed wants so returning users
+  // see them (and a shortcut to their living Wants page) without restarting.
+  const activeWants: WantItem[] = isWants
+    ? ((wantsRow?.wants as WantItem[] | null) ?? []).filter((w) => w.active)
+    : [];
 
   // For the (cyclical) values recipe, surface the user's confirmed values right
   // here so returning users see them without having to restart the recipe.
@@ -207,6 +228,34 @@ export default async function RecipeDetailPage(props: {
                   </span>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Already-discovered wants (returning users) + Verweis auf die
+            lebende Wants-Seite */}
+        {isWants && activeWants.length > 0 && (
+          <Card className="mt-6 border-primary/30">
+            <CardContent className="space-y-3 pt-(--card-spacing)">
+              <h2 className="font-heading text-base font-semibold text-primary">
+                Deine Wants
+              </h2>
+              <ul className="space-y-1.5">
+                {activeWants.map((want) => (
+                  <li
+                    key={want.id}
+                    className="text-sm leading-relaxed text-foreground"
+                  >
+                    {want.text}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/me/wants"
+                className="inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Zu deinen Wants & Little Bets →
+              </Link>
             </CardContent>
           </Card>
         )}

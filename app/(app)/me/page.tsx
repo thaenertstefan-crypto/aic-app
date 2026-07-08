@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   ChevronRight,
-  Heart,
+  Compass,
   ScrollText,
   Sparkles,
   type LucideIcon,
@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCachedUser } from "@/lib/supabase/get-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { PAGE_TITLES } from "@/lib/content/labels";
-import type { RightItem } from "@/lib/types/db-json";
+import type { BetItem, RightItem, WantItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
 
 function MeBlock({
@@ -72,12 +72,15 @@ export default async function MePage() {
   let name: string | null = null;
   let valuesCount = 0;
   let activeRightsCount = 0;
+  let activeWantsCount = 0;
+  let openBetsCount = 0;
 
   if (user) {
     const [
       { data: profile, error: profileError },
       { data: hypothesis, error: hypothesisError },
       { data: billOfRights, error: rightsError },
+      { data: wantsRow, error: wantsError },
     ] = await Promise.all([
       supabase.from("profiles").select("name").eq("id", user.id).single(),
       supabase
@@ -92,11 +95,16 @@ export default async function MePage() {
         .select("rights")
         .eq("user_id", user.id)
         .maybeSingle(),
+      supabase
+        .from("wants")
+        .select("wants, bets")
+        .eq("user_id", user.id)
+        .maybeSingle(),
     ]);
 
     // Echte Lesefehler an die Segment-Error-Boundary geben statt als Leerzustand
     // zu zeigen.
-    const readError = profileError ?? hypothesisError ?? rightsError;
+    const readError = profileError ?? hypothesisError ?? rightsError ?? wantsError;
     if (readError) {
       throw new Error(`me: read failed (${readError.code ?? "unknown"})`);
     }
@@ -105,6 +113,10 @@ export default async function MePage() {
     valuesCount = ((hypothesis?.values as string[] | null) ?? []).length;
     const rights = (billOfRights?.rights as RightItem[] | null) ?? [];
     activeRightsCount = rights.filter((r) => r.active).length;
+    const wants = (wantsRow?.wants as WantItem[] | null) ?? [];
+    activeWantsCount = wants.filter((w) => w.active).length;
+    const bets = (wantsRow?.bets as BetItem[] | null) ?? [];
+    openBetsCount = bets.filter((b) => b.status === "open").length;
   }
 
   const displayName = name?.trim() || "Du";
@@ -116,6 +128,12 @@ export default async function MePage() {
     activeRightsCount > 0
       ? `${activeRightsCount} ${activeRightsCount === 1 ? "Recht" : "Rechte"} definiert`
       : "Noch keine Rechte definiert";
+  const wantsSubtitle =
+    activeWantsCount > 0
+      ? openBetsCount > 0
+        ? `${activeWantsCount} Wants · ${openBetsCount} offene ${openBetsCount === 1 ? "Bet" : "Bets"}`
+        : `${activeWantsCount} Wants entdeckt`
+      : "Noch keine Wants entdeckt";
 
   return (
     <div className="space-y-6 p-4">
@@ -154,10 +172,10 @@ export default async function MePage() {
           href="/me/values"
         />
         <MeBlock
-          icon={Heart}
-          title="Meine Wants"
-          subtitle="Kommt bald"
-          disabled
+          icon={Compass}
+          title={PAGE_TITLES.meWants}
+          subtitle={wantsSubtitle}
+          href="/me/wants"
         />
         <MeBlock
           icon={ScrollText}

@@ -433,6 +433,41 @@ export type Database = {
           },
         ]
       }
+      wants: {
+        Row: {
+          bets: Json
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string | null
+          wants: Json
+        }
+        Insert: {
+          bets?: Json
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+          wants?: Json
+        }
+        Update: {
+          bets?: Json
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+          wants?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

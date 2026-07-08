@@ -155,6 +155,11 @@ export default async function DashboardPage() {
   const valuesHref =
     valuesStatus === "in_progress" ? "/me/values/journey" : "/me/values";
 
+  // Wants-Status analog: abgeschlossen (Wants bestätigt) → lebende Wants-Seite
+  // mit den Little Bets; sonst der Rezept-Hub, der die Intro gated.
+  const wantsCompleted =
+    progressRows.find((p) => p.recipe_slug === "wants")?.status === "completed";
+
   // "Normale" Empfehlung (recipe-basiert, mood-unabhängig). Der low-Tier-Fall
   // (Mantra-Pause) und die Frage werden client-seitig in DashboardFocus aus der
   // live getippten Stimmung abgeleitet — so reagiert die Anzeige sofort.
@@ -200,6 +205,13 @@ export default async function DashboardPage() {
       key: "overthinking",
       sentence: "Ich bin schon wieder am Overthinken",
       href: "/booster/overthinking",
+    },
+    {
+      key: "wants",
+      sentence: wantsCompleted
+        ? "Ich würde gern an meinen Little Bets arbeiten"
+        : "Ich will rausfinden, was ich wirklich will",
+      href: wantsCompleted ? "/me/wants" : "/recipes/wants",
     },
     {
       key: "bor",

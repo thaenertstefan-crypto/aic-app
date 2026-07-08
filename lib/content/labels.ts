@@ -21,4 +21,6 @@ export const PAGE_TITLES = {
   confidence: "Confidence-Boost",
   shadow: "Schattenseite",
   me: "Me",
+  wants: "Was du wirklich willst",
+  meWants: "Meine Wants",
 } as const;

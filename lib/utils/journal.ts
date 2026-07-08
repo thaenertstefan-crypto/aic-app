@@ -1,6 +1,8 @@
 import {
   AlertTriangle,
   Brain,
+  Compass,
+  FlaskConical,
   Heart,
   Lock,
   Notebook,
@@ -19,6 +21,8 @@ import { PAGE_TITLES } from "@/lib/content/labels";
 export type TemplateType =
   | "daily_value"
   | "value_eval"
+  | "yin_yang"
+  | "little_bet"
   | "bill_of_rights"
   | "messy_moment"
   | "overthinking"
@@ -101,6 +105,16 @@ export const JOURNAL_TEMPLATE_MAP: Record<string, TemplateConfig> = {
     label: "Werte-Auswertung",
     recipeSlug: "values",
   },
+  yin_yang: {
+    icon: Compass,
+    label: "Yin-&-Yang-Audit",
+    recipeSlug: "wants",
+  },
+  little_bet: {
+    icon: FlaskConical,
+    label: "Little-Bet-Reflexion",
+    recipeSlug: "wants",
+  },
   bill_of_rights: {
     icon: Shield,
     label: "Bill of Rights Reflexion",
@@ -162,6 +176,10 @@ const PREVIEW_PREFERRED_KEYS = [
   "happenings",
   "problem",
   "situation",
+  // yin_yang: die Yin-Antwort vor allem anderen (statt z.B. principles).
+  "yin",
+  // little_bet: der Bet-Snapshot statt des vibe-Enums.
+  "bet_text",
   "body",
 ];
 
@@ -230,6 +248,74 @@ function formatValueEval(content: Record<string, unknown>): ContentSection[] {
       value: stringField(content, "negative_reflection"),
     },
   ];
+}
+
+function formatYinYang(content: Record<string, unknown>): ContentSection[] {
+  const sections: ContentSection[] = [
+    {
+      label: "Wofür nimmst du Mühsal in Kauf?",
+      value: stringField(content, "yin"),
+    },
+    {
+      label: "Was bringt dich in Flow?",
+      value: stringField(content, "yang"),
+    },
+  ];
+
+  const principles = stringField(content, "principles");
+  if (principles) {
+    sections.push({ label: "Die Prinzipien dahinter", value: principles });
+  }
+
+  // Die destillierten Hypothesen (von /api/wants-distiller nachgetragen).
+  const aiWants = content["ai_wants"];
+  if (Array.isArray(aiWants) && aiWants.length > 0) {
+    const texts = aiWants
+      .map((w) =>
+        typeof (w as Record<string, unknown>)?.text === "string"
+          ? ((w as Record<string, unknown>).text as string)
+          : "",
+      )
+      .filter(Boolean);
+    if (texts.length > 0) {
+      sections.push({
+        label: "Deine Wants-Hypothesen",
+        value: texts.map((t) => `• ${t}`).join("\n"),
+      });
+    }
+  }
+
+  return sections;
+}
+
+function formatLittleBet(content: Record<string, unknown>): ContentSection[] {
+  const sections: ContentSection[] = [
+    { label: "Dein Little Bet", value: stringField(content, "bet_text") },
+    { label: "Wie war's?", value: stringField(content, "experience") },
+  ];
+
+  const liked = stringField(content, "liked");
+  if (liked) sections.push({ label: "Was dir gefallen hat", value: liked });
+
+  const disliked = stringField(content, "disliked");
+  if (disliked) sections.push({ label: "Was dir nicht gefallen hat", value: disliked });
+
+  const vibeLabels: Record<string, string> = {
+    energized: "Hat mir Energie gegeben",
+    neutral: "War okay",
+    drained: "Hat mich eher ausgelaugt",
+  };
+  const vibe = stringField(content, "vibe");
+  if (vibe && vibeLabels[vibe]) {
+    sections.push({ label: "Leute & Vibe", value: vibeLabels[vibe] });
+  }
+
+  const changedWants = stringField(content, "changed_wants");
+  if (changedWants) {
+    sections.push({ label: "Was das mit deinen Wants macht", value: changedWants });
+  }
+
+  return sections;
 }
 
 function formatBillOfRights(
@@ -427,6 +513,8 @@ const FORMATTERS: Record<
 > = {
   daily_value: formatDailyValue,
   value_eval: formatValueEval,
+  yin_yang: formatYinYang,
+  little_bet: formatLittleBet,
   bill_of_rights: formatBillOfRights,
   messy_moment: formatMessyMoment,
   overthinking: formatOverthinking,
@@ -475,6 +563,11 @@ export function getFilterTabs(): FilterTab[] {
       value: "values",
       label: "Werte",
       icon: Heart,
+    },
+    {
+      value: "wants",
+      label: "Wants",
+      icon: Compass,
     },
     {
       value: "bill-of-rights",
