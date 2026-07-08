@@ -174,7 +174,7 @@ function CompassOverlay1({ reduced }: { reduced: boolean }) {
             : {
                 transformBox: "view-box",
                 transformOrigin: `${COMPASS_CX}px ${COMPASS_CY}px`,
-                animation: "val-needle-settle 3.2s cubic-bezier(0.34,1.2,0.64,1) infinite",
+                animation: "val-needle-settle 3.2s ease-in-out infinite",
               }
         }
       >

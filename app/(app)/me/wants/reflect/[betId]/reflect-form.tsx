@@ -5,6 +5,7 @@ import { Battery, BatteryLow, Minus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { SectionLabel } from "@/components/ui/section-label";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
@@ -48,9 +49,7 @@ export function ReflectForm({
 
         <Card className="w-full">
           <CardContent className="pt-(--card-spacing)">
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Dein Little Bet
-            </p>
+            <SectionLabel className="mb-1">Dein Little Bet</SectionLabel>
             <p className="text-base leading-relaxed text-foreground">{betText}</p>
           </CardContent>
         </Card>

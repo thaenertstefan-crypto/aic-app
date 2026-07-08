@@ -132,7 +132,7 @@ function GuiltCompassOverlay({ reduced }: { reduced: boolean }) {
             : {
                 transformBox: "view-box",
                 transformOrigin: `${COMPASS_CX}px ${COMPASS_CY}px`,
-                animation: "tgm-needle-decide 3.6s cubic-bezier(0.34,1.2,0.64,1) infinite",
+                animation: "tgm-needle-decide 3.6s ease-in-out infinite",
               }
         }
       >

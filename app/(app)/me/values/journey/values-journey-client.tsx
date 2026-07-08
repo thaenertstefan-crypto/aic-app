@@ -276,7 +276,7 @@ export function ValuesJourneyClient({
                   "absolute top-1/2 flex -translate-y-1/2 items-center gap-1 whitespace-nowrap font-heading text-base",
                   side === "right" ? "left-full ml-1.5" : "right-full mr-1.5",
                   state === "open"
-                    ? "text-muted-foreground/60"
+                    ? "text-muted-foreground"
                     : "font-semibold text-foreground",
                 )}
               >

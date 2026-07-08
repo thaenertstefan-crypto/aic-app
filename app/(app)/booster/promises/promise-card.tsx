@@ -123,7 +123,7 @@ export function PromiseCard({
             <p className="text-sm text-muted-foreground">Heute startest du.</p>
           )}
           {promise.longest_streak > optimistic.streak && (
-            <span className="ml-auto text-xs text-muted-foreground/70">
+            <span className="ml-auto text-xs text-muted-foreground">
               Längste Serie: {promise.longest_streak}
             </span>
           )}

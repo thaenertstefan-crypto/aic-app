@@ -6,6 +6,7 @@ import { Check, ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-r
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SectionLabel } from "@/components/ui/section-label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -70,9 +71,7 @@ function MantraBlock({ mantra }: { mantra: string }) {
   return (
     <Card className="w-full border-primary/30 bg-card">
       <CardContent className="flex min-h-[32svh] flex-col items-center justify-center gap-4 py-6 text-center">
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
-          Dein Mantra
-        </p>
+        <SectionLabel>Dein Mantra</SectionLabel>
 
         {editing ? (
           <div className="flex w-full flex-col items-stretch gap-3">
@@ -413,17 +412,13 @@ function SituationCarousel({ situations }: { situations: MantraCardData[] }) {
                   <DeleteCardDialog onDelete={() => handleDelete(i)} />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
-                    Der Gedanke
-                  </p>
+                  <SectionLabel>Der Gedanke</SectionLabel>
                   <p className="text-base leading-relaxed text-muted-foreground">
                     „{s.thought}“
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                    Der Reframe
-                  </p>
+                  <SectionLabel>Der Reframe</SectionLabel>
                   <p className="text-base leading-relaxed text-foreground">
                     {s.reframe}
                   </p>
@@ -556,7 +551,7 @@ export function MantraRitual({
             🔥 {displayStreak} {displayStreak === 1 ? "Tag" : "Tage"} in Folge
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground/70">Heute startest du.</p>
+          <p className="text-sm text-muted-foreground">Heute startest du.</p>
         )}
 
         <FormError message={state.error} />

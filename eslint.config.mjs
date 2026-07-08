@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build-/Design-Tooling (gitignored, kein App-Code):
+    ".claude/**",
+    ".impeccable/**",
   ]),
   {
     rules: {
@@ -23,6 +26,21 @@ const eslintConfig = defineConfig([
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
           caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      // Design guardrails (DESIGN.md §6). Keep the two AI-tell patterns from
+      // creeping back into className strings.
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "Literal[value=/uppercase\\s+tracking-/]",
+          message:
+            "Tracked-uppercase eyebrow is banned (DESIGN.md §6). Use <SectionLabel> (Fraunces micro-heading) instead.",
+        },
+        {
+          selector: "Literal[value=/border-[lr]-[2-9]/]",
+          message:
+            "Side-stripe border >1px is banned (DESIGN.md §6). Use a full hairline ring/fill and carry state with an icon or badge.",
         },
       ],
     },

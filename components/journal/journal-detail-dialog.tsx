@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { SectionLabel } from "@/components/ui/section-label";
 import { getJournalEntryDetail } from "@/app/(app)/journal/actions";
 import {
   getJournalConfig,
@@ -94,9 +95,7 @@ export function JournalDetailDialog({ entry, open, onOpenChange }: Props) {
               {sections.length > 0 ? (
                 sections.map((section, i) => (
                   <div key={i}>
-                    <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      {section.label}
-                    </p>
+                    <SectionLabel className="mb-1">{section.label}</SectionLabel>
                     {section.value ? (
                       <p className="whitespace-pre-wrap text-base leading-relaxed">
                         {section.value}
@@ -118,9 +117,7 @@ export function JournalDetailDialog({ entry, open, onOpenChange }: Props) {
               <>
                 <Separator />
                 <div className="rounded-lg bg-primary/5 p-3">
-                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    KI-Einsicht
-                  </p>
+                  <SectionLabel className="mb-1">KI-Einsicht</SectionLabel>
                   <p className="whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
                     {detail.ai_insights}
                   </p>

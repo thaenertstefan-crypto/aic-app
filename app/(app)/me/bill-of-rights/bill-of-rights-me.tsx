@@ -337,7 +337,7 @@ export function BillOfRightsMe({
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="text-muted-foreground/70"
+                          className="text-muted-foreground"
                           onClick={() => startEdit(r)}
                           aria-label="Bearbeiten"
                         >

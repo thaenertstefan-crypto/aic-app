@@ -6,6 +6,7 @@ import Link from "next/link";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SectionLabel } from "@/components/ui/section-label";
 import { Mascot } from "@/components/brand/mascot";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 
@@ -63,7 +64,7 @@ export function MomentFlow({
 
   const progress =
     step === "go" ? null : (
-      <p className="text-center text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
+      <p className="text-center text-xs font-medium text-muted-foreground">
         Schritt {stepIndex + 1} von 4
       </p>
     );
@@ -224,9 +225,7 @@ export function MomentFlow({
 
           <Card className="w-full border-primary/30">
             <CardContent className="flex min-h-[28svh] flex-col items-center justify-center gap-4 py-6 text-center">
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
-                Dein Mantra
-              </p>
+              <SectionLabel>Dein Mantra</SectionLabel>
               <p className="font-heading text-3xl leading-tight font-medium tracking-tight text-foreground">
                 {mantra}
               </p>

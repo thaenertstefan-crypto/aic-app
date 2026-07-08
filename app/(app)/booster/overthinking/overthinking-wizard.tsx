@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { SectionLabel } from "@/components/ui/section-label";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
@@ -575,9 +576,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
             {answers.whatIfWrong.trim() && (
               <Card size="sm" className="border-muted">
                 <CardContent className="space-y-1 pt-(--card-spacing)">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Deine Antwort von eben
-                  </p>
+                  <SectionLabel>Deine Antwort von eben</SectionLabel>
                   <p className="text-sm italic text-muted-foreground">
                     {answers.whatIfWrong}
                   </p>
@@ -592,9 +591,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
               {/* Ursprüngliches Problem */}
               <div className="rounded-md border border-muted bg-muted/30 px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Dein ursprüngliches Problem
-                </p>
+                <SectionLabel>Dein ursprüngliches Problem</SectionLabel>
                 <p className="text-sm italic text-muted-foreground">
                   {answers.step2 || "—"}
                 </p>
@@ -695,9 +692,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
           {answers.decision && (
             <Card className="w-full border-primary/30">
               <CardContent className="space-y-2 pt-(--card-spacing)">
-                <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                  Dein nächster Schritt
-                </p>
+                <SectionLabel>Dein nächster Schritt</SectionLabel>
                 <p className="whitespace-pre-wrap text-left text-base leading-relaxed text-foreground">
                   {answers.decision}
                 </p>

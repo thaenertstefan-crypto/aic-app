@@ -152,12 +152,11 @@ function StepRow({ step }: { step: Step }) {
   const inner = (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-lg border-l-4 px-4 py-3 transition-colors",
-        step.status === "current" &&
-          "border-primary bg-primary/10",
-        step.status === "done" && "border-success/60 bg-muted/30",
-        step.status === "open" && "border-muted-foreground/20 bg-muted/30",
-        step.status === "locked" && "border-muted-foreground/20 bg-muted/30 opacity-60",
+        "flex items-start gap-3 rounded-lg px-4 py-3 ring-1 transition-colors",
+        step.status === "current" && "bg-primary/10 ring-primary/20",
+        step.status === "done" && "bg-muted/30 ring-foreground/10",
+        step.status === "open" && "bg-muted/30 ring-foreground/10",
+        step.status === "locked" && "bg-muted/30 opacity-60 ring-foreground/10",
         accessible && "hover:bg-muted/60",
       )}
     >

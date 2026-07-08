@@ -145,7 +145,7 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
         >
           <span className="text-sm font-medium">Nach oben wischen</span>
           <ChevronDown
-            className="size-6 motion-safe:animate-bounce"
+            className="size-6 motion-safe:animate-[nudge-y_1.6s_ease-in-out_infinite]"
             aria-hidden
           />
           <span className="sr-only">Zur Anmeldung</span>

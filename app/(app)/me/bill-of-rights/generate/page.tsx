@@ -6,6 +6,7 @@ import { Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SectionLabel } from "@/components/ui/section-label";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
@@ -54,9 +55,7 @@ function RuleCard({
         )}
       >
         <CardContent className="flex flex-col gap-1 pt-(--card-spacing)">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {label}
-          </span>
+          <SectionLabel>{label}</SectionLabel>
           <p className="text-base leading-relaxed text-foreground">{text}</p>
         </CardContent>
       </Card>

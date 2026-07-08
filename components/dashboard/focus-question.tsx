@@ -1,4 +1,4 @@
-const QUESTION_CLASS = "font-heading text-lg font-medium text-foreground/90";
+const QUESTION_CLASS = "font-heading text-lg font-medium text-foreground";
 
 /**
  * Rein präsentationale Fokus-Frage. Sie liegt in `daily-focus.tsx` **innerhalb**

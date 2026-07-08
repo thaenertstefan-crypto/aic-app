@@ -142,7 +142,9 @@ A dark, low-chroma aubergine field lit by one warm gold, with a small cast of de
 - **Hairline** (`rgba(255,255,255,0.12)`): Borders and dividers — light-on-dark at low alpha, never a hard line. **Input Stroke** (`rgba(255,255,255,0.16)`) is the slightly stronger field edge.
 
 ### Named Rules
-**The One Candle Rule.** Candle Gold appears on roughly one thing per screen — the primary action or the current state. If two elements are gold, one of them is wrong. The dark room has one light.
+**The One Candle Rule.** One gold *candle* per screen: exactly one element carries a gold **action or live state** — the primary CTA or the current step. If two things compete as "the gold next step," one of them is wrong. The dark room has one light *you act on*.
+
+This rule governs **emphasis, not identity.** Gold-tinted icon chips (`bg-primary/15 text-primary` glyphs) are an accepted **navigational/identity convention** for hub screens (`/me`, `/booster`, journal entries, dashboard cards): they mark *what a thing is*, not *what to do next*, so a hub may carry several without breaking the rule. The discipline is that none of those quiet chips should read as loudly as the one gold action. Gold as flat *decoration* on non-interactive surfaces (a gold rule, a gold divider, a gold text eyebrow) is still forbidden.
 
 **The Warm-White Rule.** Text is Moonlight (`#F3EFFA`), never `#FFFFFF`. Pure white on aubergine is a cold spike; the warm off-white belongs to the room.
 
@@ -210,7 +212,7 @@ A procedural SVG/CSS blob (`components/brand/mascot.tsx`), **not an image** — 
 
 ### Do:
 - **Do** keep the aubergine night (`#1B1726`) as the ground on every surface. One theme, no light mode.
-- **Do** obey the One Candle Rule — Candle Gold on ~one element per screen (the next step or current state).
+- **Do** obey the One Candle Rule — exactly one gold **action/current-state** per screen. Gold-tinted identity icon chips on hubs are fine; keep them quieter than the one gold action.
 - **Do** use Moonlight (`#F3EFFA`) for text, and Gold Ink (`#2B1B06`) on gold fills. Never pure `#FFFFFF`.
 - **Do** set voice — greetings, affirmations, encouragements — in Fraunces; set actions, labels, and data in Geist.
 - **Do** build depth from tonal layers + a 1px hairline; reserve frosted glass for 1–2 hero moments per screen.
@@ -222,7 +224,7 @@ A procedural SVG/CSS blob (`components/brand/mascot.tsx`), **not an image** — 
 - **Don't** ship the **hustle/productivity coach**: no streak-as-pressure, no "no excuses" alarm-red, no shaming empty states.
 - **Don't** ship the **generic SaaS dashboard**: no interchangeable icon+heading+text card grids, no hero-metric tiles, no corporate-neutral filler.
 - **Don't** ship **kitschy wellness esoterica**: no oversweet pastels, no incense-and-affirmation clichés, no empty mindfulness fluff.
-- **Don't** put two gold elements on one screen, or use gold as decoration.
+- **Don't** put two competing gold **actions** on one screen, or use gold as flat decoration on non-interactive surfaces (gold rules, dividers, text eyebrows). Gold identity icon chips on hubs are the exception, not decoration.
 - **Don't** use `border-left`/`border-right` >1px as a colored accent stripe on cards or callouts.
 - **Don't** use gradient text (`background-clip: text`) or glassmorphism as a default surface.
 - **Don't** reach for a solitary tiny tracked-uppercase eyebrow above every section as scaffolding — let the serif headings and copy carry the cadence.

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { SectionLabel } from "@/components/ui/section-label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormError } from "@/components/ui/form-error";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
@@ -560,9 +561,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                 <Reveal delay={0.55} className="w-full">
                   <Card className="w-full border-primary/30">
                     <CardContent className="space-y-3 pt-(--card-spacing)">
-                      <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                        So könnte dein Nein klingen
-                      </p>
+                      <SectionLabel>So könnte dein Nein klingen</SectionLabel>
                       <p className="text-sm text-muted-foreground">
                         Du kannst die Version noch anpassen, bevor du sie
                         übernimmst:
@@ -671,9 +670,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
             <Reveal delay={0.5} className="w-full">
               <Card className="w-full border-primary/30">
                 <CardContent className="space-y-2 pt-(--card-spacing)">
-                  <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                    Du hast dir dieses Recht schon gegeben
-                  </p>
+                  <SectionLabel>Du hast dir dieses Recht schon gegeben</SectionLabel>
                   <div className="flex items-start gap-2 text-left">
                     <Check className="mt-1 size-4 shrink-0 text-primary" />
                     <p className="text-base leading-relaxed text-foreground">
@@ -694,9 +691,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                 <CardContent className="space-y-3 pt-(--card-spacing)">
                   {accepted ? (
                     <>
-                      <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                        Zu deinen Rechten hinzugefügt
-                      </p>
+                      <SectionLabel>Zu deinen Rechten hinzugefügt</SectionLabel>
                       <div className="flex items-start gap-2 text-left">
                         <Check className="mt-1 size-4 shrink-0 text-primary" />
                         <p className="text-base leading-relaxed text-foreground">
@@ -706,9 +701,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                     </>
                   ) : (
                     <>
-                      <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                        Ein neues Recht für dich
-                      </p>
+                      <SectionLabel>Ein neues Recht für dich</SectionLabel>
                       <p className="text-left text-sm text-muted-foreground">
                         Dieses Nein zeigt eine Grenze, die du dir schriftlich
                         geben kannst. Du kannst den Satz noch anpassen:
@@ -922,9 +915,9 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
           {/* Situation als Kontext */}
           <Card className="w-full">
             <CardContent className="pt-(--card-spacing)">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <SectionLabel className="mb-1">
                 {mode === "real" ? "Darum geht es" : "Das Szenario"}
-              </p>
+              </SectionLabel>
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
                 {situation}
               </p>

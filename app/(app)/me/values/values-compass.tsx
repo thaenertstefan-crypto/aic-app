@@ -219,7 +219,7 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
                 transform: `rotate(${rotation}deg)`,
                 transition: reduced
                   ? "none"
-                  : "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                  : "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             />
           </svg>

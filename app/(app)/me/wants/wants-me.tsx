@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { SectionLabel } from "@/components/ui/section-label";
 import {
   Dialog,
   DialogClose,
@@ -210,7 +211,7 @@ export function WantsMe({
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="text-muted-foreground/70"
+                              className="text-muted-foreground"
                               onClick={() => startEdit(want)}
                               aria-label="Want bearbeiten"
                             >
@@ -301,9 +302,7 @@ export function WantsMe({
 
                 {triedBets.length > 0 && (
                   <div className="flex flex-col gap-2 pt-1">
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Schon ausprobiert
-                    </p>
+                    <SectionLabel>Schon ausprobiert</SectionLabel>
                     {triedBets.map((bet) => (
                       <div
                         key={bet.id}

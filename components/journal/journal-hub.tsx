@@ -15,7 +15,6 @@ import {
   formatDateDE,
   type JournalListItem,
 } from "@/lib/utils/journal";
-import { cn } from "@/lib/utils";
 
 type Props = {
   initialEntries: JournalListItem[];
@@ -100,14 +99,17 @@ export function JournalHub({ initialEntries, initialHasMore }: Props) {
                 const preview = entry.preview;
 
                 return (
-                  <Card
+                  <button
                     key={entry.id}
-                    size="sm"
+                    type="button"
                     onClick={() => setSelectedEntry(entry)}
-                    className={cn(
-                      "cursor-pointer transition-shadow hover:shadow-md",
-                    )}
+                    aria-label={`Eintrag „${config.label}“ vom ${formatDateDE(entry.entry_date)} öffnen`}
+                    className="block w-full rounded-xl text-left focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   >
+                    <Card
+                      size="sm"
+                      className="transition-colors hover:bg-muted/40"
+                    >
                     <CardContent className="pt-(--card-spacing)">
                       <div className="flex items-start gap-3">
                         {/* Icon */}
@@ -136,7 +138,8 @@ export function JournalHub({ initialEntries, initialHasMore }: Props) {
                         </div>
                       </div>
                     </CardContent>
-                  </Card>
+                    </Card>
+                  </button>
                 );
               })}
             </div>

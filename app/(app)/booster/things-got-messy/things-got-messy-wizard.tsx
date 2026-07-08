@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { SectionLabel } from "@/components/ui/section-label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormError } from "@/components/ui/form-error";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
@@ -376,9 +377,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
                 <Reveal delay={0.7} className="w-full">
                   <Card className="w-full border-primary/30">
                     <CardContent className="space-y-2 pt-(--card-spacing)">
-                      <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                        Du hast dir dieses Recht schon gegeben
-                      </p>
+                      <SectionLabel>Du hast dir dieses Recht schon gegeben</SectionLabel>
                       <div className="flex items-start gap-2 text-left">
                         <Check className="mt-1 size-4 shrink-0 text-primary" />
                         <p className="text-base leading-relaxed text-foreground">
@@ -399,9 +398,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
                     <CardContent className="space-y-3 pt-(--card-spacing)">
                       {accepted ? (
                         <>
-                          <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                            Zu deinen Rechten hinzugefügt
-                          </p>
+                          <SectionLabel>Zu deinen Rechten hinzugefügt</SectionLabel>
                           <div className="flex items-start gap-2 text-left">
                             <Check className="mt-1 size-4 shrink-0 text-primary" />
                             <p className="text-base leading-relaxed text-foreground">
@@ -411,9 +408,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
                         </>
                       ) : (
                         <>
-                          <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                            Ein neues Recht für dich
-                          </p>
+                          <SectionLabel>Ein neues Recht für dich</SectionLabel>
                           <p className="text-left text-sm text-muted-foreground">
                             Du kannst es noch anpassen, bevor du es übernimmst:
                           </p>

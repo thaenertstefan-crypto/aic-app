@@ -1,17 +1,10 @@
-import {
-  CalendarDays,
-  CheckCircle2,
-  Flame,
-  LogOut,
-  NotebookPen,
-  ScrollText,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 
 import { signoutAction } from "@/app/(auth)/auth.actions";
 import { createClient } from "@/lib/supabase/server";
 import { getCachedUser } from "@/lib/supabase/get-user";
 import { Button } from "@/components/ui/button";
-import { StatCard } from "@/components/ui/stat-card";
+import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/brand/page-header";
 import { NAV_LABELS } from "@/lib/content/labels";
 import type { RightItem } from "@/lib/types/db-json";
@@ -82,34 +75,28 @@ export default async function SettingsPage() {
         description="Deine Fortschrittsübersicht und Kontoeinstellungen."
       />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard
-          icon={<NotebookPen className="size-4 text-primary" />}
-          value={journalCount}
-          label="Tagebucheinträge"
-        />
-        <StatCard
-          icon={<CheckCircle2 className="size-4 text-success" />}
-          value={recipesCompleted}
-          label="Recipes abgeschlossen"
-        />
-        <StatCard
-          icon={<Flame className="size-4 text-celebrate" />}
-          value={longestPromiseStreak}
-          label="Längste Versprechen-Serie"
-        />
-        <StatCard
-          icon={<CalendarDays className="size-4 text-cleanser-confidence" />}
-          value={daysSinceJoining}
-          label="Tage dabei"
-        />
-        <StatCard
-          icon={<ScrollText className="size-4 text-primary" />}
-          value={activeRightsCount}
-          label="Aktive Rechte"
-        />
-      </div>
+      {/* Fortschrittsübersicht — eine ruhige Bilanz, kein Dashboard */}
+      <Card>
+        <CardContent className="divide-y divide-border py-0">
+          {[
+            { label: "Tagebucheinträge", value: journalCount },
+            { label: "Rezepte abgeschlossen", value: recipesCompleted },
+            { label: "Längste Versprechen-Serie", value: longestPromiseStreak },
+            { label: "Tage dabei", value: daysSinceJoining },
+            { label: "Aktive Rechte", value: activeRightsCount },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="flex items-baseline justify-between gap-4 py-3"
+            >
+              <span className="text-sm text-muted-foreground">{stat.label}</span>
+              <span className="font-heading text-xl font-semibold tabular-nums text-foreground">
+                {stat.value}
+              </span>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       {/* Logout */}
       <form action={signoutAction}>
