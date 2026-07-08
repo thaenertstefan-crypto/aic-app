@@ -42,3 +42,7 @@ next-env.d.ts
 
 # supabase cli (lokale link-metadaten)
 supabase/.temp
+
+# build-/design-tooling (nicht Teil der App-Runtime)
+.claude/
+.impeccable/
