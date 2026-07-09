@@ -85,7 +85,7 @@ export const RECIPES: readonly Recipe[] = [
     icon: "Shield",
     duration: "7 Tage",
     available: true,
-    startPath: "/recipes/bill-of-rights",
+    startPath: "/me/bill-of-rights",
   },
   {
     slug: "saying-no",
@@ -151,6 +151,6 @@ export function getRecipeBySlug(slug: string): Recipe | undefined {
  */
 export function getRecipeStepPath(slug: string, step: number): string {
   const recipe = getRecipeBySlug(slug);
-  if (!recipe) return `/recipes/${slug}`;
+  if (!recipe) return "/dashboard";
   return recipe.stepPaths?.[step - 1] ?? recipe.startPath;
 }

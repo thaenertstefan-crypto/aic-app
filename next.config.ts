@@ -48,6 +48,7 @@ const nextConfig: NextConfig = {
         destination: "/me/bill-of-rights",
         permanent: false,
       },
+      { source: "/recipes/wants", destination: "/me/wants", permanent: false },
       // Übungen nach /booster migriert (Bug 7)
       {
         source: "/recipes/overthinking",
@@ -59,6 +60,11 @@ const nextConfig: NextConfig = {
         destination: "/booster/saying-no",
         permanent: false,
       },
+      // Der /recipes-Bereich ist retired (Übungen leben unter /me & /booster).
+      // Fängt alle verbliebenen/alten Slugs ab (shadow, things-got-messy, …),
+      // damit gelöschte Rezept-Routen nicht 404en. Muss NACH den spezifischen
+      // /recipes/*-Regeln stehen — erster Treffer gewinnt.
+      { source: "/recipes/:path*", destination: "/me", permanent: false },
       { source: "/cleansers", destination: "/booster", permanent: false },
       {
         source: "/cleansers/confidence",

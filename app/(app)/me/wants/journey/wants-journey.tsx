@@ -359,7 +359,7 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
   if (!introSeen && !introDismissed && INTRO_CARDS.length > 0) {
     return (
       <div className="flex min-h-svh flex-col">
-        <SubPageHeader backHref="/recipes/wants" title={PAGE_TITLES.wants} />
+        <SubPageHeader backHref="/me/wants" title={PAGE_TITLES.wants} />
         <div className="flex flex-1 flex-col justify-center">
           <RecipeIntro
             cards={INTRO_CARDS}
@@ -374,7 +374,7 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
 
   const header = (
     <SubPageHeader
-      backHref="/recipes/wants"
+      backHref="/me/wants"
       title={PAGE_TITLES.wants}
       action={
         INTRO_CARDS.length > 0 ? <IntroInfoButton cards={INTRO_CARDS} /> : undefined

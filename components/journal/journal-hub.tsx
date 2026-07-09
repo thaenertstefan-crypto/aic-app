@@ -167,7 +167,7 @@ export function JournalHub({ initialEntries, initialHasMore }: Props) {
                   ? "Starte ein Rezept, um deine ersten Reflexionen festzuhalten. Jeder Eintrag ist ein Schritt zu mehr Klarheit."
                   : `Noch keine Einträge in "${filterLabel}". Starte ein Rezept, um deine ersten Reflexionen zu sammeln.`
               }
-              action={{ href: "/recipes", label: "Zu den Rezepten" }}
+              action={{ href: "/me", label: "Zu deinen Übungen" }}
             />
           )}
         </div>

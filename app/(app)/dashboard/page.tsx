@@ -211,7 +211,7 @@ export default async function DashboardPage() {
       sentence: wantsCompleted
         ? "Ich würde gern an meinen Little Bets arbeiten"
         : "Ich will rausfinden, was ich wirklich will",
-      href: wantsCompleted ? "/me/wants" : "/recipes/wants",
+      href: "/me/wants",
     },
     {
       key: "bor",

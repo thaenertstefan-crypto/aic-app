@@ -17,7 +17,7 @@ A self-development companion app that turns workbook exercises into interactive 
 - **DB calls:** `lib/supabase/client.ts` (browser) / `lib/supabase/server.ts` (server components)
 - **DB types:** Generierte Supabase-`Database`-Typen liegen in `lib/supabase/database.types.ts` (Client ist generisch typisiert). Bei Schema-Änderungen neu ziehen — siehe Header der Datei. JSONB-Spalten kommen als `Json`; die schmalen Element-Shapes (`RightItem`, `*Content`) stehen zentral in `lib/types/db-json.ts`.
 - **AI calls:** `lib/anthropic/`, system prompts in `lib/anthropic/prompts/`
-- **Recipe step components:** `components/recipes/steps/[RecipeName].tsx`
+- **Recipe/exercise UI:** Übungen leben unter `app/(app)/me/*` (durable: Werte, Wants, Bill of Rights) und `app/(app)/booster/*` (akut). Die „Steps" jeder Übung sind eine Phasen-State-Machine in der jeweiligen Client-Komponente (z. B. `me/wants/journey/wants-journey.tsx`). Server-Actions/Backend liegen weiterhin in `app/(app)/recipes/**/actions.ts`; geteilte Bausteine in `components/recipes/`.
 - **Journal template components:** `components/journal/templates/`
 
 ## Design & Content

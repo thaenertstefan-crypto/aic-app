@@ -156,9 +156,9 @@ export function DailyFocus({
               <Button
                 variant="outline"
                 className="w-full"
-                render={<Link href="/recipes" />}
+                render={<Link href="/me" />}
               >
-                Rezepte ansehen
+                Zu deinen Übungen
               </Button>
             </CardContent>
           </Card>
