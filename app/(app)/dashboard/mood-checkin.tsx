@@ -57,7 +57,7 @@ export function MoodCheckin({
         Wie geht&apos;s dir heute?
       </p>
 
-      <div className="mt-6 flex justify-center">
+      <div className="mt-8 flex justify-center">
         <div className="mascot-drift">
           <MoodAvatar
             face={MOOD_FACES[selected ?? 3]}
@@ -68,7 +68,7 @@ export function MoodCheckin({
 
       <form
         action={formAction}
-        className="mt-5 -mx-1 -my-1 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="mt-6 -mx-1 -my-1 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {MOODS.map((mood) => {
           const isActive = selected === mood.score;
