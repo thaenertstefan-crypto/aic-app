@@ -82,7 +82,7 @@ export function MoodCheckin({
                 setSelected(mood.score);
                 onSelect?.(mood.score);
               }}
-              className={`inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-medium transition-all ${
+              className={`inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-medium transition-[transform,background-color,border-color] duration-150 ease-out ${
                 isActive
                   ? "border-primary bg-primary/10 scale-105"
                   : "border-border bg-card hover:bg-muted/50"

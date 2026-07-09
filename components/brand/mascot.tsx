@@ -135,7 +135,7 @@ export function Mascot({
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
           boxShadow: "0 0 20px 2px rgba(231,182,94,0.16)",
-          transition: "all 400ms ease",
+          transition: "box-shadow 400ms ease, background 400ms ease",
           ...(reduced
             ? {}
             : {
