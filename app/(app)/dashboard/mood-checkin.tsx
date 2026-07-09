@@ -2,7 +2,6 @@
 
 import { useActionState, useState } from "react";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
 import { MoodAvatar } from "@/components/dashboard/mood-avatar";
 import {
@@ -50,58 +49,58 @@ export function MoodCheckin({
   const [selected, setSelected] = useState<number | null>(initialScore ?? 3);
 
   return (
-    <Card>
-      <CardContent className="space-y-8">
-        <div>
-          <p className="font-heading text-lg font-medium text-foreground">
-            Wie geht&apos;s dir heute?
-          </p>
-        </div>
+    <div className="space-y-8">
+      <div>
+        <p className="font-heading text-lg font-medium text-foreground">
+          Wie geht&apos;s dir heute?
+        </p>
+      </div>
 
-        <div className="flex justify-center pb-2">
+      <div className="flex justify-center pb-2">
+        <div className="mascot-drift">
           <MoodAvatar
             face={MOOD_FACES[selected ?? 3]}
             pulseSeconds={MOOD_PULSE_SECONDS[selected ?? 3]}
           />
         </div>
+      </div>
 
-        <form
-          action={formAction}
-          className="-mx-1 -my-1 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {MOODS.map((mood) => {
-            const isActive = selected === mood.score;
-            return (
-              <button
-                key={mood.score}
-                type="submit"
-                name="mood_score"
-                value={mood.score}
-                aria-pressed={isActive}
-                onClick={() => {
-                  setSelected(mood.score);
-                  onSelect?.(mood.score);
-                }}
-                className={`inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-medium transition-all ${
-                  isActive
-                    ? "border-primary bg-primary/10 scale-105"
-                    : "border-border bg-card hover:bg-muted/50"
-                }`}
-              >
-                {mood.label}
-              </button>
-            );
-          })}
-        </form>
+      <form
+        action={formAction}
+        className="-mx-1 -my-1 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {MOODS.map((mood) => {
+          const isActive = selected === mood.score;
+          return (
+            <button
+              key={mood.score}
+              type="submit"
+              name="mood_score"
+              value={mood.score}
+              aria-pressed={isActive}
+              onClick={() => {
+                setSelected(mood.score);
+                onSelect?.(mood.score);
+              }}
+              className={`inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-medium transition-all ${
+                isActive
+                  ? "border-primary bg-primary/10 scale-105"
+                  : "border-border bg-card hover:bg-muted/50"
+              }`}
+            >
+              {mood.label}
+            </button>
+          );
+        })}
+      </form>
 
-        {selected !== null && (
-          <p className="pt-2 text-sm text-muted-foreground">
-            {MESSAGES[selected]}
-          </p>
-        )}
+      {selected !== null && (
+        <p className="pt-2 text-sm text-muted-foreground">
+          {MESSAGES[selected]}
+        </p>
+      )}
 
-        <FormError message={state.error} />
-      </CardContent>
-    </Card>
+      <FormError message={state.error} />
+    </div>
   );
 }
