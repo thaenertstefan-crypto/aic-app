@@ -245,7 +245,7 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-10 p-4">
       <SkyBackdrop />
       <DailyReminderScreen rights={activeRights.map((r) => r.text)} />
       <DashboardReveal>

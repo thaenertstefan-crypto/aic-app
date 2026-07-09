@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,12 +65,6 @@ export function DailyFocus({
   showQuestion,
   alternatives,
 }: DailyFocusProps) {
-  // Nur die ersten paar Alternativen zeigen — der Rest liegt hinter „mehr".
-  // Auf einem Screen, der Überforderung nehmen soll, ist eine kurze Liste
-  // ruhiger als eine Wand aus sieben gleichwertigen Zeilen.
-  const ALTERNATIVES_PREVIEW = 3;
-  const [showAllAlternatives, setShowAllAlternatives] = useState(false);
-
   // Frage aus dem Tier ableiten (nicht an primary.key koppeln), damit sie auch
   // bei künftigen "low"-Empfehlungen stimmig bleibt.
   const question =
@@ -169,12 +162,14 @@ export function DailyFocus({
             <p className="text-sm text-muted-foreground">
               …oder brauchst du gerade was anderes?
             </p>
-            <ul className="space-y-2">
-              {(showAllAlternatives
-                ? view.alternatives
-                : view.alternatives.slice(0, ALTERNATIVES_PREVIEW)
-              ).map((destination) => (
-                <li key={destination.key}>
+            {/* Slot-Reel: fixhohes Scroll-Fenster statt Ausklapp-Liste. Zeigt
+                ~3 Ziele, die 4. lugt hervor (Scroll-Affordance). Alle Ziele
+                bleiben im DOM (Tastatur/Screenreader erreichbar); scroll-snap
+                lässt die Zeilen wie eine Walze einrasten, weiche Kanten (.alt-reel)
+                geben den Reel-Look. Scrollbar ausgeblendet für Ruhe. */}
+            <ul className="alt-reel max-h-[172px] snap-y snap-proximity space-y-2 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {view.alternatives.map((destination) => (
+                <li key={destination.key} className="snap-start">
                   <Link
                     href={destination.href}
                     className="flex items-center gap-2 rounded-lg border px-3 py-2.5 transition-colors hover:bg-muted/40"
@@ -192,19 +187,6 @@ export function DailyFocus({
                 </li>
               ))}
             </ul>
-
-            {!showAllAlternatives &&
-              view.alternatives.length > ALTERNATIVES_PREVIEW && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllAlternatives(true)}
-                  className="flex w-full items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  {view.alternatives.length - ALTERNATIVES_PREVIEW} weitere
-                  anzeigen
-                  <ChevronDown className="size-4 shrink-0" />
-                </button>
-              )}
           </div>
         )}
       </div>

@@ -37,11 +37,29 @@ export function SkyBackdrop() {
             "radial-gradient(90% 42% at 50% 24%, color-mix(in srgb, var(--primary) 20%, transparent), color-mix(in srgb, var(--primary) 6%, transparent) 45%, transparent 70%)",
         }}
       />
-      {/* Two distant lights in the upper sky. */}
+      {/* A handful of distant lights scattered across the upper sky. Some
+          twinkle on offset delays, one or two sit still for depth. The center
+          around top-24% (where the mascot glow blooms) is left clear. */}
       <span className="sky-light sky-light-twinkle absolute left-[18%] top-[12%]" />
       <span
         className="sky-light sky-light-twinkle absolute right-[22%] top-[18%]"
         style={{ animationDelay: "1.6s" }}
+      />
+      <span
+        className="sky-light sky-light-twinkle absolute left-[9%] top-[26%]"
+        style={{ width: "3px", height: "3px", animationDelay: "3.1s" }}
+      />
+      <span
+        className="sky-light sky-light-twinkle absolute right-[12%] top-[8%]"
+        style={{ animationDelay: "0.8s" }}
+      />
+      <span
+        className="sky-light absolute left-[38%] top-[7%]"
+        style={{ opacity: 0.16 }}
+      />
+      <span
+        className="sky-light absolute right-[34%] top-[30%]"
+        style={{ width: "3px", height: "3px", opacity: 0.18 }}
       />
     </div>
   );
