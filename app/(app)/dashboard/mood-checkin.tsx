@@ -49,14 +49,15 @@ export function MoodCheckin({
   const [selected, setSelected] = useState<number | null>(initialScore ?? 3);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <p className="font-heading text-lg font-medium text-foreground">
-          Wie geht&apos;s dir heute?
-        </p>
-      </div>
+    // Bewusster Rhythmus statt gleichförmiger 32px-Abstände: Prompt bekommt Luft,
+    // das Maskottchen (emotionales Zentrum) atmet oben, Buttons folgen enger, und
+    // die warme Antwort hängt dicht an den Buttons, auf die sie reagiert.
+    <div>
+      <p className="font-heading text-lg font-medium text-foreground">
+        Wie geht&apos;s dir heute?
+      </p>
 
-      <div className="flex justify-center pb-2">
+      <div className="mt-6 flex justify-center">
         <div className="mascot-drift">
           <MoodAvatar
             face={MOOD_FACES[selected ?? 3]}
@@ -67,7 +68,7 @@ export function MoodCheckin({
 
       <form
         action={formAction}
-        className="-mx-1 -my-1 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="mt-5 -mx-1 -my-1 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {MOODS.map((mood) => {
           const isActive = selected === mood.score;
@@ -95,12 +96,12 @@ export function MoodCheckin({
       </form>
 
       {selected !== null && (
-        <p className="pt-2 text-sm text-muted-foreground">
+        <p className="mt-3 text-sm text-muted-foreground">
           {MESSAGES[selected]}
         </p>
       )}
 
-      <FormError message={state.error} />
+      <FormError message={state.error} className="mt-4" />
     </div>
   );
 }

@@ -250,7 +250,7 @@ export default async function DashboardPage() {
       <DailyReminderScreen rights={activeRights.map((r) => r.text)} />
       <DashboardReveal>
       {/* Greeting */}
-      <header className="space-y-3">
+      <header className="space-y-2">
         <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
           {greetingName ? `Hey ${greetingName}!` : "Hey!"}
         </h1>
