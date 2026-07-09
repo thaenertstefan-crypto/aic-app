@@ -423,6 +423,34 @@
   }
   .star-pulse { animation: star-pulse 2.2s ease-in-out infinite; }
 
+  /* ── Dashboard "sky stage" ─────────────────────────────────────────── */
+  /* Two barely-there distant lights in the dashboard night sky. */
+  .sky-light {
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: var(--foreground);
+    opacity: 0.22;
+  }
+  @keyframes sky-light-twinkle {
+    0%, 100% { opacity: 0.1; }
+    50%      { opacity: 0.32; }
+  }
+  .sky-light-twinkle { animation: sky-light-twinkle 6s ease-in-out infinite; }
+
+  /* Slow vertical drift for the dashboard mascot, layered on top of its own
+     breathe/glow (consumed by mood-checkin). */
+  @keyframes mascot-drift {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+  .mascot-drift { animation: mascot-drift 7s ease-in-out infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sky-light-twinkle { animation: none; }
+    .mascot-drift { animation: none; }
+  }
+
   /* Goldener Puls-Rand der Duell-Kacheln (Regel-Duell), solange keine Auswahl
      getroffen wurde — signalisiert "tipp eine an". */
   @keyframes duel-glow {
