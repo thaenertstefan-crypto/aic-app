@@ -46,3 +46,6 @@ supabase/.temp
 # build-/design-tooling (nicht Teil der App-Runtime)
 .claude/
 .impeccable/
+
+# Superpowers brainstorming (throwaway visual mockups)
+.superpowers/
