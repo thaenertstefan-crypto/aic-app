@@ -582,25 +582,42 @@
     .me-seal-stamp { opacity: 1; transform: none; }
   }
 
-  /* ── Kopf-Apotheke: Antwort-Zeilen ──────────────────────────────────
-   * Die Booster-Zeilen treten gestaffelt ein; den Versatz setzt das Markup
-   * per --booster-i. Bei reduced motion nur ein weicher Fade ohne Weg und
-   * ohne Staffelung. */
-  @keyframes booster-row-in {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
+  /* ── Kopf-Apotheke: Apotheken-Regal ─────────────────────────────────
+   * 2×3-Regal transparenter Zellen (Haarlinie = Regalbrett) statt Karten.
+   * Die Gefäß-Ornamente leben wie die /me-Ornamente über je eine langsame
+   * Mikro-Animation; reduced motion stellt alles still. */
+  @keyframes bs-sway {
+    0%, 100% { transform: rotate(-5deg); }
+    50%      { transform: rotate(5deg);  }
   }
-  .booster-row-in {
-    animation: booster-row-in 0.25s cubic-bezier(0.23, 1, 0.32, 1) both;
-    animation-delay: calc(var(--booster-i, 0) * 40ms);
+  .bs-sway {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: bs-sway 7s ease-in-out infinite;
   }
-  @keyframes booster-row-fade {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+  @keyframes bs-bubble {
+    0%   { transform: translateY(2px);  opacity: 0;   }
+    25%  { opacity: 0.9; }
+    70%  { opacity: 0.5; }
+    100% { transform: translateY(-8px); opacity: 0;   }
   }
+  .bs-bubble   { animation: bs-bubble 3.2s ease-in-out infinite; }
+  .bs-bubble-2 { animation-delay: 1.6s; }
+  @keyframes bs-ember {
+    0%, 100% { opacity: 0.45; }
+    40%      { opacity: 1;    }
+    60%      { opacity: 0.6;  }
+  }
+  .bs-ember   { animation: bs-ember 4s ease-in-out infinite; }
+  .bs-ember-2 { animation-delay: 2.1s; }
+  @keyframes bs-glow {
+    0%, 100% { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--primary) 35%, transparent)); }
+    50%      { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--primary) 65%, transparent)); }
+  }
+  .bs-glow { animation: bs-glow 5s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) {
-    .booster-row-in {
-      animation: booster-row-fade 0.2s ease both;
+    .bs-sway, .bs-bubble, .bs-bubble-2, .bs-ember, .bs-ember-2, .bs-glow {
+      animation: none !important;
     }
   }
 
