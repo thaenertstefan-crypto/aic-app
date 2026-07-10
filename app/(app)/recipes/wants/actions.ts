@@ -195,6 +195,25 @@ export async function getWantsData(): Promise<{
   };
 }
 
+/** True, sobald der User irgendeine Werte-Hypothese hat (bestätigt ODER nicht) —
+ *  Basis für den weichen Nudge vor dem Wants-Audit. */
+export async function hasValuesHypothesis(): Promise<boolean> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data } = await supabase
+    .from("values_hypothesis")
+    .select("id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle();
+
+  return Boolean(data);
+}
+
 // ─── Save Wants ─────────────────────────────────────────────────────────
 
 /** Liefert zusätzlich das gemergte Array zurück, damit der Client seinen

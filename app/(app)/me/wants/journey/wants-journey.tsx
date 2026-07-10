@@ -45,7 +45,7 @@ const INTRO_CARDS = getRecipeIntro("wants") ?? [];
 const AI_FALLBACK_MESSAGE =
   "Das Destillieren hat gerade nicht geklappt. Dein Audit ist gespeichert — du kannst deine Wants auch selbst formulieren.";
 
-type Phase = "yin" | "yang" | "analyzing" | "hypotheses" | "bets" | "done";
+type Phase = "nudge" | "yin" | "yang" | "analyzing" | "hypotheses" | "bets" | "done";
 
 type AuditDraft = {
   yin: string;
@@ -87,11 +87,17 @@ type DistillerResponse = {
   bets?: { text?: string; wantIndex?: number | null; reason?: string | null }[];
 };
 
-export function WantsJourney({ introSeen }: { introSeen: boolean }) {
+export function WantsJourney({
+  introSeen,
+  hasValuesHypothesis,
+}: {
+  introSeen: boolean;
+  hasValuesHypothesis: boolean;
+}) {
   // Hybrid-Intro (Muster Saying-No-Wizard)
   const [introDismissed, setIntroDismissed] = useState(false);
 
-  const [phase, setPhase] = useState<Phase>("yin");
+  const [phase, setPhase] = useState<Phase>(hasValuesHypothesis ? "yin" : "nudge");
   useScrollTopOnChange(phase);
 
   // Audit
@@ -435,6 +441,41 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
       }
     />
   );
+
+  // ── Render: Werte-Nudge ──────────────────────────────────────────
+
+  if (phase === "nudge") {
+    return (
+      <div className="flex min-h-svh flex-col">
+        {header}
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <Mascot expression="curious" size="md" />
+          <div className="space-y-2">
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+              Erst der Kompass, dann die Sterne?
+            </h1>
+            <p className="text-base leading-relaxed text-muted-foreground">
+              Deine Sterne leuchten heller, wenn dein Kompass schon steht. Wenn du
+              zuerst deine Werte findest, kann ich deine Wants viel besser mit dem
+              verbinden, was dir wirklich wichtig ist.
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-3 pt-2">
+            <Button className="w-full" size="lg" render={<Link href="/me/values" />}>
+              Zu meinen Werten
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => setPhase("yin")}
+            >
+              Trotzdem mit den Wants starten
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ── Render: Destillat läuft ─────────────────────────────────────
 
