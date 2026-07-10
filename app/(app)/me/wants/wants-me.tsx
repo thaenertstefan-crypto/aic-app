@@ -371,7 +371,7 @@ export function WantsMe({
                       onChange={(e) => setNewBet(e.target.value)}
                       placeholder="Eigenes Experiment, z. B. „Einmal zum Bouldern gehen“"
                       maxLength={300}
-                      aria-label="Eigenes Little Bet hinzufügen"
+                      aria-label="Eigenen Schritt hinzufügen"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
@@ -384,7 +384,7 @@ export function WantsMe({
                       variant="outline"
                       size="icon"
                       className="shrink-0"
-                      aria-label="Little Bet hinzufügen"
+                      aria-label="Schritt hinzufügen"
                       disabled={!newBet.trim()}
                       onClick={addBet}
                     >
