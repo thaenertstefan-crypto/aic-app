@@ -114,6 +114,11 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
   const [savingWants, setSavingWants] = useState(false);
   const [wantsError, setWantsError] = useState<string | null>(null);
 
+  // Inline-Refine: pro Want die eingetippte Antwort + laufender/fehlerhafter Zustand.
+  const [refineAnswers, setRefineAnswers] = useState<Record<string, string>>({});
+  const [refiningId, setRefiningId] = useState<string | null>(null);
+  const [refineError, setRefineError] = useState<Record<string, string | null>>({});
+
   // Little Bets
   const [draftBets, setDraftBets] = useState<DraftBet[]>([]);
   const [newBetText, setNewBetText] = useState("");
@@ -294,6 +299,48 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
     } catch {
       setSavingWants(false);
       setWantsError("Speichern fehlgeschlagen. Versuch es noch einmal.");
+    }
+  }
+
+  // ── Want per Rückfrage nachschärfen ─────────────────────────────
+
+  async function refineWant(want: DraftWant) {
+    const answer = (refineAnswers[want.id] ?? "").trim();
+    if (!answer || !entryId) return;
+    setRefiningId(want.id);
+    setRefineError((e) => ({ ...e, [want.id]: null }));
+    try {
+      const res = await fetch("/api/wants-refiner", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entryId,
+          text: want.text,
+          question: want.question ?? "",
+          answer,
+        }),
+      });
+      const data = (await res.json()) as { text?: string; error?: string };
+      if (!res.ok || !data.text) {
+        setRefineError((e) => ({
+          ...e,
+          [want.id]: data.error ?? "Nachschärfen fehlgeschlagen.",
+        }));
+        return;
+      }
+      // Text ersetzen und die Rückfrage schließen.
+      setDraftWants((prev) =>
+        prev.map((w) => (w.id === want.id ? { ...w, text: data.text!, question: null } : w)),
+      );
+      setRefineAnswers((a) => {
+        const next = { ...a };
+        delete next[want.id];
+        return next;
+      });
+    } catch {
+      setRefineError((e) => ({ ...e, [want.id]: "Nachschärfen fehlgeschlagen." }));
+    } finally {
+      setRefiningId(null);
     }
   }
 
@@ -516,6 +563,38 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
                         <p className="text-sm leading-relaxed text-muted-foreground">
                           {want.reason}
                         </p>
+                      )}
+                      {want.question && (
+                        <div className="mt-1 space-y-2 rounded-lg border border-primary/25 bg-primary/5 p-3">
+                          <p className="text-sm leading-relaxed text-foreground">
+                            {want.question}
+                          </p>
+                          <Textarea
+                            value={refineAnswers[want.id] ?? ""}
+                            onChange={(e) =>
+                              setRefineAnswers((a) => ({ ...a, [want.id]: e.target.value }))
+                            }
+                            rows={2}
+                            maxLength={300}
+                            placeholder="Deine Antwort — dann mach ich es konkreter."
+                            className="min-h-[52px] resize-y bg-background text-sm"
+                            aria-label="Antwort zum Konkretisieren"
+                          />
+                          {refineError[want.id] && (
+                            <p className="text-xs text-destructive">{refineError[want.id]}</p>
+                          )}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={
+                              refiningId === want.id || !(refineAnswers[want.id] ?? "").trim()
+                            }
+                            onClick={() => void refineWant(want)}
+                          >
+                            {refiningId === want.id ? "Schärfe …" : "Konkreter machen"}
+                          </Button>
+                        </div>
                       )}
                     </CardContent>
                   </Card>
