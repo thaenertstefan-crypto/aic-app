@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FocusQuestion } from "@/components/dashboard/focus-question";
+import { SuggestionShuffle } from "@/components/dashboard/suggestion-shuffle";
 import { CROSSFADE_MS, useCrossfade } from "@/lib/hooks/use-crossfade";
 import { cn } from "@/lib/utils";
 
@@ -162,31 +163,10 @@ export function DailyFocus({
             <p className="text-sm text-muted-foreground">
               …oder brauchst du gerade was anderes?
             </p>
-            {/* Slot-Reel: fixhohes Scroll-Fenster statt Ausklapp-Liste. Zeigt
-                ~3 Ziele, die 4. lugt hervor (Scroll-Affordance). Alle Ziele
-                bleiben im DOM (Tastatur/Screenreader erreichbar); scroll-snap
-                lässt die Zeilen wie eine Walze einrasten, weiche Kanten (.alt-reel)
-                geben den Reel-Look. Scrollbar ausgeblendet für Ruhe. */}
-            <ul className="alt-reel max-h-[172px] snap-y snap-proximity space-y-2 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {view.alternatives.map((destination) => (
-                <li key={destination.key} className="snap-start">
-                  <Link
-                    href={destination.href}
-                    className="flex items-center gap-2 rounded-lg border px-3 py-2.5 transition-colors hover:bg-muted/40"
-                  >
-                    <span className="text-sm font-medium text-foreground">
-                      {destination.sentence}
-                    </span>
-                    {destination.badge && (
-                      <span className="text-xs text-muted-foreground">
-                        {destination.badge}
-                      </span>
-                    )}
-                    <ChevronRight className="ml-auto size-4 shrink-0 text-muted-foreground" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {/* „Vorschlags-Shuffle": eine 3er-Gruppe + „Zeig mir was anderes".
+                Eigene kleine Motion-Maschine in der Unterkomponente — bewusst
+                getrennt von der Crossfade-Maschine dieses Blocks. */}
+            <SuggestionShuffle destinations={view.alternatives} />
           </div>
         )}
       </div>

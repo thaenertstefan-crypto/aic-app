@@ -451,26 +451,6 @@
     .mascot-drift { animation: none; }
   }
 
-  /* Dashboard „was anderes?"-Reel: fixhohes Scroll-Fenster mit weichen
-     Kanten oben/unten (Walzen-Look). Die Maske fadet nur die obersten/
-     untersten ~14px, damit die Randzeilen lesbar bleiben. */
-  .alt-reel {
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      transparent 0,
-      #000 14px,
-      #000 calc(100% - 14px),
-      transparent 100%
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0,
-      #000 14px,
-      #000 calc(100% - 14px),
-      transparent 100%
-    );
-  }
-
   /* Goldener Puls-Rand der Duell-Kacheln (Regel-Duell), solange keine Auswahl
      getroffen wurde — signalisiert "tipp eine an". */
   @keyframes duel-glow {
