@@ -132,45 +132,24 @@ function Scene({
   href,
   ariaLabel,
   art,
-  candleIndex,
-  reduced,
   children,
 }: {
   href: string;
   ariaLabel: string;
   art: React.ReactNode;
-  candleIndex: number;
-  reduced: boolean;
   children: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
       aria-label={ariaLabel}
-      className="relative flex items-center gap-3 rounded-xl py-5 transition-colors hover:bg-muted/20"
+      className="relative flex items-center gap-3 rounded-xl py-8 transition-colors hover:bg-muted/20"
     >
-      {/* Lokales Kerzenlicht direkt am Ornament — driftet + flackert leise,
-          bleibt aber gebunden (kein Zeilen-Wash), damit es auf jeder Breite
-          als „Kerze neben dem Objekt" liest. */}
-      <div className="relative shrink-0">
-        {!reduced && (
-          <span
-            aria-hidden="true"
-            className="me-candle pointer-events-none absolute -inset-6 z-0 rounded-full"
-            style={{
-              background:
-                "radial-gradient(closest-side, color-mix(in srgb, var(--primary) 18%, transparent), transparent 72%)",
-              // Jedes Licht flackert in eigener Phase, damit sie nicht synchron pulsen.
-              animationDelay: `${-candleIndex * 3}s, ${-candleIndex * 1.2}s`,
-            }}
-          />
-        )}
-        <div className="relative z-10">{art}</div>
-      </div>
-      <div className="relative z-10 min-w-0 flex-1">
+      <div className="shrink-0">{art}</div>
+      <div className="min-w-0 flex-1">
         <div className="max-w-2xl">{children}</div>
       </div>
-      <ChevronRight className="relative z-10 size-5 shrink-0 text-muted-foreground" />
+      <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
     </Link>
   );
 }
@@ -197,16 +176,31 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
       : "Noch keine Wants entdeckt";
 
   return (
-    <div className="-mx-1 divide-y divide-border/70">
-      {/* Werte — die Kompassrose */}
-      <Reveal delay={0}>
-        <Scene
-          href="/me/values"
-          ariaLabel="Meine Werte öffnen"
-          candleIndex={0}
-          reduced={reduced}
-          art={<CompassArt emojis={values.map((v) => v.emoji)} animate={animate} />}
-        >
+    <div className="relative -mx-1">
+      {/* Eine einzelne Kerze wandert langsam durch den gesamten Hub-Hintergrund
+          und flackert leise — sie scheint durch die transparenten Szenen (nur
+          Haarlinien) hindurch. Bei reduced-motion aus. */}
+      {!reduced && (
+        <span
+          aria-hidden="true"
+          className="me-candle-bg pointer-events-none absolute inset-0 z-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(closest-side, color-mix(in srgb, var(--primary) 16%, transparent), transparent 72%)",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "75% 55%",
+          }}
+        />
+      )}
+
+      <div className="relative z-10 divide-y divide-border/70">
+        {/* Werte — die Kompassrose */}
+        <Reveal delay={0}>
+          <Scene
+            href="/me/values"
+            ariaLabel="Meine Werte öffnen"
+            art={<CompassArt emojis={values.map((v) => v.emoji)} animate={animate} />}
+          >
           <SceneTitle>Meine Werte</SceneTitle>
           {valuesCount > 0 ? (
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -236,8 +230,6 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
         <Scene
           href="/me/bill-of-rights"
           ariaLabel="Meine Bill of Rights öffnen"
-          candleIndex={1}
-          reduced={reduced}
           art={<SealArt animate={animate} />}
         >
           <SceneTitle>Meine Bill of Rights</SceneTitle>
@@ -256,8 +248,6 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
         <Scene
           href="/me/wants"
           ariaLabel={`${PAGE_TITLES.meWants} öffnen`}
-          candleIndex={2}
-          reduced={reduced}
           art={<FlaskArt animate={animate} dim={wantsCount === 0} />}
         >
           <SceneTitle>{PAGE_TITLES.meWants}</SceneTitle>
@@ -278,6 +268,7 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
           )}
         </Scene>
       </Reveal>
+      </div>
     </div>
   );
 }

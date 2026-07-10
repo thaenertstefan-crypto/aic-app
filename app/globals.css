@@ -504,10 +504,13 @@
    * statt als Karte. Alle Bewegungen sind bewusst langsam („nichts schreit")
    * und haben unten einen reduced-motion-Fallback. */
 
-  /* Kerzenlicht driftet langsam über die Szene und flackert leise. */
-  @keyframes me-candle-drift {
-    0%, 100% { transform: translate(-22%, -8%); }
-    50%      { transform: translate(24%, 8%);   }
+  /* Eine einzelne Kerze wandert langsam quer durch den Hub-Hintergrund
+   * (Blob per background-position, unabhängig von der Elementgröße) und
+   * flackert dabei leise. */
+  @keyframes me-candle-wander {
+    0%   { background-position: 8% 22%;  }
+    50%  { background-position: 92% 78%; }
+    100% { background-position: 8% 22%;  }
   }
   @keyframes me-candle-flicker {
     0%, 100% { opacity: 0.85; }
@@ -515,8 +518,8 @@
     60%      { opacity: 0.7;  }
     75%      { opacity: 0.95; }
   }
-  .me-candle {
-    animation: me-candle-drift 11s ease-in-out infinite,
+  .me-candle-bg {
+    animation: me-candle-wander 20s ease-in-out infinite,
                me-candle-flicker 4.5s ease-in-out infinite;
   }
 
@@ -564,7 +567,7 @@
   .me-seal-stamp { animation: me-seal-stamp 0.6s ease-out both; }
 
   @media (prefers-reduced-motion: reduce) {
-    .me-candle, .me-needle-sway, .me-seal-glow, .me-bubble,
+    .me-candle-bg, .me-needle-sway, .me-seal-glow, .me-bubble,
     .me-ring-draw, .me-seal-stamp {
       animation: none !important;
     }
