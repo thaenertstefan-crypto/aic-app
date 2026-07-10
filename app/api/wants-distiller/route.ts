@@ -28,12 +28,14 @@ type WantSuggestion = {
   valueId: string | null;
   valueLabel: string | null;
   reason: string | null;
+  question: string | null;
 };
 
 /** Ein vorgeschlagenes Little Bet (wantIndex zeigt in die wants-Liste). */
 type BetSuggestion = {
   text: string;
   wantIndex: number | null;
+  reason: string | null;
 };
 
 type DistillerResult = {
@@ -54,7 +56,12 @@ function parseWants(raw: unknown, valueIds: Set<string>): WantSuggestion[] {
 
   for (const item of raw.slice(0, MAX_WANTS_OUT)) {
     if (!item || typeof item !== "object") continue;
-    const v = item as { text?: unknown; value_id?: unknown; reason?: unknown };
+    const v = item as {
+      text?: unknown;
+      value_id?: unknown;
+      reason?: unknown;
+      question?: unknown;
+    };
     if (typeof v.text !== "string" || !v.text.trim()) continue;
 
     const valueId =
@@ -70,6 +77,10 @@ function parseWants(raw: unknown, valueIds: Set<string>): WantSuggestion[] {
         typeof v.reason === "string" && v.reason.trim()
           ? v.reason.trim().slice(0, TEXT_MAX_SHORT)
           : null,
+      question:
+        typeof v.question === "string" && v.question.trim()
+          ? v.question.trim().slice(0, TEXT_MAX_SHORT)
+          : null,
     });
   }
 
@@ -83,7 +94,11 @@ function parseBets(raw: unknown, wantsCount: number): BetSuggestion[] {
 
   for (const item of raw.slice(0, MAX_BETS_OUT)) {
     if (!item || typeof item !== "object") continue;
-    const v = item as { text?: unknown; want_index?: unknown };
+    const v = item as {
+      text?: unknown;
+      want_index?: unknown;
+      reason?: unknown;
+    };
     if (typeof v.text !== "string" || !v.text.trim()) continue;
 
     const wantIndex =
@@ -97,6 +112,10 @@ function parseBets(raw: unknown, wantsCount: number): BetSuggestion[] {
     bets.push({
       text: v.text.trim().slice(0, TEXT_MAX_SHORT),
       wantIndex,
+      reason:
+        typeof v.reason === "string" && v.reason.trim()
+          ? v.reason.trim().slice(0, TEXT_MAX_SHORT)
+          : null,
     });
   }
 
@@ -253,8 +272,9 @@ ${valuesText}
 
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5",
-      // Kommentar + bis zu 6 Wants (text/value_id/reason) + 5 Bets + JSON-
-      // Gerüst — 1200 lässt Luft, damit nie mitten im Satz abgeschnitten wird.
+      // Kommentar + bis zu 6 Wants (text/value_id/reason/question) + 5 Bets
+      // (text/want_index/reason) + JSON-Gerüst — 1200 lässt Luft, damit nie
+      // mitten im Satz abgeschnitten wird.
       max_tokens: 1200,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],

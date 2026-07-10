@@ -13,13 +13,16 @@ Die Idee hinter dem Audit: Wofür jemand freiwillig Mühsal erträgt und was ihn
 Deine Aufgaben:
 1. comment: 2–3 warme Sätze, die würdigen, was im Audit sichtbar wird — konkret auf die Antworten bezogen, in der Du-Form, ohne Floskeln, niemals belehrend.
 2. wants: Destilliere 3 bis 6 Wants-Hypothesen. Jede Hypothese:
-   - text: EIN deutscher Satz, der mit „Ich will " beginnt — konkret, positiv formuliert, nah an den Worten der Person (maximal 25 Wörter). Destilliere NUR aus dem, was im Audit steht; erfinde nichts dazu.
-   - value_id: Wenn die Hypothese klar zu einem der Werte in <werte> passt, gib exakt dessen id an (unverändert übernehmen). Passt keiner eindeutig, gib null an — eine erzwungene Zuordnung ist schlechter als keine.
-   - reason: EIN Satz, der die Hypothese aus dem Audit herleitet („Du nimmst … in Kauf / … bringt dich in Flow, also …").
-3. bets: Schlage 3 bis 5 „Little Bets" vor — kleine, konkrete Experimente, mit denen die Person ihre Wants in der Realität testen kann. Jedes Bet:
-   - text: EIN deutscher Satz im Imperativ oder als „Probier …"-Vorschlag (maximal 20 Wörter). Klein und sofort machbar: innerhalb der nächsten ein bis zwei Wochen, ohne großes Geld, ohne Verpflichtung — eine Schnupperstunde, ein Event, ein Abend, ein Gespräch. KEINE Lebensentscheidungen (nicht „kündige deinen Job").
-   - want_index: Der Index (0-basiert) der Wants-Hypothese aus deiner wants-Liste, die dieses Bet testet. Gehört es zu keiner eindeutig, gib null an.
+   - text: EIN deutscher Satz (maximal 25 Wörter), destilliert NUR aus dem Audit — erfinde nichts dazu. Variiere die Formulierung passend zum Inhalt; wähle die natürlichste aus: „Ich will …", „Ich mag es zu …", „Mir macht … Spaß", „Ich blühe auf, wenn …". Nicht stur „Ich will".
+     Wenn das Audit einen konkreten Anker hergibt, mach das Want greifbarer mit einem „— z. B. …“ (Beispiel: „Ich will mich an meine Grenzen treiben — z. B. für einen Marathon.“). Konkretisiere NUR, was aus dem Audit ableitbar ist.
+   - value_id: Wenn die Hypothese klar zu einem Wert in <werte> passt, exakt dessen id; sonst null. Keine erzwungene Zuordnung.
+   - reason: EIN Satz, der die Hypothese aus dem Audit herleitet.
+   - question: Wenn das Want noch vage/abstrakt ist und eine Konkretisierung bräuchte, EINE kurze, warme Rückfrage, die dabei hilft (z. B. „Woran denkst du beim an-die-Grenzen-treiben?“). Ist das Want schon konkret genug, gib null an.
+3. bets: Schlage 3 bis 5 „Little Bets" vor. Jedes Bet:
+   - text: EIN deutscher Satz (maximal 20 Wörter). IMMER der kleine erste Schritt — ein Abend, eine Schnupperstunde, ein Gespräch, eine niedrigschwellige Anmeldung, innerhalb der nächsten ein bis zwei Wochen, ohne großes Geld, ohne Verpflichtung. NIE ein Wochen-Commitment oder Trainingsplan. Gegenbeispiel (falsch): „Trainiere 6 Wochen für einen 10-km-Lauf.“ Richtig: „Melde dich für einen lockeren 5-km-Lauf an.“ Halte alle Bets in ähnlich kleiner Größe — kein krasser Kontrast zwischen den Vorschlägen.
+   - want_index: 0-basierter Index der getesteten Wants-Hypothese, sonst null.
+   - reason: NUR wenn eine echte Verbindung zum Yin/Yang besteht, EIN Satz, der sie benennt („weil dich … in Flow bringt“ / „weil du für … bereitwillig Mühsal in Kauf nimmst“). Sonst null — erfinde keine Verbindung.
 
 Ausgabeformat — WICHTIG:
 Gib AUSSCHLIESSLICH ein einziges striktes JSON-Objekt aus. Kein Markdown, keine Code-Fences, kein Text davor oder danach. Verwende INNERHALB der String-Werte niemals gerade doppelte Anführungszeichen (") — wenn du etwas zitieren willst, nutze ‚…' oder »…«. Halte exakt die Feld-Reihenfolge comment, wants, bets ein:
-{"comment": "…", "wants": [{"text": "Ich will …", "value_id": "<id aus <werte> oder null>", "reason": "…"}], "bets": [{"text": "…", "want_index": 0}]}`;
+{"comment": "…", "wants": [{"text": "…", "value_id": "<id oder null>", "reason": "…", "question": "<Rückfrage oder null>"}], "bets": [{"text": "…", "want_index": 0, "reason": "<Einordnung oder null>"}]}`;
