@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 import { Reveal } from "@/components/ui/reveal";
+import { StarArt } from "@/components/brand/star-art";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { cn } from "@/lib/utils";
@@ -100,29 +101,6 @@ function SealArt({ animate }: { animate: boolean }) {
         </text>
       </svg>
     </span>
-  );
-}
-
-/** Kolben der Wants-Experimente (Bets), mit aufsteigenden Blasen. */
-function FlaskArt({ animate, dim }: { animate: boolean; dim: boolean }) {
-  return (
-    <svg viewBox="0 0 48 48" className={cn("size-12", dim && "opacity-40")} aria-hidden="true">
-      <path
-        d="M20 8v10L11 34a3 3 0 003 4h20a3 3 0 003-4l-9-16V8"
-        fill="none"
-        stroke="var(--primary)"
-        strokeWidth="1.6"
-        opacity="0.85"
-      />
-      <path d="M16 27h16l4 7a3 3 0 01-3 4H15a3 3 0 01-3-4z" fill="var(--primary)" opacity="0.16" />
-      {animate && (
-        <>
-          <circle className="me-bubble" cx="21" cy="32" r="1.6" fill="var(--primary)" />
-          <circle className="me-bubble me-bubble-2" cx="27" cy="33" r="1.2" fill="var(--primary)" />
-        </>
-      )}
-      <line x1="18" y1="8" x2="30" y2="8" stroke="var(--primary)" strokeWidth="1.6" />
-    </svg>
   );
 }
 
@@ -248,7 +226,7 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
         <Scene
           href="/me/wants"
           ariaLabel={`${PAGE_TITLES.meWants} öffnen`}
-          art={<FlaskArt animate={animate} dim={wantsCount === 0} />}
+          art={<StarArt animate={animate} dim={wantsCount === 0} />}
         >
           <SceneTitle>{PAGE_TITLES.meWants}</SceneTitle>
           {openBetsCount > 0 ? (

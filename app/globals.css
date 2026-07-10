@@ -551,6 +551,13 @@
   .me-bubble   { animation: me-bubble 3s ease-in-out infinite; }
   .me-bubble-2 { animation-delay: 1.4s; }
 
+  /* Stern der Wants glüht sanft — Signatur-Ornament. */
+  @keyframes me-star-glow {
+    0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 2px color-mix(in srgb, var(--primary) 40%, transparent)); }
+    50% { opacity: 1; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 60%, transparent)); }
+  }
+  .me-star-glow { animation: me-star-glow 4s ease-in-out infinite; }
+
   /* Einzug beim Öffnen (einmalig): Rosenring zeichnet sich. */
   @keyframes me-ring-draw {
     from { stroke-dashoffset: 200; }
