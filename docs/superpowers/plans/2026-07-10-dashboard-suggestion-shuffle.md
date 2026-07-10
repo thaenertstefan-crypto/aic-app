@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Den Slot-Reel unter „…oder brauchst du gerade was anderes?" durch einen „Vorschlags-Shuffle" ersetzen: genau eine Gruppe von 3 Vorschlägen + stiller „Zeig mir was anderes"-Trigger, der mit gestaffelter Out/In-Motion die nächste Gruppe „hinlegt".
+**Goal:** Den Slot-Reel unter „…oder brauchst du gerade was anderes?" durch einen „Vorschlags-Shuffle" ersetzen: genau eine Gruppe von 3 Vorschlägen + stiller Icon-only-↻-Trigger (`aria-label="Zeig mir was anderes"`), der mit gestaffelter Out/In-Motion die nächste Gruppe „hinlegt".
 
 **Architecture:** Neue Client-Unterkomponente `SuggestionShuffle` (eigene Datei) kapselt Gruppierung (kuratierte Akut-Hilfen zuerst, dann feste Rotation), `groupIndex`-State und die Zwei-Phasen-Motion (out → swap → in). `daily-focus.tsx` rendert sie statt des Reels; die bestehende `useCrossfade`-Maschine des Tier-Wechsels bleibt unangetastet. Die `.alt-reel`-CSS-Maske wird entfernt.
 
@@ -174,17 +174,20 @@ export function SuggestionShuffle({
       </ul>
 
       {hasMultipleGroups && (
+        /* Icon-only-Trigger — bewusst ohne Schriftzug (genug Text auf dem
+           Dashboard); das aria-label trägt die Bedeutung. size-11 = volles
+           44px-Touch-Target, das Icon selbst bleibt klein und leise. */
         <button
           type="button"
           onClick={shuffle}
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          aria-label="Zeig mir was anderes"
+          className="mx-auto flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
         >
           <RefreshCw
             aria-hidden
             className="size-4 shrink-0 transition-transform duration-300 ease-out"
             style={reduced ? undefined : { rotate: `${turns * 180}deg` }}
           />
-          Zeig mir was anderes
         </button>
       )}
     </div>
@@ -336,7 +339,7 @@ Dev-Server (`npm run dev`), `/dashboard` bei ~375px (Login nötig; bei CSS-Zweif
 
 1. Genau 3 Vorschläge sichtbar, kein Scrollen, keine Fade-Kanten mehr.
 2. Erste Gruppe = Akut-Hilfen (Overthinking, Confidence-Moment, Dampf ablassen) — sofern nicht eine davon gerade Primary ist (dann rückt der Rest nach).
-3. „Zeig mir was anderes" tippen: alte Zeilen schweben gestaffelt nach oben raus, neue von unten rein; ↻ dreht eine halbe Umdrehung; kein Layout-Sprung unter dem Block (auch bei der kleineren Restgruppe).
+3. Den ↻-Trigger tippen (nur Icon, kein Schriftzug; Touch-Target fühlbar ~44px): alte Zeilen schweben gestaffelt nach oben raus, neue von unten rein; ↻ dreht eine halbe Umdrehung; kein Layout-Sprung unter dem Block (auch bei der kleineren Restgruppe).
 4. Zyklus: nach der letzten Gruppe kommt wieder Gruppe 1. Doppel-Tap während der Out-Phase löst keinen zweiten Swap aus.
 5. Mood auf Score 1–2 tippen (Tier-Wechsel): Gesamtblock crossfadet wie bisher, Shuffle funktioniert danach weiter (kein Out-of-bounds bei kürzerer Liste).
 6. DevTools → Rendering → „Emulate CSS prefers-reduced-motion": Tap tauscht sofort, nichts animiert, Icon dreht nicht.

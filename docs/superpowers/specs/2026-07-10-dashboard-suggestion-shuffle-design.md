@@ -26,9 +26,12 @@ Begleiter macht einen neuen Vorschlag, der User navigiert kein Menü.
 1. Überschrift (unverändert): *„…oder brauchst du gerade was anderes?"*
 2. **3 Vorschlags-Zeilen** — Optik wie bestehend: Hairline-Border (`rounded-lg border`),
    Ich-Satz (`text-sm font-medium`), `ChevronRight`, hover `bg-muted/40`.
-3. Trigger darunter: **„Zeig mir was anderes"** — Geist, `text-sm`, `text-muted-foreground`
-   (hover → foreground), kleines ↻-Icon (lucide `RefreshCw` o. ä.). Echter `<button>`.
-   Klar leiser als der goldene Primary-CTA (One-Candle-Regel bleibt intakt).
+3. Trigger darunter: **nur das ↻-Icon** (lucide `RefreshCw`), zentriert,
+   `text-muted-foreground` (hover → foreground) — kein Schriftzug, das Dashboard
+   trägt schon genug Text (User-Entscheidung). Echter `<button>` mit
+   `aria-label="Zeig mir was anderes"` und vollem 44px-Touch-Target (Icon selbst
+   bleibt klein). Klar leiser als der goldene Primary-CTA (One-Candle-Regel
+   bleibt intakt).
 
 ### Gruppierungs-Logik (Entscheidung: feste Rotation mit kuratiertem Start)
 
