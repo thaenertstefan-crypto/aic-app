@@ -273,9 +273,9 @@ ${valuesText}
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5",
       // Kommentar + bis zu 6 Wants (text/value_id/reason/question) + 5 Bets
-      // (text/want_index/reason) + JSON-Gerüst — 1200 lässt Luft, damit nie
-      // mitten im Satz abgeschnitten wird.
-      max_tokens: 1200,
+      // (text/want_index/reason) + JSON-Gerüst — 1600 lässt extra Luft für
+      // question- und reason-Felder, damit nie mitten im Satz abgeschnitten wird.
+      max_tokens: 1600,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });
