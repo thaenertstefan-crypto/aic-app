@@ -582,6 +582,28 @@
     .me-seal-stamp { opacity: 1; transform: none; }
   }
 
+  /* ── Kopf-Apotheke: Antwort-Zeilen ──────────────────────────────────
+   * Die Booster-Zeilen treten gestaffelt ein; den Versatz setzt das Markup
+   * per --booster-i. Bei reduced motion nur ein weicher Fade ohne Weg und
+   * ohne Staffelung. */
+  @keyframes booster-row-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .booster-row-in {
+    animation: booster-row-in 0.25s cubic-bezier(0.23, 1, 0.32, 1) both;
+    animation-delay: calc(var(--booster-i, 0) * 40ms);
+  }
+  @keyframes booster-row-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .booster-row-in {
+      animation: booster-row-fade 0.2s ease both;
+    }
+  }
+
   /* 4-7-8 breathing cycle (19s): inhale 4s, hold 7s, exhale 8s */
   @keyframes breathe478 {
     0% {
