@@ -574,7 +574,7 @@
   .me-seal-stamp { animation: me-seal-stamp 0.6s ease-out both; }
 
   @media (prefers-reduced-motion: reduce) {
-    .me-candle-bg, .me-needle-sway, .me-seal-glow, .me-bubble,
+    .me-candle-bg, .me-needle-sway, .me-seal-glow, .me-star-glow, .me-bubble,
     .me-ring-draw, .me-seal-stamp {
       animation: none !important;
     }
