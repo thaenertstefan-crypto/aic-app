@@ -60,6 +60,7 @@ type DraftWant = {
   valueId: string | null;
   valueLabel: string | null;
   reason: string | null;
+  question: string | null;
   source: "ai" | "own";
 };
 
@@ -68,6 +69,7 @@ type DraftBet = {
   id: string;
   text: string;
   wantClientId: string | null;
+  reason: string | null;
   selected: boolean;
   source: "ai" | "own";
 };
@@ -80,8 +82,9 @@ type DistillerResponse = {
     valueId?: string | null;
     valueLabel?: string | null;
     reason?: string | null;
+    question?: string | null;
   }[];
-  bets?: { text?: string; wantIndex?: number | null }[];
+  bets?: { text?: string; wantIndex?: number | null; reason?: string | null }[];
 };
 
 export function WantsJourney({ introSeen }: { introSeen: boolean }) {
@@ -164,6 +167,7 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
           valueId: typeof w.valueId === "string" ? w.valueId : null,
           valueLabel: typeof w.valueLabel === "string" ? w.valueLabel : null,
           reason: typeof w.reason === "string" ? w.reason : null,
+          question: typeof w.question === "string" ? w.question : null,
           source: "ai",
         }));
 
@@ -176,6 +180,7 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
             typeof b.wantIndex === "number" && wants[b.wantIndex]
               ? wants[b.wantIndex].id
               : null,
+          reason: typeof b.reason === "string" ? b.reason : null,
           selected: true,
           source: "ai",
         }));
@@ -250,6 +255,7 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
         valueId: null,
         valueLabel: null,
         reason: null,
+        question: null,
         source: "own",
       },
     ]);
@@ -302,6 +308,7 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
         id: crypto.randomUUID(),
         text,
         wantClientId: null,
+        reason: null,
         selected: true,
         source: "own",
       },
@@ -452,7 +459,7 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
                 </h1>
                 <p className="text-base leading-relaxed text-muted-foreground">
                   {manualMode
-                    ? "Formuliere 3–6 Sätze, die mit „Ich will …“ beginnen — destilliert aus deinem Audit."
+                    ? "Formuliere 3–6 Sätze dazu, was dich antreibt — so, wie es sich für dich richtig anfühlt."
                     : "Das lese ich aus deinem Audit heraus. Pass die Sätze an, verwirf, was nicht stimmt, und ergänze, was fehlt — es sind deine Wants."}
                 </p>
               </div>
@@ -519,7 +526,7 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
                 <Textarea
                   value={newWantText}
                   onChange={(e) => setNewWantText(e.target.value)}
-                  placeholder="Ich will …"
+                  placeholder="Was zieht dich an? Z. B. „Mir macht … Spaß“ oder „Ich will …“"
                   maxLength={300}
                   rows={2}
                   className="min-h-[60px] flex-1 resize-y"
@@ -616,9 +623,16 @@ export function WantsJourney({ introSeen }: { introSeen: boolean }) {
                       >
                         {bet.selected && <FlaskConical className="size-3" />}
                       </span>
-                      <p className="text-base leading-relaxed text-foreground">
-                        {bet.text}
-                      </p>
+                      <div className="flex-1">
+                        <p className="text-base leading-relaxed text-foreground">
+                          {bet.text}
+                        </p>
+                        {bet.reason && (
+                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                            {bet.reason}
+                          </p>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 </button>
