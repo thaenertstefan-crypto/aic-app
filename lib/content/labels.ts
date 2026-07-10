@@ -23,4 +23,5 @@ export const PAGE_TITLES = {
   me: "Me",
   wants: "Was du wirklich willst",
   meWants: "Meine Wants",
+  meWantsHero: "Was mich leuchten lässt",
 } as const;
