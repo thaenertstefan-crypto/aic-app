@@ -198,8 +198,16 @@ export function WantsJourney({
 
   const restoreDraft = () => {
     if (pendingDraft) {
-      setYin(pendingDraft.yin?.length ? pendingDraft.yin : Array(START_BOXES).fill(""));
-      setYang(pendingDraft.yang?.length ? pendingDraft.yang : Array(START_BOXES).fill(""));
+      setYin(
+        Array.isArray(pendingDraft.yin) && pendingDraft.yin.length
+          ? pendingDraft.yin
+          : Array(START_BOXES).fill(""),
+      );
+      setYang(
+        Array.isArray(pendingDraft.yang) && pendingDraft.yang.length
+          ? pendingDraft.yang
+          : Array(START_BOXES).fill(""),
+      );
       setPrinciples(pendingDraft.principles ?? "");
       if (pendingDraft.principles) setPrinciplesOpen(true);
     }
