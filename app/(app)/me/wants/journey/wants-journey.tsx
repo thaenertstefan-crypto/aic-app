@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   ChevronDown,
   Compass,
-  FlaskConical,
   Plus,
   Sparkles,
   X,
@@ -13,7 +12,6 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,11 +29,10 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
-import type { BetItem, WantItem } from "@/lib/types/db-json";
+import type { WantItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
 
 import {
-  saveBetsAction,
   saveWantsAction,
   saveYinYangEntryAction,
 } from "@/app/(app)/recipes/wants/actions";
@@ -45,7 +42,7 @@ const INTRO_CARDS = getRecipeIntro("wants") ?? [];
 const AI_FALLBACK_MESSAGE =
   "Das Destillieren hat gerade nicht geklappt. Dein Audit ist gespeichert — du kannst deine Wants auch selbst formulieren.";
 
-type Phase = "nudge" | "yin" | "yang" | "analyzing" | "hypotheses" | "bets" | "done";
+type Phase = "nudge" | "yin" | "yang" | "analyzing" | "sterne" | "done";
 
 type AuditDraft = {
   yin: string[];
@@ -64,16 +61,6 @@ type DraftWant = {
   source: "ai" | "own";
 };
 
-/** Ein Bet-Vorschlag im Client-State; wantClientId zeigt auf DraftWant.id. */
-type DraftBet = {
-  id: string;
-  text: string;
-  wantClientId: string | null;
-  reason: string | null;
-  selected: boolean;
-  source: "ai" | "own";
-};
-
 /** Antwort-Shape von /api/wants-distiller. */
 type DistillerResponse = {
   comment?: string;
@@ -84,7 +71,6 @@ type DistillerResponse = {
     reason?: string | null;
     question?: string | null;
   }[];
-  bets?: { text?: string; wantIndex?: number | null; reason?: string | null }[];
 };
 
 // Multi-Antwort-Audit: 3 Boxen vorgeschlagen (1 Pflicht), bis zu 6 möglich.
@@ -186,12 +172,6 @@ export function WantsJourney({
   const [refiningId, setRefiningId] = useState<string | null>(null);
   const [refineError, setRefineError] = useState<Record<string, string | null>>({});
 
-  // Little Bets
-  const [draftBets, setDraftBets] = useState<DraftBet[]>([]);
-  const [newBetText, setNewBetText] = useState("");
-  const [savingBets, setSavingBets] = useState(false);
-  const [betsError, setBetsError] = useState<string | null>(null);
-
   // Offline draft safety net
   const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
     useFormDraft<AuditDraft>("wants-audit");
@@ -235,7 +215,7 @@ export function WantsJourney({
       const data = (await res.json()) as DistillerResponse & { error?: string };
       if (!res.ok) {
         setAiError(data.error ?? AI_FALLBACK_MESSAGE);
-        setPhase("hypotheses");
+        setPhase("sterne");
         return;
       }
 
@@ -251,28 +231,13 @@ export function WantsJourney({
           source: "ai",
         }));
 
-      const bets: DraftBet[] = (data.bets ?? [])
-        .filter((b) => typeof b.text === "string" && b.text.trim())
-        .map((b) => ({
-          id: crypto.randomUUID(),
-          text: (b.text as string).trim(),
-          wantClientId:
-            typeof b.wantIndex === "number" && wants[b.wantIndex]
-              ? wants[b.wantIndex].id
-              : null,
-          reason: typeof b.reason === "string" ? b.reason : null,
-          selected: true,
-          source: "ai",
-        }));
-
       setComment(typeof data.comment === "string" ? data.comment : "");
       setDraftWants(wants);
-      setDraftBets(bets);
       setManualMode(wants.length === 0);
-      setPhase("hypotheses");
+      setPhase("sterne");
     } catch {
       setAiError(AI_FALLBACK_MESSAGE);
-      setPhase("hypotheses");
+      setPhase("sterne");
     }
   }
 
@@ -370,7 +335,7 @@ export function WantsJourney({
         setWantsError(result.error);
         return;
       }
-      setPhase("bets");
+      setPhase("done");
     } catch {
       setSavingWants(false);
       setWantsError("Speichern fehlgeschlagen. Versuch es noch einmal.");
@@ -416,65 +381,6 @@ export function WantsJourney({
       setRefineError((e) => ({ ...e, [want.id]: "Nachschärfen fehlgeschlagen." }));
     } finally {
       setRefiningId(null);
-    }
-  }
-
-  // ── Bets speichern ──────────────────────────────────────────────
-
-  function addOwnBet() {
-    const text = newBetText.trim();
-    if (!text) return;
-    setDraftBets((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        text,
-        wantClientId: null,
-        reason: null,
-        selected: true,
-        source: "own",
-      },
-    ]);
-    setNewBetText("");
-  }
-
-  async function confirmBets() {
-    const chosen = draftBets.filter((b) => b.selected && b.text.trim());
-    if (chosen.length === 0) {
-      setPhase("done");
-      return;
-    }
-
-    setSavingBets(true);
-    setBetsError(null);
-
-    // wantClientId nur übernehmen, wenn das Want auch bestätigt wurde
-    // (der User kann Hypothesen verworfen haben).
-    const keptWantIds = new Set(draftWants.map((w) => w.id));
-    const items: BetItem[] = chosen.map((b) => ({
-      id: b.id,
-      text: b.text.trim(),
-      wantId: b.wantClientId && keptWantIds.has(b.wantClientId) ? b.wantClientId : null,
-      status: "open",
-      journalEntryId: null,
-      source: b.source,
-    }));
-
-    const fd = new FormData();
-    fd.set("bets", JSON.stringify(items));
-    fd.set("previousIds", "[]");
-
-    try {
-      const result = await saveBetsAction({ error: null }, fd);
-      setSavingBets(false);
-      if (result.error) {
-        setBetsError(result.error);
-        return;
-      }
-      setPhase("done");
-    } catch {
-      setSavingBets(false);
-      setBetsError("Speichern fehlgeschlagen. Versuch es noch einmal.");
     }
   }
 
@@ -567,9 +473,9 @@ export function WantsJourney({
     );
   }
 
-  // ── Render: Wants-Hypothesen ────────────────────────────────────
+  // ── Render: Sterne ───────────────────────────────────────────────
 
-  if (phase === "hypotheses") {
+  if (phase === "sterne") {
     const keptCount = draftWants.filter((w) => w.text.trim()).length;
 
     return (
@@ -612,12 +518,12 @@ export function WantsJourney({
               <div className="flex flex-col items-center gap-3 text-center">
                 <Mascot expression="happy" size="md" />
                 <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                  Deine Wants-Hypothesen
+                  Deine Sterne
                 </h1>
                 <p className="text-base leading-relaxed text-muted-foreground">
                   {manualMode
                     ? "Formuliere 3–6 Sätze dazu, was dich antreibt — so, wie es sich für dich richtig anfühlt."
-                    : "Das lese ich aus deinem Audit heraus. Pass die Sätze an, verwirf, was nicht stimmt, und ergänze, was fehlt — es sind deine Wants."}
+                    : "Das lese ich aus deinem Audit heraus — deine Sterne. Pass die Sätze an, verwirf, was nicht stimmt, und ergänze, was fehlt."}
                 </p>
               </div>
 
@@ -746,141 +652,11 @@ export function WantsJourney({
                 {savingWants
                   ? "Wird gespeichert …"
                   : keptCount === 1
-                    ? "Dieses Want bestätigen"
-                    : `Diese ${keptCount} Wants bestätigen`}
+                    ? "Diesen Stern behalten"
+                    : `Diese ${keptCount} Sterne behalten`}
               </Button>
             </>
           )}
-          <div className="h-8" />
-        </div>
-      </div>
-    );
-  }
-
-  // ── Render: Little Bets ─────────────────────────────────────────
-
-  if (phase === "bets") {
-    const selectedCount = draftBets.filter((b) => b.selected && b.text.trim()).length;
-
-    return (
-      <div className="flex min-h-svh flex-col">
-        {header}
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <Mascot expression="smile" size="md" />
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-              Zeit für Little Bets
-            </h1>
-            <p className="text-base leading-relaxed text-muted-foreground">
-              Deine Wants sind erstmal nur eine These. Kleine, risikofreie
-              Experimente liefern dir die Beweise — welche willst du platzieren?
-            </p>
-          </div>
-
-          {draftBets.length > 0 && (
-            <div className="flex w-full flex-col gap-3">
-              {draftBets.map((bet) => (
-                <button
-                  key={bet.id}
-                  type="button"
-                  className="w-full text-left"
-                  aria-pressed={bet.selected}
-                  onClick={() =>
-                    setDraftBets((prev) =>
-                      prev.map((b) =>
-                        b.id === bet.id ? { ...b, selected: !b.selected } : b,
-                      ),
-                    )
-                  }
-                >
-                  <Card
-                    className={cn(
-                      "w-full transition-colors",
-                      bet.selected
-                        ? "border-primary/40 bg-primary/5"
-                        : "opacity-60 hover:opacity-80",
-                    )}
-                  >
-                    <CardContent className="flex items-start gap-3 pt-(--card-spacing)">
-                      <span
-                        className={cn(
-                          "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border",
-                          bet.selected
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-muted-foreground/40",
-                        )}
-                      >
-                        {bet.selected && <FlaskConical className="size-3" />}
-                      </span>
-                      <div className="flex-1">
-                        <p className="text-base leading-relaxed text-foreground">
-                          {bet.text}
-                        </p>
-                        {bet.reason && (
-                          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                            {bet.reason}
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="flex w-full items-start gap-2">
-            <Input
-              value={newBetText}
-              onChange={(e) => setNewBetText(e.target.value)}
-              placeholder="Eigenes Experiment, z. B. „Einmal zum Bouldern gehen“"
-              maxLength={300}
-              aria-label="Eigenes Little Bet hinzufügen"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addOwnBet();
-                }
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="shrink-0"
-              aria-label="Little Bet hinzufügen"
-              disabled={!newBetText.trim()}
-              onClick={addOwnBet}
-            >
-              <Plus className="size-4" />
-            </Button>
-          </div>
-
-          <FormError message={betsError} />
-
-          <div className="flex w-full flex-col gap-2">
-            <Button
-              className="w-full gap-2"
-              size="lg"
-              disabled={savingBets || selectedCount === 0}
-              onClick={() => void confirmBets()}
-            >
-              <FlaskConical className="size-4" />
-              {savingBets
-                ? "Wird gespeichert …"
-                : selectedCount === 1
-                  ? "1 Bet platzieren"
-                  : `${selectedCount} Bets platzieren`}
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full"
-              disabled={savingBets}
-              onClick={() => setPhase("done")}
-            >
-              Später auf meiner Wants-Seite
-            </Button>
-          </div>
           <div className="h-8" />
         </div>
       </div>
@@ -897,18 +673,18 @@ export function WantsJourney({
 
           <div className="space-y-2">
             <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
-              Deine Wants stehen.
+              Deine Sterne leuchten.
             </h1>
             <p className="text-muted-foreground">
-              Jetzt beginnt der spannende Teil: ausprobieren. Deine Wants und
-              Little Bets warten auf deiner Me-Seite — und nach jedem Experiment
-              reflektierst du kurz, was es dir gezeigt hat.
+              Sie warten auf deiner Sterne-Seite. Und wenn du Lust hast, etwas
+              Neues auszuprobieren, das ein neuer Stern werden könnte: In der
+              Sternschmiede schlägst du dafür ein paar Funken.
             </p>
           </div>
 
           <div className="flex w-full flex-col gap-3 pt-4">
             <Button className="w-full" size="lg" render={<Link href="/me/wants" />}>
-              Zu deinen Wants
+              Zu deinen Sternen
             </Button>
             <Button
               variant="outline"
