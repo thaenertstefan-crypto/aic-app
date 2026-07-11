@@ -17,6 +17,8 @@ export const SAYING_NO_LIMIT = 30;
 export const WANTS_DISTILLER_LIMIT = 10;
 // Nachschärfen einzelner Wants — mehrere pro Audit-Durchlauf möglich.
 export const WANTS_REFINER_LIMIT = 30;
+// Sternschmiede: ein Funken-Generierungs-Call pro Durchlauf (+ Retries).
+export const STERNSCHMIEDE_LIMIT = 15;
 
 // Friendly German message returned with a 429 when a cap is hit.
 export const RATE_LIMIT_MESSAGE =
