@@ -48,8 +48,8 @@ const AI_FALLBACK_MESSAGE =
 type Phase = "nudge" | "yin" | "yang" | "analyzing" | "hypotheses" | "bets" | "done";
 
 type AuditDraft = {
-  yin: string;
-  yang: string;
+  yin: string[];
+  yang: string[];
   principles: string;
 };
 
@@ -87,6 +87,67 @@ type DistillerResponse = {
   bets?: { text?: string; wantIndex?: number | null; reason?: string | null }[];
 };
 
+// Multi-Antwort-Audit: 3 Boxen vorgeschlagen (1 Pflicht), bis zu 6 möglich.
+const START_BOXES = 3;
+const MAX_ANSWER_BOXES = 6;
+// Pro Box gecappt, damit die zusammengefügten Antworten unter TEXT_MAX_LONG (5000) bleiben.
+const ANSWER_MAX = 800;
+
+/** Nicht-leere Antworten zeilenweise zu einem String zusammenfügen (für die Action). */
+function joinAnswers(answers: string[]): string {
+  return answers.map((a) => a.trim()).filter(Boolean).join("\n");
+}
+
+function AnswerBoxes({
+  answers,
+  onChange,
+  idPrefix,
+  placeholders,
+  disabled,
+}: {
+  answers: string[];
+  onChange: (next: string[]) => void;
+  idPrefix: string;
+  placeholders: string[];
+  disabled?: boolean;
+}) {
+  const setAt = (i: number, val: string) =>
+    onChange(answers.map((a, idx) => (idx === i ? val : a)));
+  return (
+    <div className="space-y-3">
+      {answers.map((answer, i) => (
+        <Textarea
+          key={i}
+          id={`${idPrefix}-${i}`}
+          value={answer}
+          onChange={(e) => setAt(i, e.target.value)}
+          placeholder={placeholders[i] ?? "Noch eine Antwort …"}
+          rows={2}
+          required={i === 0}
+          maxLength={ANSWER_MAX}
+          disabled={disabled}
+          className="min-h-[64px] resize-y text-base"
+          aria-label={
+            i === 0 ? "Antwort (Pflicht)" : `Weitere Antwort ${i + 1} (optional)`
+          }
+        />
+      ))}
+      {answers.length < MAX_ANSWER_BOXES && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="gap-2 text-muted-foreground"
+          onClick={() => onChange([...answers, ""])}
+          disabled={disabled}
+        >
+          <Plus className="size-4" /> Noch eine Antwort
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function WantsJourney({
   introSeen,
   hasValuesHypothesis,
@@ -101,8 +162,8 @@ export function WantsJourney({
   useScrollTopOnChange(phase);
 
   // Audit
-  const [yin, setYin] = useState("");
-  const [yang, setYang] = useState("");
+  const [yin, setYin] = useState<string[]>(Array(START_BOXES).fill(""));
+  const [yang, setYang] = useState<string[]>(Array(START_BOXES).fill(""));
   const [principles, setPrinciples] = useState("");
   const [principlesOpen, setPrinciplesOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -137,8 +198,8 @@ export function WantsJourney({
 
   const restoreDraft = () => {
     if (pendingDraft) {
-      setYin(pendingDraft.yin ?? "");
-      setYang(pendingDraft.yang ?? "");
+      setYin(pendingDraft.yin?.length ? pendingDraft.yin : Array(START_BOXES).fill(""));
+      setYang(pendingDraft.yang?.length ? pendingDraft.yang : Array(START_BOXES).fill(""));
       setPrinciples(pendingDraft.principles ?? "");
       if (pendingDraft.principles) setPrinciplesOpen(true);
     }
@@ -224,8 +285,8 @@ export function WantsJourney({
     }
 
     const formData = new FormData();
-    formData.set("yin", yin);
-    formData.set("yang", yang);
+    formData.set("yin", joinAnswers(yin));
+    formData.set("yang", joinAnswers(yang));
     formData.set("principles", principles);
 
     try {
@@ -865,7 +926,7 @@ export function WantsJourney({
           <div className="flex flex-col items-center gap-3 text-center">
             <Mascot expression="smile" size="md" />
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-              Yang — Was bringt dich in Flow?
+              Was bringt dich zum Leuchten?
             </h1>
             <p className="text-base leading-relaxed text-muted-foreground">
               Flow ist dieser Zustand, in dem du die Zeit vergisst: Du bist so
@@ -879,21 +940,21 @@ export function WantsJourney({
 
           <form className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="yang" className="text-base font-medium">
-                Bei welchen Aktivitäten vergisst du die Zeit? Und was hast du
-                früher aus purem Spaß gemacht, tust es heute aber nicht mehr?
+              <Label className="text-base font-medium">
+                Bei welchen Aktivitäten vergisst du die Zeit — gehst so darin auf,
+                dass die Welt (und das Gedankenchaos im Kopf) ausgeblendet ist?
+                Schreib ruhig mehrere auf — eine reicht, drei sind ideal.
               </Label>
-              <Textarea
-                id="yang"
-                name="yang"
-                value={yang}
-                onChange={(e) => setYang(e.target.value)}
-                placeholder="Zum Beispiel: Wenn ich an einem Design tüftle, schaue ich plötzlich auf die Uhr und drei Stunden sind weg. Früher habe ich ständig gezeichnet — heute gar nicht mehr …"
-                rows={6}
-                required
-                maxLength={5000}
+              <AnswerBoxes
+                answers={yang}
+                onChange={setYang}
+                idPrefix="yang"
+                placeholders={[
+                  "Zum Beispiel: Wenn ich an einem Design tüftle, sind plötzlich drei Stunden weg …",
+                  "Noch etwas, das dich in Flow bringt …",
+                  "Und noch etwas …",
+                ]}
                 disabled={submitting}
-                className="min-h-[160px] resize-y"
               />
             </div>
 
@@ -947,7 +1008,7 @@ export function WantsJourney({
                 type="button"
                 className="w-full gap-2"
                 size="lg"
-                disabled={submitting || !yang.trim()}
+                disabled={submitting || !yang[0]?.trim()}
                 onClick={() => void handleAuditSubmit()}
               >
                 {submitting ? "Wird gespeichert …" : "Meine Wants destillieren"}
@@ -997,21 +1058,20 @@ export function WantsJourney({
 
         <form className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="yin" className="text-base font-medium">
+            <Label className="text-base font-medium">
               Denk an Momente von Stress, Anstrengung oder Schmerz, auf die du
               zurückblickst und denkst: „Hat mich an den Rand gebracht … war’s
-              aber wert.“
+              aber wert.“ Schreib ruhig mehrere auf — eine reicht, drei sind ideal.
             </Label>
-            <Textarea
-              id="yin"
-              name="yin"
-              value={yin}
-              onChange={(e) => setYin(e.target.value)}
-              placeholder="Zum Beispiel: die durchgemachten Nächte vor der Abgabe, das Lampenfieber vor meinem ersten Vortrag, der kräftezehrende Umzug in die neue Stadt …"
-              rows={6}
-              required
-              maxLength={5000}
-              className="min-h-[160px] resize-y"
+            <AnswerBoxes
+              answers={yin}
+              onChange={setYin}
+              idPrefix="yin"
+              placeholders={[
+                "Zum Beispiel: die durchgemachten Nächte vor der Abgabe …",
+                "Noch eine Mühsal, die sich gelohnt hat …",
+                "Und noch eine …",
+              ]}
             />
           </div>
 
@@ -1019,10 +1079,10 @@ export function WantsJourney({
             type="button"
             className="w-full gap-2"
             size="lg"
-            disabled={!yin.trim()}
+            disabled={!yin[0]?.trim()}
             onClick={() => setPhase("yang")}
           >
-            Weiter zu Yang
+            Weiter zum Leuchten
           </Button>
         </form>
         <div className="h-8" />
