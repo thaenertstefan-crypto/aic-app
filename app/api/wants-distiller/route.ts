@@ -17,7 +17,6 @@ const MAX_ENTRY_LEN = 2000;
 const MAX_VALUES_IN_PROMPT = 20;
 // Obergrenzen für die Modell-Listen — mehr wird still verworfen.
 const MAX_WANTS_OUT = 6;
-const MAX_BETS_OUT = 5;
 
 const AI_ERROR_MESSAGE =
   "Das Destillieren hat gerade nicht geklappt. Dein Audit ist gespeichert — du kannst deine Wants auch selbst formulieren.";
@@ -31,17 +30,9 @@ type WantSuggestion = {
   question: string | null;
 };
 
-/** Ein vorgeschlagenes Little Bet (wantIndex zeigt in die wants-Liste). */
-type BetSuggestion = {
-  text: string;
-  wantIndex: number | null;
-  reason: string | null;
-};
-
 type DistillerResult = {
   comment: string;
   wants: WantSuggestion[];
-  bets: BetSuggestion[];
 };
 
 function clampText(value: string): string {
@@ -87,41 +78,6 @@ function parseWants(raw: unknown, valueIds: Set<string>): WantSuggestion[] {
   return wants;
 }
 
-/** Validiert die bets-Liste; want_index außerhalb der wants-Liste wird null. */
-function parseBets(raw: unknown, wantsCount: number): BetSuggestion[] {
-  if (!Array.isArray(raw)) return [];
-  const bets: BetSuggestion[] = [];
-
-  for (const item of raw.slice(0, MAX_BETS_OUT)) {
-    if (!item || typeof item !== "object") continue;
-    const v = item as {
-      text?: unknown;
-      want_index?: unknown;
-      reason?: unknown;
-    };
-    if (typeof v.text !== "string" || !v.text.trim()) continue;
-
-    const wantIndex =
-      typeof v.want_index === "number" &&
-      Number.isInteger(v.want_index) &&
-      v.want_index >= 0 &&
-      v.want_index < wantsCount
-        ? v.want_index
-        : null;
-
-    bets.push({
-      text: v.text.trim().slice(0, TEXT_MAX_SHORT),
-      wantIndex,
-      reason:
-        typeof v.reason === "string" && v.reason.trim()
-          ? v.reason.trim().slice(0, TEXT_MAX_SHORT)
-          : null,
-    });
-  }
-
-  return bets;
-}
-
 /**
  * Parse the model output. Preferred path: strict JSON per system prompt.
  * Die Listen sind per Regex kaum rettbar — bei kaputtem JSON degradiert die
@@ -143,16 +99,15 @@ function parseModelOutput(raw: string, valueIds: Set<string>): DistillerResult {
     ) {
       const comment = ((parsed as { comment: string }).comment).trim();
       const wants = parseWants((parsed as { wants?: unknown }).wants, valueIds);
-      const bets = parseBets((parsed as { bets?: unknown }).bets, wants.length);
       if (comment) {
-        return { comment, wants, bets };
+        return { comment, wants };
       }
     }
   } catch {
     // JSON kaputt → comment-Fallback unten.
   }
 
-  // Feld-Reihenfolge (comment → wants → bets) ist per Prompt fixiert: der
+  // Feld-Reihenfolge (comment → wants) ist per Prompt fixiert: der
   // Kommentar lässt sich über den nachfolgenden "wants"-Key heraustrennen.
   const commentMatch = stripped.match(/"comment"\s*:\s*"([\s\S]*?)"\s*,\s*"wants"/);
   if (commentMatch) {
@@ -162,11 +117,11 @@ function parseModelOutput(raw: string, valueIds: Set<string>): DistillerResult {
       .replace(/\\\\/g, "\\")
       .trim();
     if (comment) {
-      return { comment, wants: [], bets: [] };
+      return { comment, wants: [] };
     }
   }
 
-  return { comment: "", wants: [], bets: [] };
+  return { comment: "", wants: [] };
 }
 
 /**
@@ -272,10 +227,10 @@ ${valuesText}
 
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5",
-      // Kommentar + bis zu 6 Wants (text/value_id/reason/question) + 5 Bets
-      // (text/want_index/reason) + JSON-Gerüst — 1600 lässt extra Luft für
-      // question- und reason-Felder, damit nie mitten im Satz abgeschnitten wird.
-      max_tokens: 1600,
+      // Kommentar + bis zu 6 Wants (text/value_id/reason/question) +
+      // JSON-Gerüst — 1200 lässt extra Luft, damit nie mitten im Satz
+      // abgeschnitten wird.
+      max_tokens: 1200,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });
@@ -293,7 +248,7 @@ ${valuesText}
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
 
-    const { comment, wants, bets } = parseModelOutput(raw, valueIds);
+    const { comment, wants } = parseModelOutput(raw, valueIds);
     if (!comment && wants.length === 0) {
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
@@ -321,7 +276,7 @@ ${valuesText}
       })
       .eq("id", entry.id);
 
-    return Response.json({ comment, wants, bets });
+    return Response.json({ comment, wants });
   } catch (error) {
     console.error("wants-distiller: call failed", error);
     return Response.json({ error: AI_ERROR_MESSAGE }, { status: 500 });
