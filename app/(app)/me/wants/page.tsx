@@ -8,7 +8,6 @@ export default async function MeWantsPage() {
   return (
     <WantsMe
       initialWants={data?.wants ?? []}
-      initialBets={data?.bets ?? []}
       introSeen={data?.introSeen ?? true}
     />
   );
