@@ -217,57 +217,14 @@ git commit -m "feat(layout): SubPageHeader-Übergang (Header-Fade) + backTransit
 
 ---
 
-## Task 3: Intro-Karten für die Sternschmiede
-
-**Files:**
-- Modify: `lib/utils/recipe-intros.ts`
-
-**Interfaces:**
-- Produces: `getRecipeIntro("sternschmiede")` liefert die Info-Karten für den Schmiede-Header (Task 4).
-
-- [ ] **Step 1: Neuen Intro-Eintrag ergänzen**
-
-In `lib/utils/recipe-intros.ts` im `RECIPE_INTROS`-Objekt einen Eintrag `sternschmiede` hinzufügen (z.B. direkt nach dem `wants`-Block):
-
-```ts
-  sternschmiede: [
-    {
-      title: "Willkommen in der Sternschmiede",
-      body: "Hier schlägst du Funken — kleine, risikofreie Experimente, mit denen du Neues (oder längst Vergessenes) ausprobierst. Aus manchem Funken wird ein neuer Stern.",
-    },
-    {
-      title: "Wie ein Funke entsteht",
-      body: "Du erzählst mir, was dir als Kind Spaß gemacht hat (optional) — und ich schlage dir ein paar Funken vor, die zu deinen Werten und deinen Sternen passen. Du nimmst mit, was dich neugierig macht, probierst es im Alltag aus und reflektierst danach kurz, was der Funke dir gezeigt hat.",
-    },
-    {
-      title: "Auch ohne Sterne?",
-      body: "Klar. Du brauchst keine bestätigten Sterne, um Funken zu schlagen — ein Funke kann selbst der Anfang sein. Manchmal weiß man einfach nicht, was man will; genau dafür ist dieser Ort da.",
-    },
-  ],
-```
-
-- [ ] **Step 2: Lint + Typecheck**
-
-Run: `npx eslint lib/utils/recipe-intros.ts` → Expected: clean.
-Run: `npx tsc --noEmit` → Expected: clean.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add lib/utils/recipe-intros.ts
-git commit -m "feat(wants): Intro-Karten für die Sternschmiede (Info-Button)"
-```
-
----
-
-## Task 4: Sternschmiede — Bets-Landing, Info-Button, Übergang, done-Merge
+## Task 3: Sternschmiede — Bets-Landing, Info-Button, Übergang, done-Merge
 
 **Files:**
 - Modify: `app/(app)/me/wants/schmiede/page.tsx`
 - Modify: `app/(app)/me/wants/schmiede/sternschmiede.tsx`
 
 **Interfaces:**
-- Consumes: `getRecipeIntro("sternschmiede")` (Task 3); `SubPageHeader` `backTransitionTypes` (Task 2); CSS-Klassen (Task 1); `saveBetsAction`, `BetItem`, `getWantsData` (bestehend).
+- Consumes: `getRecipeIntro("wants")` (bestehende Wants-Intro-Karten — der Info-Button zeigt dasselbe Overlay wie `/me/wants`, KEINE eigene Schmiede-Intro); `SubPageHeader` `backTransitionTypes` (Task 2); CSS-Klassen (Task 1); `saveBetsAction`, `BetItem`, `getWantsData` (bestehend).
 - Produces: `Sternschmiede`-Komponente nimmt neue Prop `initialBets: BetItem[]`; verwaltet Bets optimistisch; zeigt sie auf der Intro/Landing-Ansicht.
 
 - [ ] **Step 1: page.tsx — initialBets laden & übergeben**
@@ -320,7 +277,9 @@ import { saveBetsAction } from "@/app/(app)/recipes/wants/actions";
 import type { BetItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
 
-const SCHMIEDE_INTRO_CARDS = getRecipeIntro("sternschmiede") ?? [];
+// Der Info-Button der Schmiede zeigt DASSELBE Wants-Intro-Overlay wie /me/wants —
+// keine eigene Schmiede-Intro.
+const INTRO_CARDS = getRecipeIntro("wants") ?? [];
 ```
 
 - [ ] **Step 3: sternschmiede.tsx — Signatur, Bet-State & Persistenz**
@@ -359,8 +318,8 @@ export function Sternschmiede({
       title="Sternschmiede"
       backTransitionTypes={["forge-up"]}
       action={
-        SCHMIEDE_INTRO_CARDS.length > 0 ? (
-          <IntroInfoButton cards={SCHMIEDE_INTRO_CARDS} />
+        INTRO_CARDS.length > 0 ? (
+          <IntroInfoButton cards={INTRO_CARDS} />
         ) : undefined
       }
     />
@@ -626,7 +585,7 @@ Run: `npx tsc --noEmit` → Expected: clean.
 - [ ] **Step 8: Manuelle Prüfung**
 
 Run: `npm run dev`, öffne `/me/wants/schmiede` (Viewport 375px). Expected:
-- Header zeigt rechts ein Info-Icon; Klick öffnet das Schmiede-Intro (3 Karten).
+- Header zeigt rechts ein Info-Icon; Klick öffnet dasselbe Wants-Intro-Overlay wie auf `/me/wants`.
 - Falls offene Bets existieren: Sektion „Nach den Sternen greifen" mit „Reflektieren"/„Verwerfen" erscheint über der Kind-Frage. (Testdaten: vorher auf `/me/wants` — vor dessen Umbau — bzw. via Schmiede „Funken schlagen" → mitnehmen.)
 - „Funken schlagen" → Auswahl → „mitnehmen": danach zeigt „done"; „Zu deinen Funken" führt zurück auf die Landing, wo die neuen Funken jetzt gelistet sind.
 
@@ -639,7 +598,7 @@ git commit -m "feat(wants): Sternschmiede beheimatet Bets + Info-Button + Überg
 
 ---
 
-## Task 5: Sterne-Seite entschlacken + Übergangs-Button
+## Task 4: Sterne-Seite entschlacken + Übergangs-Button
 
 **Files:**
 - Modify: `app/(app)/me/wants/page.tsx`
@@ -1016,7 +975,7 @@ git commit -m "feat(wants): Sterne-Seite entschlackt + View-Transition-Übergang
 
 ---
 
-## Task 6: Sternsuche-Copy (Yin/Yang-Wörter + Audit)
+## Task 5: Sternsuche-Copy (Yin/Yang-Wörter + Audit)
 
 **Files:**
 - Modify: `app/(app)/me/wants/journey/wants-journey.tsx`
@@ -1065,7 +1024,7 @@ git commit -m "feat(wants): Copy auf Sternsuche umgestellt, Yin/Yang-Wörter rau
 
 ---
 
-## Task 7: AI-Prompt — Funken stärker an Werten orientieren
+## Task 6: AI-Prompt — Funken stärker an Werten orientieren
 
 **Files:**
 - Modify: `lib/anthropic/prompts/sternschmiede.ts`
@@ -1105,7 +1064,7 @@ git commit -m "feat(wants): Schmiede-Prompt balanciert Funken auf Werte + Wert-B
 
 ---
 
-## Task 8: End-to-End-Sichtprüfung (Gate, kein Code)
+## Task 7: End-to-End-Sichtprüfung (Gate, kein Code)
 
 **Files:** keine.
 
@@ -1135,15 +1094,15 @@ Verwende `superpowers:finishing-a-development-branch`, um Merge/PR/Cleanup zu w�
 ## Self-Review (vom Autor durchgeführt)
 
 **Spec-Abdeckung:**
-- P1 (Kompass-Link raus) → Task 5.
-- P2 (Bets in die Schmiede) → Task 4 (Landing) + Task 5 (aus wants entfernt) + Task 5 page.tsx (kein initialBets).
-- P3 (Swipe raus, „nach unten wischen" raus, „Sternsuche nochmal" über der Brücke) → Task 5.
-- P4 (cooler Übergang, kein Overlay, Spinner im Button; Header alt slidet/neu fadet) → Task 1 (CSS/Flag) + Task 2 (Header) + Task 4/5 (Wrapper + Button).
-- P5 (Info-Button in der Schmiede, Bets dort) → Task 3 (Intro-Karten) + Task 4.
-- P6 (Weg in die Schmiede auch ohne Sterne) → Task 5 (Brücke im Leer-Zustand).
-- P7 (Audit→Sternsuche; Yin/Yang-Wörter raus) → Task 5 (wants-Copy) + Task 6 (journey-Copy).
-- P8 (Funken an Werten + Wert-Begründung) → Task 7.
+- P1 (Kompass-Link raus) → Task 4.
+- P2 (Bets in die Schmiede) → Task 3 (Landing) + Task 4 (aus wants entfernt) + Task 4 page.tsx (kein initialBets).
+- P3 (Swipe raus, „nach unten wischen" raus, „Sternsuche nochmal" über der Brücke) → Task 4.
+- P4 (cooler Übergang, kein Overlay, Spinner im Button; Header alt slidet/neu fadet) → Task 1 (CSS/Flag) + Task 2 (Header) + Task 3/4 (Wrapper + Button).
+- P5 (Info-Button in der Schmiede zeigt Wants-Intro-Overlay, Bets dort) → Task 3.
+- P6 (Weg in die Schmiede auch ohne Sterne) → Task 4 (Brücke im Leer-Zustand).
+- P7 (Audit→Sternsuche; Yin/Yang-Wörter raus) → Task 4 (wants-Copy) + Task 5 (journey-Copy).
+- P8 (Funken an Werten + Wert-Begründung) → Task 6.
 
 **Platzhalter-Scan:** keine TBD/TODO/„handle edge cases" — alle Codeblöcke ausformuliert.
 
-**Typ-Konsistenz:** CSS-Klassen (`forge-in-up/down`, `forge-out-up/down`, `forge-header-in`) identisch in Task 1, 2, 4, 5. `backTransitionTypes?: string[]` in Task 2 definiert, in Task 4 konsumiert. `WantsMe`-Props (`initialWants`, `introSeen`) konsistent zwischen Task 5 page.tsx und Komponente. `Sternschmiede`-Props (`hasSterne`, `initialBets`) konsistent zwischen Task 4 page.tsx und Komponente. `transitionTypes`-Wert `"forge-down"`/`"forge-up"` durchgehend gleich.
+**Typ-Konsistenz:** CSS-Klassen (`forge-in-up/down`, `forge-out-up/down`, `forge-header-in`) identisch in Task 1, 2, 3, 4. `backTransitionTypes?: string[]` in Task 2 definiert, in Task 3 konsumiert. `WantsMe`-Props (`initialWants`, `introSeen`) konsistent zwischen Task 4 page.tsx und Komponente. `Sternschmiede`-Props (`hasSterne`, `initialBets`) konsistent zwischen Task 3 page.tsx und Komponente. Info-Button nutzt in Schmiede (Task 3) und Sterne-Seite (Task 4) dieselben `getRecipeIntro("wants")`-Karten. `transitionTypes`-Wert `"forge-down"`/`"forge-up"` durchgehend gleich.

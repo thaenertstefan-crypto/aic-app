@@ -76,12 +76,11 @@ Dateien: [sternschmiede.tsx](../../../app/(app)/me/wants/schmiede/sternschmiede.
 [schmiede/page.tsx](../../../app/(app)/me/wants/schmiede/page.tsx)
 
 ### Header mit Info-Button (P5)
-Der `SubPageHeader` bekommt — analog zur Sterne-Seite — einen `IntroInfoButton`,
-über den das Intro nachlesbar ist. Dafür wird ein neuer Intro-Eintrag
-`"sternschmiede"` in [recipe-intros.ts](../../../lib/utils/recipe-intros.ts)
-angelegt (2–3 Karten aus der bestehenden Willkommens-/Erklär-Copy der Schmiede).
-`getRecipeIntro("sternschmiede")` liefert die Karten; der Button rendert nur,
-wenn Karten vorhanden sind.
+Der `SubPageHeader` bekommt — analog zur Sterne-Seite — einen `IntroInfoButton`.
+**Kein eigenes Schmiede-Intro:** Der Button zeigt beim Klick dasselbe
+Wants-Intro-Overlay wie `/me/wants`, d. h. er nutzt die bestehenden
+`getRecipeIntro("wants")`-Karten. Der Button rendert nur, wenn Karten vorhanden
+sind.
 
 ### Bets leben jetzt hier (P2, P5) — auf der Intro/Landing-Ansicht
 Die Landing-/Intro-Phase (`phase === "intro"`) wird zum Zuhause der Bets:
@@ -222,7 +221,6 @@ Die Route [route.ts](../../../app/api/sternschmiede/route.ts) bleibt unveränder
 | `app/(app)/me/wants/schmiede/sternschmiede.tsx` | Info-Button im Header (P5); Bets-Landing inkl. Persistenz (P2/P5); done → Schmiede-Landing |
 | `app/(app)/me/wants/schmiede/page.tsx` | `initialBets` laden/übergeben |
 | `app/(app)/me/wants/journey/wants-journey.tsx` | Yin/Yang-Wörter streichen, „Audit"→„Sternsuche" (P7) |
-| `lib/utils/recipe-intros.ts` | Intro-Eintrag `"sternschmiede"` (P5) |
 | `lib/anthropic/prompts/sternschmiede.ts` | Werte-Aufteilung + Begründung (P8) |
 | `next.config.ts` | `experimental.viewTransition: true` (P4) |
 | `app/globals.css` | Vertikale View-Transition-Keyframes + reduced-motion (P4) |
