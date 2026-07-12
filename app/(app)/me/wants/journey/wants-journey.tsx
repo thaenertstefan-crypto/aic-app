@@ -50,7 +50,7 @@ type AuditDraft = {
   principles: string;
 };
 
-/** Eine Hypothese im Client-State — die id wird beim Bestätigen zur WantItem-id. */
+/** Ein Stern-Entwurf im Client-State — die id wird beim Bestätigen zur WantItem-id. */
 type DraftWant = {
   id: string;
   text: string;
@@ -161,7 +161,7 @@ export function WantsJourney({
   const [aiError, setAiError] = useState<string | null>(null);
   const [manualMode, setManualMode] = useState(false);
 
-  // Hypothesen-Karten
+  // Sterne-Karten
   const [draftWants, setDraftWants] = useState<DraftWant[]>([]);
   const [newWantText, setNewWantText] = useState("");
   const [savingWants, setSavingWants] = useState(false);
@@ -199,7 +199,7 @@ export function WantsJourney({
   // ── KI-Destillat laden ──────────────────────────────────────────
   // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert; die Route lädt
   // Audit + bestätigte Werte serverseitig nach — der Client schickt nur die
-  // entryId. Fehler landen als aiError auf dem Hypothesen-Screen; das Rezept
+  // entryId. Fehler landen als aiError auf dem Sterne-Screen; das Rezept
   // bleibt ohne KI vollständig nutzbar (manueller Modus).
 
   async function runDistiller(id: string) {

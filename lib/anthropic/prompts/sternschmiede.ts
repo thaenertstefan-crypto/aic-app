@@ -15,9 +15,8 @@ Deine Aufgaben:
    - Kleiner Aufwand: ein Abend, eine Schnupperstunde, ein niederschwelliger erster Schritt innerhalb der nächsten ein bis zwei Wochen, ohne großes Geld, ohne Verpflichtung. NIE ein Wochen-Commitment oder Trainingsplan.
    - Funken, die von einem bestehenden Stern inspiriert sind, sind eine NEUE, angrenzende Idee — NIEMALS eine Umformulierung des Sterns. Ziel ist etwas Neues, das zum Konzept des Sterns passt und selbst ein neuer Stern werden könnte.
    - So konkret wie möglich innerhalb dieser Grenzen.
-   - source_hint: grobe Herkunft der Idee, EIN kurzes Stichwort — „wert", „stern", „kind" oder null. Impliziere damit nie, dass ein bestehender Stern nur wiederholt wird.
    - reason: NUR wenn es eine echte Verbindung zu Werten/Sternen/Kind-Antwort gibt, EIN Satz, der sie benennt. Sonst null — erfinde keine Verbindung.
 
 Ausgabeformat — WICHTIG:
 Gib AUSSCHLIESSLICH ein einziges striktes JSON-Objekt aus. Kein Markdown, keine Code-Fences, kein Text davor oder danach. Verwende INNERHALB der String-Werte niemals gerade doppelte Anführungszeichen (") — nutze stattdessen ‚…' oder »…«. Halte exakt die Feld-Reihenfolge comment, funken ein:
-{"comment": "…", "funken": [{"text": "…", "source_hint": "<wert|stern|kind oder null>", "reason": "<Einordnung oder null>"}]}`;
+{"comment": "…", "funken": [{"text": "…", "reason": "<Einordnung oder null>"}]}`;

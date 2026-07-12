@@ -25,11 +25,13 @@ type DraftFunke = {
   text: string;
   reason: string | null;
   selected: boolean;
+  /** Herkunft: KI-Vorschlag oder selbst getippt. */
+  source: "ai" | "own";
 };
 
 type ForgeResponse = {
   comment?: string;
-  funken?: { text?: string; sourceHint?: string | null; reason?: string | null }[];
+  funken?: { text?: string; reason?: string | null }[];
   error?: string;
 };
 
@@ -71,6 +73,7 @@ export function Sternschmiede({ hasSterne }: { hasSterne: boolean }) {
           text: (f.text as string).trim(),
           reason: typeof f.reason === "string" ? f.reason : null,
           selected: true,
+          source: "ai" as const,
         }));
       setComment(typeof data.comment === "string" ? data.comment : "");
       setFunken(parsed);
@@ -86,7 +89,7 @@ export function Sternschmiede({ hasSterne }: { hasSterne: boolean }) {
     if (!text) return;
     setFunken((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), text, reason: null, selected: true },
+      { id: crypto.randomUUID(), text, reason: null, selected: true, source: "own" },
     ]);
     setNewFunkeText("");
   }
@@ -105,7 +108,7 @@ export function Sternschmiede({ hasSterne }: { hasSterne: boolean }) {
       wantId: null,
       status: "open",
       journalEntryId: null,
-      source: "ai",
+      source: f.source,
     }));
     const fd = new FormData();
     fd.set("bets", JSON.stringify(items));

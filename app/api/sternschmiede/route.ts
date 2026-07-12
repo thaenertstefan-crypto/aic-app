@@ -21,7 +21,6 @@ const AI_ERROR_MESSAGE =
 
 type FunkeSuggestion = {
   text: string;
-  sourceHint: string | null;
   reason: string | null;
 };
 
@@ -30,16 +29,10 @@ function parseFunken(raw: unknown): FunkeSuggestion[] {
   const out: FunkeSuggestion[] = [];
   for (const item of raw.slice(0, MAX_FUNKEN_OUT)) {
     if (!item || typeof item !== "object") continue;
-    const v = item as { text?: unknown; source_hint?: unknown; reason?: unknown };
+    const v = item as { text?: unknown; reason?: unknown };
     if (typeof v.text !== "string" || !v.text.trim()) continue;
-    const hint =
-      typeof v.source_hint === "string" &&
-      ["wert", "stern", "kind"].includes(v.source_hint)
-        ? v.source_hint
-        : null;
     out.push({
       text: v.text.trim().slice(0, TEXT_MAX_SHORT),
-      sourceHint: hint,
       reason:
         typeof v.reason === "string" && v.reason.trim()
           ? v.reason.trim().slice(0, TEXT_MAX_SHORT)

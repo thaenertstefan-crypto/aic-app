@@ -21,7 +21,7 @@ const MAX_WANTS_OUT = 6;
 const AI_ERROR_MESSAGE =
   "Das Destillieren hat gerade nicht geklappt. Dein Audit ist gespeichert — du kannst deine Wants auch selbst formulieren.";
 
-/** Eine destillierte Wants-Hypothese (value gegen die DB-Werte aufgelöst). */
+/** Ein destillierter Wants/Stern (value gegen die DB-Werte aufgelöst). */
 type WantSuggestion = {
   text: string;
   valueId: string | null;
@@ -128,7 +128,7 @@ function parseModelOutput(raw: string, valueIds: Set<string>): DistillerResult {
  * Der Wants-Destillierer (Rezept #2 — Was du wirklich willst). Accepts
  * { entryId } eines yin_yang-Eintrags — Audit-Texte und bestätigte Werte
  * werden serverseitig über den RLS-Client nachgeladen (entryId-first).
- * Die Hypothesen werden zusätzlich auf den Eintrag persistiert
+ * Die Sterne werden zusätzlich auf den Eintrag persistiert
  * (content.ai_wants + ai_insights).
  */
 export async function POST(request: Request) {
@@ -253,7 +253,7 @@ ${valuesText}
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
 
-    // Persist onto the entry: die Hypothesen als Provenienz ins content-JSONB,
+    // Persist onto the entry: die Sterne als Provenienz ins content-JSONB,
     // der Lesetext in ai_insights. WICHTIG: content mergen, nie ersetzen.
     const mergedContent: YinYangContent = {
       ...content,

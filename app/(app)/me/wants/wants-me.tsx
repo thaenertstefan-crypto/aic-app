@@ -388,7 +388,7 @@ export function WantsMe({
                       variant="outline"
                       size="icon"
                       className="shrink-0"
-                      aria-label="Schritt hinzufügen"
+                      aria-label="Funken hinzufügen"
                       disabled={!newBet.trim()}
                       onClick={addBet}
                     >
