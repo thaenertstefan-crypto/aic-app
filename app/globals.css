@@ -671,12 +671,18 @@
    UND Inhalt → wirkt wie ein durchgehender Scroll. forge-up: gespiegelt.
    Reisestrecke in lvh, damit der kurze Header und der hohe Inhalt exakt
    um dieselbe absolute Distanz wandern (translateY(%) wäre je Snapshot
-   relativ zu dessen Höhe und würde die beiden entkoppeln). */
+   relativ zu dessen Höhe und würde die beiden entkoppeln).
+   Tempo an EINER Stelle justieren: --forge-dur / --forge-ease. */
 
-::view-transition-old(.forge-out-up)   { animation: 680ms cubic-bezier(0.45, 0.05, 0.55, 0.95) both forge-scroll-up-out; }
-::view-transition-new(.forge-in-up)    { animation: 680ms cubic-bezier(0.45, 0.05, 0.55, 0.95) both forge-scroll-up-in; }
-::view-transition-old(.forge-out-down) { animation: 680ms cubic-bezier(0.45, 0.05, 0.55, 0.95) both forge-scroll-down-out; }
-::view-transition-new(.forge-in-down)  { animation: 680ms cubic-bezier(0.45, 0.05, 0.55, 0.95) both forge-scroll-down-in; }
+:root {
+  --forge-dur: 1200ms;
+  --forge-ease: cubic-bezier(0.45, 0.05, 0.55, 0.95);
+}
+
+::view-transition-old(.forge-out-up)   { animation: var(--forge-dur) var(--forge-ease) both forge-scroll-up-out; }
+::view-transition-new(.forge-in-up)    { animation: var(--forge-dur) var(--forge-ease) both forge-scroll-up-in; }
+::view-transition-old(.forge-out-down) { animation: var(--forge-dur) var(--forge-ease) both forge-scroll-down-out; }
+::view-transition-new(.forge-in-down)  { animation: var(--forge-dur) var(--forge-ease) both forge-scroll-down-in; }
 
 @keyframes forge-scroll-up-out   { to   { transform: translateY(-100lvh); } }
 @keyframes forge-scroll-up-in    { from { transform: translateY(100lvh); } }
