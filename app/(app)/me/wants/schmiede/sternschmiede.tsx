@@ -190,8 +190,13 @@ export function Sternschmiede({
         setError(result.error);
         return;
       }
-      // Frisch geschlagene Funken sofort in die Landing-Liste übernehmen.
-      setBets((prev) => [...prev, ...items]);
+      // Frisch geschlagene Funken sofort in die Landing-Liste übernehmen —
+      // bevorzugt die autoritative Server-Liste, sonst lokaler Merge.
+      if (result.bets) {
+        setBets(result.bets);
+      } else {
+        setBets((prev) => [...prev, ...items]);
+      }
       setPhase("done");
     } catch {
       setSaving(false);
