@@ -358,31 +358,37 @@ export function Sternschmiede({
     return (
       <div className="flex min-h-svh flex-col">
         {header}
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <Mascot expression="happy" size="lg" />
-          <div className="space-y-2">
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-              Funken geschlagen.
-            </h1>
-            <p className="text-muted-foreground">
-              Sie warten auf deiner Sterne-Seite. Probier sie aus — und danach
-              reflektierst du kurz, was der Funke dir gezeigt hat.
-            </p>
+        <ViewTransition
+          enter={{ "forge-down": "forge-in-up", "forge-up": "forge-in-down", default: "none" }}
+          exit={{ "forge-down": "forge-out-up", "forge-up": "forge-out-down", default: "none" }}
+          default="none"
+        >
+          <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <Mascot expression="happy" size="lg" />
+            <div className="space-y-2">
+              <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+                Funken geschlagen.
+              </h1>
+              <p className="text-muted-foreground">
+                Sie warten auf deiner Sterne-Seite. Probier sie aus — und danach
+                reflektierst du kurz, was der Funke dir gezeigt hat.
+              </p>
+            </div>
+            <div className="flex w-full flex-col gap-3 pt-2">
+              <Button className="w-full" size="lg" onClick={() => setPhase("intro")}>
+                Zu deinen Funken
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                size="lg"
+                render={<Link href="/me/wants" transitionTypes={["forge-up"]} />}
+              >
+                Zu deinen Sternen
+              </Button>
+            </div>
           </div>
-          <div className="flex w-full flex-col gap-3 pt-2">
-            <Button className="w-full" size="lg" onClick={() => setPhase("intro")}>
-              Zu deinen Funken
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              size="lg"
-              render={<Link href="/me/wants" />}
-            >
-              Zu deinen Sternen
-            </Button>
-          </div>
-        </div>
+        </ViewTransition>
       </div>
     );
   }
