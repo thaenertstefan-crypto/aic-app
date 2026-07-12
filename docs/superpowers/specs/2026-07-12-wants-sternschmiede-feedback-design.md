@@ -155,30 +155,34 @@ herein — „als würde man nach unten scrollen", in einer Smoothness ähnlich 
    `transitionTypes: ["forge-up"]`. Dafür bekommt `SubPageHeader` optional eine
    `backTransitionTypes`-Prop (oder die Schmiede nutzt einen eigenen
    Back-Handler), sodass nur dieser eine Rückweg den umgekehrten Slide spielt.
-5. **ViewTransition-Wrapper:** Nur der **Seiteninhalt** (ohne Header) von
+5. **ViewTransition-Wrapper (Inhalt):** Der **Seiteninhalt** (ohne Header) von
    `/wants` und `/schmiede` wird je in ein `<ViewTransition>` gehüllt, das
    `forge-down`/`forge-up` auf vertikale Slide-Animationen mappt und
    `default: "none"` setzt — damit animiert **nur** dieser Übergang, alle
    anderen Navigationen bleiben unberührt.
-6. **Header fadet eigenständig:** Der `SubPageHeader` bekommt einen stabilen
-   `viewTransitionName` (z. B. `sub-page-header`), sodass der Browser alten und
-   neuen Header als dasselbe Element behandelt. Per CSS animieren
-   `::view-transition-old/new(sub-page-header)` **nur als Fade** (Opacity, kein
-   Slide) und liegen mit höherem `z-index` über dem slidenden Inhalt. Effekt:
-   Der Header bleibt an Ort und Stelle und blendet weich vom alten zum neuen
-   Titel über, während der Inhalt darunter vertikal durchscrollt.
-7. **CSS-Keyframes** (in globals.css): vertikale Variante der Doku-Slides für den
-   Inhalt (`translateY` statt `translateX`), asymmetrisches Timing (Exit schnell
-   ~150 ms, Enter etwas langsamer ~210 ms + Delay), leichter Blur/Fade zum
-   Kaschieren; separate Fade-Regel für `sub-page-header`.
+6. **Header asymmetrisch — alter slidet mit, neuer fadet ein:** Der Header wird
+   **separat** vom Inhalt in ein eigenes `<ViewTransition>` gehüllt, **ohne
+   geteilten `name`** (kein Pairing/Morph). So wirkt beim Vorwärts-Übergang
+   (`forge-down`) auf jeder Seite nur eine Seite der Animation:
+   - Alter Header (`/wants`): **Exit = mit hochsliden** (gleiche
+     `translateY`-Bewegung wie der Inhalt, verlässt das Bild nach oben).
+   - Neuer Header (`/schmiede`): **Enter = langsames Einfaden** (nur Opacity,
+     kein Slide), leicht verzögert, damit er sanft erscheint statt zu poppen.
+   - Rückweg (`forge-up`) spiegelt das sinnvoll (schmiede-Header slidet mit nach
+     unten raus, wants-Header fadet ein). `default: "none"`.
+7. **CSS-Keyframes** (in globals.css): vertikale Slide-Keyframes für den Inhalt
+   (`translateY` statt `translateX`), asymmetrisches Timing (Exit schnell
+   ~150 ms, Enter langsamer ~210 ms + Delay), leichter Blur/Fade zum Kaschieren;
+   separate Regeln für den Header — `::view-transition-old(header-…)` = Slide-up,
+   `::view-transition-new(header-…)` = langsamer Opacity-Fade.
 8. **Reduced Motion:** `@media (prefers-reduced-motion: reduce)` setzt
    `animation-duration/-delay: 0s` für die View-Transition-Pseudo-Elemente →
    sofortiger Swap (bestehende `useReducedMotion`-Nutzung bleibt für andere
    Effekte).
 
 ### Verhalten / Fallbacks
-- Der Header bleibt fix und **fadet** vom alten zum neuen Titel (siehe Punkt 6),
-  während nur der Inhalt vertikal slidet.
+- Der alte `/wants`-Header **slidet mit hoch raus**, der neue `/schmiede`-Header
+  **fadet langsam ein** (asymmetrisch, siehe Punkt 6).
 - Ohne View-Transition-Support (ältere iOS-Versionen) swappt der Browser ohne
   Animation — Funktion bleibt voll erhalten.
 - **Vor der Umsetzung verifizieren** (AGENTS.md): API gegen
@@ -222,7 +226,7 @@ Die Route [route.ts](../../../app/api/sternschmiede/route.ts) bleibt unveränder
 | `lib/anthropic/prompts/sternschmiede.ts` | Werte-Aufteilung + Begründung (P8) |
 | `next.config.ts` | `experimental.viewTransition: true` (P4) |
 | `app/globals.css` | Vertikale View-Transition-Keyframes + reduced-motion (P4) |
-| `components/layout/sub-page-header.tsx` | optional `backTransitionTypes` für Rückweg-Slide + `viewTransitionName` fürs Header-Fade (P4) |
+| `components/layout/sub-page-header.tsx` | optional `backTransitionTypes` für Rückweg-Slide + eigener `<ViewTransition>`-Wrapper (alter Header slidet mit, neuer fadet ein) (P4) |
 
 ## Nicht im Scope (YAGNI)
 - Keine DB-/Schema-Änderungen (`template_type`, Bet-/Want-Shapes bleiben).
