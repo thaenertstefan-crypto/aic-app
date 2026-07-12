@@ -675,7 +675,8 @@
    Tempo an EINER Stelle justieren: --forge-dur / --forge-ease. */
 
 :root {
-  --forge-dur: 1200ms;
+  --forge-dur: 1200ms;      /* Eingang: Schmiede slidet von unten rein */
+  --forge-exit-dur: 720ms;  /* Ausgang: Wants-Seite slidet nach oben raus (muss zu FORGE_EXIT_MS passen) */
   --forge-ease: cubic-bezier(0.45, 0.05, 0.55, 0.95);
 }
 
@@ -703,8 +704,22 @@
   from { transform: translateY(72lvh); }
   to   { transform: translateY(0); }
 }
+
+/* Gegenstück: beim Tap auf „Zur Sternschmiede" scrollt die GANZE Wants-Seite
+   deckend nach oben raus, bevor navigiert wird (goToForge wartet FORGE_EXIT_MS).
+   `both` hält den Endzustand (oben raus), bis React die Seite aushängt. */
+.forge-page-leave {
+  animation: forge-page-leave var(--forge-exit-dur) var(--forge-ease) both;
+  will-change: transform;
+}
+@keyframes forge-page-leave {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-100lvh); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .forge-page-enter { animation-duration: 0.01ms; }
+  .forge-page-enter,
+  .forge-page-leave { animation-duration: 0.01ms; }
 }
 
 @media (prefers-reduced-motion: reduce) {

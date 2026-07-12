@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { ViewTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -33,6 +33,9 @@ import type { WantItem } from "@/lib/types/db-json";
 
 const INTRO_CARDS = getRecipeIntro("wants") ?? [];
 const FORGE_HREF = "/me/wants/schmiede";
+// Muss zu --forge-exit-dur in globals.css passen: so lange slidet die
+// Wants-Seite nach oben raus, BEVOR zur Schmiede navigiert wird.
+const FORGE_EXIT_MS = 720;
 
 export function WantsMe({
   initialWants,
@@ -50,6 +53,14 @@ export function WantsMe({
   const reduced = useReducedMotion();
   const router = useRouter();
   const [forging, startForge] = useTransition();
+  // `leaving` triggert die Raus-Slide-Animation der ganzen Wants-Seite.
+  const [leaving, setLeaving] = useState(false);
+
+  // Ziel-Route vorab laden, damit nach der Raus-Animation ohne Lücke
+  // navigiert werden kann (die Schmiede slidet dann sofort von unten rein).
+  useEffect(() => {
+    router.prefetch(FORGE_HREF);
+  }, [router]);
 
   const activeWants = wants.filter((w) => w.active);
   const hasSterne = activeWants.length > 0;
@@ -96,15 +107,20 @@ export function WantsMe({
     void persistWants(wants.filter((w) => w.id !== id));
   }
 
-  // Programmatische Navigation → globaler NavigationSpinner feuert NICHT;
-  // `forging` (isPending) treibt den Spinner IM Button. Der Slow-Scroll-
-  // Eingang läuft als CSS-Animation auf der Zielseite (.forge-page-enter),
-  // NICHT über die View-Transitions-API — die rendert iOS-Standalone-PWAs
-  // nicht zuverlässig (dort bewegt sich die alte Seite gar nicht).
+  // Zweistufiger Übergang OHNE View-Transitions-API (iOS-PWA rendert sie
+  // nicht): 1) ganze Wants-Seite deckend nach oben rausscrollen (`leaving`),
+  // 2) nach FORGE_EXIT_MS navigieren — die Schmiede slidet dann per
+  // .forge-page-enter von unten rein. Bei reduced motion sofort navigieren.
   function goToForge() {
-    startForge(() => {
-      router.push(FORGE_HREF);
-    });
+    if (leaving || forging) return;
+    if (reduced) {
+      startForge(() => router.push(FORGE_HREF));
+      return;
+    }
+    setLeaving(true);
+    window.setTimeout(() => {
+      startForge(() => router.push(FORGE_HREF));
+    }, FORGE_EXIT_MS);
   }
 
   const forgeBridge = (
@@ -118,15 +134,24 @@ export function WantsMe({
         Neues ausprobieren — weiß aber nicht was. In der Sternschmiede schlägst du
         Funken: kleine Wetten, aus denen ein neuer Stern werden könnte.
       </p>
-      <Button className="w-full gap-2" size="lg" disabled={forging} onClick={goToForge}>
-        {forging ? <Loader2 className="size-4 animate-spin" /> : <Flame className="size-4" />}
+      <Button
+        className="w-full gap-2"
+        size="lg"
+        disabled={forging || leaving}
+        onClick={goToForge}
+      >
+        {forging || leaving ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Flame className="size-4" />
+        )}
         Zur Sternschmiede
       </Button>
     </section>
   );
 
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className={`flex min-h-svh flex-col${leaving ? " forge-page-leave" : ""}`}>
       <SubPageHeader
         backHref="/me"
         title={PAGE_TITLES.meWants}
