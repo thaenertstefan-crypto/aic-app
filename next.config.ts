@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Aktiviert Reacts <ViewTransition> für den Sternschmiede-Übergang.
+    viewTransition: true,
+  },
   // Basis-Härtung für alle Responses. Bewusst OHNE strikte Content-Security-
   // Policy: die bräuchte in Next.js Nonce-Handling für Inline-Scripts —
   // Aufwand/Risiko lohnt für diese App aktuell nicht.

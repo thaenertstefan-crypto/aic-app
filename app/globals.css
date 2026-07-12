@@ -663,3 +663,49 @@
     -webkit-backdrop-filter: blur(16px);
   }
 }
+
+/* ── Sternschmiede-Übergang (View Transitions) ─────────────────────────
+   Vorwärts (forge-down): alte Seite slidet hoch raus, neue slidet von
+   unten rein. Zurück (forge-up): gespiegelt. Header: alt slidet mit dem
+   Inhalt, neu fadet nur ein (forge-header-in). */
+
+::view-transition-old(.forge-out-up) {
+  animation:
+    220ms ease-in both forge-slide-up-out,
+    160ms ease-in both forge-fade-out;
+}
+::view-transition-old(.forge-out-down) {
+  animation:
+    220ms ease-in both forge-slide-down-out,
+    160ms ease-in both forge-fade-out;
+}
+::view-transition-new(.forge-in-up) {
+  animation:
+    320ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both forge-slide-up-in,
+    260ms ease-out 60ms both forge-fade-in;
+}
+::view-transition-new(.forge-in-down) {
+  animation:
+    320ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both forge-slide-down-in,
+    260ms ease-out 60ms both forge-fade-in;
+}
+/* Neuer Header: nur langsam einfaden, kein Slide. */
+::view-transition-new(.forge-header-in) {
+  animation: 380ms ease-out 120ms both forge-fade-in;
+}
+
+@keyframes forge-slide-up-out { to { transform: translateY(-24px); } }
+@keyframes forge-slide-down-out { to { transform: translateY(24px); } }
+@keyframes forge-slide-up-in { from { transform: translateY(28px); } }
+@keyframes forge-slide-down-in { from { transform: translateY(-28px); } }
+@keyframes forge-fade-out { to { opacity: 0; } }
+@keyframes forge-fade-in { from { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
