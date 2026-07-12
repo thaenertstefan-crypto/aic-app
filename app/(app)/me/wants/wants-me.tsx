@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Check,
   Compass,
+  Flame,
   FlaskConical,
   Pencil,
   Plus,
@@ -65,6 +67,8 @@ export function WantsMe({
   const [editText, setEditText] = useState("");
 
   const reduced = useReducedMotion();
+  const router = useRouter();
+  const forgeHref = "/me/wants/schmiede";
 
   const activeWants = wants.filter((w) => w.active);
   const openBets = bets.filter((b) => b.status === "open");
@@ -305,8 +309,8 @@ export function WantsMe({
                     </h2>
                   </div>
                   <p className="text-sm leading-relaxed text-muted-foreground">
-                    Kleine erste Schritte, mit denen du deine Sterne im echten Leben
-                    antippst. Nach jedem reflektierst du kurz, was er dir gezeigt hat.
+                    Deine Funken — kleine Experimente aus der Sternschmiede. Nach
+                    jedem reflektierst du kurz, was er dir gezeigt hat.
                   </p>
 
                   {openBets.length > 0 && (
@@ -369,9 +373,9 @@ export function WantsMe({
                     <Input
                       value={newBet}
                       onChange={(e) => setNewBet(e.target.value)}
-                      placeholder="Eigenes Experiment, z. B. „Einmal zum Bouldern gehen“"
+                      placeholder="Eigener Funke, z. B. „Einmal zum Bouldern gehen“"
                       maxLength={300}
-                      aria-label="Eigenen Schritt hinzufügen"
+                      aria-label="Eigenen Funken hinzufügen"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
@@ -392,6 +396,27 @@ export function WantsMe({
                     </Button>
                   </div>
                 </section>
+
+                {/* ── Überleitung: zur Sternschmiede ───────────────── */}
+                <hr className="border-border" />
+                <SwipeToForge onTrigger={() => router.push(forgeHref)}>
+                  <section className="space-y-3 rounded-2xl bg-primary/5 p-5 text-center">
+                    <Flame className="mx-auto size-6 text-primary" />
+                    <h2 className="font-heading text-lg font-semibold text-foreground">
+                      Noch nicht sicher, was dich zum Leuchten bringt?
+                    </h2>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      Manchmal steckt man in der Routine fest und will endlich wieder
+                      etwas Neues ausprobieren — weiß aber nicht was. In der
+                      Sternschmiede schlägst du Funken: kleine Wetten, aus denen ein
+                      neuer Stern werden könnte.
+                    </p>
+                    <Button className="w-full gap-2" size="lg" render={<Link href={forgeHref} />}>
+                      <Flame className="size-4" /> Zur Sternschmiede
+                    </Button>
+                    <p className="text-xs text-muted-foreground">oder nach unten wischen</p>
+                  </section>
+                </SwipeToForge>
 
                 <hr className="border-border" />
 
@@ -448,6 +473,35 @@ export function WantsMe({
           </div>
         </div>
       </RecipeIntroGate>
+    </div>
+  );
+}
+
+function SwipeToForge({
+  onTrigger,
+  children,
+}: {
+  onTrigger: () => void;
+  children: React.ReactNode;
+}) {
+  const startY = useRef<number | null>(null);
+  const fired = useRef(false);
+  return (
+    <div
+      onTouchStart={(e) => {
+        startY.current = e.touches[0]?.clientY ?? null;
+        fired.current = false;
+      }}
+      onTouchMove={(e) => {
+        if (fired.current || startY.current === null) return;
+        const dy = (e.touches[0]?.clientY ?? 0) - startY.current;
+        if (dy > 80) {
+          fired.current = true;
+          onTrigger();
+        }
+      }}
+    >
+      {children}
     </div>
   );
 }
