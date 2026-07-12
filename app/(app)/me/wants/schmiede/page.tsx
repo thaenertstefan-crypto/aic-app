@@ -6,5 +6,7 @@ export default async function SternschmiedePage() {
   const { data } = await getWantsData();
   const hasSterne = (data?.wants ?? []).some((w) => w.active);
 
-  return <Sternschmiede hasSterne={hasSterne} />;
+  return (
+    <Sternschmiede hasSterne={hasSterne} initialBets={data?.bets ?? []} />
+  );
 }
