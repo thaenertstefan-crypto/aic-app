@@ -43,13 +43,13 @@ export function ReflectForm({
         <div className="flex flex-col items-center gap-3 text-center">
           <Mascot expression="curious" size="md" />
           <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-            Wie war dein Experiment?
+            Wie war dein Funke?
           </h1>
         </div>
 
         <Card className="w-full">
           <CardContent className="pt-(--card-spacing)">
-            <SectionLabel className="mb-1">Dein Little Bet</SectionLabel>
+            <SectionLabel className="mb-1">Dein Funke</SectionLabel>
             <p className="text-base leading-relaxed text-foreground">{betText}</p>
           </CardContent>
         </Card>
@@ -139,7 +139,7 @@ export function ReflectForm({
 
           <div className="space-y-2">
             <Label htmlFor="changed_wants" className="text-base font-medium">
-              Hat dieses Experiment deine Wants verändert oder bestätigt?
+              Hat dieser Funke einen neuen Stern entzündet?
             </Label>
             <Textarea
               id="changed_wants"
