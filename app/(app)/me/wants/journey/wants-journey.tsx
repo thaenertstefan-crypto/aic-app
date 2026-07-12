@@ -40,7 +40,7 @@ import {
 const INTRO_CARDS = getRecipeIntro("wants") ?? [];
 
 const AI_FALLBACK_MESSAGE =
-  "Das Destillieren hat gerade nicht geklappt. Dein Audit ist gespeichert — du kannst deine Wants auch selbst formulieren.";
+  "Das Destillieren hat gerade nicht geklappt. Deine Sternsuche ist gespeichert — du kannst deine Wants auch selbst formulieren.";
 
 type Phase = "nudge" | "yin" | "yang" | "analyzing" | "sterne" | "done";
 
@@ -252,7 +252,7 @@ export function WantsJourney({
       saveDraft(currentDraft());
       setSubmitting(false);
       setError(
-        "Du bist offline – dein Audit wurde als Entwurf gesichert. Sobald du wieder online bist, kannst du es abschließen.",
+        "Du bist offline – deine Sternsuche wurde als Entwurf gesichert. Sobald du wieder online bist, kannst du es abschließen.",
       );
       return;
     }
@@ -282,7 +282,7 @@ export function WantsJourney({
       saveDraft(currentDraft());
       setSubmitting(false);
       setError(
-        "Speichern fehlgeschlagen – dein Audit wurde als Entwurf gesichert. Versuch es später noch einmal.",
+        "Speichern fehlgeschlagen – deine Sternsuche wurde als Entwurf gesichert. Versuch es später noch einmal.",
       );
     }
   }
@@ -461,7 +461,7 @@ export function WantsJourney({
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 animate-in fade-in duration-500">
           <Mascot expression="curious" size="md" gazeX={0} />
           <p className="text-center text-base text-muted-foreground">
-            Ich schaue, was dein Audit über deine Wants verrät …
+            Ich schaue, was deine Sternsuche über deine Wants verrät …
           </p>
           <div className="w-full max-w-sm space-y-2">
             <Skeleton className="h-4 w-full" />
@@ -523,7 +523,7 @@ export function WantsJourney({
                 <p className="text-base leading-relaxed text-muted-foreground">
                   {manualMode
                     ? "Formuliere 3–6 Sätze dazu, was dich antreibt — so, wie es sich für dich richtig anfühlt."
-                    : "Das lese ich aus deinem Audit heraus — deine Sterne. Pass die Sätze an, verwirf, was nicht stimmt, und ergänze, was fehlt."}
+                    : "Das lese ich aus deiner Sternsuche heraus — deine Sterne. Pass die Sätze an, verwirf, was nicht stimmt, und ergänze, was fehlt."}
                 </p>
               </div>
 
@@ -804,7 +804,7 @@ export function WantsJourney({
                 disabled={submitting}
                 onClick={() => setPhase("yin")}
               >
-                Zurück zu Yin
+                Zurück
               </Button>
             </div>
           </form>
@@ -828,7 +828,7 @@ export function WantsJourney({
         <div className="flex flex-col items-center gap-3 text-center">
           <Mascot expression="smile" size="md" />
           <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-            Yin — Wofür nimmst du Mühsal in Kauf?
+            Wofür nimmst du Mühsal in Kauf?
           </h1>
           <p className="text-base leading-relaxed text-muted-foreground">
             Egal wie gut dein Leben läuft — manches ist einfach anstrengend.
