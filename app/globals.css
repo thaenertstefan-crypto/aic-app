@@ -689,6 +689,24 @@
 @keyframes forge-scroll-down-out { to   { transform: translateY(100lvh); } }
 @keyframes forge-scroll-down-in  { from { transform: translateY(-100lvh); } }
 
+/* Schmiede-Eingang OHNE View-Transitions-API: iOS-Standalone-PWAs rendern
+   die API nicht zuverlässig (die alte Seite bewegt sich dort gar nicht),
+   deshalb läuft der Übergang als echte CSS-Animation auf der Zielseite.
+   Der Inhalt scrollt beim Ankommen langsam & DECKEND von unten herein —
+   bewusst KEIN Fade, damit es wie ein Scroll wirkt, nicht wie eine
+   Überblendung. Dauer/Kurve teilen sich mit --forge-dur / --forge-ease. */
+.forge-page-enter {
+  animation: forge-page-enter var(--forge-dur) var(--forge-ease) both;
+  will-change: transform;
+}
+@keyframes forge-page-enter {
+  from { transform: translateY(72lvh); }
+  to   { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .forge-page-enter { animation-duration: 0.01ms; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(*),
   ::view-transition-new(*),

@@ -97,11 +97,13 @@ export function WantsMe({
   }
 
   // Programmatische Navigation → globaler NavigationSpinner feuert NICHT;
-  // `forging` (isPending) treibt den Spinner IM Button. transitionTypes
-  // aktiviert den vertikalen View-Transition-Slide.
+  // `forging` (isPending) treibt den Spinner IM Button. Der Slow-Scroll-
+  // Eingang läuft als CSS-Animation auf der Zielseite (.forge-page-enter),
+  // NICHT über die View-Transitions-API — die rendert iOS-Standalone-PWAs
+  // nicht zuverlässig (dort bewegt sich die alte Seite gar nicht).
   function goToForge() {
     startForge(() => {
-      router.push(FORGE_HREF, { transitionTypes: ["forge-down"] });
+      router.push(FORGE_HREF);
     });
   }
 

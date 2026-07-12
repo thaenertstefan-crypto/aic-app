@@ -402,7 +402,7 @@ export function Sternschmiede({
         exit={{ "forge-down": "forge-out-up", "forge-up": "forge-out-down", default: "none" }}
         default="none"
       >
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="forge-page-enter mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
           <div className="flex flex-col items-center gap-3 text-center">
             <Mascot expression="smile" size="md" />
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
