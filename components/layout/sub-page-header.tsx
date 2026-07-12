@@ -20,11 +20,12 @@ export function SubPageHeader({
   backTransitionTypes,
 }: SubPageHeaderProps) {
   return (
-    // Header animiert nur beim Sternschmiede-Übergang: alter Header slidet mit
-    // dem Inhalt hoch/runter raus, neuer Header fadet ein. Alle anderen
-    // Navigationen: default "none" → keine Animation.
+    // Header animiert nur beim Sternschmiede-Übergang und teilt dieselben
+    // Slide-Keyframes wie der Inhalt (forge-in/out-up/down) — so wandern Header
+    // und Inhalt exakt gleich und wirken wie eine durchgehend scrollende Fläche.
+    // Alle anderen Navigationen: default "none" → keine Animation.
     <ViewTransition
-      enter={{ "forge-down": "forge-header-in", "forge-up": "forge-header-in", default: "none" }}
+      enter={{ "forge-down": "forge-in-up", "forge-up": "forge-in-down", default: "none" }}
       exit={{ "forge-down": "forge-out-up", "forge-up": "forge-out-down", default: "none" }}
       default="none"
     >
