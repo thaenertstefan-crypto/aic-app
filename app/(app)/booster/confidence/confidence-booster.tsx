@@ -8,15 +8,13 @@ import { CleanserIntroInfoButton } from "@/components/intro/cleanser-intro-info-
 import { Card, CardContent } from "@/components/ui/card";
 import { PAGE_TITLES } from "@/lib/content/labels";
 
-import { BreathingExercise, ExerciseCard, EXERCISES } from "./breathing-exercise";
 import { MantraRitual } from "./mantra-ritual";
 import type { MantraCardData } from "./actions";
 
 // ---------------------------------------------------------------------------
-// Confidence-Boost — Landing des Merges aus Mantra Cleanser + Showstopper
-// Confidence: oben der Einstieg in den akuten Moment-Flow, darunter das
-// tägliche Mantra-Ritual (inkl. Streak, ohne Extra-Tap erreichbar), unten die
-// 5 Showstopper-Übungen als Nachschlage-Referenz.
+// Confidence-Boost — Landing: oben der Einstieg in den akuten Moment-Flow
+// („Gleich bin ich dran"), darunter das tägliche Mantra-Ritual (inkl. Streak,
+// ohne Extra-Tap erreichbar).
 // ---------------------------------------------------------------------------
 
 export function ConfidenceBooster({
@@ -69,46 +67,6 @@ export function ConfidenceBooster({
             mantra={mantra}
             cards={cards}
           />
-        </section>
-
-        {/* Referenz: die 5 Showstopper-Übungen */}
-        <section className="space-y-3">
-          <div className="space-y-1 text-center">
-            <h2 className="font-heading text-lg font-semibold text-foreground">
-              Die 5 Showstopper-Übungen
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Selbstbewusstsein ist eine Fähigkeit — diese fünf Tricks kannst du
-              jeden Tag mitnehmen.
-            </p>
-          </div>
-
-          {EXERCISES.map((exercise, index) => (
-            <ExerciseCard
-              key={exercise.title}
-              number={index + 1}
-              title={exercise.title}
-              short={exercise.short}
-            >
-              {exercise.detail}
-            </ExerciseCard>
-          ))}
-
-          <ExerciseCard
-            number={5}
-            title="Inneren Caveman trainieren"
-            short="Atmung + Körper, um runterzufahren."
-          >
-            <p className="mb-3">
-              Vor einem Auftritt schaltet dein Körper auf Alarm. Mit der
-              4-7-8-Atmung beruhigst du deinen inneren Höhlenmenschen — und
-              wenn das Adrenalin trotzdem arbeiten will, gib ihm eine stille
-              Aufgabe: Po- und Oberschenkelmuskeln anspannen oder die
-              Handflächen fest gegeneinanderpressen (beides führt dich der
-              „Gleich bin ich dran“-Flow Schritt für Schritt durch).
-            </p>
-            <BreathingExercise />
-          </ExerciseCard>
         </section>
       </div>
     </div>

@@ -1,83 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
 // ---------------------------------------------------------------------------
-// Die 5 Showstopper-Übungen (Referenz-Karten) + 4-7-8-Atemübung.
-// Aus der früheren Standalone-Confidence-Seite extrahiert; werden jetzt von
-// der Confidence-Boost-Landing (Referenz-Abschnitt) und dem Moment-Flow
-// (Atem-Schritt) gemeinsam genutzt.
+// 4-7-8-Atemübung — genutzt vom „Gleich bin ich dran"-Flow (Atem-Schritt).
 // ---------------------------------------------------------------------------
-
-type TextExercise = {
-  title: string;
-  short: string;
-  detail: string;
-};
-
-export const EXERCISES: TextExercise[] = [
-  {
-    title: "Pause-Knopf",
-    short: "Kurz innehalten statt sofort losreden.",
-    detail:
-      "Drück innerlich auf Pause, bevor du antwortest. Eine Sekunde Stille fühlt sich für dich endlos an — für dein Gegenüber wirkt sie ruhig und souverän. Atme einmal durch, dann sprich. So vermeidest du Füllwörter und hastiges Gerede.",
-  },
-  {
-    title: "„Ich weiß es nicht“",
-    short: "Zugeben, statt zu bluffen.",
-    detail:
-      "Wenn du etwas nicht weißt, sag es offen: „Das weiß ich gerade nicht — ich finde es heraus.“ Das wirkt nicht schwach, sondern glaubwürdig. Wer ehrlich mit Wissenslücken umgeht, dem glaubt man auch den Rest.",
-  },
-  {
-    title: "Nicht „nur“",
-    short: "Wörter streichen, die dich kleinmachen.",
-    detail:
-      "Achte auf Mini-Wörter wie „nur“, „eigentlich“, „vielleicht“ oder „ich glaube“. Sie schwächen deine Aussage ab, ohne dass du es merkst. Sag „Ich habe eine Frage“ statt „Ich hätte da vielleicht nur eine kurze Frage“.",
-  },
-  {
-    title: "Stimme kontrollieren",
-    short: "Tempo runter, Sätze klar beenden.",
-    detail:
-      "Sprich langsamer, als sich richtig anfühlt, und lass deine Sätze am Ende nach unten gehen — nicht fragend nach oben. Eine ruhige, tiefe Stimme signalisiert Sicherheit. Tief in den Bauch atmen hilft dir dabei — und ein Zungenbrecher vorab wärmt Zunge und Kiefer auf (den findest du im „Gleich bin ich dran“-Flow).",
-  },
-];
-
-export function ExerciseCard({
-  number,
-  title,
-  short,
-  children,
-}: {
-  number: number;
-  title: string;
-  short: string;
-  children: ReactNode;
-}) {
-  return (
-    <details className="group rounded-xl border border-border bg-card transition-colors open:border-cleanser-confidence/30">
-      <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-cleanser-confidence/15 text-sm font-semibold text-cleanser-confidence">
-          {number}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-heading text-base font-medium text-foreground">
-            {title}
-          </span>
-          <span className="block truncate text-sm text-muted-foreground">
-            {short}
-          </span>
-        </span>
-        <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
-      </summary>
-      <div className="border-t border-border px-4 py-3 text-base leading-relaxed text-foreground">
-        {children}
-      </div>
-    </details>
-  );
-}
 
 type Phase = "einatmen" | "halten" | "ausatmen";
 
