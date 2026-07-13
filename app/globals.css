@@ -697,13 +697,14 @@
    und Wash auf und geben die Schmiede frei. Alles per transform/opacity (GPU).
    Ersetzt die alten forge-page-enter/leave-Slides (Vorwärtsrichtung). */
 
-/* Wash: dunkler Aubergine-Deckel oben, warme Schmiedeglut unten. */
+/* Wash: dezente warme Schmiedeglut von unten, die zum Ende leicht anschwillt
+   (man nähert sich dem Feuer). KEIN Voll-Deckel — die slidenden Seiten und der
+   Tunnel dazwischen bleiben sichtbar. */
 .warp-wash {
   opacity: 0;
   will-change: opacity;
   background:
-    radial-gradient(120% 60% at 50% 108%, color-mix(in srgb, var(--primary) 42%, transparent), transparent 60%),
-    linear-gradient(180deg, var(--background) 0%, color-mix(in srgb, var(--background) 68%, #000) 55%, var(--background) 100%);
+    radial-gradient(120% 55% at 50% 112%, color-mix(in srgb, var(--primary) 40%, transparent), transparent 62%);
 }
 .warp-overlay[data-phase="diving"] .warp-wash {
   animation: warp-wash-in 500ms var(--forge-ease) both;
@@ -711,21 +712,22 @@
 .warp-overlay[data-phase="arriving"] .warp-wash {
   animation: warp-wash-out 760ms var(--forge-ease) both;
 }
-@keyframes warp-wash-in  { 0% { opacity: 0; } 72% { opacity: 0.97; } 100% { opacity: 0.97; } }
-@keyframes warp-wash-out { from { opacity: 0.97; } to { opacity: 0; } }
+@keyframes warp-wash-in  { from { opacity: 0; } to { opacity: 0.42; } }
+@keyframes warp-wash-out { from { opacity: 0.42; } to { opacity: 0; } }
 
-/* Streifen: dünne vertikale Lichtlinie, an der Basis fast unsichtbar. Streckt
-   sich per scaleY von einem Punkt zu einer langen Linie, während sie beschleunigt
-   nach unten rast (Kamera stürzt hinab). Reisestrecke in lvh (iOS-PWA). */
+/* Streifen: dünne Lichtlinie, an der Basis fast unsichtbar. Streckt sich per
+   scaleY von einem Punkt zu einer langen Linie, während sie beschleunigt nach
+   OBEN rast — die Umgebung zieht beim Abtauchen nach oben vorbei (Kamera stürzt
+   hinab). Reisestrecke in lvh (iOS-PWA). */
 .warp-streak {
   position: absolute;
   border-radius: 50%;
   opacity: 0;
-  transform: translateY(-30lvh) scaleY(0.12);
-  transform-origin: top center;
+  transform: translateY(30lvh) scaleY(0.12);
+  transform-origin: bottom center;
   will-change: transform, opacity;
   background: linear-gradient(
-    180deg,
+    0deg,
     transparent,
     color-mix(in srgb, var(--primary) 85%, transparent) 42%,
     var(--foreground) 72%,
@@ -739,13 +741,35 @@
   animation: warp-streak-settle 420ms ease-out both;
 }
 @keyframes warp-streak-dive {
-  0%   { opacity: 0;   transform: translateY(-30lvh) scaleY(0.12); }
+  0%   { opacity: 0;   transform: translateY(30lvh)  scaleY(0.12); }
   28%  { opacity: 0.9; }
-  100% { opacity: 0;   transform: translateY(125lvh) scaleY(1); }
+  100% { opacity: 0;   transform: translateY(-125lvh) scaleY(1); }
 }
 @keyframes warp-streak-settle {
-  from { opacity: 0.55; transform: translateY(125lvh) scaleY(1); }
-  to   { opacity: 0;    transform: translateY(150lvh) scaleY(0.2); }
+  from { opacity: 0.55; transform: translateY(-125lvh) scaleY(1); }
+  to   { opacity: 0;    transform: translateY(-150lvh) scaleY(0.2); }
+}
+
+/* Verbundener Seiten-Slide (vom Warp-phase gesteuert): die Wants-Szene slidet
+   nach oben aus dem Bild, die Schmiede-Szene kommt von unten herein — zusammen
+   mit den Streifen ein durchgehender Sturz nach unten. Der fixed Backdrop der
+   jeweiligen Seite slidet mit (ein transform am Vorfahren macht position:fixed
+   relativ zu ihm), sodass die ganze Szene als Einheit wandert. */
+.warp-page-exit {
+  animation: warp-page-exit 620ms var(--forge-ease) both;
+  will-change: transform;
+}
+@keyframes warp-page-exit {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-100lvh); }
+}
+.warp-page-enter {
+  animation: warp-page-enter 720ms var(--forge-ease) both;
+  will-change: transform;
+}
+@keyframes warp-page-enter {
+  from { transform: translateY(80lvh); }
+  to   { transform: translateY(0); }
 }
 
 /* Aufsteigende Funken der Schmiede (ForgeBackdrop). */
@@ -780,6 +804,8 @@
 @media (prefers-reduced-motion: reduce) {
   .warp-wash,
   .warp-streak,
+  .warp-page-exit,
+  .warp-page-enter,
   .forge-spark,
   .forge-hammer { animation: none !important; }
 }

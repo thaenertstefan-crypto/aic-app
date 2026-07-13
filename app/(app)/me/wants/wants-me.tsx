@@ -143,7 +143,9 @@ export function WantsMe({
   );
 
   return (
-    <div className="flex min-h-svh flex-col">
+    <div
+      className={`flex min-h-svh flex-col${phase === "diving" ? " warp-page-exit" : ""}`}
+    >
       <SkyBackdrop />
       <SubPageHeader
         backHref="/me"

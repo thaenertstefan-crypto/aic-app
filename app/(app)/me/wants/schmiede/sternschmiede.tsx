@@ -61,7 +61,10 @@ export function Sternschmiede({
 
   const reduced = useReducedMotion();
   // Löst den Warp-Sturz beim Ankommen auf (no-op, wenn direkt navigiert wurde).
-  const { arrive } = useWarp();
+  const { phase: warpPhase, arrive } = useWarp();
+  // Beim ersten Render festhalten, ob wir per Warp ankommen — dann slidet die
+  // Schmiede-Szene von unten herein. Direktaufruf (phase "idle") → kein Slide.
+  const [warpArrival] = useState(() => warpPhase !== "idle");
   useEffect(() => {
     arrive();
   }, [arrive]);
@@ -409,7 +412,9 @@ export function Sternschmiede({
 
   // ── Intro + Bets + Kind-Frage (Einstieg / Landing) ──────────────
   return (
-    <div className="flex min-h-svh flex-col">
+    <div
+      className={cn("flex min-h-svh flex-col", warpArrival && "warp-page-enter")}
+    >
       <ForgeBackdrop />
       {header}
       <ViewTransition
