@@ -233,6 +233,24 @@ export function MomentFlow({
             </CardContent>
           </Card>
 
+          {/* Kuratierter Auftritts-Reframe — die häufigste Angst vor einem
+              Auftritt, einmal liebevoll umgedreht (Stil der Reframe-Karten). */}
+          <Card className="w-full">
+            <CardContent className="space-y-3 pt-(--card-spacing)">
+              <SectionLabel>Falls da so ein Gedanke ist …</SectionLabel>
+              <p className="text-base leading-relaxed italic text-muted-foreground">
+                „Was, wenn ich gleich was sage, was dem anderen nicht gefällt —
+                oder ich mich blamiere?&quot;
+              </p>
+              <p className="text-base leading-relaxed text-foreground">
+                Meine Ideen und Worte haben einen Platz verdient. Ich darf sie
+                aussprechen. Mehr als echt sein kann ich nicht. Wenn das
+                jemandem nicht gefällt, ist das nicht mein Problem — ich bin
+                nicht für jeden.
+              </p>
+            </CardContent>
+          </Card>
+
           {right && (
             <Card className="w-full">
               <CardContent className="pt-(--card-spacing)">
