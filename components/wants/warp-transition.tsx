@@ -27,16 +27,25 @@ import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
  */
 
 type Phase = "idle" | "diving" | "arriving";
+// Richtung der Kamerafahrt: "down" = Sturz in die Schmiede (wants→schmiede),
+// "up" = Aufstieg zurück in den Sternenhimmel (schmiede→wants).
+type Direction = "down" | "up";
 
-// Bei ~ACCEL_MS ist der Wash nahezu deckend → Navigation verbirgt den Mount-Flash.
+// Navigation mitten im Exit der Quell-Seite; das Overlay überbrückt die Mount-Naht.
 const ACCEL_MS = 500;
+// Reiner Streifen-Tunnel-Beat: Phase bleibt so lange auf "diving" (Streifen
+// loopen weiter), beide Seiten sind off-screen — der prominente Tunnel-Moment.
+const TUNNEL_MS = 420;
 // Dauer der Auflösung/Ankunft, bevor das Overlay wieder verschwindet.
 const DECEL_MS = 760;
 
 type WarpValue = {
   phase: Phase;
-  /** Löst den Sturz aus und navigiert nach der Beschleunigung. */
+  direction: Direction;
+  /** Sturz in die Schmiede (wants→schmiede); navigiert nach der Beschleunigung. */
   dive: (navigate: () => void) => void;
+  /** Aufstieg zurück zu den Sternen (schmiede→wants); Sturz rückwärts. */
+  ascend: (navigate: () => void) => void;
   /** Von der Zielseite beim Mount aufgerufen; no-op ohne laufenden Sturz. */
   arrive: () => void;
 };
@@ -51,9 +60,32 @@ export function useWarp(): WarpValue {
   return ctx;
 }
 
+/**
+ * Zentrale Zuordnung: welche Seiten-Slide-Klasse trägt eine Seite gerade?
+ * Je nach Richtung ist eine Seite Quelle (slidet raus) und die andere Ziel
+ * (hält off-screen → slidet rein). `idle` → keine Klasse (normaler Load).
+ */
+export function warpPageClass(
+  role: "wants" | "schmiede",
+  phase: Phase,
+  direction: Direction,
+): string {
+  const source = direction === "down" ? "wants" : "schmiede";
+  if (role === source) {
+    // Quelle fährt raus (nur während "diving"; danach unmountet die Seite).
+    if (phase !== "diving") return "";
+    return direction === "down" ? "warp-page-exit" : "warp-page-exit-down";
+  }
+  // Ziel: erst off-screen halten (diving inkl. Tunnel), dann hereinfahren.
+  if (phase === "diving") return direction === "down" ? "warp-page-below" : "warp-page-above";
+  if (phase === "arriving") return direction === "down" ? "warp-page-enter" : "warp-page-enter-down";
+  return "";
+}
+
 export function WarpProvider({ children }: { children: ReactNode }) {
   const reduced = useReducedMotion();
   const [phase, setPhase] = useState<Phase>("idle");
+  const [direction, setDirection] = useState<Direction>("down");
   const phaseRef = useRef<Phase>("idle");
   const timers = useRef<number[]>([]);
 
@@ -62,10 +94,12 @@ export function WarpProvider({ children }: { children: ReactNode }) {
     setPhase(p);
   }, []);
 
-  const dive = useCallback(
-    (navigate: () => void) => {
+  // Gemeinsamer Start für beide Richtungen: Phase "diving", nach ACCEL_MS
+  // navigieren. Reduced motion → sofort navigieren (kein Warp).
+  const start = useCallback(
+    (dir: Direction, navigate: () => void) => {
       if (phaseRef.current !== "idle") return;
-      // Reduced motion: kein Warp — direkt navigieren.
+      setDirection(dir);
       if (reduced) {
         navigate();
         return;
@@ -77,45 +111,55 @@ export function WarpProvider({ children }: { children: ReactNode }) {
     [reduced, set],
   );
 
+  const dive = useCallback((navigate: () => void) => start("down", navigate), [start]);
+  const ascend = useCallback((navigate: () => void) => start("up", navigate), [start]);
+
   const arrive = useCallback(() => {
     if (phaseRef.current !== "diving") return;
-    set("arriving");
-    const t = window.setTimeout(() => set("idle"), DECEL_MS);
-    timers.current.push(t);
+    // Erst den Tunnel-Beat halten (Phase bleibt "diving" → Streifen loopen,
+    // beide Seiten off-screen), dann ankommen und das Overlay auflösen.
+    const t1 = window.setTimeout(() => {
+      set("arriving");
+      const t2 = window.setTimeout(() => set("idle"), DECEL_MS);
+      timers.current.push(t2);
+    }, TUNNEL_MS);
+    timers.current.push(t1);
   }, [set]);
 
   return (
-    <WarpContext.Provider value={{ phase, dive, arrive }}>
+    <WarpContext.Provider value={{ phase, direction, dive, ascend, arrive }}>
       {children}
-      <WarpOverlay phase={phase} />
+      <WarpOverlay phase={phase} direction={direction} />
     </WarpContext.Provider>
   );
 }
 
 // Deterministisches Streifenfeld (kein Math.random → kein Hydration-Mismatch).
-// Verteilt über die Breite, mit versetzten Startpunkten/Delays für den Stream.
-const STREAK_COUNT = 30;
+// Dicht über Breite UND Höhe verteilt, mit versetzten Delays → beim Endlos-Loop
+// ein durchgehend gefüllter, aufwärts fließender Tunnel.
+const STREAK_COUNT = 48;
 const STREAKS = Array.from({ length: STREAK_COUNT }, (_, i) => ({
   id: i,
   // gestreute, nicht bandende Horizontalverteilung
   left: (i * 37 + (i % 5) * 6) % 100,
-  // Startversatz oberhalb des Bildes, gestaffelt
-  top: -12 - (i % 7) * 9,
+  // über die volle Höhe streuen (0–110%), damit der Tunnel überall gefüllt ist
+  top: (i * 29 + (i % 4) * 11) % 110,
   // Ruhelänge des Streifens (wird per scaleY gestreckt)
-  len: 40 + (i % 4) * 26,
-  delayMs: (i % 6) * 35,
+  len: 60 + (i % 5) * 22,
+  delayMs: (i % 8) * 55,
   durMs: 460 + (i % 5) * 70,
   // dünn/dick für Tiefe
-  width: i % 3 === 0 ? 2.5 : 1.5,
+  width: i % 4 === 0 ? 3.5 : i % 2 === 0 ? 2.5 : 1.5,
 }));
 
-function WarpOverlay({ phase }: { phase: Phase }) {
+function WarpOverlay({ phase, direction }: { phase: Phase; direction: Direction }) {
   if (phase === "idle") return null;
 
   return (
     <div
       aria-hidden
       data-phase={phase}
+      data-direction={direction}
       className="warp-overlay fixed inset-0 z-[80]"
       style={{ pointerEvents: "auto" }}
     >

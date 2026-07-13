@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { ViewTransition } from "react";
 import Link from "next/link";
-import { Check, Flame, FlaskConical, Plus, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowUp, Check, Flame, FlaskConical, Plus, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,7 +19,7 @@ import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { Mascot } from "@/components/brand/mascot";
 import { AnvilArt } from "@/components/brand/forge-art";
 import { ForgeBackdrop } from "@/components/backdrops/forge-backdrop";
-import { useWarp } from "@/components/wants/warp-transition";
+import { useWarp, warpPageClass } from "@/components/wants/warp-transition";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
@@ -60,14 +61,24 @@ export function Sternschmiede({
   useScrollTopOnChange(phase);
 
   const reduced = useReducedMotion();
-  // Löst den Warp-Sturz beim Ankommen auf (no-op, wenn direkt navigiert wurde).
-  const { phase: warpPhase, arrive } = useWarp();
-  // Beim ersten Render festhalten, ob wir per Warp ankommen — dann slidet die
-  // Schmiede-Szene von unten herein. Direktaufruf (phase "idle") → kein Slide.
-  const [warpArrival] = useState(() => warpPhase !== "idle");
+  const router = useRouter();
+  // Warp: beim Ankommen (Vorwärts-Sturz) den Übergang auflösen; beim Verlassen
+  // (Rück-Aufstieg) ascend() auslösen. warpPageClass() liefert die Slide-Klasse
+  // je nach Rolle/Richtung/Phase.
+  const { phase: warpPhase, direction, ascend, arrive } = useWarp();
+  const warpBusy = warpPhase !== "idle";
   useEffect(() => {
     arrive();
   }, [arrive]);
+  // Rückweg vorab laden, damit der Aufstieg ohne Lücke navigiert.
+  useEffect(() => {
+    router.prefetch("/me/wants");
+  }, [router]);
+
+  function goBackToStars() {
+    if (warpBusy) return;
+    ascend(() => router.push("/me/wants"));
+  }
 
   const [childAnswer, setChildAnswer] = useState("");
   const [comment, setComment] = useState("");
@@ -413,7 +424,10 @@ export function Sternschmiede({
   // ── Intro + Bets + Kind-Frage (Einstieg / Landing) ──────────────
   return (
     <div
-      className={cn("flex min-h-svh flex-col", warpArrival && "warp-page-enter")}
+      className={cn(
+        "flex min-h-svh flex-col",
+        warpPageClass("schmiede", warpPhase, direction),
+      )}
     >
       <ForgeBackdrop />
       {header}
@@ -571,6 +585,17 @@ export function Sternschmiede({
 
           <Button className="w-full gap-2" size="lg" onClick={() => void forge()}>
             <Flame className="size-4" /> Funken schlagen
+          </Button>
+
+          {/* Zurück in den Sternenhimmel — derselbe Warp, nur rückwärts (Aufstieg).
+              Gedämpft (ghost), damit „Funken schlagen" die eine Gold-CTA bleibt. */}
+          <Button
+            variant="ghost"
+            className="w-full gap-2 text-muted-foreground"
+            disabled={warpBusy}
+            onClick={goBackToStars}
+          >
+            <ArrowUp className="size-4" /> Zurück zu meinen Sternen
           </Button>
           <div className="h-8" />
         </div>

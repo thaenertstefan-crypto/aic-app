@@ -697,57 +697,87 @@
    und Wash auf und geben die Schmiede frei. Alles per transform/opacity (GPU).
    Ersetzt die alten forge-page-enter/leave-Slides (Vorwärtsrichtung). */
 
-/* Wash: dezente warme Schmiedeglut von unten, die zum Ende leicht anschwillt
-   (man nähert sich dem Feuer). KEIN Voll-Deckel — die slidenden Seiten und der
-   Tunnel dazwischen bleiben sichtbar. */
+/* Wash = dunkler Tunnel-Canvas, damit die Streifen „poppen": dunkler Aubergine-
+   Layer mit warmer Schmiedeglut unten. Das Dunkel rampt bewusst SPÄT hoch — beim
+   Verlassen ist die Wants-Szene noch klar sichtbar, erst zum Tunnel-Beat wird es
+   deckend dunkel; in "arriving" fadet es weg → die Schmiede taucht in die Glut auf. */
 .warp-wash {
   opacity: 0;
   will-change: opacity;
   background:
-    radial-gradient(120% 55% at 50% 112%, color-mix(in srgb, var(--primary) 40%, transparent), transparent 62%);
+    radial-gradient(120% 55% at 50% 112%, color-mix(in srgb, var(--primary) 42%, transparent), transparent 60%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--background) 96%, #000) 0%,
+      color-mix(in srgb, var(--background) 90%, #000) 62%,
+      color-mix(in srgb, var(--background) 82%, #000) 100%);
 }
 .warp-overlay[data-phase="diving"] .warp-wash {
-  animation: warp-wash-in 500ms var(--forge-ease) both;
+  animation: warp-wash-in 640ms var(--forge-ease) both;
 }
 .warp-overlay[data-phase="arriving"] .warp-wash {
   animation: warp-wash-out 760ms var(--forge-ease) both;
 }
-@keyframes warp-wash-in  { from { opacity: 0; } to { opacity: 0.42; } }
-@keyframes warp-wash-out { from { opacity: 0.42; } to { opacity: 0; } }
+@keyframes warp-wash-in  { 0% { opacity: 0; } 55% { opacity: 0.14; } 100% { opacity: 0.78; } }
+@keyframes warp-wash-out { from { opacity: 0.78; } to { opacity: 0; } }
 
-/* Streifen: dünne Lichtlinie, an der Basis fast unsichtbar. Streckt sich per
-   scaleY von einem Punkt zu einer langen Linie, während sie beschleunigt nach
-   OBEN rast — die Umgebung zieht beim Abtauchen nach oben vorbei (Kamera stürzt
-   hinab). Reisestrecke in lvh (iOS-PWA). */
+/* Streifen: dünne Lichtlinie, an der Basis fast unsichtbar; streckt sich per
+   scaleY von einem Punkt zu einer langen Linie. Richtung via data-direction:
+   "down" (Sturz) → die Umgebung rast nach OBEN vorbei; "up" (Aufstieg) → nach
+   UNTEN. Reisestrecke in lvh (iOS-PWA). */
 .warp-streak {
   position: absolute;
   border-radius: 50%;
   opacity: 0;
+  will-change: transform, opacity;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--primary) 55%, transparent);
+}
+/* down: heller Kopf oben, Ursprung unten (Trail hängt nach unten). */
+.warp-overlay[data-direction="down"] .warp-streak {
   transform: translateY(30lvh) scaleY(0.12);
   transform-origin: bottom center;
-  will-change: transform, opacity;
-  background: linear-gradient(
-    0deg,
-    transparent,
-    color-mix(in srgb, var(--primary) 85%, transparent) 42%,
-    var(--foreground) 72%,
-    transparent
-  );
+  background: linear-gradient(0deg, transparent,
+    color-mix(in srgb, var(--primary) 90%, transparent) 38%, var(--foreground) 70%, transparent);
 }
-.warp-overlay[data-phase="diving"] .warp-streak {
-  animation: warp-streak-dive var(--warp-dur, 520ms) cubic-bezier(0.45, 0, 0.9, 0.6) both;
+/* up: gespiegelt — heller Kopf unten, Ursprung oben. */
+.warp-overlay[data-direction="up"] .warp-streak {
+  transform: translateY(-30lvh) scaleY(0.12);
+  transform-origin: top center;
+  background: linear-gradient(180deg, transparent,
+    color-mix(in srgb, var(--primary) 90%, transparent) 38%, var(--foreground) 70%, transparent);
 }
-.warp-overlay[data-phase="arriving"] .warp-streak {
-  animation: warp-streak-settle 420ms ease-out both;
+/* Während des Sturzes (inkl. Tunnel-Beat) loopen die Streifen kontinuierlich,
+   damit der Tunnel durchgehend gefüllt ist. */
+.warp-overlay[data-direction="down"][data-phase="diving"] .warp-streak {
+  animation: warp-streak-up var(--warp-dur, 520ms) cubic-bezier(0.4, 0, 0.85, 0.7) infinite;
 }
-@keyframes warp-streak-dive {
-  0%   { opacity: 0;   transform: translateY(30lvh)  scaleY(0.12); }
-  28%  { opacity: 0.9; }
-  100% { opacity: 0;   transform: translateY(-125lvh) scaleY(1); }
+.warp-overlay[data-direction="up"][data-phase="diving"] .warp-streak {
+  animation: warp-streak-down var(--warp-dur, 520ms) cubic-bezier(0.4, 0, 0.85, 0.7) infinite;
 }
-@keyframes warp-streak-settle {
+.warp-overlay[data-direction="down"][data-phase="arriving"] .warp-streak {
+  animation: warp-streak-up-settle 420ms ease-out both;
+}
+.warp-overlay[data-direction="up"][data-phase="arriving"] .warp-streak {
+  animation: warp-streak-down-settle 420ms ease-out both;
+}
+@keyframes warp-streak-up {
+  0%   { opacity: 0;    transform: translateY(30lvh)   scaleY(0.12); }
+  22%  { opacity: 0.95; }
+  80%  { opacity: 0.95; }
+  100% { opacity: 0;    transform: translateY(-125lvh) scaleY(1); }
+}
+@keyframes warp-streak-down {
+  0%   { opacity: 0;    transform: translateY(-30lvh)  scaleY(0.12); }
+  22%  { opacity: 0.95; }
+  80%  { opacity: 0.95; }
+  100% { opacity: 0;    transform: translateY(125lvh)  scaleY(1); }
+}
+@keyframes warp-streak-up-settle {
   from { opacity: 0.55; transform: translateY(-125lvh) scaleY(1); }
   to   { opacity: 0;    transform: translateY(-150lvh) scaleY(0.2); }
+}
+@keyframes warp-streak-down-settle {
+  from { opacity: 0.55; transform: translateY(125lvh)  scaleY(1); }
+  to   { opacity: 0;    transform: translateY(150lvh)  scaleY(0.2); }
 }
 
 /* Verbundener Seiten-Slide (vom Warp-phase gesteuert): die Wants-Szene slidet
@@ -763,12 +793,41 @@
   from { transform: translateY(0); }
   to   { transform: translateY(-100lvh); }
 }
+/* Schmiede während diving+Tunnel voll unter dem Bild halten (statisch), damit
+   der Tunnel-Beat frei von Seiten-Inhalt ist. */
+.warp-page-below {
+  transform: translateY(100lvh);
+  will-change: transform;
+}
 .warp-page-enter {
   animation: warp-page-enter 720ms var(--forge-ease) both;
   will-change: transform;
 }
 @keyframes warp-page-enter {
-  from { transform: translateY(80lvh); }
+  from { transform: translateY(100lvh); }
+  to   { transform: translateY(0); }
+}
+
+/* Gegenrichtung (Aufstieg schmiede→wants, direction "up"): die Schmiede slidet
+   nach UNTEN raus, die Wants-Szene wird OBEN gehalten und fährt von oben herein. */
+.warp-page-exit-down {
+  animation: warp-page-exit-down 620ms var(--forge-ease) both;
+  will-change: transform;
+}
+@keyframes warp-page-exit-down {
+  from { transform: translateY(0); }
+  to   { transform: translateY(100lvh); }
+}
+.warp-page-above {
+  transform: translateY(-100lvh);
+  will-change: transform;
+}
+.warp-page-enter-down {
+  animation: warp-page-enter-down 720ms var(--forge-ease) both;
+  will-change: transform;
+}
+@keyframes warp-page-enter-down {
+  from { transform: translateY(-100lvh); }
   to   { transform: translateY(0); }
 }
 
@@ -805,9 +864,13 @@
   .warp-wash,
   .warp-streak,
   .warp-page-exit,
+  .warp-page-exit-down,
   .warp-page-enter,
+  .warp-page-enter-down,
   .forge-spark,
   .forge-hammer { animation: none !important; }
+  .warp-page-below,
+  .warp-page-above { transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

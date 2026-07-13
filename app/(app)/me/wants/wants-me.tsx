@@ -25,7 +25,8 @@ import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { Mascot } from "@/components/brand/mascot";
 import { StarArt } from "@/components/brand/star-art";
 import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
-import { useWarp } from "@/components/wants/warp-transition";
+import { useWarp, warpPageClass } from "@/components/wants/warp-transition";
+import { cn } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { PAGE_TITLES } from "@/lib/content/labels";
@@ -52,8 +53,8 @@ export function WantsMe({
   const reduced = useReducedMotion();
   const router = useRouter();
   // Der Warp-Übergang lebt im gemeinsamen me/wants-Layout und überlebt so die
-  // Navigation in die Schmiede. `busy` sperrt den Button während des Sturzes.
-  const { phase, dive } = useWarp();
+  // Navigation. `busy` sperrt den Button während des Sturzes.
+  const { phase, direction, dive, arrive } = useWarp();
   const busy = phase !== "idle";
 
   // Ziel-Route vorab laden, damit nach der Raus-Animation ohne Lücke
@@ -61,6 +62,12 @@ export function WantsMe({
   useEffect(() => {
     router.prefetch(FORGE_HREF);
   }, [router]);
+
+  // Beim Rück-Aufstieg (schmiede→wants) ist Wants das Ziel: arrive() löst
+  // Tunnel→Ankunft aus. Beim Direktaufruf/Load ist phase "idle" → no-op.
+  useEffect(() => {
+    arrive();
+  }, [arrive]);
 
   const activeWants = wants.filter((w) => w.active);
   const hasSterne = activeWants.length > 0;
@@ -143,9 +150,7 @@ export function WantsMe({
   );
 
   return (
-    <div
-      className={`flex min-h-svh flex-col${phase === "diving" ? " warp-page-exit" : ""}`}
-    >
+    <div className={cn("flex min-h-svh flex-col", warpPageClass("wants", phase, direction))}>
       <SkyBackdrop />
       <SubPageHeader
         backHref="/me"
