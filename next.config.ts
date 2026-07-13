@@ -86,11 +86,6 @@ const nextConfig: NextConfig = {
         destination: "/booster/confidence",
         permanent: false,
       },
-      {
-        source: "/cleansers/promises",
-        destination: "/booster/promises",
-        permanent: false,
-      },
     ];
   },
 };

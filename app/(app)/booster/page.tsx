@@ -7,7 +7,6 @@ import {
   ConfidenceFlask,
   MessyJar,
   NoVial,
-  PromiseJar,
   ShadowPot,
   SpiralFlask,
 } from "./vessels";
@@ -54,12 +53,6 @@ const TILES: Tile[] = [
     art: <ConfidenceFlask />,
     href: "/booster/confidence",
   },
-  {
-    feeling: "Ich will zu mir stehen",
-    title: "Promise Keeper",
-    art: <PromiseJar />,
-    href: "/booster/promises",
-  },
 ];
 
 /** Ein Regalfach: Gefäß steht auf dem Brett (Haarlinie der Reihe), darunter
@@ -81,8 +74,8 @@ function ShelfCell({ tile }: { tile: Tile }) {
   );
 }
 
-/** Je zwei Gefäße teilen sich ein Regalbrett. */
-const SHELVES = [TILES.slice(0, 2), TILES.slice(2, 4), TILES.slice(4, 6)];
+/** Je zwei Gefäße teilen sich ein Regalbrett — das letzte steht allein. */
+const SHELVES = [TILES.slice(0, 2), TILES.slice(2, 4), TILES.slice(4)];
 
 export default function BoosterPage() {
   return (
@@ -122,7 +115,11 @@ export default function BoosterPage() {
         <div className="relative z-10">
           {SHELVES.map((shelf, i) => (
             <Reveal key={i} delay={i * 0.12}>
-              <div className="grid grid-cols-2 border-b border-border/70">
+              <div
+                className={`grid border-b border-border/70 ${
+                  shelf.length === 1 ? "grid-cols-1" : "grid-cols-2"
+                }`}
+              >
                 {shelf.map((tile) => (
                   <ShelfCell key={tile.title} tile={tile} />
                 ))}

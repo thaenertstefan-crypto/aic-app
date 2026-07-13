@@ -148,33 +148,3 @@ export function ConfidenceFlask() {
     </VesselSvg>
   );
 }
-
-/** Promise Keeper — kleines Vorratsglas, versiegelt mit einem Wachs-Haken
- *  (Familienähnlichkeit zum §-Siegel der Bill of Rights auf /me). */
-export function PromiseJar() {
-  return (
-    <VesselSvg>
-      <path d="M19,15 a9,7 0 0 1 18,0" fill="none" stroke={STROKE} strokeWidth="1.4" opacity="0.55" />
-      <path d="M17.5,15 h21" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
-      <path
-        d="M18.5,15 c-4,9 -4,32 3,41.5 h13 c7,-9.5 7,-32.5 3,-41.5"
-        fill="none"
-        stroke={STROKE}
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-        opacity="0.55"
-      />
-      <g className="bs-glow">
-        <circle cx="28" cy="38" r="7.5" fill={STROKE} opacity="0.95" />
-        <path
-          d="M24.6,38.2 l2.4,2.6 l4.6,-5.4"
-          fill="none"
-          stroke="var(--primary-foreground)"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </g>
-    </VesselSvg>
-  );
-}

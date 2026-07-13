@@ -227,11 +227,6 @@ export default async function DashboardPage() {
       href: "/booster/confidence",
     },
     {
-      key: "promises",
-      sentence: "Ich will mein Versprechen an mich selbst einlösen",
-      href: "/booster/promises",
-    },
-    {
       // Führt direkt in den akuten Moment-Flow „Gleich bin ich dran".
       key: "confidence",
       sentence: "Ich brauch 'n schnellen Confidence-Boost",

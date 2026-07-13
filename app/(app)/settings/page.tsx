@@ -16,7 +16,6 @@ export default async function SettingsPage() {
 
   let journalCount = 0;
   let recipesCompleted = 0;
-  let longestPromiseStreak = 0;
   let daysSinceJoining = 0;
   let activeRightsCount = 0;
 
@@ -24,7 +23,6 @@ export default async function SettingsPage() {
     const [
       { count: journalEntriesCount },
       { data: progressRows },
-      { data: promiseRows },
       { data: billOfRights },
     ] = await Promise.all([
       supabase
@@ -35,7 +33,6 @@ export default async function SettingsPage() {
         .from("user_recipe_progress")
         .select("recipe_slug, status")
         .eq("user_id", user.id),
-      supabase.from("promises").select("longest_streak").eq("user_id", user.id),
       supabase
         .from("bill_of_rights")
         .select("rights")
@@ -50,11 +47,6 @@ export default async function SettingsPage() {
         .filter((p) => p.status === "completed")
         .map((p) => p.recipe_slug),
     ).size;
-
-    longestPromiseStreak = (promiseRows ?? []).reduce(
-      (max, p) => Math.max(max, p.longest_streak ?? 0),
-      0,
-    );
 
     const rights = (billOfRights?.rights as RightItem[] | null) ?? [];
     activeRightsCount = rights.filter((r) => r.active).length;
@@ -81,7 +73,6 @@ export default async function SettingsPage() {
           {[
             { label: "Tagebucheinträge", value: journalCount },
             { label: "Rezepte abgeschlossen", value: recipesCompleted },
-            { label: "Längste Versprechen-Serie", value: longestPromiseStreak },
             { label: "Tage dabei", value: daysSinceJoining },
             { label: "Aktive Rechte", value: activeRightsCount },
           ].map((stat) => (
