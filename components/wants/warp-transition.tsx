@@ -31,13 +31,14 @@ type Phase = "idle" | "diving" | "arriving";
 // "up" = Aufstieg zurück in den Sternenhimmel (schmiede→wants).
 type Direction = "down" | "up";
 
-// Navigation mitten im Exit der Quell-Seite; das Overlay überbrückt die Mount-Naht.
-const ACCEL_MS = 500;
+// Navigation exakt am Ende des Exit-Slides der Quell-Seite (= Dauer von
+// warp-page-exit/-down); der Wash ist dann voll deckend und verdeckt die Naht.
+const ACCEL_MS = 420;
 // Reiner Streifen-Tunnel-Beat: Phase bleibt so lange auf "diving" (Streifen
 // loopen weiter), beide Seiten sind off-screen — der prominente Tunnel-Moment.
-const TUNNEL_MS = 420;
+const TUNNEL_MS = 300;
 // Dauer der Auflösung/Ankunft, bevor das Overlay wieder verschwindet.
-const DECEL_MS = 760;
+const DECEL_MS = 600;
 
 type WarpValue = {
   phase: Phase;
