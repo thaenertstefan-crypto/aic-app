@@ -82,7 +82,8 @@ export function MomentFlow({
               Erst der Körper, dann der Kopf.
             </h1>
             <p className="text-base leading-relaxed text-muted-foreground">
-              Vier Runden 4-7-8-Atmung beruhigen deinen inneren Höhlenmenschen —
+              Dein Körper schaltet auf Alarm — lass uns deinen
+              Fight-or-Flight-Reflex beruhigen. Vier Runden 4-7-8-Atmung,
               folge einfach dem Kreis.
             </p>
           </div>
