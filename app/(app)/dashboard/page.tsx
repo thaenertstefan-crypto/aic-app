@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DashboardReveal } from "@/components/dashboard/dashboard-reveal";
 import { DashboardFocus } from "@/components/dashboard/dashboard-focus";
 import { DailyReminderScreen } from "@/components/daily-reminder/daily-reminder-screen";
-import { SkyBackdrop } from "@/components/dashboard/sky-backdrop";
+import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
 import type {
   Destination,
   PrimaryRecommendation,

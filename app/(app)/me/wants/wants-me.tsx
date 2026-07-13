@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { ViewTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,6 +24,8 @@ import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { Mascot } from "@/components/brand/mascot";
 import { StarArt } from "@/components/brand/star-art";
+import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
+import { useWarp } from "@/components/wants/warp-transition";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { PAGE_TITLES } from "@/lib/content/labels";
@@ -33,9 +35,6 @@ import type { WantItem } from "@/lib/types/db-json";
 
 const INTRO_CARDS = getRecipeIntro("wants") ?? [];
 const FORGE_HREF = "/me/wants/schmiede";
-// Muss zu --forge-exit-dur in globals.css passen: so lange slidet die
-// Wants-Seite nach oben raus, BEVOR zur Schmiede navigiert wird.
-const FORGE_EXIT_MS = 720;
 
 export function WantsMe({
   initialWants,
@@ -52,9 +51,10 @@ export function WantsMe({
 
   const reduced = useReducedMotion();
   const router = useRouter();
-  const [forging, startForge] = useTransition();
-  // `leaving` triggert die Raus-Slide-Animation der ganzen Wants-Seite.
-  const [leaving, setLeaving] = useState(false);
+  // Der Warp-Übergang lebt im gemeinsamen me/wants-Layout und überlebt so die
+  // Navigation in die Schmiede. `busy` sperrt den Button während des Sturzes.
+  const { phase, dive } = useWarp();
+  const busy = phase !== "idle";
 
   // Ziel-Route vorab laden, damit nach der Raus-Animation ohne Lücke
   // navigiert werden kann (die Schmiede slidet dann sofort von unten rein).
@@ -107,20 +107,12 @@ export function WantsMe({
     void persistWants(wants.filter((w) => w.id !== id));
   }
 
-  // Zweistufiger Übergang OHNE View-Transitions-API (iOS-PWA rendert sie
-  // nicht): 1) ganze Wants-Seite deckend nach oben rausscrollen (`leaving`),
-  // 2) nach FORGE_EXIT_MS navigieren — die Schmiede slidet dann per
-  // .forge-page-enter von unten rein. Bei reduced motion sofort navigieren.
+  // „Der Sturz": das Warp-Overlay startet, stürzt durch die Sterne und navigiert
+  // mitten in der Bewegung in die Schmiede (dive() übernimmt Timing + reduced
+  // motion). Die Schmiede löst den Warp beim Mount per arrive() auf.
   function goToForge() {
-    if (leaving || forging) return;
-    if (reduced) {
-      startForge(() => router.push(FORGE_HREF));
-      return;
-    }
-    setLeaving(true);
-    window.setTimeout(() => {
-      startForge(() => router.push(FORGE_HREF));
-    }, FORGE_EXIT_MS);
+    if (busy) return;
+    dive(() => router.push(FORGE_HREF));
   }
 
   const forgeBridge = (
@@ -137,10 +129,10 @@ export function WantsMe({
       <Button
         className="w-full gap-2"
         size="lg"
-        disabled={forging || leaving}
+        disabled={busy}
         onClick={goToForge}
       >
-        {forging || leaving ? (
+        {busy ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (
           <Flame className="size-4" />
@@ -151,7 +143,8 @@ export function WantsMe({
   );
 
   return (
-    <div className={`flex min-h-svh flex-col${leaving ? " forge-page-leave" : ""}`}>
+    <div className="flex min-h-svh flex-col">
+      <SkyBackdrop />
       <SubPageHeader
         backHref="/me"
         title={PAGE_TITLES.meWants}
@@ -167,20 +160,8 @@ export function WantsMe({
           default="none"
         >
           <div className="relative mx-auto flex w-full max-w-lg flex-1 flex-col">
-            {!reduced && (
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 top-0 z-0 h-64"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(closest-side, color-mix(in srgb, var(--primary) 14%, transparent), transparent 72%)",
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "50% 0%",
-                  backgroundSize: "85% 60%",
-                }}
-              />
-            )}
-
+            {/* Der Sternenhimmel (SkyBackdrop) liefert jetzt das Umgebungsglühen —
+                kein zweiter lokaler Gold-Schein hier (One-Candle-Rule). */}
             <div className="relative z-10 flex flex-1 flex-col gap-6 px-4 py-6">
               {!hasSterne ? (
                 // ── Leer-Zustand: Sternsuche ODER direkt in die Schmiede ──

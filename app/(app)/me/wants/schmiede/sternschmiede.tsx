@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ViewTransition } from "react";
 import Link from "next/link";
 import { Check, Flame, FlaskConical, Plus, Sparkles } from "lucide-react";
@@ -16,6 +16,10 @@ import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { Mascot } from "@/components/brand/mascot";
+import { AnvilArt } from "@/components/brand/forge-art";
+import { ForgeBackdrop } from "@/components/backdrops/forge-backdrop";
+import { useWarp } from "@/components/wants/warp-transition";
+import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { saveBetsAction } from "@/app/(app)/recipes/wants/actions";
@@ -54,6 +58,13 @@ export function Sternschmiede({
 }) {
   const [phase, setPhase] = useState<Phase>("intro");
   useScrollTopOnChange(phase);
+
+  const reduced = useReducedMotion();
+  // Löst den Warp-Sturz beim Ankommen auf (no-op, wenn direkt navigiert wurde).
+  const { arrive } = useWarp();
+  useEffect(() => {
+    arrive();
+  }, [arrive]);
 
   const [childAnswer, setChildAnswer] = useState("");
   const [comment, setComment] = useState("");
@@ -208,9 +219,10 @@ export function Sternschmiede({
   if (phase === "forging") {
     return (
       <div className="flex min-h-svh flex-col">
+        <ForgeBackdrop />
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 animate-in fade-in duration-500">
-          <Mascot expression="curious" size="md" />
+          <AnvilArt animate={!reduced} active />
           <p className="text-center text-base text-muted-foreground">
             Ich schlage ein paar Funken für dich …
           </p>
@@ -229,6 +241,7 @@ export function Sternschmiede({
     const selectedCount = funken.filter((f) => f.selected && f.text.trim()).length;
     return (
       <div className="flex min-h-svh flex-col">
+        <ForgeBackdrop />
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex flex-col items-center gap-3 text-center">
@@ -357,6 +370,7 @@ export function Sternschmiede({
   if (phase === "done") {
     return (
       <div className="flex min-h-svh flex-col">
+        <ForgeBackdrop />
         {header}
         <ViewTransition
           enter={{ "forge-down": "forge-in-up", "forge-up": "forge-in-down", default: "none" }}
@@ -396,15 +410,16 @@ export function Sternschmiede({
   // ── Intro + Bets + Kind-Frage (Einstieg / Landing) ──────────────
   return (
     <div className="flex min-h-svh flex-col">
+      <ForgeBackdrop />
       {header}
       <ViewTransition
         enter={{ "forge-down": "forge-in-up", "forge-up": "forge-in-down", default: "none" }}
         exit={{ "forge-down": "forge-out-up", "forge-up": "forge-out-down", default: "none" }}
         default="none"
       >
-        <div className="forge-page-enter mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
           <div className="flex flex-col items-center gap-3 text-center">
-            <Mascot expression="smile" size="md" />
+            <AnvilArt animate={!reduced} />
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
               Willkommen in der Sternschmiede
             </h1>
