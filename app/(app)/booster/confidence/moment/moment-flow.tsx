@@ -240,7 +240,7 @@ export function MomentFlow({
               <SectionLabel>Falls da so ein Gedanke ist …</SectionLabel>
               <p className="text-base leading-relaxed italic text-muted-foreground">
                 „Was, wenn ich gleich was sage, was dem anderen nicht gefällt —
-                oder ich mich blamiere?&quot;
+                oder ich mich blamiere?“
               </p>
               <p className="text-base leading-relaxed text-foreground">
                 Meine Ideen und Worte haben einen Platz verdient. Ich darf sie
