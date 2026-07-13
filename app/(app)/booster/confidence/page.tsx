@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { computeStreak } from "@/lib/utils/streak";
 import { serverTodayKey } from "@/lib/server/timezone";
+import { getSeenCleanserIntros } from "@/app/(app)/cleansers/actions";
 
 import { ConfidenceBooster } from "./confidence-booster";
 import { getMantraData } from "./actions";
@@ -20,7 +21,7 @@ export default async function ConfidenceBoosterPage() {
   // Check-ins und Mantra/Karten sind voneinander unabhängig → parallel laden.
   // Der Ritual-Streak läuft weiter über den Slug "mantra" (Streak-Erhalt nach
   // dem Merge — siehe Kommentar in actions.ts).
-  const [checkinsResult, { mantra, cards }] = await Promise.all([
+  const [checkinsResult, { mantra, cards }, seenIntros] = await Promise.all([
     user
       ? supabase
           .from("cleanser_checkins")
@@ -32,6 +33,7 @@ export default async function ConfidenceBoosterPage() {
       : Promise.resolve({ data: null }),
     // Mantra + Karten (mit Default-Fallback) zentral über die Action laden.
     getMantraData(),
+    getSeenCleanserIntros(),
   ]);
 
   if (user) {
@@ -48,6 +50,7 @@ export default async function ConfidenceBoosterPage() {
       streak={streak}
       mantra={mantra}
       cards={cards}
+      introSeen={seenIntros.includes("confidence-boost")}
     />
   );
 }

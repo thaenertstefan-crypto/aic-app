@@ -1,10 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Zap } from "lucide-react";
 
 import { SubPageHeader } from "@/components/layout/sub-page-header";
-import { CleanserIntroInfoButton } from "@/components/intro/cleanser-intro-info-button";
+import { RecipeIntro } from "@/components/recipes/recipe-intro";
+import { IntroInfoButton } from "@/components/intro/intro-info-button";
+import { Mascot } from "@/components/brand/mascot";
+import { markCleanserIntroSeenAction } from "@/app/(app)/cleansers/actions";
+import { getCleanserIntro } from "@/lib/utils/cleanser-intros";
 import { Card, CardContent } from "@/components/ui/card";
 import { PAGE_TITLES } from "@/lib/content/labels";
 
@@ -17,23 +22,63 @@ import type { MantraCardData } from "./actions";
 // ohne Extra-Tap erreichbar).
 // ---------------------------------------------------------------------------
 
+const INTRO_CARDS = getCleanserIntro("confidence-boost") ?? [];
+
+/** Mascot-Ausdruck je Intro-Karte: neugierig ankommen, strahlend rausgehen. */
+const INTRO_EXPRESSIONS = ["smile", "curious", "radiant"] as const;
+
 export function ConfidenceBooster({
   doneToday,
   streak,
   mantra,
   cards,
+  introSeen,
 }: {
   doneToday: boolean;
   streak: number;
   mantra: string;
   cards: MantraCardData[];
+  introSeen: boolean;
 }) {
+  const [introDismissed, setIntroDismissed] = useState(false);
+
+  function handleIntroSeen() {
+    setIntroDismissed(true);
+    // Fire-and-forget: Gesehen-Status still persistieren.
+    void markCleanserIntroSeenAction("confidence-boost");
+  }
+
+  if (!introSeen && !introDismissed) {
+    return (
+      <div className="flex min-h-svh flex-col">
+        <SubPageHeader backHref="/booster" title={PAGE_TITLES.confidence} />
+        <div className="flex flex-1 flex-col justify-center">
+          <RecipeIntro
+            cards={INTRO_CARDS}
+            onComplete={handleIntroSeen}
+            onSkip={handleIntroSeen}
+            renderMascot={(index) => (
+              <Mascot
+                expression={INTRO_EXPRESSIONS[index] ?? "smile"}
+                size="md"
+              />
+            )}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-svh flex-col">
       <SubPageHeader
         backHref="/booster"
         title={PAGE_TITLES.confidence}
-        action={<CleanserIntroInfoButton slug="confidence-boost" />}
+        action={
+          INTRO_CARDS.length > 0 ? (
+            <IntroInfoButton cards={INTRO_CARDS} />
+          ) : undefined
+        }
       />
       <div className="mx-auto w-full max-w-md space-y-10 px-4 py-6">
         {/* Hero: der akute Moment-Flow */}
