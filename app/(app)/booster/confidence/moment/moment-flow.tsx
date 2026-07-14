@@ -7,7 +7,7 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionLabel } from "@/components/ui/section-label";
-import { Mascot } from "@/components/brand/mascot";
+import { CompletionCelebration } from "@/components/ui/completion-celebration";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 
 import { BreathingExercise } from "../breathing-exercise";
@@ -276,21 +276,29 @@ export function MomentFlow({
   }
 
   // ── Abschluss: Los geht's ───────────────────────────────────────
-  // Bewusst leichtgewichtig (kein CompletionCelebration): das Ziel ist,
-  // JETZT raus aus der App und rein in den Moment zu gehen.
+  // Grüner Haken wie auf den anderen Abschluss-Screens; das Mantra kommt
+  // noch einmal groß — als Letztes, was man liest, bevor man rausgeht.
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center px-4 py-10">
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <Mascot expression="radiant" size="md" />
+        <CompletionCelebration />
         <div className="space-y-2">
           <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
             Los geht&apos;s — du bist bereit.
           </h1>
           <p className="text-base leading-relaxed text-muted-foreground">
-            Langsam sprechen, Sätze beenden — und dein Mantra hast du dabei.
+            Langsam sprechen, Sätze beenden — und dein Mantra hast du dabei:
           </p>
         </div>
+        <Card className="w-full border-primary/30">
+          <CardContent className="flex flex-col items-center gap-3 py-6 text-center">
+            <SectionLabel>Dein Mantra</SectionLabel>
+            <p className="font-heading text-2xl leading-tight font-medium tracking-tight text-foreground">
+              {mantra}
+            </p>
+          </CardContent>
+        </Card>
         <Button
           size="lg"
           className="w-full"
