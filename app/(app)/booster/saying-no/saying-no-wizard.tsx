@@ -4,11 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   Check,
-  ChevronDown,
   Copy,
   MessageCircleQuestion,
   RefreshCw,
-  ShieldOff,
   X,
 } from "lucide-react";
 
@@ -98,7 +96,6 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
 
   // Nein-Entwurf
   const [draftText, setDraftText] = useState("");
-  const [blueprintOpen, setBlueprintOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** true, sobald „Nochmal selbst umformulieren“ benutzt wurde (max. 1×). */
@@ -670,7 +667,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
             <Reveal delay={0.5} className="w-full">
               <Card className="w-full border-primary/30">
                 <CardContent className="space-y-2 pt-(--card-spacing)">
-                  <SectionLabel>Du hast dir dieses Recht schon gegeben</SectionLabel>
+                  <SectionLabel>Kleiner Reminder — in deiner Bill of Rights steht:</SectionLabel>
                   <div className="flex items-start gap-2 text-left">
                     <Check className="mt-1 size-4 shrink-0 text-primary" />
                     <p className="text-base leading-relaxed text-foreground">
@@ -841,7 +838,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex flex-col items-center gap-3 text-center">
-            <Mascot expression="smile" size="md" />
+            <Mascot expression={scenarioLoading ? "curious" : "smile"} size="md" />
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
               Dein Übungsszenario
             </h1>
@@ -854,10 +851,15 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
           <Card className="w-full">
             <CardContent className="pt-(--card-spacing)">
               {scenarioLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6" />
-                  <Skeleton className="h-4 w-2/3" />
+                <div className="flex flex-col items-center gap-4 py-4 text-center">
+                  <p className="text-base text-muted-foreground motion-safe:animate-pulse">
+                    Ich denk mir gerade eine Situation für dich aus …
+                  </p>
+                  <span className="flex gap-1.5" aria-hidden="true">
+                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-bounce" />
+                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-bounce [animation-delay:150ms]" />
+                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-bounce [animation-delay:300ms]" />
+                  </span>
                 </div>
               ) : (
                 <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
@@ -924,46 +926,6 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
             </CardContent>
           </Card>
 
-          {/* Einklappbare 4-Schichten-Referenz */}
-          <Card className="w-full">
-            <CardContent className="pt-(--card-spacing)">
-              <button
-                type="button"
-                className="flex w-full items-center justify-between gap-2 text-left"
-                onClick={() => setBlueprintOpen((o) => !o)}
-                aria-expanded={blueprintOpen}
-              >
-                <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <ShieldOff className="size-4 text-primary" />
-                  Die vier Schichten eines guten Neins
-                </span>
-                <ChevronDown
-                  className={cn(
-                    "size-4 shrink-0 text-muted-foreground transition-transform",
-                    blueprintOpen && "rotate-180",
-                  )}
-                />
-              </button>
-              {blueprintOpen && (
-                <div className="mt-3 space-y-3 border-t pt-3">
-                  {SAYING_NO_LAYERS.map((layer, i) => (
-                    <div key={layer.key} className="space-y-0.5">
-                      <p className="text-sm font-medium text-foreground">
-                        {i + 1}. {layer.title}
-                      </p>
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        {layer.rule}
-                      </p>
-                      <p className="text-sm italic leading-relaxed text-muted-foreground">
-                        {layer.example}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           {/* Error banner */}
           <FormError message={error} />
 
@@ -978,7 +940,11 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                 name="draft"
                 value={draftText}
                 onChange={(e) => setDraftText(e.target.value)}
-                placeholder="Zum Beispiel: Danke, dass du an mich denkst — das freut mich wirklich. Leider passt es diesmal nicht bei mir."
+                placeholder={
+                  mode === "real"
+                    ? "Zum Beispiel: Danke, dass du an mich denkst — das freut mich wirklich. Leider passt es diesmal nicht bei mir."
+                    : undefined
+                }
                 rows={5}
                 required
                 maxLength={5000}
@@ -1021,6 +987,21 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
               für Schritt zusammen.
             </p>
           </div>
+
+          {/* Denk-Pause: die Zeit-gewinnen-Strategie auch für Wiederkehrer
+              sichtbar, nicht nur im Intro. */}
+          <Card className="w-full bg-muted/30">
+            <CardContent className="pt-(--card-spacing)">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  Noch nicht geantwortet?
+                </span>{" "}
+                Du darfst dir Zeit nehmen: „Da muss ich kurz drüber
+                nachdenken.“ Entscheide in Ruhe — und formuliere dein Nein
+                erst, wenn du sicher bist.
+              </p>
+            </CardContent>
+          </Card>
 
           <form className="space-y-5">
             <div className="space-y-2">

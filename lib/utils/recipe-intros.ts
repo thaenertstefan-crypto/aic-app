@@ -89,6 +89,10 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
       body: "Diese simple Regel (nach Dr. Aziz Gazipura) ist dein neuer Kompass: Spürst du bei einer Anfrage kein klares, freudiges „Hell yes!“, dann ist die ehrliche Antwort ein Nein. Das ist kein Egoismus — im Gegenteil: Dein Ja ist nur so viel wert wie dein Nein. Wer zu allem Ja sagt, sagt in Wahrheit zu nichts richtig Ja. Jedes ehrliche Nein macht Platz für die Dinge und Menschen, die dir wirklich wichtig sind.",
     },
     {
+      title: "Du musst nicht sofort antworten.",
+      body: "Die Frage kommt, dein Bauch zieht sich zusammen — und trotzdem spürst du den Druck, sofort Ja zu sagen? Dann verschaff dir Luft: „Da muss ich kurz drüber nachdenken — ich sag dir Bescheid.“ Das ist kein Vertrösten, das ist Selbstrespekt. Du entkommst dem inneren Konflikt, entscheidest in Ruhe — und wenn es ein Nein wird, hilft dir dieses Rezept, es zu formulieren.",
+    },
+    {
       title: "Die vier Schichten eines guten Neins",
       body: "Ein gutes Nein ist kein hartes Nein — es hat vier Schichten: Erstens: „Nein.“ ist ein vollständiger Satz — du schuldest niemandem einen Rechtfertigungs-Marathon. Zweitens: keine Entschuldigungen — ein Nein ist kein Vergehen, du füllst nur zuerst dein eigenes Glas. Drittens: Wärme zuerst — „Danke, dass du an mich denkst“ nimmt dem Nein die Härte, ohne es aufzuweichen. Und viertens: das sanfte Nein — beginne mit „Leider …“ und lass das Wort „aber“ weg, denn es radiert deine Wärme wieder aus.",
     },
