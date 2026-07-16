@@ -478,7 +478,7 @@ export function Sternschmiede({
     );
   }
 
-  // ── Intro + Bets + Kind-Frage (Einstieg / Landing) ──────────────
+  // ── Intro + Bets (Einstieg / Landing) ───────────────────────────
   return (
     <div
       className={cn(
