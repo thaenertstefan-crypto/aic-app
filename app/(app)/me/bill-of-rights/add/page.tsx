@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,10 +14,14 @@ import { appendRightAction } from "../actions";
 
 const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
 
+/** Fester Satzanfang — nicht löschbar, der User schreibt nach dem Komma weiter. */
+const PREFIX = "Ich habe das Recht,";
+
 export default function AddRightPage() {
   const [state, formAction, pending] = useActionState(appendRightAction, {
     error: null,
   });
+  const [rest, setRest] = useState("");
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -38,17 +42,37 @@ export default function AddRightPage() {
             <Label htmlFor="text" className="text-base font-medium">
               Dein Recht
             </Label>
-            <Textarea
-              id="text"
+            {/* Der Präfix steht fest IN der Box (nicht editierbar); getippt wird
+                nur die Fortsetzung. Gespeichert wird der zusammengesetzte Satz
+                (hidden input), die Action bleibt unverändert. */}
+            <div className="rounded-lg border border-input px-3 py-2 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
+              <span className="text-base font-medium text-foreground">
+                {PREFIX}
+              </span>
+              <Textarea
+                id="text"
+                value={rest}
+                onChange={(e) => setRest(e.target.value)}
+                placeholder="… nicht perfekt zu sein."
+                required
+                disabled={pending}
+                autoFocus
+                className="min-h-[90px] resize-y border-0 bg-transparent px-0 shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent"
+              />
+            </div>
+            <input
+              type="hidden"
               name="text"
-              placeholder="Ich habe das Recht zu…"
-              required
-              disabled={pending}
-              className="min-h-[120px] resize-y"
+              value={`${PREFIX} ${rest.trim()}`}
             />
           </div>
 
-          <Button type="submit" size="lg" className="w-full" disabled={pending}>
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full"
+            disabled={pending || !rest.trim()}
+          >
             {pending ? "Wird hinzugefügt …" : "Hinzufügen"}
           </Button>
         </form>

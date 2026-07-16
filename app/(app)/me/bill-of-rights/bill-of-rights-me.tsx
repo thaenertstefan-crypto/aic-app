@@ -22,7 +22,6 @@ import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { MascotJudge } from "@/components/brand/mascot-judge";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
-import { PAGE_TITLES } from "@/lib/content/labels";
 import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
@@ -360,8 +359,7 @@ export function BillOfRightsMe({
           {/* Immer sichtbar: zwei Wege, ein Recht hinzuzufügen */}
           <ActionTiles className="mt-auto pt-4" />
 
-          {/* Verzahnung: Things Got Messy für den akuten Moment,
-              der Nein-Trainer fürs Durchsetzen der Rechte. */}
+          {/* Verzahnung: Things Got Messy für den akuten Moment. */}
           <Card className="border-dashed">
             <CardContent className="space-y-2 pt-(--card-spacing)">
               <p className="text-sm leading-relaxed text-muted-foreground">
@@ -373,16 +371,6 @@ export function BillOfRightsMe({
                   Things Got Messy
                 </Link>{" "}
                 hilft dir herauszufinden, was sie dir sagen wollen.
-              </p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Und wenn dir das Durchsetzen schwerfällt: Im{" "}
-                <Link
-                  href="/booster/saying-no"
-                  className="font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  {PAGE_TITLES.sayingNo}
-                </Link>{" "}
-                übst du, deine Rechte auch auszusprechen.
               </p>
             </CardContent>
           </Card>
