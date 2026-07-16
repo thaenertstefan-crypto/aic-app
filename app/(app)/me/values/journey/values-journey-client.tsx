@@ -86,35 +86,43 @@ function clamp(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v));
 }
 
-function StarGlyph({ state, reduced }: { state: State; reduced: boolean }) {
+function StarGlyph({
+  state,
+  reduced,
+  finale = false,
+}: {
+  state: State;
+  reduced: boolean;
+  finale?: boolean;
+}) {
+  // Die Endstation (Auswertung & Erkenntnisse) ist deutlich größer und trägt
+  // einen warmen Gold-Glow; bei reduced motion statisch (kein Puls).
+  const glow = finale
+    ? state === "open"
+      ? "drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 40%, transparent))"
+      : "drop-shadow(0 0 14px color-mix(in srgb, var(--primary) 85%, transparent))"
+    : state === "done"
+      ? "drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 60%, transparent))"
+      : state === "current" && reduced
+        ? "drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 75%, transparent))"
+        : undefined;
   return (
     <svg
       viewBox="0 0 16 16"
       className={cn(
-        "size-5 shrink-0",
-        state === "open" && "scale-75 opacity-35",
-        state === "current" && !reduced && "star-pulse",
+        finale ? "size-9" : "size-5",
+        "shrink-0",
+        state === "open" && (finale ? "opacity-60" : "scale-75 opacity-35"),
+        !reduced &&
+          (state === "current" || (finale && state === "done")) &&
+          "star-pulse",
       )}
-      style={
-        state === "done"
-          ? {
-              filter:
-                "drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 60%, transparent))",
-            }
-          : state === "current" && reduced
-            ? {
-                filter:
-                  "drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 75%, transparent))",
-              }
-            : undefined
-      }
+      style={glow ? { filter: glow } : undefined}
       aria-hidden="true"
     >
       <path
         d={STAR_PATH}
-        fill={
-          state === "open" ? "var(--muted-foreground)" : "var(--primary)"
-        }
+        fill={state === "open" ? "var(--muted-foreground)" : "var(--primary)"}
       />
     </svg>
   );
@@ -261,6 +269,7 @@ export function ValuesJourneyClient({
               : i === currentStep
                 ? "current"
                 : "open";
+            const finale = i === lastIndex;
             const { x, y, side } = CONSTELLATION[i];
             const clickable = state !== "open";
             // Bereits abgeschlossene Reflexionstage öffnen ihren eigenen
@@ -273,11 +282,13 @@ export function ValuesJourneyClient({
             const labelEl = (
               <span
                 className={cn(
-                  "absolute top-1/2 flex -translate-y-1/2 items-center gap-1 whitespace-nowrap font-heading text-base",
+                  "absolute top-1/2 flex -translate-y-1/2 items-center gap-1 whitespace-nowrap font-heading",
+                  finale ? "text-lg" : "text-base",
                   side === "right" ? "left-full ml-1.5" : "right-full mr-1.5",
                   state === "open"
                     ? "text-muted-foreground"
                     : "font-semibold text-foreground",
+                  finale && "font-semibold",
                 )}
               >
                 {state === "open" && (
@@ -301,12 +312,12 @@ export function ValuesJourneyClient({
                 className={nodeClass}
                 style={nodeStyle}
               >
-                <StarGlyph state={state} reduced={reduced} />
+                <StarGlyph state={state} reduced={reduced} finale={finale} />
                 {labelEl}
               </Link>
             ) : (
               <span key={i} className={nodeClass} style={nodeStyle}>
-                <StarGlyph state={state} reduced={reduced} />
+                <StarGlyph state={state} reduced={reduced} finale={finale} />
                 {labelEl}
               </span>
             );

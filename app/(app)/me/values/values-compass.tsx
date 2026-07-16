@@ -178,7 +178,7 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
   if (n === 0) {
     return (
       <div className="flex flex-col items-center gap-4">
-        <div className="relative mx-auto aspect-square w-full max-w-[320px] opacity-40">
+        <div className="relative mx-auto aspect-square w-full max-w-[380px] opacity-40">
           <svg viewBox="0 0 320 320" className="size-full" aria-hidden="true">
             <RoseOrnament />
             <Needle
@@ -206,7 +206,7 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
     <div className="flex flex-col gap-4">
       {/* ── Die Rose mit Werte-Punkten ──────────────────────────────── */}
       <Reveal>
-        <div className="relative mx-auto aspect-square w-full max-w-[320px]">
+        <div className="relative mx-auto aspect-square w-full max-w-[380px]">
           <svg
             viewBox="0 0 320 320"
             className="absolute inset-0 size-full"

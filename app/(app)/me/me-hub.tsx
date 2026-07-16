@@ -203,26 +203,8 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
         </Scene>
       </Reveal>
 
-      {/* Bill of Rights — die Urkunde mit Siegel */}
-      <Reveal delay={0.12}>
-        <Scene
-          href="/me/bill-of-rights"
-          ariaLabel="Meine Bill of Rights öffnen"
-          art={<SealArt animate={animate} />}
-        >
-          <SceneTitle>Meine Bill of Rights</SceneTitle>
-          {rightsCount > 0 && firstRight ? (
-            <p className="mt-2 line-clamp-2 font-heading text-sm italic leading-snug text-foreground">
-              „{asAffirmation(firstRight)}&#8220;
-            </p>
-          ) : (
-            <SceneMeta>Dieses Dokument wartet auf dein erstes Recht.</SceneMeta>
-          )}
-        </Scene>
-      </Reveal>
-
       {/* Wants — die Experimente */}
-      <Reveal delay={0.24}>
+      <Reveal delay={0.12}>
         <Scene
           href="/me/wants"
           ariaLabel={`${PAGE_TITLES.meWants} öffnen`}
@@ -243,6 +225,24 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
             </div>
           ) : (
             <SceneMeta>{wantsMeta}</SceneMeta>
+          )}
+        </Scene>
+      </Reveal>
+
+      {/* Bill of Rights — die Urkunde mit Siegel */}
+      <Reveal delay={0.24}>
+        <Scene
+          href="/me/bill-of-rights"
+          ariaLabel="Meine Bill of Rights öffnen"
+          art={<SealArt animate={animate} />}
+        >
+          <SceneTitle>Meine Bill of Rights</SceneTitle>
+          {rightsCount > 0 && firstRight ? (
+            <p className="mt-2 line-clamp-2 font-heading text-sm italic leading-snug text-foreground">
+              „{asAffirmation(firstRight)}&#8220;
+            </p>
+          ) : (
+            <SceneMeta>Dieses Dokument wartet auf dein erstes Recht.</SceneMeta>
           )}
         </Scene>
       </Reveal>
