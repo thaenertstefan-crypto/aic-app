@@ -1,5 +1,5 @@
 /**
- * Dashboard-only atmospheric backdrop — a "suggested night sky".
+ * Shared atmospheric backdrop (Dashboard + Wants) — a "suggested night sky".
  *
  * Layers a downward-darkening sky wash, a soft candle-gold horizon-glow behind
  * where the mascot sits, and two barely-visible distant lights. Purely painted
@@ -60,6 +60,36 @@ export function SkyBackdrop() {
       <span
         className="sky-light absolute right-[34%] top-[30%]"
         style={{ width: "3px", height: "3px", opacity: 0.18 }}
+      />
+      {/* Zusätzliche Sterne Richtung Bildschirmmitte — gleiche Größen- und
+          Funkel-Sprache, unterhalb des Mascot-Glows (top ≳ 32%). */}
+      <span
+        className="sky-light sky-light-twinkle absolute left-[46%] top-[14%]"
+        style={{ animationDelay: "2.3s" }}
+      />
+      <span
+        className="sky-light sky-light-twinkle absolute left-[58%] top-[34%]"
+        style={{ animationDelay: "4.2s" }}
+      />
+      <span
+        className="sky-light sky-light-twinkle absolute left-[30%] top-[40%]"
+        style={{ width: "3px", height: "3px", animationDelay: "1.2s" }}
+      />
+      <span
+        className="sky-light sky-light-twinkle absolute right-[42%] top-[47%]"
+        style={{ animationDelay: "5.1s" }}
+      />
+      <span
+        className="sky-light absolute left-[66%] top-[42%]"
+        style={{ opacity: 0.15 }}
+      />
+      <span
+        className="sky-light sky-light-twinkle absolute left-[22%] top-[52%]"
+        style={{ animationDelay: "2.9s" }}
+      />
+      <span
+        className="sky-light absolute right-[26%] top-[36%]"
+        style={{ width: "3px", height: "3px", opacity: 0.17 }}
       />
     </div>
   );
