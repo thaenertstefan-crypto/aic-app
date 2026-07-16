@@ -282,7 +282,12 @@ export function ValuesJourneyClient({
             const labelEl = (
               <span
                 className={cn(
-                  "absolute top-1/2 flex -translate-y-1/2 items-center gap-1 whitespace-nowrap font-heading",
+                  "absolute top-1/2 flex items-center gap-1 font-heading",
+                  // Die Endstation wird zweizeilig und wächst dadurch in der
+                  // Höhe — sie hängt am Sternmittelpunkt statt zentriert zu
+                  // sein, damit die erste Zeile nicht unter den Header rutscht.
+                  finale ? "-translate-y-3.5" : "-translate-y-1/2",
+                  finale ? "w-40 whitespace-normal" : "whitespace-nowrap",
                   finale ? "text-lg" : "text-base",
                   side === "right" ? "left-full ml-1.5" : "right-full mr-1.5",
                   state === "open"
