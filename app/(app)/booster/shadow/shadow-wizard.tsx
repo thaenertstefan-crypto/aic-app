@@ -62,6 +62,8 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
 
   // Rage Walk
   const [elapsed, setElapsed] = useState(0);
+  /** Die Stoppuhr startet erst nach explizitem Tipp auf den Startknopf. */
+  const [walkStarted, setWalkStarted] = useState(false);
 
   const [outcome, setOutcome] = useState<Outcome>("burned");
 
@@ -80,10 +82,10 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
   // ── Rage-Walk-Timer (läuft nur in der walk-Phase) ───────────────
 
   useEffect(() => {
-    if (phase !== "walk") return;
+    if (phase !== "walk" || !walkStarted) return;
     const id = setInterval(() => setElapsed((s) => s + 1), 1000);
     return () => clearInterval(id);
-  }, [phase]);
+  }, [phase, walkStarted]);
 
   // „Verbrennen?"-Nachfrage nach kurzer Zeit zurücksetzen.
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -211,8 +213,7 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
             {outcome === "kept" ? (
               <p className="flex items-center justify-center gap-1.5 text-muted-foreground">
                 <Lock className="size-4 shrink-0" />
-                Mit Schloss im Journal — nur für dich. Die KI bekommt das nie
-                zu sehen.
+                Mit Schloss im Journal — nur für dich.
               </p>
             ) : (
               <p className="text-muted-foreground">
@@ -269,7 +270,7 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-4 py-6 animate-in fade-in duration-500">
           <p className="flex items-center justify-center gap-1.5 text-center text-sm text-muted-foreground">
             <Lock className="size-3.5 shrink-0" />
-            Niemand liest mit — nicht mal die KI.
+            Niemand liest mit.
           </p>
 
           {/* Bewusst dunkle Fläche in beiden Themes: der Schatten-Raum. */}
@@ -336,27 +337,49 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
             aus, was raus muss, wo dich niemand hört.
           </p>
 
-          <p
-            className="font-heading text-6xl font-bold tabular-nums tracking-tight text-foreground"
-            aria-label={`Bisher ${minutes} Minuten ${seconds} Sekunden`}
-          >
-            {minutes}:{seconds}
-          </p>
-
-          <Card className="w-full">
-            <CardContent className="pt-(--card-spacing)">
+          {walkStarted ? (
+            <>
               <p
-                key={prompt}
-                className="text-base leading-relaxed text-foreground animate-in fade-in duration-700"
+                className="font-heading text-6xl font-bold tabular-nums tracking-tight text-foreground"
+                aria-label={`Bisher ${minutes} Minuten ${seconds} Sekunden`}
               >
-                {prompt}
+                {minutes}:{seconds}
               </p>
-            </CardContent>
-          </Card>
 
-          <Button size="lg" className="w-full" onClick={() => setPhase("walkEnd")}>
-            Ich bin fertig
-          </Button>
+              <Card className="w-full">
+                <CardContent className="pt-(--card-spacing)">
+                  <p
+                    key={prompt}
+                    className="text-base leading-relaxed text-foreground animate-in fade-in duration-700"
+                  >
+                    {prompt}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  setWalkStarted(false);
+                  setPhase("walkEnd");
+                }}
+              >
+                Ich bin fertig
+              </Button>
+            </>
+          ) : (
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                setElapsed(0);
+                setWalkStarted(true);
+              }}
+            >
+              Los geht&apos;s
+            </Button>
+          )}
         </div>
       </div>
     );

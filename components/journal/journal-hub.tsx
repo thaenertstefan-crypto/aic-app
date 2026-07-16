@@ -67,7 +67,7 @@ export function JournalHub({ initialEntries, initialHasMore }: Props) {
       <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
         <TabsList
           variant="line"
-          className="w-full justify-start overflow-x-auto"
+          className="w-full justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [touch-action:pan-x]"
         >
           {filterTabs.map((tab) => {
             const Icon = tab.icon;
