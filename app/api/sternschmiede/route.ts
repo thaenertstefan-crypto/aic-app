@@ -19,6 +19,49 @@ const MAX_FUNKEN_OUT = 5;
 const AI_ERROR_MESSAGE =
   "Das Funkenschlagen hat gerade nicht geklappt. Versuch es gleich noch einmal.";
 
+// ── Slot-Auswürfelung (Spec 2026-07-16, §1.2) ──────────────────────────
+// Der Server bestimmt Anzahl und Quelle der Funken; die KI bekommt einen
+// festen AUFTRAG. Standard: 2 Wert-Slots (zufällig gezogene Werte) + 2
+// Stern-Slots; mit Kind-Antwort ein 5. Kind-Slot. Fallbacks: keine Werte →
+// 4 Stern-Slots; keine Sterne → 4 Wert-Slots; beides leer → 4 freie Slots.
+type ForgeSlot =
+  | { kind: "wert"; valueId: string }
+  | { kind: "stern" }
+  | { kind: "kind" }
+  | { kind: "frei" };
+
+/** n zufällige Werte (Fisher-Yates); bei weniger als n Werten wird wiederholt. */
+function pickRandomValues(values: string[], n: number): string[] {
+  const shuffled = [...values];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) out.push(shuffled[i % shuffled.length]);
+  return out;
+}
+
+function buildForgeSlots(
+  values: string[],
+  sterneCount: number,
+  hasChildAnswer: boolean,
+): ForgeSlot[] {
+  const slots: ForgeSlot[] = [];
+  if (values.length > 0 && sterneCount > 0) {
+    for (const v of pickRandomValues(values, 2)) slots.push({ kind: "wert", valueId: v });
+    slots.push({ kind: "stern" }, { kind: "stern" });
+  } else if (values.length > 0) {
+    for (const v of pickRandomValues(values, 4)) slots.push({ kind: "wert", valueId: v });
+  } else if (sterneCount > 0) {
+    slots.push({ kind: "stern" }, { kind: "stern" }, { kind: "stern" }, { kind: "stern" });
+  } else {
+    slots.push({ kind: "frei" }, { kind: "frei" }, { kind: "frei" }, { kind: "frei" });
+  }
+  if (hasChildAnswer) slots.push({ kind: "kind" });
+  return slots;
+}
+
 type FunkeSuggestion = {
   text: string;
   reason: string | null;
@@ -122,6 +165,21 @@ export async function POST(request: Request) {
         ? sterne.map((w) => `<stern>${w.text}</stern>`).join("\n")
         : "(noch keine Sterne)";
 
+    const slots = buildForgeSlots(values, sterne.length, childAnswer.length > 0);
+    const auftragText = slots
+      .map((s, i) => {
+        const label =
+          s.kind === "wert"
+            ? `Wert: ${getValueLabel(s.valueId)}`
+            : s.kind === "stern"
+              ? "Stern-Inspiration"
+              : s.kind === "kind"
+                ? "Kind-Antwort"
+                : "Frei";
+        return `${i + 1}. ${label}`;
+      })
+      .join("\n");
+
     const userMessage = `Die Werte der Person:
 <werte>
 ${werteText}
@@ -133,7 +191,12 @@ ${sterneText}
 </sterne>
 
 Was der Person als Kind Spaß gemacht hat:
-<kind>${childAnswer || "(keine Angabe)"}</kind>`;
+<kind>${childAnswer || "(keine Angabe)"}</kind>
+
+Dein AUFTRAG — schlage genau ${slots.length} Funken, in dieser Reihenfolge:
+<auftrag>
+${auftragText}
+</auftrag>`;
 
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5",
