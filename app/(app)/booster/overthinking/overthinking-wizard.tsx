@@ -436,32 +436,28 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   const renderStepContent = () => {
     switch (step) {
       case 1:
-        // Volle Spaltenhöhe: der Intro-Text zentriert sich im freien Raum
-        // zwischen Header und Countdown-Block; der Block selbst sitzt unten
-        // nah am "Weiter"-Button.
+        // Kompakt zentriert: Intro-Text, Anweisung und Countdown rücken als
+        // eine Gruppe zusammen, statt sich über die volle Spaltenhöhe zu
+        // verteilen.
         return (
-          <div className="flex w-full flex-1 flex-col items-center self-stretch text-center">
-            <div className="flex flex-1 items-center">
-              <p className="text-base leading-relaxed text-muted-foreground">
-                Dein Kopf dreht gerade Runden? Man kennt&apos;s – lass uns
-                gemeinsam aus dem Gedankenkarussell aussteigen!
+          <div className="flex w-full flex-1 flex-col items-center justify-center gap-6 self-stretch text-center">
+            <p className="text-base leading-relaxed text-muted-foreground">
+              Dein Kopf dreht gerade Runden? Man kennt&apos;s – lass uns
+              gemeinsam aus dem Gedankenkarussell aussteigen!
+            </p>
+
+            <p className="text-xl font-medium leading-relaxed text-foreground sm:text-2xl">
+              Zähle von 5 runter und sage dann laut{" "}
+              <span className="font-bold text-primary">Stopp</span>.
+            </p>
+
+            <CountdownCircle duration={5} onComplete={() => setCountdownDone(true)} />
+
+            {countdownDone && (
+              <p className="text-base text-muted-foreground animate-in fade-in slide-in-from-bottom-2 duration-500">
+                Gut gemacht. Der Gedankenkarussell ist kurz gestoppt — nutzen wir diesen Moment.
               </p>
-            </div>
-
-            <div className="flex flex-col items-center gap-8">
-              <p className="text-xl font-medium leading-relaxed text-foreground sm:text-2xl">
-                Zähle von 5 runter und sage dann laut{" "}
-                <span className="font-bold text-primary">Stopp</span>.
-              </p>
-
-              <CountdownCircle duration={5} onComplete={() => setCountdownDone(true)} />
-
-              {countdownDone && (
-                <p className="text-base text-muted-foreground animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  Gut gemacht. Der Gedankenkarussell ist kurz gestoppt — nutzen wir diesen Moment.
-                </p>
-              )}
-            </div>
+            )}
           </div>
         );
 

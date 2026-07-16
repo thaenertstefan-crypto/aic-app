@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { Mascot } from "@/components/brand/mascot";
 import { Reveal } from "@/components/ui/reveal";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import {
@@ -80,21 +79,13 @@ const SHELVES = [TILES.slice(0, 2), TILES.slice(2, 4), TILES.slice(4)];
 export default function BoosterPage() {
   return (
     <div className="space-y-6 p-4">
-      <header className="space-y-4">
+      <header className="space-y-3">
         <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
           {PAGE_TITLES.booster}
         </h1>
-        <div className="flex items-center gap-5">
-          <Mascot expression="curious" size="sm" gazeX={1.1} className="shrink-0" />
-          <div className="space-y-0.5">
-            <p className="font-heading text-lg font-medium leading-snug text-foreground">
-              Was ist gerade los?
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Nimm dir, was dir jetzt guttut.
-            </p>
-          </div>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Für Momente, in denen der Kopf lauter ist als nötig.
+        </p>
       </header>
 
       <div className="relative -mx-1">
