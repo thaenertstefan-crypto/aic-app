@@ -32,6 +32,7 @@ type ForgeSlot =
 
 /** n zufällige Werte (Fisher-Yates); bei weniger als n Werten wird wiederholt. */
 function pickRandomValues(values: string[], n: number): string[] {
+  if (values.length === 0) return [];
   const shuffled = [...values];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

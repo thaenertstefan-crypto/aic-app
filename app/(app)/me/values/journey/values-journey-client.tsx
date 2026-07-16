@@ -290,6 +290,7 @@ export function ValuesJourneyClient({
                   finale ? "w-40 whitespace-normal" : "whitespace-nowrap",
                   finale ? "text-lg" : "text-base",
                   side === "right" ? "left-full ml-1.5" : "right-full mr-1.5",
+                  finale && side !== "right" && "text-right",
                   state === "open"
                     ? "text-muted-foreground"
                     : "font-semibold text-foreground",

@@ -455,7 +455,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
             {countdownDone && (
               <p className="text-base text-muted-foreground animate-in fade-in slide-in-from-bottom-2 duration-500">
-                Gut gemacht. Der Gedankenkarussell ist kurz gestoppt — nutzen wir diesen Moment.
+                Gut gemacht. Das Gedankenkarussell ist kurz gestoppt — nutzen wir diesen Moment.
               </p>
             )}
           </div>
@@ -666,7 +666,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
           </h1>
 
           <p className="text-muted-foreground">
-            Du hast den Gedankenkarussell durchbrochen und einen klaren nächsten Schritt
+            Du hast das Gedankenkarussell durchbrochen und einen klaren nächsten Schritt
             festgelegt. Das war mutig – nimm diesen Moment mit.
           </p>
 

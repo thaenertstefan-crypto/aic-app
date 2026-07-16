@@ -45,7 +45,7 @@ export default function AddRightPage() {
             {/* Der Präfix steht fest IN der Box (nicht editierbar); getippt wird
                 nur die Fortsetzung. Gespeichert wird der zusammengesetzte Satz
                 (hidden input), die Action bleibt unverändert. */}
-            <div className="rounded-lg border border-input px-3 py-2 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
+            <div className="rounded-lg border border-input px-3 py-2 transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 dark:bg-input/30">
               <span className="text-base font-medium text-foreground">
                 {PREFIX}
               </span>
