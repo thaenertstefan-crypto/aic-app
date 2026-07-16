@@ -126,7 +126,7 @@ export function WantsMe({
     <section className="space-y-3 rounded-2xl bg-primary/5 p-5 text-center">
       <Flame className="mx-auto size-6 text-primary" />
       <h2 className="font-heading text-lg font-semibold text-foreground">
-        Noch nicht sicher, was dich zum Leuchten bringt?
+        Lust, neue Sterne zu entdecken?
       </h2>
       <p className="text-sm leading-relaxed text-muted-foreground">
         Manchmal steckt man in der Routine fest und will endlich wieder etwas
@@ -179,13 +179,13 @@ export function WantsMe({
                       Noch keine Sterne entdeckt
                     </h2>
                     <p className="text-base leading-relaxed text-muted-foreground">
-                      Finde mit der Sternsuche heraus, was du wirklich willst — in
-                      etwa 10 Minuten. Oder schlag in der Sternschmiede ein paar
-                      Funken, wenn du einfach mal etwas Neues ausprobieren willst.
+                      Finde mit der Sternensuche heraus, was dich zum Leuchten
+                      bringt, was dir echte Freude bringt und dir dieses Gefühl
+                      von tiefer Zufriedenheit entlockt.
                     </p>
                   </div>
                   <Button className="w-full gap-2" size="lg" render={<Link href="/me/wants/journey" />}>
-                    <Star className="size-4" /> Sternsuche starten
+                    <Star className="size-4" /> Sternensuche starten
                   </Button>
                   {forgeBridge}
                 </div>
@@ -275,7 +275,7 @@ export function WantsMe({
                     className="w-full gap-2"
                     render={<Link href="/me/wants/journey" />}
                   >
-                    <RefreshCw className="size-4" /> Sternsuche nochmal machen
+                    <RefreshCw className="size-4" /> Sternensuche nochmal machen
                   </Button>
 
                   {/* Brücke in die Sternschmiede */}
