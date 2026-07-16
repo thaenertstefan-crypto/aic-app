@@ -839,9 +839,9 @@
   width: 2px;
   height: 2px;
   border-radius: 50%;
-  background: var(--primary);
+  background: var(--celebrate);
   opacity: 0;
-  box-shadow: 0 0 4px color-mix(in srgb, var(--primary) 60%, transparent);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--celebrate) 60%, transparent);
   animation: forge-spark-rise 4.5s ease-in-out infinite;
 }
 @keyframes forge-spark-rise {
