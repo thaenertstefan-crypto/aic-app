@@ -33,12 +33,12 @@ type Direction = "down" | "up";
 
 // Navigation exakt am Ende des Exit-Slides der Quell-Seite (= Dauer von
 // warp-page-exit/-down); der Wash ist dann voll deckend und verdeckt die Naht.
-const ACCEL_MS = 420;
+const ACCEL_MS = 340;
 // Reiner Streifen-Tunnel-Beat: Phase bleibt so lange auf "diving" (Streifen
 // loopen weiter), beide Seiten sind off-screen — der prominente Tunnel-Moment.
-const TUNNEL_MS = 300;
+const TUNNEL_MS = 180;
 // Dauer der Auflösung/Ankunft, bevor das Overlay wieder verschwindet.
-const DECEL_MS = 600;
+const DECEL_MS = 460;
 
 type WarpValue = {
   phase: Phase;
