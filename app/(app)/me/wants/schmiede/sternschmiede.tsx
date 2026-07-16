@@ -19,6 +19,7 @@ import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { Mascot } from "@/components/brand/mascot";
 import { AnvilArt } from "@/components/brand/forge-art";
 import { ForgeBackdrop } from "@/components/backdrops/forge-backdrop";
+import { CompassStarsArt } from "@/components/brand/compass-stars-art";
 import { useWarp, warpPageClass } from "@/components/wants/warp-transition";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
@@ -31,7 +32,7 @@ import { cn } from "@/lib/utils";
 // keine eigene Schmiede-Intro.
 const INTRO_CARDS = getRecipeIntro("wants") ?? [];
 
-type Phase = "intro" | "forging" | "funken" | "done";
+type Phase = "intro" | "briefing" | "forging" | "funken" | "done";
 
 type DraftFunke = {
   id: string;
@@ -158,7 +159,7 @@ export function Sternschmiede({
       const data = (await res.json()) as ForgeResponse;
       if (!res.ok) {
         setError(data.error ?? AI_ERROR);
-        setPhase("intro");
+        setPhase("briefing");
         return;
       }
       const parsed: DraftFunke[] = (data.funken ?? [])
@@ -175,7 +176,7 @@ export function Sternschmiede({
       setPhase("funken");
     } catch {
       setError(AI_ERROR);
-      setPhase("intro");
+      setPhase("briefing");
     }
   }
 
@@ -227,6 +228,70 @@ export function Sternschmiede({
       setSaving(false);
       setError("Speichern fehlgeschlagen. Versuch es noch einmal.");
     }
+  }
+
+  // ── Briefing (neuer erster Wizard-Schritt) ──────────────────────
+  // Erklärt die Zutaten (Werte + Sterne + Kindheitsfrage) und trägt die
+  // Kindheitsfrage — von der Landing hierher gezogen (Spec 2026-07-16, §1.1).
+  if (phase === "briefing") {
+    return (
+      <div className="flex min-h-svh flex-col">
+        <ForgeBackdrop />
+        {header}
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <CompassStarsArt />
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+              Woraus Funken entstehen
+            </h1>
+            <p className="text-base leading-relaxed text-muted-foreground">
+              Gleich entstehen Ideen zum Ausprobieren — Dinge, die dir Spaß
+              machen und dich zum Leuchten bringen könnten. Geschmiedet werden
+              sie aus deinen Werten, deinen Sternen und einer kleinen, aber
+              feinen Frage, die oft überraschend aufschlussreich ist.
+            </p>
+          </div>
+
+          <Card className="w-full">
+            <CardContent className="space-y-3 pt-(--card-spacing)">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-4 text-primary" />
+                <p className="text-sm font-medium text-foreground">
+                  Was hat dir als Kind Spaß gemacht?
+                </p>
+              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Etwas, das dir vielleicht immer noch Spaß machen könnte? Optional —
+                aber es hilft mir, bessere Funken für dich zu schlagen.
+              </p>
+              <Textarea
+                value={childAnswer}
+                onChange={(e) => setChildAnswer(e.target.value)}
+                placeholder="Zum Beispiel: stundenlang Höhlen aus Decken bauen, Fußball auf der Straße, Geschichten erfinden …"
+                rows={3}
+                maxLength={800}
+                className="min-h-[80px] resize-y"
+                aria-label="Was dir als Kind Spaß gemacht hat (optional)"
+              />
+            </CardContent>
+          </Card>
+
+          <FormError message={error} />
+
+          <Button className="w-full gap-2" size="lg" onClick={() => void forge()}>
+            <Flame className="size-4" /> Funken schlagen
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full text-muted-foreground"
+            onClick={() => setPhase("intro")}
+          >
+            Zurück
+          </Button>
+          <div className="h-8" />
+        </div>
+      </div>
+    );
   }
 
   // ── Forging (Ladezustand) ───────────────────────────────────────
@@ -404,15 +469,7 @@ export function Sternschmiede({
             </div>
             <div className="flex w-full flex-col gap-3 pt-2">
               <Button className="w-full" size="lg" onClick={() => setPhase("intro")}>
-                Zu deinen Funken
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                size="lg"
-                render={<Link href="/me/wants" transitionTypes={["forge-up"]} />}
-              >
-                Zu deinen Sternen
+                Zurück zur Schmiede
               </Button>
             </div>
           </div>
@@ -556,34 +613,9 @@ export function Sternschmiede({
             </section>
           )}
 
-          {/* ── Neue Funken schlagen ── */}
-          <Card className="w-full">
-            <CardContent className="space-y-3 pt-(--card-spacing)">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-primary" />
-                <p className="text-sm font-medium text-foreground">
-                  Was hat dir als Kind Spaß gemacht?
-                </p>
-              </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Etwas, das dir vielleicht immer noch Spaß machen könnte? Optional —
-                aber es hilft mir, bessere Funken für dich zu schlagen.
-              </p>
-              <Textarea
-                value={childAnswer}
-                onChange={(e) => setChildAnswer(e.target.value)}
-                placeholder="Zum Beispiel: stundenlang Höhlen aus Decken bauen, Fußball auf der Straße, Geschichten erfinden …"
-                rows={3}
-                maxLength={800}
-                className="min-h-[80px] resize-y"
-                aria-label="Was dir als Kind Spaß gemacht hat (optional)"
-              />
-            </CardContent>
-          </Card>
-
           <FormError message={error} />
 
-          <Button className="w-full gap-2" size="lg" onClick={() => void forge()}>
+          <Button className="w-full gap-2" size="lg" onClick={() => setPhase("briefing")}>
             <Flame className="size-4" /> Funken schlagen
           </Button>
 
