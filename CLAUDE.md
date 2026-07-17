@@ -29,5 +29,15 @@ A self-development companion app that turns workbook exercises into interactive 
 - `cookies()`, `headers()`, `params`, and `searchParams` are **async** and **must be awaited**
   - Always use: `const { slug } = await params`
 - Apply this convention to all new pages, layouts, and route handlers
+- **Nach Routen-Löschungen `.next` löschen** (`rm -rf .next`) — sonst schlägt `npx tsc --noEmit` mit Geister-Typen von den gelöschten Routen fehl
+
+## Session Routine
+- **At session start:** read `AIC-STATUS.md` (current state, open items, next steps) to get oriented instead of re-exploring the codebase.
+- **At session end:** run `/feierabend` (summarizes the session into the Obsidian vault as a Daily Note and refreshes `AIC-STATUS.md`).
+
+## Git Workflow
+- Solo project, no external users yet: `main` is the working branch and it is safe to deploy directly to it.
+- **After a feature or fix is complete and working, commit and push to `main` right away — no need to ask first.** Stefan tests immediately on his phone against the live deploy. Use a concise, descriptive commit message.
+- Revisit this once the app has real users: switch to feature branches and pull requests instead of pushing straight to `main`.
 
 @AGENTS.md
