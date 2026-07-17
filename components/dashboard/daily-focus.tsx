@@ -70,7 +70,7 @@ export function DailyFocus({
   // bei künftigen "low"-Empfehlungen stimmig bleibt.
   const question =
     tier === "low"
-      ? "Dreht dein Kopf gerade Runden?"
+      ? "Stürmt es gerade in deinem Kopf?"
       : "Sollen wir weitermachen?";
 
   // Kompletter Tier-Zustand in einem Snapshot — neue Objekt-Identität pro Render

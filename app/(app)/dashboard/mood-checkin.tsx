@@ -16,13 +16,14 @@ const MOODS: { score: number; label: string }[] = Object.entries(
   MOOD_LABELS,
 ).map(([score, label]) => ({ score: Number(score), label }));
 
-// Encouraging, judgment-free message per score — low scores get warmth, not pity.
+// Warme, wertfreie Antwort pro Wetterlage — raues Wetter bekommt Wärme,
+// nie Mitleid oder Diagnose (Sprachregel: festgestellt, nie bewertet).
 const MESSAGES: Record<number, string> = {
-  1: "Schwere Tage gehören dazu. Schön, dass du trotzdem hier bist. 🤍",
-  2: "Auch zähe Tage dürfen sein. Sei heute sanft mit dir. 🫶",
-  3: "Schön, in deiner Mitte zu sein — aus dieser Ruhe heraus kann der Tag wachsen. 🌿",
-  4: "Schön, dass es heute gut läuft. Genieß diesen Moment. ☀️",
-  5: "Wunderbar — nimm den Schwung mit in den Tag! ✨",
+  1: "Stürmisch heute — auch das ist nur Wetter. Schön, dass du trotzdem hier bist. 🤍",
+  2: "Bewölkte Tage dürfen sein. Sei heute sanft mit dir. 🫶",
+  3: "Ruhiger Himmel — aus dieser Ruhe heraus kann der Tag wachsen. 🌿",
+  4: "Klare Sicht heute. Genieß diesen Moment. ✨",
+  5: "Sternenklar — nimm den Schwung mit in den Tag! 🌟",
 };
 
 const INITIAL_STATE: MoodCheckinState = {
@@ -45,7 +46,7 @@ export function MoodCheckin({
   );
 
   // Optimistic selection: highlight the tapped mood immediately. Ohne Check-in
-  // heute starten wir auf „Im Gleichgewicht" (Score 3) als ruhiger Default.
+  // heute starten wir auf „Ruhig" (Score 3) als ruhiger Default.
   const [selected, setSelected] = useState<number | null>(initialScore ?? 3);
 
   return (
@@ -54,7 +55,7 @@ export function MoodCheckin({
     // die warme Antwort hängt dicht an den Buttons, auf die sie reagiert.
     <div>
       <p className="font-heading text-lg font-medium text-foreground">
-        Wie geht&apos;s dir heute?
+        Wie ist das Wetter heute in deinem Kopf?
       </p>
 
       <div className="mt-10 flex justify-center">

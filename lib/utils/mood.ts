@@ -1,11 +1,13 @@
 export type MoodFace = "sorrowStrong" | "sorrowMild" | "smile" | "happy" | "radiant";
 
+/** Wetterbericht-Skala: Stimmung als Kopfwetter. Wetter wird festgestellt,
+ *  nie bewertet — die Labels beschreiben den Himmel, keinen Erfolg. */
 export const MOOD_LABELS: Record<number, string> = {
-  1: "Erschöpft",
-  2: "Angespannt",
-  3: "Im Gleichgewicht",
-  4: "Stark",
-  5: "Strahlend",
+  1: "Stürmisch",
+  2: "Bewölkt",
+  3: "Ruhig",
+  4: "Klar",
+  5: "Sternenklar",
 };
 
 export const MOOD_FACES: Record<number, MoodFace> = {
