@@ -600,9 +600,9 @@
     .me-seal-stamp { opacity: 1; transform: none; }
   }
 
-  /* ── Kopf-Apotheke: Apotheken-Regal ─────────────────────────────────
-   * 2×3-Regal transparenter Zellen (Haarlinie = Regalbrett) statt Karten.
-   * Die Gefäß-Ornamente leben wie die /me-Ornamente über je eine langsame
+  /* ── Kopfwetter: Wetter-Motive ─────────────────────────────────────
+   * Raster transparenter Zellen (Haarlinie als Rahmenlinie) statt Karten.
+   * Die Wetter-Ornamente leben wie die /me-Ornamente über je eine langsame
    * Mikro-Animation; reduced motion stellt alles still. */
   @keyframes bs-sway {
     0%, 100% { transform: rotate(-5deg); }
@@ -613,14 +613,6 @@
     transform-origin: center;
     animation: bs-sway 7s ease-in-out infinite;
   }
-  @keyframes bs-bubble {
-    0%   { transform: translateY(2px);  opacity: 0;   }
-    25%  { opacity: 0.9; }
-    70%  { opacity: 0.5; }
-    100% { transform: translateY(-8px); opacity: 0;   }
-  }
-  .bs-bubble   { animation: bs-bubble 3.2s ease-in-out infinite; }
-  .bs-bubble-2 { animation-delay: 1.6s; }
   @keyframes bs-ember {
     0%, 100% { opacity: 0.45; }
     40%      { opacity: 1;    }
@@ -628,13 +620,23 @@
   }
   .bs-ember   { animation: bs-ember 4s ease-in-out infinite; }
   .bs-ember-2 { animation-delay: 2.1s; }
+  @keyframes bs-rain {
+    0%   { transform: translateY(-2px); opacity: 0; }
+    30%  { opacity: 0.85; }
+    70%  { opacity: 0.55; }
+    100% { transform: translateY(7px); opacity: 0; }
+  }
+  .bs-rain   { animation: bs-rain 2.6s linear infinite; }
+  .bs-rain-2 { animation-delay: 1s; }
+  .bs-rain-3 { animation-delay: 1.8s; }
   @keyframes bs-glow {
     0%, 100% { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--scene-glow, var(--primary)) 35%, transparent)); }
     50%      { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--scene-glow, var(--primary)) 65%, transparent)); }
   }
   .bs-glow { animation: bs-glow 5s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) {
-    .bs-sway, .bs-bubble, .bs-bubble-2, .bs-ember, .bs-ember-2, .bs-glow {
+    .bs-sway, .bs-ember, .bs-ember-2, .bs-glow,
+    .bs-rain, .bs-rain-2, .bs-rain-3 {
       animation: none !important;
     }
   }
