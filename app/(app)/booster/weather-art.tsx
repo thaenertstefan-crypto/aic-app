@@ -1,7 +1,7 @@
 /**
  * Die Wetter-Motive des Kopfwetter-Hubs — je Booster ein Ausschnitt des
  * Nachthimmels (Windwirbel, Wolkenbank, Schirm im Regen, …) statt der
- * früheren Apotheken-Gefäße. Handgebaute SVGs im Stil der /me-Ornamente:
+ * früheren Gefäß-Ornamente. Handgebaute SVGs im Stil der /me-Ornamente:
  * Gold-Linienzeichnung, das lebendige Akzent-Element in Lilac (Kopfwetter-
  * Modulfarbe), eine langsame Mikro-Animation pro Motiv (bs-*-Klassen,
  * reduced-motion-Fallback liegt zentral in globals.css). Alle teilen den
