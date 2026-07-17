@@ -227,7 +227,7 @@ export function MomentFlow({
           <Card className="w-full border-primary/30">
             <CardContent className="flex min-h-[28svh] flex-col items-center justify-center gap-4 py-6 text-center">
               <SectionLabel>Dein Mantra</SectionLabel>
-              <p className="font-heading text-3xl leading-tight font-medium tracking-tight text-foreground">
+              <p className="font-affirmation text-3xl leading-tight font-medium tracking-tight text-foreground">
                 {mantra}
               </p>
             </CardContent>
@@ -256,7 +256,7 @@ export function MomentFlow({
               <CardContent className="pt-(--card-spacing)">
                 <p className="text-base leading-relaxed text-muted-foreground">
                   Und denk dran:{" "}
-                  <span className="font-medium text-foreground">
+                  <span className="font-affirmation font-medium text-foreground">
                     {right.startsWith("Ich habe das Recht")
                       ? right
                       : `Du hast das Recht, ${right}`}
@@ -294,7 +294,7 @@ export function MomentFlow({
         <Card className="w-full border-primary/30">
           <CardContent className="flex flex-col items-center gap-3 py-6 text-center">
             <SectionLabel>Dein Mantra</SectionLabel>
-            <p className="font-heading text-2xl leading-tight font-medium tracking-tight text-foreground">
+            <p className="font-affirmation text-2xl leading-tight font-medium tracking-tight text-foreground">
               {mantra}
             </p>
           </CardContent>

@@ -330,7 +330,7 @@ export function BillOfRightsMe({
                         § {i + 1}
                       </span>
                       <div className="flex flex-1 items-start gap-2">
-                        <p className="flex-1 text-base leading-relaxed text-foreground">
+                        <p className="font-affirmation flex-1 text-base leading-relaxed text-foreground">
                           {asAffirmation(r.text)}
                         </p>
                         <Button

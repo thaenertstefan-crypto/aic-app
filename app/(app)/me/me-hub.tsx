@@ -238,7 +238,7 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
         >
           <SceneTitle>Meine Bill of Rights</SceneTitle>
           {rightsCount > 0 && firstRight ? (
-            <p className="mt-2 line-clamp-2 font-heading text-sm italic leading-snug text-foreground">
+            <p className="mt-2 line-clamp-2 font-affirmation text-sm leading-snug text-foreground">
               „{asAffirmation(firstRight)}&#8220;
             </p>
           ) : (

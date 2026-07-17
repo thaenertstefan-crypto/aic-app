@@ -273,7 +273,7 @@ export default async function DashboardPage() {
           </div>
 
           {todayRight ? (
-            <p className="font-heading text-lg leading-relaxed text-foreground">
+            <p className="font-affirmation text-lg leading-relaxed text-foreground">
               {asAffirmation(todayRight.text)}
             </p>
           ) : (

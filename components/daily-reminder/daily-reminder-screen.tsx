@@ -115,7 +115,7 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
 
         <p
           className={cn(
-            "mx-auto max-w-sm text-center font-heading text-2xl leading-relaxed text-foreground",
+            "mx-auto max-w-sm text-center font-affirmation text-2xl leading-relaxed text-foreground",
             !reduced && "transition-opacity",
             visible ? "opacity-100" : "opacity-0",
           )}

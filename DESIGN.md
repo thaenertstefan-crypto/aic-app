@@ -163,7 +163,7 @@ This rule governs **emphasis, not identity.** Gold-tinted icon chips (`bg-primar
 - **Label** (Geist, 500, 0.75rem / `text-xs`): Meta text and small captions.
 
 ### Named Rules
-**The Serif-Is-Voice Rule.** Fraunces is for language the user should *feel* — names, affirmations, encouragements. Never set a button, a data value, or a form label in the serif. If it's an action or a fact, it's Geist.
+**The Serif-Is-Voice Rule.** Fraunces is for language the user should *feel* — names, affirmations, encouragements. Never set a button, a data value, or a form label in the serif. If it's an action or a fact, it's Geist. Affirmationen — Sätze, die die App dem User zuspricht — stehen in Fraunces Italic (Utility `.font-affirmation`).
 
 **The Fixed-Scale Rule.** This is product UI: type sizes are fixed rem steps, not fluid `clamp()`. A heading that shrinks with the viewport looks worse in a phone-width column, not better.
 

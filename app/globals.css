@@ -140,6 +140,13 @@
 }
 
 @layer utilities {
+  /* Affirmationen sprechen kursiv: Fraunces Italic — die Stimme der App,
+     wenn sie dem User etwas zuspricht (Serif-Is-Voice+). */
+  .font-affirmation {
+    font-family: var(--font-fraunces), Georgia, serif;
+    font-style: italic;
+  }
+
   /* Gentle "breathing" pulse for the mood avatar; duration is set inline. */
   @keyframes mood-breathe {
     0%,
