@@ -122,32 +122,40 @@ export function WantsMe({
     dive(() => router.push(FORGE_HREF));
   }
 
-  const forgeBridge = (
-    <section className="space-y-3 rounded-2xl bg-primary/5 p-5 text-center">
-      <Flame className="mx-auto size-6 text-primary" />
-      <h2 className="font-heading text-lg font-semibold text-foreground">
-        Lust, neue Sterne zu entdecken?
-      </h2>
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        Manchmal steckt man in der Routine fest und will endlich wieder etwas
-        Neues ausprobieren — weiß aber nicht was. In der Sternschmiede schlägst du
-        Funken: kleine Wetten, aus denen ein neuer Stern werden könnte.
-      </p>
-      <Button
-        className="w-full gap-2"
-        size="lg"
-        disabled={busy}
-        onClick={goToForge}
-      >
-        {busy ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <Flame className="size-4" />
-        )}
-        Zur Sternschmiede
-      </Button>
-    </section>
-  );
+  // Im Leer-Zustand steht die Sternschmiede gleichwertig NEBEN „Sternensuche
+  // starten" (siehe Kommentar unten: „Sternsuche ODER direkt in die
+  // Schmiede") — dort bleibt sie outline, damit nur eine Gold-Kerze brennt.
+  // Sobald schon Sterne existieren, ist sie die einzige verbleibende
+  // Primäraktion des Screens und wird zur Gold-Kerze.
+  function forgeBridge(primary: boolean) {
+    return (
+      <section className="space-y-3 rounded-2xl bg-primary/5 p-5 text-center">
+        <Flame className="mx-auto size-6 text-primary" />
+        <h2 className="font-heading text-lg font-semibold text-foreground">
+          Lust, neue Sterne zu entdecken?
+        </h2>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Manchmal steckt man in der Routine fest und will endlich wieder etwas
+          Neues ausprobieren — weiß aber nicht was. In der Sternschmiede schlägst du
+          Funken: kleine Wetten, aus denen ein neuer Stern werden könnte.
+        </p>
+        <Button
+          variant={primary ? "default" : "outline"}
+          className="w-full gap-2"
+          size="lg"
+          disabled={busy}
+          onClick={goToForge}
+        >
+          {busy ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Flame className="size-4" />
+          )}
+          Zur Sternschmiede
+        </Button>
+      </section>
+    );
+  }
 
   return (
     <div className={cn("flex min-h-svh flex-col", warpPageClass("wants", phase, direction))}>
@@ -187,7 +195,7 @@ export function WantsMe({
                   <Button className="w-full gap-2" size="lg" render={<Link href="/me/wants/journey" />}>
                     <Star className="size-4" /> Sternensuche starten
                   </Button>
-                  {forgeBridge}
+                  {forgeBridge(false)}
                 </div>
               ) : (
                 <>
@@ -279,7 +287,7 @@ export function WantsMe({
                   </Button>
 
                   {/* Brücke in die Sternschmiede */}
-                  {forgeBridge}
+                  {forgeBridge(true)}
                 </>
               )}
 

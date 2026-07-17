@@ -537,6 +537,7 @@ export function Sternschmiede({
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
+                            variant="outline"
                             className="gap-2"
                             render={<Link href={`/me/wants/reflect/${bet.id}`} />}
                           >

@@ -712,6 +712,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                       />
                       <FormError message={acceptError} />
                       <Button
+                        variant="outline"
                         className="w-full"
                         disabled={acceptPending || !suggestionText.trim()}
                         onClick={() => void acceptRight()}

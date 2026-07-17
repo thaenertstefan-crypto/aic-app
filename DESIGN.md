@@ -65,7 +65,7 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.candle-gold}"
-    textColor: "{colors.moonlight}"
+    textColor: "{colors.gold-ink}"
     rounded: "{rounded.lg}"
     padding: "0 10px"
     height: "32px"
@@ -182,7 +182,7 @@ The ground itself is not a flat fill but a vertical body gradient (`components/u
 
 ### Buttons
 - **Shape:** Gently rounded (`rounded-lg`, 10px). Compact height (32px default; `sm` 28px, `lg` 36px).
-- **Primary (default):** A *translucent gold* fill, not a solid slab — `bg-primary/15` over a `border-primary/55` edge with `backdrop-blur`, text in Moonlight. It glows rather than blocks. Hover lifts the fill to `bg-primary/25`. (Solid-gold fills with Gold Ink text are reserved for badges/pills.)
+- **Primary (default):** Solid Candle Gold with Gold-Ink text — die eine angezündete Kerze. Hover dunkelt minimal Richtung Ink.
 - **Outline:** Aubergine-tinted transparent fill (`bg-background/40`) with a hairline border and light blur; hover fills to muted. The workhorse secondary action.
 - **Ghost / Secondary / Link:** Ghost = transparent, hover to muted. Secondary = solid Plum. Link = gold text, underline on hover.
 - **Focus:** A 3px `ring-ring/50` gold focus ring plus border shift — always visible. **Active:** a 1px downward nudge (`translate-y-px`) for a tactile press.
