@@ -15,14 +15,14 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
     body: [
       'Die App besteht im Wesentlichen aus zwei Teilen. Im Teil „Me“ geht es darum, die Essenz eines gesunden Selbstbewusstseins herauszuarbeiten: Zu wissen wer du bist – und zwar auf einer tieferen Ebene, als Du sie bisher vielleicht betrachtet hast.',
       'Konkret findest Du mit den Übungen im Teil „Me“ heraus, was Dir wirklich wichtig ist (Deine Werte), was Du wirklich willst (Deine Wants) und nach welchen inneren Regeln Du leben willst (Deine Bill of Rights).',
-      'Die Prämisse: Nur wenn Du Dich selbst wirklich kennst, kannst Du Dein Leben so gestalten, dass Du die Dinge tust, die Dir wirklich Energie geben, statt sie Dir zu nehmen. Und wenn Du dabei in innere Konflikte gerätst, hast Du immer noch die Kopf-Apotheke.',
+      'Die Prämisse: Nur wenn Du Dich selbst wirklich kennst, kannst Du Dein Leben so gestalten, dass Du die Dinge tust, die Dir wirklich Energie geben, statt sie Dir zu nehmen. Und wenn Du dabei in innere Konflikte gerätst, hast Du immer noch die Kopfwetter-Hilfen.',
     ],
   },
   {
     // intro3 (Schritt 7)
     title: 'Was Dich erwartet',
     body: [
-      'Die Kopf-Apotheke ist der zweite Teil dieser App und stellt Dir eine Reihe von Schnellhilfen bereit.',
+      'Das Kopfwetter ist der zweite Teil dieser App und stellt Dir eine Reihe von Schnellhilfen bereit.',
       'Sie helfen Dir, Overthinking-Spiralen zu überwinden, eine schuldgefühlfreie „Nein“-Antwort zu formulieren oder Dir selbst Rückenwind zu geben, bevor Du in ein nervenaufreibendes Gespräch, Treffen oder eine Präsentation gehst. Sprich: schnell abrufbare kleine Unterstützer für mittendrin im Alltag.',
     ],
   },
@@ -30,7 +30,7 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
     // intro4 (Schritt 8)
     title: 'Schön, dass du da bist.',
     body: [
-      '„Me“, um Dich Stück für Stück kennenzulernen. Die Kopf-Apotheke, um Dir im Alltag den Rücken zu stärken. Zusammen bringen sie Dich zu dem Gefühl zurück, das eigentlich Dein Normalzustand sein sollte: gut genug.',
+      '„Me“, um Dich Stück für Stück kennenzulernen. Das Kopfwetter, um Dir im Alltag den Rücken zu stärken. Zusammen bringen sie Dich zu dem Gefühl zurück, das eigentlich Dein Normalzustand sein sollte: gut genug.',
       'Bereit?',
     ],
   },

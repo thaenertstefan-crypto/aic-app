@@ -1,10 +1,10 @@
 import {
-  Brain,
-  Flame,
+  Cloudy,
   Heart,
   Quote,
   ScrollText,
   Sparkles,
+  Wind,
   type LucideIcon,
 } from "lucide-react";
 
@@ -52,12 +52,12 @@ export function MePreview() {
   );
 }
 
-/** Vorschau auf die Kopf-Apotheke (vgl. [booster/page.tsx]). */
+/** Vorschau auf das Kopfwetter (vgl. [booster/page.tsx]). */
 export function BoosterPreview() {
   return (
     <div aria-hidden="true" className="grid grid-cols-2 gap-2">
-      <PreviewTile icon={Brain} label="Overthinking" />
-      <PreviewTile icon={Flame} label="Things Got Messy" />
+      <PreviewTile icon={Wind} label="Overthinking" />
+      <PreviewTile icon={Cloudy} label="Things Got Messy" />
       <PreviewTile icon={Sparkles} label="Confidence" />
       <PreviewTile icon={Quote} label="Mantra" />
     </div>
