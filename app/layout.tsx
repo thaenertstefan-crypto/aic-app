@@ -3,6 +3,7 @@ import { Geist, Fraunces } from "next/font/google";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { NavigationSpinner } from "@/components/layout/navigation-spinner";
+import { GrainOverlay } from "@/components/ui/grain-overlay";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -53,6 +54,7 @@ export default function RootLayout({
         <NavigationSpinner />
         <ServiceWorkerRegistration />
         {children}
+        <GrainOverlay />
       </body>
     </html>
   );
