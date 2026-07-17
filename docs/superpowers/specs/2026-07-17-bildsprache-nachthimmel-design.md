@@ -1,6 +1,6 @@
 # Bildsprache „Dein Nachthimmel" — Design
 
-_Stand: 2026-07-17 · Status: von Stefan im Brainstorming abgesegnet, Umsetzung noch nicht geplant_
+_Stand: 2026-07-17 · Status: von Stefan abgesegnet (inkl. Spec-Review), Implementierungsplan folgt_
 
 ## Problem
 
@@ -36,9 +36,9 @@ Bewusst „leuchten weiter" statt „ändert sich nicht": Der Himmel darf wachse
 
 ## Story (Onboarding-Rohfassung)
 
-> Jeder Mensch hat einen eigenen Nachthimmel — das, was ihn ausmacht. Die meisten haben nur nie in Ruhe hingeschaut.
+> Jeder Mensch hat verschiedene Dinge, die ihn oder sie zum Leuchten bringen, die einem Freude bringen, ein echtes Lachen entlocken, und ein Gefühl von echter Zufriedenheit geben. Diese Dinge sind wie Sterne am Nachthimmel, die besonders hell für einen selbst scheinen und wie den alten Seefahrern den Weg zu innerem Frieden zeigen. Die meisten haben nur nie in Ruhe hingeschaut.
 >
-> Hier ist dein Raum dafür. **Dein Kompass** zeigt dir, wofür du stehst — deine Werte. **Deine Sterne** zeigen dir, was dich leuchten lässt und wonach du greifst — deine Wants. Und **deine Bill of Rights** sind die Regeln, nach denen du navigierst — die Rechte, die du dir selbst gibst.
+> Hier ist dein Raum dafür. **Dein Kompass** zeigt dir, wofür du stehst — deine Werte. **Deine Sterne** zeigen dir, was dich leuchten lässt und wonach du greifst — Deine persönliche Freudenquellen und Ziele. Und **deine Bill of Rights** sind die Regeln, nach denen du navigierst — die Rechte, die du dir selbst gibst.
 >
 > Und wenn Wolken aufziehen — Zweifel, Grübeln, ein Tag, an dem alles zu viel ist — dann ist das Wetter. Nicht dein Himmel. Es zieht vorbei. Bis dahin findest du hier Hilfen, um durchzukommen — und deine Sterne wieder zu sehen.
 
@@ -72,7 +72,7 @@ Bewusst „leuchten weiter" statt „ändert sich nicht": Der Himmel darf wachse
 
 ## Umfang (grob, noch ohne Implementierungsplan)
 
-- **Naming & Copy:** Kopf-Apotheke → Kopfwetter (Hub-Titel, Copy; Nav-Tab-Beschriftung „Booster" separat entscheiden), Onboarding-Story, Hub-Intro-Texte, Leitsatz an Affirmations-Stellen.
+- **Naming & Copy:** Kopf-Apotheke → Kopfwetter (Hub-Titel, Copy; auch der Nav-Tab heißt einheitlich „Kopfwetter" statt „Booster"), Onboarding-Story, Hub-Intro-Texte, Leitsatz an Affirmations-Stellen.
 - **Visuals:** ein neues Szenen-Ornament (Kopfwetter), Wetter-Semantik im Check-in; optional Backdrop-Sterne.
 - **Docs:** DESIGN.md (Overview/North-Star um die Bildwelt ergänzen), PRODUCT.md (Story-Absatz).
 
