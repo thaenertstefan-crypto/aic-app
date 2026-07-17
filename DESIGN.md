@@ -148,6 +148,17 @@ This rule governs **emphasis, not identity.** Gold-tinted icon chips (`bg-primar
 
 **The Warm-White Rule.** Text is Moonlight (`#F3EFFA`), never `#FFFFFF`. Pure white on aubergine is a cold spike; the warm off-white belongs to the room.
 
+### Modul-Lichtfarben (Szenen-Identität, nie Aktions-Farbe)
+| Modul | Lichtfarbe | Token |
+|---|---|---|
+| Werte | Gold | `--primary` |
+| Wants / Sternschmiede | Rosé | `--celebrate` |
+| Confidence | Lilac | `--cleanser-confidence` |
+| Bill of Rights | Sage | `--success` |
+
+Modulfarbe lebt ausschließlich in Szenen-Ornamenten und Glows (`--scene-glow`).
+Gold bleibt überall die Aktions-Farbe (One-Candle-Rule).
+
 ## 3. Typography
 
 **Display Font:** Fraunces (with Georgia, serif fallback)

@@ -543,8 +543,8 @@
 
   /* Wachssiegel glüht im wandernden Kerzenlicht. */
   @keyframes me-seal-glow {
-    0%, 100% { filter: drop-shadow(0 0 6px  color-mix(in srgb, var(--primary) 40%, transparent)); }
-    50%      { filter: drop-shadow(0 0 13px color-mix(in srgb, var(--primary) 75%, transparent)); }
+    0%, 100% { filter: drop-shadow(0 0 6px  color-mix(in srgb, var(--scene-glow, var(--primary)) 40%, transparent)); }
+    50%      { filter: drop-shadow(0 0 13px color-mix(in srgb, var(--scene-glow, var(--primary)) 75%, transparent)); }
   }
   .me-seal-glow { animation: me-seal-glow 5s ease-in-out infinite; }
 
@@ -560,10 +560,21 @@
 
   /* Stern der Wants glüht sanft — Signatur-Ornament. */
   @keyframes me-star-glow {
-    0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 2px color-mix(in srgb, var(--primary) 40%, transparent)); }
-    50% { opacity: 1; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 60%, transparent)); }
+    0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 2px color-mix(in srgb, var(--scene-glow, var(--primary)) 40%, transparent)); }
+    50% { opacity: 1; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--scene-glow, var(--primary)) 60%, transparent)); }
   }
   .me-star-glow { animation: me-star-glow 4s ease-in-out infinite; }
+
+  /* Wants-Szene im /me-Hub: Stern-Ornament folgt der Modulfarbe (Rosé) statt
+   * dem Gold-Fallback — geschwisterlich zum --scene-glow-Glühen oben.
+   * Attribut-Selektoren treffen gezielt die Fill- bzw. Stroke-Variante des
+   * Sterns (StarArt), ohne die geteilte Komponente selbst anzufassen. */
+  .scene-ornament-tint polygon:not([fill="none"]) {
+    fill: var(--scene-glow, var(--primary));
+  }
+  .scene-ornament-tint polygon[fill="none"] {
+    stroke: var(--scene-glow, var(--primary));
+  }
 
   /* Einzug beim Öffnen (einmalig): Rosenring zeichnet sich. */
   @keyframes me-ring-draw {
@@ -618,8 +629,8 @@
   .bs-ember   { animation: bs-ember 4s ease-in-out infinite; }
   .bs-ember-2 { animation-delay: 2.1s; }
   @keyframes bs-glow {
-    0%, 100% { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--primary) 35%, transparent)); }
-    50%      { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--primary) 65%, transparent)); }
+    0%, 100% { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--scene-glow, var(--primary)) 35%, transparent)); }
+    50%      { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--scene-glow, var(--primary)) 65%, transparent)); }
   }
   .bs-glow { animation: bs-glow 5s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) {

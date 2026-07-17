@@ -80,7 +80,12 @@ function SealArt({ animate }: { animate: boolean }) {
       <svg
         viewBox="0 0 56 56"
         className={cn("size-12", animate && "me-seal-glow")}
-        style={{ transform: "rotate(-6deg)" }}
+        style={
+          {
+            transform: "rotate(-6deg)",
+            "--scene-glow": "var(--success)",
+          } as React.CSSProperties
+        }
         aria-hidden="true"
       >
         {scallops.map((c, i) => (
@@ -208,7 +213,17 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
         <Scene
           href="/me/wants"
           ariaLabel={`${PAGE_TITLES.meWants} öffnen`}
-          art={<StarArt animate={animate} dim={wantsCount === 0} />}
+          art={
+            <span
+              style={{ "--scene-glow": "var(--celebrate)" } as React.CSSProperties}
+            >
+              <StarArt
+                animate={animate}
+                dim={wantsCount === 0}
+                className="scene-ornament-tint"
+              />
+            </span>
+          }
         >
           <SceneTitle>{PAGE_TITLES.meWants}</SceneTitle>
           {openBetsCount > 0 ? (
