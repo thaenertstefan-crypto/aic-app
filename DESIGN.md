@@ -105,7 +105,7 @@ components:
 
 **Creative North Star: "Candlelight in a Quiet Room"**
 
-Anti Imposter Club is a companion, not a coach. The whole surface sits in a deep aubergine night (`#1B1726`) — the app you open late, after the day, when the inner critic is loudest. Into that dark room falls a single warm light: a candle-gold accent (`#E7B65E`) that marks the one thing worth doing next. Nothing shouts. Warmth is carried by the light and the voice, never by loud color everywhere. A soft, procedural mascot breathes in the corners; motion is gentle and "alive," never busy. The register is **product** — this is a tool you're *in*, working through a guided exercise — but a tool with a heartbeat.
+Anti Imposter Club is a companion, not a coach. The whole surface sits in a deep aubergine night (`#161226`) — a protected, dimmed room you can retreat to at any time, the app you open late, after the day, when the inner critic is loudest. Into that dark room falls a single warm light: a candle-gold accent (`#E7B65E`) that marks the one thing worth doing next. Nothing shouts. Warmth is carried by the light and the voice, never by loud color everywhere. A soft, procedural mascot breathes in the corners; motion is gentle and "alive," never busy. The register is **product** — this is a tool you're *in*, working through a guided exercise — but a tool with a heartbeat.
 
 This system explicitly rejects four things (straight from PRODUCT.md's anti-references): the **cold clinical health app** (no medical white, no form-field sea, no hospital blue), the **hustle/productivity coach** (no aggressive streaks-as-pressure, no "no excuses" red), the **generic SaaS dashboard** (no interchangeable card grids, no hero-metric tiles, no soulless corporate neutral), and **kitschy wellness esoterica** (no oversweet pastels, no empty mindfulness fluff). The dark ground plus a single earned accent is the whole discipline: restraint that reads as calm, not as emptiness.
 
@@ -133,7 +133,7 @@ A dark, low-chroma aubergine field lit by one warm gold, with a small cast of de
 - **Chart ramp** (`#E7B65E → #C9A878 → #B29A8C → #9D8C9B → #8E84A6`): A gold-to-lavender ramp for the few data/progress visuals; sequential and muted by design.
 
 ### Neutral
-- **Aubergine Night** (`#1B1726`): The body background. The room. Also the resting fill of outline buttons and inputs.
+- **Aubergine Night** (`#161226`): The body background. The room. Also the resting fill of outline buttons and inputs.
 - **Plum Surface** (`#221C30`): Card, popover, sidebar, bottom-nav base — one step up from the ground.
 - **Plum Muted** (`#251F32`) / **Plum Secondary** (`#2A2438`): Second neutral layer for muted panels, secondary buttons, toolbars.
 - **Amber Accent** (`#332818`): A dim warm tint for hover/accent surfaces in the dark.
@@ -224,7 +224,7 @@ A procedural SVG/CSS blob (`components/brand/mascot.tsx`), **not an image** — 
 ## 6. Do's and Don'ts
 
 ### Do:
-- **Do** keep the aubergine night (`#1B1726`) as the ground on every surface. One theme, no light mode.
+- **Do** keep the aubergine night (`#161226`) as the ground on every surface. One theme, no light mode.
 - **Do** obey the One Candle Rule — exactly one gold **action/current-state** per screen. Gold-tinted identity icon chips on hubs are fine; keep them quieter than the one gold action.
 - **Do** use Moonlight (`#F3EFFA`) for text, and Gold Ink (`#2B1B06`) on gold fills. Never pure `#FFFFFF`.
 - **Do** set voice — greetings, affirmations, encouragements — in Fraunces; set actions, labels, and data in Geist.
