@@ -107,6 +107,8 @@ components:
 
 Anti Imposter Club is a companion, not a coach. The whole surface sits in a deep aubergine night (`#161226`) — a protected, dimmed room you can retreat to at any time, the app you open late, after the day, when the inner critic is loudest. Into that dark room falls a single warm light: a candle-gold accent (`#E7B65E`) that marks the one thing worth doing next. Nothing shouts. Warmth is carried by the light and the voice, never by loud color everywhere. A soft, procedural mascot breathes in the corners; motion is gentle and "alive," never busy. The register is **product** — this is a tool you're *in*, working through a guided exercise — but a tool with a heartbeat.
 
+**Bildwelt: „Dein Nachthimmel“** — the meaning layer over this visual system (spec: `docs/superpowers/specs/2026-07-17-bildsprache-nachthimmel-design.md`). From the protected room you look at your own night sky: the **Kompass** (Werte) shows direction, the **Sterne** (Wants) are what makes you shine and what you reach for, the **Bill of Rights** are the rules you navigate by, and rough moments are **Kopfwetter** — weather that passes and never destroys the sky. Metaphors live at the edges (hub titles, onboarding, the check-in as „Wetterbericht“, intro/outro moments); exercise steps stay concrete and image-free, and buttons say „Weiter“, never „Nach den Sternen greifen“.
+
 This system explicitly rejects four things (straight from PRODUCT.md's anti-references): the **cold clinical health app** (no medical white, no form-field sea, no hospital blue), the **hustle/productivity coach** (no aggressive streaks-as-pressure, no "no excuses" red), the **generic SaaS dashboard** (no interchangeable card grids, no hero-metric tiles, no soulless corporate neutral), and **kitschy wellness esoterica** (no oversweet pastels, no empty mindfulness fluff). The dark ground plus a single earned accent is the whole discipline: restraint that reads as calm, not as emptiness.
 
 **Key Characteristics:**
@@ -129,7 +131,7 @@ A dark, low-chroma aubergine field lit by one warm gold, with a small cast of de
 - **Rose Celebrate** (`#C97B84`): Reserved for celebration moments (completion flourishes) — warm, human, not confetti-loud.
 
 ### Tertiary
-- **Lilac Confidence** (`#9C7FB0`): Module identity for the Confidence/Booster surfaces (`--cleanser-confidence`). Used to tint a flow, not to decorate.
+- **Lilac Confidence** (`#9C7FB0`): Module identity for the Confidence flow and the Kopfwetter hub (`--cleanser-confidence`). Used to tint a flow, not to decorate.
 - **Chart ramp** (`#E7B65E → #C9A878 → #B29A8C → #9D8C9B → #8E84A6`): A gold-to-lavender ramp for the few data/progress visuals; sequential and muted by design.
 
 ### Neutral
@@ -155,9 +157,10 @@ This rule governs **emphasis, not identity.** Gold-tinted icon chips (`bg-primar
 | Wants / Sternschmiede | Rosé | `--celebrate` |
 | Confidence | Lilac | `--cleanser-confidence` |
 | Bill of Rights | Sage | `--success` |
+| Kopfwetter (Akut-Hilfen) | Lilac | `--cleanser-confidence` |
 
 Modulfarbe lebt ausschließlich in Szenen-Ornamenten und Glows (`--scene-glow`).
-Gold bleibt überall die Aktions-Farbe (One-Candle-Rule).
+Gold bleibt überall die Aktions-Farbe (One-Candle-Rule). Die `scene-ornament-tint`-Konvention (Attribut-Selektoren + `--scene-glow`) lebt in `app/globals.css`.
 
 ## 3. Typography
 
@@ -215,7 +218,7 @@ The ground itself is not a flat fill but a vertical body gradient (`components/u
 - **Error:** `aria-invalid` drives a destructive border + destructive ring. **Disabled:** reduced opacity, muted fill, no pointer events.
 
 ### Navigation
-- **Bottom tab bar** (mobile-first): 5 tabs (Dashboard, Ich, Booster, Journal, Einstellungen), each an icon + `text-xs` label. Sticky bottom, safe-area padded, on a separate absolute `bg-background/70 backdrop-blur-xl` glass layer.
+- **Bottom tab bar** (mobile-first): 5 tabs (Dashboard, Me, Kopfwetter, Journal, Einstellungen), each an icon + `text-xs` label. Sticky bottom, safe-area padded, on a separate absolute `bg-background/70 backdrop-blur-xl` glass layer.
 - **States:** Active tab is Candle Gold with a lightly gold-filled icon; inactive is Lavender-Muted, hover to Moonlight. A 2px gold indicator line slides between tabs (GSAP, `power2.out`, ~0.4s) and snaps instantly under reduced motion.
 
 ### The Mascot (signature component)
