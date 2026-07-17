@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Die im Spec [2026-07-17-bildsprache-nachthimmel-design.md](../specs/2026-07-17-bildsprache-nachthimmel-design.md) beschlossene Bildwelt umsetzen: Kopf-Apotheke → **Kopfwetter** (inkl. Nav-Tab und komplettem Hub-Visual-Umbau von Apotheken-Gefäßen zu Wetter-Motiven), Stimmungs-Check-in als **Wetterbericht**, Onboarding-Story um den Nachthimmel, Leitsatz, Doc-Updates.
+**Goal:** Die im Spec [2026-07-17-bildsprache-nachthimmel-design.md](../specs/2026-07-17-bildsprache-nachthimmel-design.md) beschlossene Bildwelt umsetzen: Kopf-Apotheke → **Kopfwetter** (inkl. Nav-Tab und komplettem Hub-Visual-Umbau von Apotheken-Gefäßen zu Wetter-Motiven), Stimmungs-Check-in als **Wetterbericht**, minimales Onboarding-Rename (Stefans Entscheidung: Onboarding-Texte bleiben, nur Kopf-Apotheke-Wording + Icons ändern sich), Doc-Updates.
 
 **Architecture:** Reine Copy-/Visual-Schicht über dem bestehenden Designsystem — keine neuen Farb-Token, keine Routen-Änderungen, keine DB-Änderungen. Die 5 Apotheken-Gefäße (`vessels.tsx`) werden durch 5 Wetter-/Nachthimmel-SVGs (`weather-art.tsx`) im selben Koordinatenraum ersetzt; das Hairline-Raster des Hubs bleibt. Check-in-Labels und -Copy werden auf Wetter-Semantik umgestellt (Datenmodell `mood_score` 1–5 unverändert).
 
@@ -13,8 +13,7 @@
 - **Alle nutzersichtbaren Texte Deutsch**, informelles „du" (Onboarding-Bestand nutzt großgeschriebenes „Du" — dort beibehalten).
 - **Typografische Anführungszeichen:** „…" = U+201E (öffnend) + U+201C (schließend). Niemals ASCII `"` in User-Copy. (Subagent-Dispatches: diese Regel explizit in den Prompt schreiben.)
 - **Rahmen-Regel (Spec Sprachregel 1):** Metaphern nur an Rändern (Hub-Titel, Onboarding, Check-in, Intro/Outro). Übungs-Steps bleiben bildfrei; Buttons sagen „Weiter", nie „Nach den Sternen greifen". Dieser Plan ändert **keine** Copy innerhalb von Übungs-Steps.
-- **Sprachregeln 2–4:** Sterne werden nie gedeutet („deine Sterne zeigen dir, dass…" ist verboten); Wetter wird festgestellt, nie bewertet (kein „schlechter Tag", kein Versagen); der Leitsatz erscheint genau an den im Plan genannten Stellen (Onboarding intro4) — nirgendwo sonst.
-- **Leitsatz (exakter Wortlaut):** „Auch wenn das Wetter sie manchmal versteckt: Deine Sterne leuchten weiter."
+- **Sprachregeln 2–4:** Sterne werden nie gedeutet („deine Sterne zeigen dir, dass…" ist verboten); Wetter wird festgestellt, nie bewertet (kein „schlechter Tag", kein Versagen); der Leitsatz („Auch wenn das Wetter sie manchmal versteckt: Deine Sterne leuchten weiter.") wird in **dieser Runde noch nicht eingebaut** — Stefan lässt das Onboarding vorerst inhaltlich unverändert; der Einbau folgt in einer späteren Runde.
 - **One-Candle-Rule, Palette, Farb-Token unverändert.** Lilac = `var(--cleanser-confidence)` ist die Kopfwetter-Modulfarbe (Spec, visuelle Ebene Punkt 2) — nur in Ornamenten/Glows, nie als Aktionsfarbe.
 - **Route `/booster` und alle internen Bezeichner (`booster`, `NAV_LABELS.booster`, DB-Spalten) bleiben** — der Rename ist reine Copy-Ebene. Kein Verzeichnis-/Key-Rename.
 - **Jede neue Animation braucht einen `prefers-reduced-motion: reduce`-Fallback** (zentral in `globals.css`, wie die bestehenden `bs-*`-Klassen).
@@ -407,11 +406,11 @@ export const MOOD_LABELS: Record<number, string> = {
 
 - [ ] **Step 2: Frage + Antworten in `mood-checkin.tsx`**
 
-Frage (Zeile ~57):
+Frage (Zeile ~57, Wortlaut von Stefan festgelegt):
 
 ```tsx
       <p className="font-heading text-lg font-medium text-foreground">
-        Wie ist dein Kopfwetter heute?
+        Wie ist das Wetter heute in deinem Kopf?
       </p>
 ```
 
@@ -455,99 +454,30 @@ git commit -m "feat(bildsprache): Stimmungs-Check-in wird zum Wetterbericht"
 
 ---
 
-### Task 5: Onboarding-Story + Leitsatz
+### Task 5: Onboarding — Kopfwetter-Wording + Icons (minimal)
 
 **Files:**
-- Modify: `lib/content/onboarding-intro.ts`
-- Modify: `app/onboarding/page.tsx:370-377` (introCard-Rendering)
+- Modify: `lib/content/onboarding-intro.ts` (drei Wort-Ersetzungen, sonst wörtlich unverändert)
 - Modify: `components/onboarding/intro-previews.tsx`
 
 **Interfaces:**
-- Consumes: `.font-affirmation`-Utility (bestehend), `Crossfade`/Card-Struktur des Onboardings (unverändert).
-- Produces: erweiterter Typ `OnboardingIntroCard = { title?: string; body: string[]; affirmation?: string; closing?: string }` — `page.tsx` rendert die zwei neuen optionalen Felder.
+- Consumes: —
+- Produces: — (Typ `OnboardingIntroCard` bleibt unverändert; `app/onboarding/page.tsx` wird **nicht** angefasst.)
 
-- [ ] **Step 1: `onboarding-intro.ts` neu schreiben** (kompletter Dateiinhalt; intro1 bleibt wörtlich unverändert)
+**Stefans Vorgabe:** Das Onboarding bleibt inhaltlich, wie es ist — nur das Kopf-Apotheke-Wording wird ersetzt und die Preview-Icons ziehen nach. Nachthimmel-Story und Leitsatz kommen erst in einer späteren Runde ins Onboarding.
 
-```ts
-/** App-Intro-Karten im Onboarding (Steps intro1–intro4). */
-export type OnboardingIntroCard = {
-  title?: string;
-  body: string[];
-  /** Leitsatz in .font-affirmation — ein Leuchtsatz pro Moment, sparsam. */
-  affirmation?: string;
-  /** Kurzer Abbinder nach dem Leitsatz (normale Textfarbe). */
-  closing?: string;
-};
+- [ ] **Step 1: Drei Ersetzungen in `onboarding-intro.ts`**
 
-export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
-  {
-    // intro1 (Schritt 5)
-    title: 'Das war mutig.',
-    body: [
-      'Danke für Deine Ehrlichkeit – zu mir und vor allem zu Dir selbst. Es ist ganz sicher nicht immer leicht, sich die Wahrheit einzugestehen, aber nur wer wirklich ehrlich zu sich selbst ist, wird des schaffen das Gefühl von "gut genug" zurückzugewinnen.',
-    ],
-  },
-  {
-    // intro2 (Schritt 6) — der eigene Nachthimmel + der Me-Teil
-    title: 'Was Dich erwartet',
-    body: [
-      'Jeder Mensch hat Dinge, die ihn zum Leuchten bringen: Sie machen echte Freude, entlocken ein ehrliches Lachen, geben ein Gefühl von Zufriedenheit. Diese Dinge sind wie Sterne an Deinem eigenen Nachthimmel. Die meisten haben nur nie in Ruhe hingeschaut.',
-      'Hier ist Dein Raum dafür. Im Teil „Me“ lernst Du, Deinen Himmel zu lesen: Dein Kompass zeigt Dir, wofür Du stehst (Deine Werte). Deine Sterne zeigen Dir, was Dich leuchten lässt und wonach Du greifst (Deine Wants). Und Deine Bill of Rights sind die Regeln, nach denen Du navigierst (die Rechte, die Du Dir selbst gibst).',
-      'Die Prämisse: Nur wenn Du Dich selbst wirklich kennst, kannst Du Dein Leben so gestalten, dass Du die Dinge tust, die Dir Energie geben, statt sie Dir zu nehmen.',
-    ],
-  },
-  {
-    // intro3 (Schritt 7) — das Kopfwetter
-    title: 'Was Dich erwartet',
-    body: [
-      'Und dann gibt es Tage, an denen Wolken aufziehen: Zweifel, Grübeln, ein Kopf, der lauter ist als nötig. Das ist Wetter. Nicht Dein Himmel. Es zieht vorbei.',
-      'Für genau diese Momente gibt es das Kopfwetter: schnelle Hilfen, die Dich aus Overthinking-Spiralen holen, Dir zu einem schuldgefühlfreien „Nein“ verhelfen oder Dir Rückenwind geben, bevor es ernst wird. Sprich: kleine Unterstützer für mittendrin im Alltag.',
-    ],
-  },
-  {
-    // intro4 (Schritt 8) — Abschluss + Leitsatz
-    title: 'Schön, dass du da bist.',
-    body: [
-      '„Me“, um Deinen Himmel Stück für Stück kennenzulernen. Das Kopfwetter, um Dir im Alltag den Rücken zu stärken. Zusammen bringen sie Dich zu dem Gefühl zurück, das eigentlich Dein Normalzustand sein sollte: gut genug.',
-    ],
-    affirmation:
-      'Auch wenn das Wetter sie manchmal versteckt: Deine Sterne leuchten weiter.',
-    closing: 'Bereit?',
-  },
-];
-```
+Alle übrigen Sätze bleiben Byte-für-Byte unverändert (inkl. des Bestands-Tippfehlers „wird des schaffen" in intro1 — nicht Teil dieser Runde). Typografische „…“ (U+201E/U+201C) beibehalten.
 
-(Achtung Typografie: „…“ sind U+201E/U+201C — beim Übertragen nicht durch ASCII ersetzen. intro1 enthält einen Bestands-Tippfehler („wird des schaffen") — bewusst unangetastet, nicht Teil dieser Runde.)
+1. intro2, dritter Absatz, Satzende: „…, hast Du immer noch die Kopf-Apotheke." → „…, hast Du immer noch die Kopfwetter-Hilfen."
+2. intro3, erster Absatz: „Die Kopf-Apotheke ist der zweite Teil dieser App und stellt Dir eine Reihe von Schnellhilfen bereit." → „Das Kopfwetter ist der zweite Teil dieser App und stellt Dir eine Reihe von Schnellhilfen bereit."
+3. intro4, erster Absatz: „Die Kopf-Apotheke, um Dir im Alltag den Rücken zu stärken." → „Das Kopfwetter, um Dir im Alltag den Rücken zu stärken."
 
-- [ ] **Step 2: Rendering in `page.tsx` erweitern**
-
-Im `introCard`-Block nach der `body`-Map ergänzen:
-
-```tsx
-          {introCard && (
-            <>
-              {introCard.title && <CardTitle className="text-xl">{introCard.title}</CardTitle>}
-              {introCard.body.map((paragraph, i) => (
-                <CardDescription key={i} className="text-base">{paragraph}</CardDescription>
-              ))}
-              {introCard.affirmation && (
-                <p className="pt-1 font-affirmation text-lg leading-relaxed text-foreground">
-                  {introCard.affirmation}
-                </p>
-              )}
-              {introCard.closing && (
-                <CardDescription className="text-base">{introCard.closing}</CardDescription>
-              )}
-            </>
-          )}
-```
-
-(Leitsatz ohne Anführungszeichen — er ist die Stimme der App, kein Zitat; Serif-Italic trägt ihn.)
-
-- [ ] **Step 3: `intro-previews.tsx` angleichen**
+- [ ] **Step 2: `intro-previews.tsx` angleichen**
 
 - Datei-Kommentar + `BoosterPreview`-Doc: „Kopf-Apotheke" → „Kopfwetter".
-- Icons an die neuen Motive angleichen: `Brain` → `Wind` (Overthinking), `Flame` → `Cloudy` (Things Got Messy); `Sparkles` (Confidence) und `Quote` (Mantra) bleiben. Import wird zu:
+- Icons an die neuen Hub-Motive angleichen: `Brain` → `Wind` (Overthinking), `Flame` → `Cloudy` (Things Got Messy); `Sparkles` (Confidence) und `Quote` (Mantra) bleiben. Import wird zu:
 
 ```tsx
 import {
@@ -570,15 +500,18 @@ und in `BoosterPreview`:
       <PreviewTile icon={Quote} label="Mantra" />
 ```
 
-- [ ] **Step 4: Verifizieren**
+(`MePreview` mit `Heart`/`ScrollText`/`Sparkles` bleibt unverändert.)
+
+- [ ] **Step 3: Verifizieren**
 
 Run: `npx tsc --noEmit` → Expected: keine Fehler.
+Run: `Get-ChildItem lib/content/onboarding-intro.ts,components/onboarding/intro-previews.tsx | Select-String -Pattern "Apotheke"` → Expected: keine Treffer.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```
-git add lib/content/onboarding-intro.ts app/onboarding/page.tsx components/onboarding/intro-previews.tsx
-git commit -m "feat(bildsprache): Onboarding erzaehlt den Nachthimmel, Leitsatz in Fraunces Italic"
+git add lib/content/onboarding-intro.ts components/onboarding/intro-previews.tsx
+git commit -m "feat(bildsprache): Onboarding-Wording Kopf-Apotheke zu Kopfwetter, Preview-Icons"
 ```
 
 ---
@@ -648,4 +581,4 @@ Run: `node scripts/check-contrast.mjs` → Expected: 7/7 PASS (es wurden keine F
 - [ ] **Step 3: Push**
 
 Run: `git push`
-Danach: Stefan prüft am iPhone gegen den Live-Deploy (Kopfwetter-Hub-Motive, Nav-Tab-Breite bei „Kopfwetter" als längstem Label, Check-in-Chips mit „Sternenklar" im horizontalen Scroll, Onboarding-Leitsatz). Kein Browser-Verifikations-Subagent.
+Danach: Stefan prüft am iPhone gegen den Live-Deploy (Kopfwetter-Hub-Motive, Nav-Tab-Breite bei „Kopfwetter" als längstem Label, Check-in-Chips mit „Sternenklar" im horizontalen Scroll, Onboarding-Intro-Karten mit neuem Wording). Kein Browser-Verifikations-Subagent.
