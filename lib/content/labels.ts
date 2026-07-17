@@ -1,6 +1,6 @@
 /**
  * Zentrale, nutzersichtbare Labels für Navigation und Seitentitel. Niemals
- * "Booster", "Kopf-Apotheke" oder "Things Got Messy" irgendwo hardcoden — immer
+ * "Booster", "Kopfwetter" oder "Things Got Messy" irgendwo hardcoden — immer
  * von hier importieren, damit Umbenennungen an einer Stelle passieren.
  */
 
@@ -8,14 +8,14 @@
 export const NAV_LABELS = {
   dashboard: "Home",
   me: "Me",
-  booster: "Apotheke", // gekürztes Nav-Label für die Kopf-Apotheke
+  booster: "Kopfwetter", // interner Key bleibt "booster" (Route /booster)
   journal: "Journal",
   settings: "Einstellungen",
 } as const;
 
 /** Ausgeschriebene Seitentitel. */
 export const PAGE_TITLES = {
-  booster: "Kopf-Apotheke",
+  booster: "Kopfwetter",
   thingsGotMessy: "Things Got Messy",
   sayingNo: "Nein-Trainer",
   confidence: "Confidence-Boost",

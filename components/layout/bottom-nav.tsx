@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import gsap from "gsap";
-import { Home, User, FlaskConical, NotebookPen, Settings2 } from "lucide-react";
+import { Home, User, CloudMoon, NotebookPen, Settings2 } from "lucide-react";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { NAV_LABELS } from "@/lib/content/labels";
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { label: NAV_LABELS.dashboard, href: "/dashboard", icon: Home },
   { label: NAV_LABELS.me, href: "/me", icon: User },
-  { label: NAV_LABELS.booster, href: "/booster", icon: FlaskConical },
+  { label: NAV_LABELS.booster, href: "/booster", icon: CloudMoon },
   { label: NAV_LABELS.journal, href: "/journal", icon: NotebookPen },
   { label: NAV_LABELS.settings, href: "/settings", icon: Settings2 },
 ] as const;

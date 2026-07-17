@@ -9,7 +9,7 @@ import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
 
 // ─── Schattenseite ──────────────────────────────────────────────────────
-// Ventil-Rezept in der Kopf-Apotheke (Shadow Journal / Rage Walk).
+// Ventil-Rezept im Kopfwetter (Shadow Journal / Rage Walk).
 // Privatsphäre-Garantie: Einträge (template_type 'shadow') werden von KEINER
 // KI-Route gelesen und tragen `private: true` (unterdrückt die Text-Vorschau
 // in der Journal-Liste). Beim „Verbrennen" wird gar nichts gespeichert —

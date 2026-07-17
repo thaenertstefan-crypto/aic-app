@@ -14,7 +14,7 @@ import {
 } from "@/lib/utils/form-validation";
 
 // ─── Things Got Messy ───────────────────────────────────────────────────
-// Geführtes Mini-Rezept in der Kopf-Apotheke. Einträge werden als
+// Geführtes Mini-Rezept im Kopfwetter. Einträge werden als
 // journal_entries mit recipe_slug='things-got-messy' gespeichert;
 // template_type bleibt 'messy_moment' (der Journal-Formatter formatMessyMoment
 // ist darauf gekeyed). Nach dem Speichern markiert die Action das Rezept als

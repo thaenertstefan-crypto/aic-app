@@ -14,7 +14,7 @@ import {
 } from "@/lib/utils/form-validation";
 
 // ─── Nein-Trainer ───────────────────────────────────────────────────────
-// Geführtes Mini-Rezept in der Kopf-Apotheke (Saying 'No' Blueprint).
+// Geführtes Mini-Rezept im Kopfwetter (Saying 'No' Blueprint).
 // Einträge werden als journal_entries mit recipe_slug='saying-no' und
 // template_type='saying_no' gespeichert. Nach dem ersten Speichern markiert
 // die Action das Rezept als abgeschlossen (wie Things Got Messy: wiederholbar,
