@@ -31,8 +31,9 @@ Der erste Eindruck (Dashboard, Hubs) wirkt warm, tief und lebendig; der eine Gol
 ### M2 — Flächenkontrast + Body-Verlauf *(zuerst: erst der Raum, dann die Kerze)*
 
 - Fixe Gradient-Ebene **unterhalb der Ambient-Blobs**, integriert in `components/ui/app-backdrop.tsx`. Kein `background-attachment: fixed` (iOS ignoriert es).
-- Vertikaler Verlauf, Richtwerte oben ~`#131020` → unten ~`#171326`. Beide Endpunkte so, dass Card `#221C30` **≥ 1,3:1** gegen jeden Punkt des Verlaufs trägt.
-- `--background`-Token in `app/globals.css` auf den unteren Endpunkt setzen (für alle direkten Token-Nutzer: Outline-Buttons, Inputs, Bottom-Nav-Alpha etc.).
+- Vertikaler Verlauf, Richtwerte oben ~`#131020` → unten ~`#161226`.
+- **Korrektur nach Nachrechnung (17.07.):** Abdunkeln allein kann ≥ 1,3:1 nicht erreichen — bei zwei derart dunklen Flächen dominiert der WCAG-Flare-Term (+0.05); selbst Fast-Schwarz vs. Card `#221C30` liefert nur 1,14:1. Der Schritt braucht daher **zusätzlich eine Anhebung der Karten-Leiter**: `--card`/`--popover`/`--sidebar` → `#2E2745` (Card vs. Verlauf: 1,33/1,30), `--muted` → `#272041`, `--secondary` → `#3A3158`. Text-Kontraste bleiben AA (Moonlight auf Card 12,4:1, Lavender 5,6:1).
+- `--background`-Token in `app/globals.css` auf den unteren Endpunkt setzen (für alle direkten Token-Nutzer: Outline-Buttons, Inputs, Bottom-Nav-Alpha etc.); PWA-Farben (`viewport.themeColor`, `manifest.ts`) ziehen nach.
 - **Kontrast-Script ins Repo** (`scripts/check-contrast.mjs`): rechnet die Kernpaarungen (Card vs. Verlaufs-Endpunkte, Text-Paarungen, Gold-CTA) nach und dient als Gate für M1/M2.
 - **SkyBackdrop nachjustieren** (`components/backdrops/sky-backdrop.tsx`, rendert auf Dashboard + Wants): dessen Schwarz-Vignette (heute 0,6 → 0 von oben) reduzieren, damit sich globale und lokale Abdunkelung oben nicht stapeln. Gesamt-Anmutung oben ≈ heute.
 
