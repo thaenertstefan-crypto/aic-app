@@ -21,7 +21,7 @@ export function SkyBackdrop() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.34) 16%, rgba(0,0,0,0.14) 32%, rgba(0,0,0,0.04) 44%, transparent 56%)",
+            "linear-gradient(180deg, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0.2) 16%, rgba(0,0,0,0.08) 32%, rgba(0,0,0,0.02) 44%, transparent 56%)",
         }}
       />
       {/* Horizon-glow: a wide, soft bloom of warm candle-gold light behind the

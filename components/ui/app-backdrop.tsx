@@ -37,5 +37,20 @@ const VIEWPORT_BLOBS: Blob[] = [
 ];
 
 export function AppBackdrop() {
-  return <AmbientBlobs blobs={VIEWPORT_BLOBS} className="fixed inset-0 -z-10" />;
+  return (
+    <>
+      {/* Body-Verlauf: oben dunkler (Nacht vertieft sich nach oben), unten der
+          --background-Grundton. Fixe Ebene statt background-attachment:fixed
+          (iOS ignoriert das); Endpunkte werden von scripts/check-contrast.mjs
+          gegen --card verifiziert (GRADIENT_TOP). */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10"
+        style={{
+          background: "linear-gradient(180deg, #131020 0%, var(--background) 78%)",
+        }}
+      />
+      <AmbientBlobs blobs={VIEWPORT_BLOBS} className="fixed inset-0 -z-10" />
+    </>
+  );
 }

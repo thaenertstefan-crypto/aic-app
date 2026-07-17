@@ -2,10 +2,10 @@
 name: Anti Imposter Club
 description: Warm, encouraging dark-aubergine companion app for quieting the inner critic
 colors:
-  aubergine-night: "#1B1726"
-  plum-surface: "#221C30"
-  plum-muted: "#251F32"
-  plum-secondary: "#2A2438"
+  aubergine-night: "#161226"
+  plum-surface: "#2E2745"
+  plum-muted: "#272041"
+  plum-secondary: "#3A3158"
   candle-gold: "#E7B65E"
   gold-ink: "#2B1B06"
   amber-accent: "#332818"
@@ -170,6 +170,8 @@ This rule governs **emphasis, not identity.** Gold-tinted icon chips (`bg-primar
 ## 4. Elevation
 
 Depth is built from **tonal layering and translucency**, not drop shadows. Surfaces step up from the aubergine ground by getting lighter (ground → Plum Surface) and are separated by a 1px light-on-dark hairline ring (`ring-1 ring-foreground/10`), not a cast shadow. There is essentially no box-shadow vocabulary; the dark theme would swallow it. The signature "lift" is instead **frosted glass**: `backdrop-filter: blur()` over a low-alpha white fill, so the app-wide ambient blobs glow through hero cards.
+
+The ground itself is not a flat fill but a vertical body gradient (`components/ui/app-backdrop.tsx`), deepening from `#131020` at the top toward `--background` lower down; the Card↔ground step stays ≥1.3:1 at both endpoints, verified by `scripts/check-contrast.mjs`.
 
 ### Named Rules
 **The Glass-Is-Rare Rule.** Frosted glass (`.glass-card`, `.glass-panel`) is reserved for one or two hero moments per screen — the daily focus, the "today's right" card. Stacked `backdrop-filter` layers are expensive on older phones and, used everywhere, they stop meaning "this one matters." Everything else is solid Plum Surface.

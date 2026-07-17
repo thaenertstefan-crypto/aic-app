@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1B1726",
+  themeColor: "#161226",
   // Let content flow into the safe areas (notch) so env(safe-area-inset-*) works.
   viewportFit: "cover",
 };
