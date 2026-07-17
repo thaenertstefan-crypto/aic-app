@@ -3,12 +3,12 @@ import Link from "next/link";
 import { Reveal } from "@/components/ui/reveal";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import {
-  ConfidenceFlask,
-  MessyJar,
-  NoVial,
-  ShadowPot,
-  SpiralFlask,
-} from "./vessels";
+  ClearingStar,
+  CloudStack,
+  StormCloud,
+  UmbrellaRain,
+  WindSwirl,
+} from "./weather-art";
 
 type Tile = {
   /** Ich-Satz, nach dem man im akuten Moment sucht — die "Antwort" auf die
@@ -16,7 +16,7 @@ type Tile = {
   feeling: string;
   /** Modulname, leise Meta-Zeile unter dem Ich-Satz. */
   title: string;
-  /** Das Gefäß im Regal (siehe vessels.tsx). */
+  /** Das Wetter-Motiv der Zelle (siehe weather-art.tsx). */
   art: React.ReactNode;
   href: string;
 };
@@ -25,38 +25,37 @@ const TILES: Tile[] = [
   {
     feeling: "Ich denke im Kreis",
     title: "Overthinking",
-    art: <SpiralFlask />,
+    art: <WindSwirl />,
     href: "/booster/overthinking",
   },
   {
     feeling: "Gerade ist alles zu viel",
     title: PAGE_TITLES.thingsGotMessy,
-    art: <MessyJar />,
+    art: <CloudStack />,
     href: "/booster/things-got-messy",
   },
   {
     feeling: "Ich kann schlecht Nein sagen",
     title: PAGE_TITLES.sayingNo,
-    art: <NoVial />,
+    art: <UmbrellaRain />,
     href: "/booster/saying-no",
   },
   {
     feeling: "Ich muss Dampf ablassen",
     title: PAGE_TITLES.shadow,
-    art: <ShadowPot />,
+    art: <StormCloud />,
     href: "/booster/shadow",
   },
   {
     feeling: "Ich brauche Selbstvertrauen",
     title: PAGE_TITLES.confidence,
-    art: <ConfidenceFlask />,
+    art: <ClearingStar />,
     href: "/booster/confidence",
   },
 ];
 
-/** Ein Regalfach: Gefäß steht auf dem Brett (Haarlinie der Reihe), darunter
- *  Ich-Satz und Modulname als Etikett. */
-function ShelfCell({ tile }: { tile: Tile }) {
+/** Eine Zelle des Himmelsausschnitts: Motiv über Ich-Satz und Modulname; die Haarlinie der Reihe bleibt als ruhige Rahmenlinie. */
+function SkyCell({ tile }: { tile: Tile }) {
   return (
     <Link
       href={tile.href}
@@ -66,15 +65,15 @@ function ShelfCell({ tile }: { tile: Tile }) {
       <p className="min-w-0 font-heading text-base font-medium leading-snug text-balance text-foreground">
         {tile.feeling}
       </p>
-      {/* mt-auto zieht die Etiketten einer Regalreihe auf eine Linie,
+      {/* mt-auto zieht die Etiketten einer Reihe auf eine Linie,
           auch wenn der Ich-Satz daneben zweizeilig umbricht. */}
       <p className="mt-auto text-xs text-muted-foreground">{tile.title}</p>
     </Link>
   );
 }
 
-/** Je zwei Gefäße teilen sich ein Regalbrett — das letzte steht allein. */
-const SHELVES = [TILES.slice(0, 2), TILES.slice(2, 4), TILES.slice(4)];
+/** Je zwei Motive teilen sich eine Reihe — das letzte steht allein. */
+const ROWS = [TILES.slice(0, 2), TILES.slice(2, 4), TILES.slice(4)];
 
 export default function BoosterPage() {
   return (
@@ -84,12 +83,13 @@ export default function BoosterPage() {
           {PAGE_TITLES.booster}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Für Momente, in denen der Kopf lauter ist als nötig.
+          Manchmal zieht Wetter auf: Zweifel, Grübeln, alles zu viel. Es zieht
+          vorbei — bis dahin helfen dir diese Übungen.
         </p>
       </header>
 
       <div className="relative -mx-1">
-        {/* Dieselbe wandernde Kerze wie auf /me scheint durch das Regal —
+        {/* Dieselbe wandernde Kerze wie auf /me scheint durch den Himmelsausschnitt —
             die beiden Hubs sind Räume desselben Hauses. Rein dekorativ;
             bei reduced motion steht sie still (globals.css). */}
         <span
@@ -104,15 +104,15 @@ export default function BoosterPage() {
         />
 
         <div className="relative z-10">
-          {SHELVES.map((shelf, i) => (
+          {ROWS.map((row, i) => (
             <Reveal key={i} delay={i * 0.12}>
               <div
                 className={`grid border-b border-border/70 ${
-                  shelf.length === 1 ? "grid-cols-1" : "grid-cols-2"
+                  row.length === 1 ? "grid-cols-1" : "grid-cols-2"
                 }`}
               >
-                {shelf.map((tile) => (
-                  <ShelfCell key={tile.title} tile={tile} />
+                {row.map((tile) => (
+                  <SkyCell key={tile.title} tile={tile} />
                 ))}
               </div>
             </Reveal>
