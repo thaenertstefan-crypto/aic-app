@@ -2,29 +2,30 @@
 
 _Maintained by the `/feierabend` skill at the end of each session. Read this at session start to get oriented before diving into the code._
 
-_Last updated: 2026-07-17 ("Die Kerze anzünden" round)_
+_Last updated: 2026-07-17 (Bildsprache "Dein Nachthimmel" round)_
 
 ## Current State
-- **"Die Kerze anzünden" round merged to main** (`b160f11..921bdb4`, 6 commits, pushed). Sharpened the existing "Candlelight in a Quiet Room" language rather than changing it — the design-review verdict was "loudness, not language": the restraint system (One-Candle-Rule, Glass-Is-Rare, Hairline-Elevation) is correct; the loud counterpole was missing.
-- **M2 — Surface contrast + body gradient:** fixed gradient layer below the ambient blobs (top `#131020`), card ladder raised (`--card`/`--popover`/`--sidebar` → `#2E2745`, `--muted` → `#272041`, `--secondary` → `#3A3158`) in BOTH `:root` and `.dark`. Card-vs-ground step is now 1.30–1.33:1 (was 1.07:1). SkyBackdrop vignette reduced so Dashboard/Wants don't double-darken at the top. PWA colors (`viewport.themeColor`, `manifest.ts`) → `#161226`.
-- **M1 — Gold CTA:** the `default` button variant IS now the solid gold candle (gold-ink text `#2B1B06`, 8.9:1), not the old 15%-alpha glimmer. One-Candle audit over 69 buttons/31 files; 4 competing gold buttons downgraded to `outline` (saying-no-wizard, things-got-messy-wizard, sternschmiede, wants-me).
-- **M3 — Grain:** static SVG feTurbulence grain (`components/ui/grain-overlay.tsx`, opacity 2.5%, `fixed inset-0 z-40`, aria-hidden, server component) mounted after `{children}` in the root layout, below the z-50 dialogs.
-- **M4 — Fraunces Italic:** real italic for affirmations at 8 spots via `.font-affirmation` utility. Font decision: **Italic without the SOFT axis** (SOFT alone inflated the payload +101 kB; italic subset alone = +44.6 kB, normal weight unchanged).
-- **M5 — Module light-colors via scenes:** BoR seal glows Sage (`--success`), Wants ornaments Rosé (`--celebrate`), Werte Gold, Confidence Lilac — Hub scenes only, via the new `scene-ornament-tint` attribute-selector convention + parametrized glow keyframes (`var(--scene-glow, ...)`). Gold stays the action color everywhere; One-Candle-Rule untouched.
-- **Contrast gate in the repo:** `scripts/check-contrast.mjs` computes 7 core pairings and gates all future color changes (7/7 PASS). Non-obvious math it encodes: darkening two dark surfaces can't cross 1.3:1 because the WCAG flare term (+0.05) dominates — you must raise the card ladder. This gate is the guardrail for the deferred palette change.
-- Final whole-branch review (opus, `b160f11..921bdb4`): Ready = YES, no Critical/Important, no follow-up commit.
-- Spec/plan/ledger: `docs/superpowers/specs/2026-07-17-kerze-anzuenden-design.md`, `docs/superpowers/plans/2026-07-17-kerze-anzuenden.md`, `.superpowers/sdd/progress.md`.
+- **Bildsprache "Dein Nachthimmel" merged to main** (`414e98c..e446101`, 7 commits, pushed). The app now has a unified image system: the app is the protected room from which you look at your own night sky — Kompass = Werte, Sterne/Sternschmiede = Wants (one concept, two described-but-unnamed facets), Bill of Rights = the rules you navigate by, acute helpers = **Kopfwetter** (weather that passes; replaces "Kopf-Apotheke"). Spec: `docs/superpowers/specs/2026-07-17-bildsprache-nachthimmel-design.md`, plan: `docs/superpowers/plans/2026-07-17-bildsprache-nachthimmel.md`, ledger: `.superpowers/sdd/progress.md`.
+- **Rename complete:** `NAV_LABELS.booster`/`PAGE_TITLES.booster` = "Kopfwetter", nav icon `CloudMoon`; zero "Apotheke" occurrences left in `app/`, `components/`, `lib/`. Route `/booster`, internal keys, and DB fields unchanged (copy-level rename only).
+- **Hub visual rebuild:** the 5 apothecary vessels (`vessels.tsx`, deleted) were replaced by 5 weather motifs in `app/(app)/booster/weather-art.tsx` — WindSwirl (Overthinking), CloudStack (Things Got Messy), UmbrellaRain (Nein-Trainer), StormCloud (Schattenseite), ClearingStar (Confidence). Convention: gold line silhouettes, ONE lilac accent element per motif (Kopfwetter module color = `--cleanser-confidence`), one slow micro-animation each, `bs-rain` keyframes added / `bs-bubble` removed, reduced-motion covered.
+- **Check-in is the Wetterbericht:** question "Wie ist das Wetter heute in deinem Kopf?" (exact wording fixed by Stefan), labels Stürmisch/Bewölkt/Ruhig/Klar/Sternenklar, judgment-free weather messages; low-tier focus question "Stürmt es gerade in deinem Kopf?". `MOOD_FACES`, `moodTier`, DB `mood_score` untouched.
+- **Onboarding minimally renamed** (Stefan's call: content stays as-is): three Kopf-Apotheke → Kopfwetter replacements in `lib/content/onboarding-intro.ts`, preview icons Wind/Cloudy. The **Leitsatz** ("Auch wenn das Wetter sie manchmal versteckt: Deine Sterne leuchten weiter.") is deliberately NOT built in yet.
+- **Docs anchored:** DESIGN.md Overview has a Bildwelt paragraph + module-color table row "Kopfwetter = Lilac" + `scene-ornament-tint` cross-reference; PRODUCT.md purpose paragraph updated.
+- Final whole-branch review (opus): Ready = YES, no Critical/Important. Gates green: `tsc`, `npm run build`, contrast 7/7.
+- **Previous round ("Die Kerze anzünden", `b160f11..921bdb4`) also live:** gold `default` button = the one candle, raised card ladder (1.30–1.33:1), static grain, Fraunces Italic affirmations (`.font-affirmation`), module light-colors on hub scenes, contrast gate `scripts/check-contrast.mjs`.
 
 ## Open Items
-- **Stefan's iPhone check** against the live deploy, focus: grain over the Dashboard glass cards (known iOS backdrop-filter compositing risk — fallback is defined), gold CTA at low display brightness / outdoors, card separation from ground without double-darkening at the top.
-- **Checkpoint (Measure 6, after the iPhone check):** decide whether glow under the hero card or mood-reactive ambience is still needed before writing any follow-up spec. Also at the checkpoint: North-Star rewording in DESIGN.md ("ein geschützter, gedämpfter Raum, in den du dich jederzeit zurückziehen kannst") as a doc-only change.
-- **Module-color consistency pass (non-blocking):** Schmiede/Wants page ornaments (forge-art AnvilArt, wants-me hero StarArt, StarArt outer ring) still glow gold despite the "Wants = Rosé" mapping — identity flip Hub→Schmiede. M5 was deliberately scoped to Hub scenes only.
-- **Small observations:** the curated reframe paragraph in `moment-flow.tsx` is deliberately NOT italicized (not data-driven — show Stefan); `check-contrast.mjs:9` throws a raw TypeError instead of a descriptive error when `:root` is missing; the `scene-ornament-tint` convention is only documented in a code comment (a cross-reference in the DESIGN.md module-color table would be cleaner).
-- **Deferred palette change** ("für später"): candidates documented (Herbstgarten, Waldnacht, Kaminzimmer, Gothic Noir), now verifiable via the contrast gate.
-- Carried over: FK `cleanser_checkins.user_id` is the only non-cascading user table (`NO ACTION`) — migrating it to `ON DELETE CASCADE` is still pending (hardening + prerequisite for a real account-deletion feature).
+- **Stefan's iPhone check** against the live deploy — now covers BOTH rounds: grain over glass cards, gold CTA at low brightness, card separation (Kerze round); the 5 weather motifs (calm enough? CloudStack/StormCloud animate two elements each — reduce to one if busy), nav-tab width with "Kopfwetter" as longest label, check-in chips with "Sternenklar" in horizontal scroll, onboarding wording (Bildsprache round).
+- **Checkpoint (Measure 6, after the iPhone check):** decide whether glow under the hero card or mood-reactive ambience is still needed.
+- **Leitsatz round (deferred):** place the Leitsatz in `.font-affirmation` at the onboarding closing card and/or 1–2 exercise completion moments — text and utility exist, only placement missing (held back because onboarding stays unchanged for now).
+- **Module-color consistency pass (non-blocking):** Schmiede/Wants page ornaments (forge-art AnvilArt, wants-me hero StarArt, StarArt outer ring) still glow gold despite "Wants = Rosé".
+- **Deferred Minors (Bildsprache ledger, all "leave open"):** two-element animations in CloudStack/StormCloud (await iPhone verdict); ASCII closing quotes in two code comments (`mood-checkin.tsx:49`, labels.ts JSDoc); `check-contrast.mjs:9` raw TypeError when `:root` missing (carried over).
+- **Small observations:** curated reframe paragraph in `moment-flow.tsx` deliberately NOT italicized — show Stefan. (scene-ornament-tint DESIGN.md cross-reference: DONE this round.)
+- **Deferred palette change** ("für später"): candidates documented (Herbstgarten, Waldnacht, Kaminzimmer, Gothic Noir), verifiable via the contrast gate.
+- Carried over: FK `cleanser_checkins.user_id` is the only non-cascading user table (`NO ACTION`) — migrating to `ON DELETE CASCADE` still pending (hardening + prerequisite for account deletion).
 
 ## Next Steps
-- Await Stefan's iPhone verdict, then run the Measure-6 checkpoint conversation (glow / mood-ambience yes-or-no) at the live state.
+- Await Stefan's iPhone verdict on both rounds, then: (a) Measure-6 checkpoint conversation, (b) decide the Leitsatz round, (c) fix weather-motif animation count if needed.
 
 ## Links
 - Vault project note: `Stefan's Vault/02 Projekte/AIC-App.md`
