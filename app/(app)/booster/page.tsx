@@ -10,70 +10,25 @@ import {
   WindSwirl,
 } from "./weather-art";
 
-type Tile = {
-  /** Ich-Satz, nach dem man im akuten Moment sucht — die "Antwort" auf die
-   *  Frage im Header. */
+type WeatherSystem = {
+  /** Ich-Satz, nach dem man im akuten Moment sucht — primäres Label. */
   feeling: string;
-  /** Modulname, leise Meta-Zeile unter dem Ich-Satz. */
+  /** Modulname, leise Meta-Zeile. */
   title: string;
-  /** Das Wetter-Motiv der Zelle (siehe weather-art.tsx). */
   art: React.ReactNode;
   href: string;
+  /** Position des System-Zentrums auf der Karte (viewBox-Koordinaten 200×340). */
+  x: number;
+  y: number;
 };
 
-const TILES: Tile[] = [
-  {
-    feeling: "Ich denke im Kreis",
-    title: "Overthinking",
-    art: <WindSwirl />,
-    href: "/booster/overthinking",
-  },
-  {
-    feeling: "Gerade ist alles zu viel",
-    title: PAGE_TITLES.thingsGotMessy,
-    art: <CloudStack />,
-    href: "/booster/things-got-messy",
-  },
-  {
-    feeling: "Ich kann schlecht Nein sagen",
-    title: PAGE_TITLES.sayingNo,
-    art: <UmbrellaRain />,
-    href: "/booster/saying-no",
-  },
-  {
-    feeling: "Ich muss Dampf ablassen",
-    title: PAGE_TITLES.shadow,
-    art: <StormCloud />,
-    href: "/booster/shadow",
-  },
-  {
-    feeling: "Ich brauche Selbstvertrauen",
-    title: PAGE_TITLES.confidence,
-    art: <ClearingStar />,
-    href: "/booster/confidence",
-  },
+const SYSTEMS: WeatherSystem[] = [
+  { feeling: "Ich denke im Kreis", title: "Overthinking", art: <WindSwirl />, href: "/booster/overthinking", x: 96, y: 118 },
+  { feeling: "Gerade ist alles zu viel", title: PAGE_TITLES.thingsGotMessy, art: <CloudStack />, href: "/booster/things-got-messy", x: 52, y: 192 },
+  { feeling: "Ich kann schlecht Nein sagen", title: PAGE_TITLES.sayingNo, art: <UmbrellaRain />, href: "/booster/saying-no", x: 146, y: 178 },
+  { feeling: "Ich muss Dampf ablassen", title: PAGE_TITLES.shadow, art: <StormCloud />, href: "/booster/shadow", x: 62, y: 262 },
+  { feeling: "Ich brauche Selbstvertrauen", title: PAGE_TITLES.confidence, art: <ClearingStar />, href: "/booster/confidence", x: 142, y: 252 },
 ];
-
-/** Eine Zelle des Himmelsausschnitts: Motiv über Ich-Satz und Modulname; die Haarlinie der Reihe bleibt als ruhige Rahmenlinie. */
-function SkyCell({ tile }: { tile: Tile }) {
-  return (
-    <Link
-      href={tile.href}
-      className="flex flex-col items-center gap-3 rounded-xl px-2 pb-5 pt-4 text-center transition-[background-color,transform] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-    >
-      <div className="flex h-16 items-end">{tile.art}</div>
-      <p className="min-w-0 font-heading text-base font-medium leading-snug text-balance text-foreground">
-        {tile.feeling}
-      </p>
-      {/* mt-auto zieht die Etiketten einer Reihe auf eine Linie,
-          auch wenn der Ich-Satz daneben zweizeilig umbricht. */}
-      <p className="mt-auto text-xs text-muted-foreground">{tile.title}</p>
-    </Link>
-  );
-}
-
-/** Je zwei Motive teilen sich eine Reihe — das letzte steht allein. */
-const ROWS = [TILES.slice(0, 2), TILES.slice(2, 4), TILES.slice(4)];
 
 export default function BoosterPage() {
   return (
@@ -88,37 +43,51 @@ export default function BoosterPage() {
         </p>
       </header>
 
-      <div className="relative -mx-1">
-        {/* Dieselbe wandernde Kerze wie auf /me scheint durch den Himmelsausschnitt —
-            die beiden Hubs sind Räume desselben Hauses. Rein dekorativ;
-            bei reduced motion steht sie still (globals.css). */}
-        <span
-          aria-hidden="true"
-          className="me-candle-bg pointer-events-none absolute inset-0 z-0"
-          style={{
-            backgroundImage:
-              "radial-gradient(closest-side, color-mix(in srgb, var(--primary) 16%, transparent), transparent 72%)",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "75% 55%",
-          }}
-        />
+      <Reveal>
+        <div className="relative w-full" style={{ aspectRatio: "200 / 340" }}>
+          {/* Karten-Untergrund: Isobaren, Kopf-Insel, Front-Linie — reine Deko */}
+          <svg viewBox="0 0 200 340" className="absolute inset-0 size-full" aria-hidden="true">
+            {/* Isobaren */}
+            <g fill="none" stroke="var(--muted-foreground)" strokeOpacity="0.18" strokeWidth="0.8">
+              <ellipse cx="100" cy="185" rx="92" ry="130" />
+              <ellipse cx="100" cy="185" rx="72" ry="105" />
+              <ellipse cx="104" cy="180" rx="50" ry="78" />
+            </g>
+            {/* Insel: aus dem Augenwinkel eine Kopf-Silhouette im Profil */}
+            <path
+              d="M70 268 C 40 250, 38 210, 52 185 C 44 170, 48 140, 66 126 C 70 96, 100 82, 126 92 C 152 100, 162 128, 156 154 C 166 166, 164 186, 154 196 C 158 212, 150 230, 136 236 C 134 254, 118 268, 100 266 C 90 274, 78 274, 70 268 Z"
+              fill="var(--primary)"
+              fillOpacity="0.06"
+              stroke="var(--primary)"
+              strokeOpacity="0.35"
+              strokeWidth="1"
+            />
+            {/* Front-Linie (Deko) */}
+            <path d="M30 60 Q 70 42 110 30 Q 150 18 180 24" fill="none" stroke="var(--cleanser-confidence)" strokeOpacity="0.4" strokeWidth="1" strokeDasharray="1 3" />
+            <g fill="var(--cleanser-confidence)" fillOpacity="0.4">
+              <path d="M70 44 l4 -1 -2 4 Z" />
+              <path d="M120 27 l4 -1 -2 4 Z" />
+            </g>
+          </svg>
 
-        <div className="relative z-10">
-          {ROWS.map((row, i) => (
-            <Reveal key={i} delay={i * 0.12}>
-              <div
-                className={`grid border-b border-border/70 ${
-                  row.length === 1 ? "grid-cols-1" : "grid-cols-2"
-                }`}
-              >
-                {row.map((tile) => (
-                  <SkyCell key={tile.title} tile={tile} />
-                ))}
-              </div>
-            </Reveal>
+          {/* Die 5 Wettersysteme — echte Links auf der Karte */}
+          {SYSTEMS.map((s) => (
+            <Link
+              key={s.href}
+              href={s.href}
+              aria-label={`${s.title} — ${s.feeling}`}
+              className="absolute z-10 flex w-36 -translate-x-1/2 -translate-y-9 flex-col items-center gap-1 rounded-xl px-2 py-2 text-center transition-[background-color,transform] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              style={{ left: `${(s.x / 200) * 100}%`, top: `${(s.y / 340) * 100}%` }}
+            >
+              {s.art}
+              <p className="font-heading text-sm font-medium leading-snug text-balance text-foreground">
+                {s.feeling}
+              </p>
+              <p className="text-[11px] text-muted-foreground">{s.title}</p>
+            </Link>
           ))}
         </div>
-      </div>
+      </Reveal>
     </div>
   );
 }
