@@ -35,7 +35,7 @@ const STEP_LINKS = [
   "/me/values/journey/evaluation",
 ];
 
-// ─── Sternbild-Geometrie (viewBox 0 0 360 880) ────────────────────────
+// ─── Pfad-Geometrie (viewBox 0 0 360 880) ────────────────────────
 // Unregelmäßiger Zickzack von unten (Start) nach oben (Auswertung); die
 // vertikalen Abstände (~85–90 Units) geben der Kamerafahrt Scrollweg und
 // verhindern Label-Kollisionen bei 360px.
@@ -76,9 +76,20 @@ const MICRO_STARS: { x: number; y: number; r: number }[] = [
   { x: 60, y: 520, r: 1.1 },
 ];
 
-/** 4-strahliger Stern in einer 16er-Box. */
-const STAR_PATH =
-  "M8 0 L9.8 6.2 L16 8 L9.8 9.8 L8 16 L6.2 9.8 L0 8 L6.2 6.2 Z";
+/** Geschwungener Wanderpfad durch die Wegmarken: kubische Segmente mit
+ *  vertikalen Tangenten — der Pfad schlängelt sich, statt von Punkt zu
+ *  Punkt zu springen (Wanderpfad-Anmutung statt Konstellations-Polyline). */
+function buildTrailPath(points: { x: number; y: number }[]): string {
+  if (points.length < 2) return "";
+  let d = `M${points[0].x},${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1];
+    const b = points[i];
+    const bend = (b.y - a.y) * 0.5;
+    d += ` C ${a.x},${a.y + bend} ${b.x},${b.y - bend} ${b.x},${b.y}`;
+  }
+  return d;
+}
 
 type State = "done" | "current" | "open";
 
@@ -86,7 +97,7 @@ function clamp(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v));
 }
 
-function StarGlyph({
+function WaymarkGlyph({
   state,
   reduced,
   finale = false,
@@ -95,8 +106,8 @@ function StarGlyph({
   reduced: boolean;
   finale?: boolean;
 }) {
-  // Die Endstation (Auswertung & Erkenntnisse) ist deutlich größer und trägt
-  // einen warmen Gold-Glow; bei reduced motion statisch (kein Puls).
+  // Glow-Logik wie beim alten Sternglyph: die Endstation glüht wärmer,
+  // erledigte Marken tragen einen leisen Goldschein.
   const glow = finale
     ? state === "open"
       ? "drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 40%, transparent))"
@@ -108,11 +119,11 @@ function StarGlyph({
         : undefined;
   return (
     <svg
-      viewBox="0 0 16 16"
+      viewBox="0 0 24 24"
       className={cn(
-        finale ? "size-9" : "size-5",
+        finale ? "size-9" : "size-6",
         "shrink-0",
-        state === "open" && (finale ? "opacity-60" : "scale-75 opacity-35"),
+        state === "open" && "opacity-60",
         !reduced &&
           (state === "current" || (finale && state === "done")) &&
           "star-pulse",
@@ -120,10 +131,19 @@ function StarGlyph({
       style={glow ? { filter: glow } : undefined}
       aria-hidden="true"
     >
-      <path
-        d={STAR_PATH}
-        fill={state === "open" ? "var(--muted-foreground)" : "var(--primary)"}
-      />
+      {state === "done" && <circle cx="12" cy="12" r="5" fill="var(--primary)" />}
+      {state === "current" && (
+        <>
+          {/* Pulsierende Kompassrose: 4-strahlige Nadel im Doppelring */}
+          <circle cx="12" cy="12" r="7.5" fill="none" stroke="var(--primary)" strokeWidth="1.5" />
+          <circle cx="12" cy="12" r="10.5" fill="none" stroke="var(--primary)" strokeWidth="1" opacity="0.3" />
+          <path d="M12 5.5 L13.6 12 L12 18.5 L10.4 12 Z" fill="var(--primary)" />
+          <path d="M5.5 12 L12 10.4 L18.5 12 L12 13.6 Z" fill="var(--primary)" opacity="0.45" />
+        </>
+      )}
+      {state === "open" && (
+        <circle cx="12" cy="12" r="5" fill="none" stroke="var(--muted-foreground)" strokeWidth="1.2" />
+      )}
     </svg>
   );
 }
@@ -182,11 +202,9 @@ export function ValuesJourneyClient({
   const maxDone = completedSteps.length ? Math.max(...completedSteps) : -1;
   const drawnPoints = CONSTELLATION.slice(0, maxDone + 1);
   const drawnPath =
-    drawnPoints.length >= 2
-      ? "M" + drawnPoints.map((p) => `${p.x},${p.y}`).join(" L")
-      : null;
+    drawnPoints.length >= 2 ? buildTrailPath(drawnPoints) : null;
 
-  const routeHint = CONSTELLATION.map((p) => `${p.x},${p.y}`).join(" ");
+  const routeHint = buildTrailPath(CONSTELLATION);
 
   // Blick des Maskottchens zum aktuellen Stern
   const cur = CONSTELLATION[clamp(currentStep, 0, lastIndex)];
@@ -219,30 +237,33 @@ export function ValuesJourneyClient({
             className="absolute inset-0 size-full"
             aria-hidden="true"
           >
-            {MICRO_STARS.map((s, i) => (
-              <circle
-                key={i}
-                cx={s.x}
-                cy={s.y}
-                r={s.r}
-                fill="var(--foreground)"
-                className={reduced ? undefined : "star-twinkle"}
-                style={
-                  reduced
-                    ? { opacity: 0.35 }
-                    : { animationDelay: `${(i % 6) * 0.6}s` }
-                }
-              />
-            ))}
+            <g opacity="0.6">
+              {MICRO_STARS.map((s, i) => (
+                <circle
+                  key={i}
+                  cx={s.x}
+                  cy={s.y}
+                  r={s.r}
+                  fill="var(--foreground)"
+                  className={reduced ? undefined : "star-twinkle"}
+                  style={
+                    reduced
+                      ? { opacity: 0.35 }
+                      : { animationDelay: `${(i % 6) * 0.6}s` }
+                  }
+                />
+              ))}
+            </g>
 
             {/* Angedeutete Route durch alle Sterne */}
-            <polyline
-              points={routeHint}
+            <path
+              d={routeHint}
               fill="none"
-              stroke="var(--muted-foreground)"
-              strokeWidth="1"
+              stroke="var(--primary)"
+              strokeWidth="1.5"
               strokeDasharray="2 6"
-              opacity="0.12"
+              strokeLinecap="round"
+              opacity="0.25"
             />
 
             {/* Bereits gezeichneter Teil der Konstellation */}
@@ -262,7 +283,7 @@ export function ValuesJourneyClient({
             )}
           </svg>
 
-          {/* Sterne (Etappen) — echte Links, 44px-Hit-Area */}
+          {/* Wegmarken (Etappen) — echte Links, 44px-Hit-Area */}
           {STEP_LABELS.map((label, i) => {
             const state: State = done.has(i)
               ? "done"
@@ -318,12 +339,12 @@ export function ValuesJourneyClient({
                 className={nodeClass}
                 style={nodeStyle}
               >
-                <StarGlyph state={state} reduced={reduced} finale={finale} />
+                <WaymarkGlyph state={state} reduced={reduced} finale={finale} />
                 {labelEl}
               </Link>
             ) : (
               <span key={i} className={nodeClass} style={nodeStyle}>
-                <StarGlyph state={state} reduced={reduced} finale={finale} />
+                <WaymarkGlyph state={state} reduced={reduced} finale={finale} />
                 {labelEl}
               </span>
             );
@@ -343,7 +364,7 @@ export function ValuesJourneyClient({
         {allDone && (
           <Reveal delay={0.8} className="pt-4">
             <p className="text-center text-sm leading-relaxed text-muted-foreground">
-              Dein Sternbild ist vollständig. ✨
+              Dein Kompass ist kalibriert. ✨
               <br />
               Schau dir deine Erkenntnisse an.
             </p>
