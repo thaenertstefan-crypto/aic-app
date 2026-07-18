@@ -48,11 +48,11 @@ export type BetItem = {
 export type YinYangContent = {
   /** „Wofür nimmst du Mühsal in Kauf?" */
   yin: string;
-  /** „Was bringt dich in Flow?" */
+  /** „Was bringt dich in Flow?“ */
   yang: string;
   /** Optional: kognitive Prinzipien hinter den Flow-Aktivitäten. */
   principles?: string;
-  /** Optional: „Wovon tagträumst du?" — Quelle der fernen Sterne. */
+  /** Optional: „Wovon tagträumst du?“ — Quelle der fernen Sterne. */
   tagtraum?: string;
   /** Von /api/wants-distiller nachgetragen: die KI-Hypothesen (Provenienz). */
   ai_wants?: { text: string; value_id: string | null }[];
