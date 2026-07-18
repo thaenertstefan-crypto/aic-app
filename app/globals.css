@@ -431,19 +431,22 @@
   .star-pulse { animation: star-pulse 2.2s ease-in-out infinite; }
 
   /* ── Dashboard "sky stage" ─────────────────────────────────────────── */
-  /* Two barely-there distant lights in the dashboard night sky. */
+  /* Distant lights in the night sky (Dashboard + Wants). Größer/deckender
+     als die erste Version, damit sie auf gedimmtem Display sichtbar bleiben. */
   .sky-light {
-    width: 2px;
-    height: 2px;
+    width: 3px;
+    height: 3px;
     border-radius: 50%;
     background: var(--foreground);
-    opacity: 0.22;
+    opacity: 0.38;
   }
   @keyframes sky-light-twinkle {
-    0%, 100% { opacity: 0.1; }
-    50%      { opacity: 0.32; }
+    0%, 100% { opacity: 0.2; }
+    50%      { opacity: 0.55; }
   }
-  .sky-light-twinkle { animation: sky-light-twinkle 6s ease-in-out infinite; }
+  .sky-light-twinkle {
+    animation: sky-light-twinkle var(--twinkle-dur, 6s) ease-in-out infinite;
+  }
 
   /* Slow vertical drift for the dashboard mascot, layered on top of its own
      breathe/glow (consumed by mood-checkin). */
