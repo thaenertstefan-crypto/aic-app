@@ -43,12 +43,18 @@ function hash01(seed: string): number {
   return (h % 1000) / 1000;
 }
 
-/** Kartenlabel: Titel, sonst gekürzte Beschreibung (Bestandsdaten ohne title). */
+/** 26-Zeichen-Kürzung mit „…“ — hält Kartenlabels bei jeder Eingabelänge kurz. */
+function clip26(s: string): string {
+  return s.length > 26 ? `${s.slice(0, 25).trimEnd()}…` : s;
+}
+
+/** Kartenlabel: Titel, sonst gekürzte Beschreibung (Bestandsdaten ohne title);
+ *  beide Quellen laufen durch dieselbe 26-Zeichen-Kürzung, damit lange Titel
+ *  (Input erlaubt bis zu 60 Zeichen) das Label nicht sprengen. */
 export function starLabel(w: WantItem): string {
   const t = w.title?.trim();
-  if (t) return t;
-  const text = w.text.trim();
-  return text.length > 26 ? `${text.slice(0, 25).trimEnd()}…` : text;
+  if (t) return clip26(t);
+  return clip26(w.text.trim());
 }
 
 type PlacedStar = { want: WantItem; x: number; y: number; side: "left" | "right" };
@@ -132,7 +138,10 @@ export function StarMap({
   }
 
   return (
-    <div className="relative w-full" style={{ aspectRatio: `${VIEW_W} / ${viewH}` }}>
+    <div
+      className="relative w-full"
+      style={{ aspectRatio: `${VIEW_W} / ${viewH}`, minHeight: zoomedId ? 480 : undefined }}
+    >
       {/* Die Karte (wird bei Zoom skaliert und gedimmt) */}
       <div ref={mapRef} className={cn("absolute inset-0", reduced && zoomedId && "opacity-0")}>
         <svg viewBox={`0 0 ${VIEW_W} ${viewH}`} className="absolute inset-0 size-full" aria-hidden="true">
@@ -207,7 +216,7 @@ export function StarMap({
 
       {/* Zoom-Detailansicht: reine Betrachtung (Variante B — keine Schmiede) */}
       {zoomed && detailVisible && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center gap-4 px-2 pt-2 text-center animate-in fade-in duration-300">
+        <div className="absolute inset-0 z-20 flex flex-col items-center gap-4 overflow-y-auto px-2 pt-2 pb-4 text-center animate-in fade-in duration-300">
           <button
             type="button"
             onClick={zoomOut}
@@ -234,7 +243,7 @@ export function StarMap({
           </svg>
 
           <div className="space-y-2">
-            <h3 className="font-heading text-2xl font-semibold text-foreground">
+            <h3 className="font-heading text-2xl font-semibold text-balance break-words text-foreground">
               {starLabel(zoomed.want)}
             </h3>
             {zoomed.want.distance === "fern" && zoomed.want.active && (
