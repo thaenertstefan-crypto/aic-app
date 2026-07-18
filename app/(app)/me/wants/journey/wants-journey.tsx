@@ -12,6 +12,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,11 +43,12 @@ const INTRO_CARDS = getRecipeIntro("wants") ?? [];
 const AI_FALLBACK_MESSAGE =
   "Das Destillieren hat gerade nicht geklappt. Deine Sternensuche ist gespeichert — du kannst deine Wants auch selbst formulieren.";
 
-type Phase = "nudge" | "yin" | "yang" | "analyzing" | "sterne" | "done";
+type Phase = "nudge" | "yin" | "yang" | "tagtraum" | "analyzing" | "sterne" | "done";
 
 type AuditDraft = {
   yin: string[];
   yang: string[];
+  tagtraum: string[];
   principles: string;
 };
 
@@ -54,6 +56,8 @@ type AuditDraft = {
 type DraftWant = {
   id: string;
   text: string;
+  title: string | null;
+  distance: "nah" | "fern";
   valueId: string | null;
   valueLabel: string | null;
   reason: string | null;
@@ -66,6 +70,8 @@ type DistillerResponse = {
   comment?: string;
   wants?: {
     text?: string;
+    title?: string | null;
+    distance?: string;
     valueId?: string | null;
     valueLabel?: string | null;
     reason?: string | null;
@@ -90,12 +96,14 @@ function AnswerBoxes({
   idPrefix,
   placeholders,
   disabled,
+  optional,
 }: {
   answers: string[];
   onChange: (next: string[]) => void;
   idPrefix: string;
   placeholders: string[];
   disabled?: boolean;
+  optional?: boolean;
 }) {
   const setAt = (i: number, val: string) =>
     onChange(answers.map((a, idx) => (idx === i ? val : a)));
@@ -109,12 +117,16 @@ function AnswerBoxes({
           onChange={(e) => setAt(i, e.target.value)}
           placeholder={placeholders[i] ?? "Noch eine Antwort …"}
           rows={2}
-          required={i === 0}
+          required={i === 0 && !optional}
           maxLength={ANSWER_MAX}
           disabled={disabled}
           className="min-h-[64px] resize-y text-base"
           aria-label={
-            i === 0 ? "Antwort (Pflicht)" : `Weitere Antwort ${i + 1} (optional)`
+            i === 0
+              ? optional
+                ? "Antwort (optional)"
+                : "Antwort (Pflicht)"
+              : `Weitere Antwort ${i + 1} (optional)`
           }
         />
       ))}
@@ -150,6 +162,7 @@ export function WantsJourney({
   // Audit
   const [yin, setYin] = useState<string[]>(Array(START_BOXES).fill(""));
   const [yang, setYang] = useState<string[]>(Array(START_BOXES).fill(""));
+  const [tagtraum, setTagtraum] = useState<string[]>(Array(START_BOXES).fill(""));
   const [principles, setPrinciples] = useState("");
   const [principlesOpen, setPrinciplesOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -188,13 +201,18 @@ export function WantsJourney({
           ? pendingDraft.yang
           : Array(START_BOXES).fill(""),
       );
+      setTagtraum(
+        Array.isArray(pendingDraft.tagtraum) && pendingDraft.tagtraum.length
+          ? pendingDraft.tagtraum
+          : Array(START_BOXES).fill(""),
+      );
       setPrinciples(pendingDraft.principles ?? "");
       if (pendingDraft.principles) setPrinciplesOpen(true);
     }
     dismissPendingDraft();
   };
 
-  const currentDraft = (): AuditDraft => ({ yin, yang, principles });
+  const currentDraft = (): AuditDraft => ({ yin, yang, tagtraum, principles });
 
   // ── KI-Destillat laden ──────────────────────────────────────────
   // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert; die Route lädt
@@ -224,6 +242,8 @@ export function WantsJourney({
         .map((w) => ({
           id: crypto.randomUUID(),
           text: (w.text as string).trim(),
+          title: typeof w.title === "string" && w.title.trim() ? w.title.trim() : null,
+          distance: w.distance === "fern" ? "fern" : "nah",
           valueId: typeof w.valueId === "string" ? w.valueId : null,
           valueLabel: typeof w.valueLabel === "string" ? w.valueLabel : null,
           reason: typeof w.reason === "string" ? w.reason : null,
@@ -260,6 +280,7 @@ export function WantsJourney({
     const formData = new FormData();
     formData.set("yin", joinAnswers(yin));
     formData.set("yang", joinAnswers(yang));
+    formData.set("tagtraum", joinAnswers(tagtraum));
     formData.set("principles", principles);
 
     try {
@@ -297,6 +318,8 @@ export function WantsJourney({
       {
         id: crypto.randomUUID(),
         text,
+        title: null,
+        distance: "nah",
         valueId: null,
         valueLabel: null,
         reason: null,
@@ -318,6 +341,8 @@ export function WantsJourney({
       id: w.id,
       text: w.text.trim(),
       active: true,
+      title: w.title?.trim() ? w.title.trim() : null,
+      distance: w.distance,
       valueId: w.valueId,
       source: w.source,
     }));
@@ -520,7 +545,7 @@ export function WantsJourney({
                 <p className="text-base leading-relaxed text-muted-foreground">
                   {manualMode
                     ? "Formuliere 3–6 Sätze dazu, was dich antreibt — so, wie es sich für dich richtig anfühlt."
-                    : "Das lese ich aus deiner Sternensuche heraus. Pass die Sätze an, verwirf, was nicht stimmt, und ergänze, was fehlt."}
+                    : "Das lese ich aus deiner Sternensuche heraus. Pass die Sätze an, verwirf, was nicht stimmt — und tauf deine Sterne: Jeder trägt einen Namensvorschlag, den du ändern kannst."}
                 </p>
               </div>
 
@@ -540,6 +565,27 @@ export function WantsJourney({
                 {draftWants.map((want) => (
                   <Card key={want.id} className="w-full">
                     <CardContent className="space-y-2 pt-(--card-spacing)">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={want.title ?? ""}
+                          onChange={(e) =>
+                            setDraftWants((prev) =>
+                              prev.map((w) =>
+                                w.id === want.id ? { ...w, title: e.target.value } : w,
+                              ),
+                            )
+                          }
+                          maxLength={60}
+                          placeholder="Name des Sterns (2–3 Worte)"
+                          className="font-heading"
+                          aria-label="Name des Sterns"
+                        />
+                        {want.distance === "fern" && (
+                          <span className="shrink-0 rounded-full bg-foreground/10 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                            Ferner Stern
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-start gap-2">
                         <Textarea
                           value={want.text}
@@ -689,6 +735,70 @@ export function WantsJourney({
     );
   }
 
+  // ── Render: Tagträume (überspringbar) ───────────────────────────
+
+  if (phase === "tagtraum") {
+    return (
+      <div className="flex min-h-svh flex-col">
+        {header}
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <Mascot expression="curious" size="md" />
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+              Wovon tagträumst du?
+            </h1>
+            <p className="text-base leading-relaxed text-muted-foreground">
+              Die Dinge, die dich manchmal gedankenversunken in die Leere
+              starren lassen: „Irgendwann mach ich mal einen Ironman.
+              Irgendwann hole ich den Flugschein.“ Solche Sterne stehen etwas
+              weiter weg — nach ihnen greift man. Schreib auf, was dir kommt,
+              oder überspring den Schritt einfach.
+            </p>
+          </div>
+
+          <FormError message={error} />
+
+          <form className="space-y-5">
+            <AnswerBoxes
+              answers={tagtraum}
+              onChange={setTagtraum}
+              idPrefix="tagtraum"
+              optional
+              placeholders={[
+                "Zum Beispiel: Irgendwann mach ich mal einen Ironman …",
+                "Noch ein Tagtraum …",
+                "Und noch einer …",
+              ]}
+              disabled={submitting}
+            />
+
+            <div className="flex flex-col gap-2">
+              <Button
+                type="button"
+                className="w-full gap-2"
+                size="lg"
+                disabled={submitting}
+                onClick={() => void handleAuditSubmit()}
+              >
+                {submitting ? "Wird gespeichert …" : "Meine Wants destillieren"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                disabled={submitting}
+                onClick={() => setPhase("yang")}
+              >
+                Zurück
+              </Button>
+            </div>
+          </form>
+          <div className="h-8" />
+        </div>
+      </div>
+    );
+  }
+
   // ── Render: Yang (Flow) ─────────────────────────────────────────
 
   if (phase === "yang") {
@@ -782,9 +892,9 @@ export function WantsJourney({
                 className="w-full gap-2"
                 size="lg"
                 disabled={submitting || !yang[0]?.trim()}
-                onClick={() => void handleAuditSubmit()}
+                onClick={() => setPhase("tagtraum")}
               >
-                {submitting ? "Wird gespeichert …" : "Meine Wants destillieren"}
+                Weiter
               </Button>
               <Button
                 type="button"
