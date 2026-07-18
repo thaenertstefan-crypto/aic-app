@@ -38,6 +38,10 @@ function isWantItem(value: unknown): value is WantItem {
     typeof v.text === "string" &&
     tooLong(v.text, TEXT_MAX_SHORT) === null &&
     typeof v.active === "boolean" &&
+    (v.title === undefined ||
+      v.title === null ||
+      (typeof v.title === "string" && tooLong(v.title, TEXT_MAX_SHORT) === null)) &&
+    (v.distance === undefined || v.distance === "nah" || v.distance === "fern") &&
     (v.valueId === undefined || v.valueId === null || typeof v.valueId === "string") &&
     (v.source === undefined || v.source === "ai" || v.source === "own")
   );
@@ -246,6 +250,8 @@ export async function saveWantsAction(
     id: w.id,
     text: w.text,
     active: w.active,
+    title: w.title?.trim() ? w.title.trim() : null,
+    distance: w.distance ?? "nah",
     valueId: w.valueId ?? null,
     source: w.source ?? "own",
   }));
@@ -395,6 +401,7 @@ export async function saveYinYangEntryAction(
   const yin = (formData.get("yin") as string | null)?.trim() ?? "";
   const yang = (formData.get("yang") as string | null)?.trim() ?? "";
   const principles = (formData.get("principles") as string | null)?.trim() ?? "";
+  const tagtraum = (formData.get("tagtraum") as string | null)?.trim() ?? "";
 
   if (!yin || !yang) {
     return {
@@ -407,7 +414,8 @@ export async function saveYinYangEntryAction(
   const lengthError =
     tooLong(yin, TEXT_MAX_LONG) ??
     tooLong(yang, TEXT_MAX_LONG) ??
-    (principles ? tooLong(principles, TEXT_MAX_LONG) : null);
+    (principles ? tooLong(principles, TEXT_MAX_LONG) : null) ??
+    (tagtraum ? tooLong(tagtraum, TEXT_MAX_LONG) : null);
   if (lengthError) {
     return { error: lengthError, success: false, entryId: null };
   }
@@ -415,6 +423,9 @@ export async function saveYinYangEntryAction(
   const content: YinYangContent = { yin, yang };
   if (principles) {
     content.principles = principles;
+  }
+  if (tagtraum) {
+    content.tagtraum = tagtraum;
   }
 
   const { data: inserted, error: insertError } = await supabase

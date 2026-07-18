@@ -18,9 +18,13 @@ export type RightItem = {
 /** Element von `wants.wants` (JSONB-Array): ein bestätigtes Want. */
 export type WantItem = {
   id: string;
-  /** „Ich will …"-Formulierung. */
+  /** Beschreibung des Sterns („Es macht mir Spaß …"). */
   text: string;
   active: boolean;
+  /** Sternname (2–3 Worte); null bei Bestandsdaten — Label fällt dann auf den gekürzten Text zurück. */
+  title?: string | null;
+  /** Tagtraum-Sterne stehen weiter weg; fehlend = "nah". */
+  distance?: "nah" | "fern";
   /** Verlinkter bestätigter Wert (values-bank-id bzw. "custom:…"); null ohne Passung. */
   valueId?: string | null;
   /** Herkunft: KI-Hypothese oder selbst formuliert. */
@@ -48,6 +52,8 @@ export type YinYangContent = {
   yang: string;
   /** Optional: kognitive Prinzipien hinter den Flow-Aktivitäten. */
   principles?: string;
+  /** Optional: „Wovon tagträumst du?" — Quelle der fernen Sterne. */
+  tagtraum?: string;
   /** Von /api/wants-distiller nachgetragen: die KI-Hypothesen (Provenienz). */
   ai_wants?: { text: string; value_id: string | null }[];
 };
