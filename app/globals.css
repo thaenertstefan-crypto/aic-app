@@ -430,6 +430,16 @@
   }
   .star-pulse { animation: star-pulse 2.2s ease-in-out infinite; }
 
+  /* Wants-Sternenkarte: dezentes Funkeln der benannten Sterne. */
+  @keyframes want-star-twinkle {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.72; }
+  }
+  .want-star-twinkle { animation: want-star-twinkle 4.2s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .want-star-twinkle { animation: none; }
+  }
+
   /* ── Dashboard "sky stage" ─────────────────────────────────────────── */
   /* Distant lights in the night sky (Dashboard + Wants). Größer/deckender
      als die erste Version, damit sie auf gedimmtem Display sichtbar bleiben. */

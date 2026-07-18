@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { ViewTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Flame, Loader2, Pencil, Plus, RefreshCw, Sparkles, Star } from "lucide-react";
+import { Binoculars, Flame, Loader2, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Reveal } from "@/components/ui/reveal";
 import {
   Dialog,
@@ -31,7 +31,7 @@ import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { saveWantsAction } from "@/app/(app)/recipes/wants/actions";
-import { getValueLabel } from "@/lib/utils/values-bank";
+import { StarMap } from "./star-map";
 import type { WantItem } from "@/lib/types/db-json";
 
 const INTRO_CARDS = getRecipeIntro("wants") ?? [];
@@ -46,9 +46,12 @@ export function WantsMe({
 }) {
   const [wants, setWants] = useState<WantItem[]>(initialWants);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [newWant, setNewWant] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
   const [editText, setEditText] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [addTitle, setAddTitle] = useState("");
+  const [addText, setAddText] = useState("");
 
   const reduced = useReducedMotion();
   const router = useRouter();
@@ -69,8 +72,9 @@ export function WantsMe({
     arrive();
   }, [arrive]);
 
-  const activeWants = wants.filter((w) => w.active);
-  const hasSterne = activeWants.length > 0;
+  // Erloschene Sterne halten die Karte am Leben, damit „Wieder anzünden“
+  // erreichbar bleibt.
+  const hasSterne = wants.length > 0;
 
   async function persistWants(updated: WantItem[]) {
     const previous = wants;
@@ -88,26 +92,49 @@ export function WantsMe({
     }
   }
 
-  function addWant() {
-    const text = newWant.trim();
-    if (!text) return;
-    setNewWant("");
-    void persistWants([
-      ...wants,
-      { id: crypto.randomUUID(), text, active: true, valueId: null, source: "own" },
-    ]);
-  }
-
   function startEdit(w: WantItem) {
     setEditingId(w.id);
+    setEditTitle(w.title ?? "");
     setEditText(w.text);
   }
 
   function saveEdit() {
     const t = editText.trim();
     if (!t || !editingId) return;
-    void persistWants(wants.map((w) => (w.id === editingId ? { ...w, text: t } : w)));
+    void persistWants(
+      wants.map((w) =>
+        w.id === editingId
+          ? { ...w, text: t, title: editTitle.trim() ? editTitle.trim() : null }
+          : w,
+      ),
+    );
     setEditingId(null);
+  }
+
+  function addOwnStar() {
+    const text = addText.trim();
+    if (!text) return;
+    void persistWants([
+      ...wants,
+      {
+        id: crypto.randomUUID(),
+        text,
+        title: addTitle.trim() ? addTitle.trim() : null,
+        active: true,
+        distance: "nah",
+        valueId: null,
+        source: "own",
+      },
+    ]);
+    setAddOpen(false);
+    setAddTitle("");
+    setAddText("");
+  }
+
+  function toggleActive(w: WantItem) {
+    void persistWants(
+      wants.map((x) => (x.id === w.id ? { ...x, active: !x.active } : x)),
+    );
   }
 
   function deleteWant(id: string) {
@@ -132,7 +159,7 @@ export function WantsMe({
       <section className="space-y-3 rounded-2xl bg-primary/5 p-5 text-center">
         <Flame className="mx-auto size-6 text-primary" />
         <h2 className="font-heading text-lg font-semibold text-foreground">
-          Lust, neue Sterne zu entdecken?
+          Lust, was Neues zu entdecken?
         </h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Manchmal steckt man in der Routine fest und will endlich wieder etwas
@@ -193,7 +220,7 @@ export function WantsMe({
                     </p>
                   </div>
                   <Button className="w-full gap-2" size="lg" render={<Link href="/me/wants/journey" />}>
-                    <Star className="size-4" /> Sternensuche starten
+                    <Binoculars className="size-4" /> Sternensuche starten
                   </Button>
                   {forgeBridge(false)}
                 </div>
@@ -213,85 +240,36 @@ export function WantsMe({
 
                   <FormError message={saveError} />
 
-                  <section className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Star className="size-5 text-primary" />
-                      <h2 className="font-heading text-lg font-semibold text-foreground">
-                        Meine Sterne
-                      </h2>
-                    </div>
+                  {/* key: Add/Delete layouten die Karte neu UND setzen den
+                      Zoom-State zurück (Remount) — sonst zeigt ein offener
+                      Zoom nach dem Löschen ins Leere. Loslassen/Anzünden
+                      ändert die Länge nicht, die Detailansicht bleibt offen. */}
+                  <StarMap key={wants.length} wants={wants} onEdit={startEdit} onToggleActive={toggleActive} />
 
-                    <div className="flex flex-col gap-3">
-                      {activeWants.map((want) => (
-                        <Card key={want.id} className="w-full">
-                          <CardContent className="space-y-2 pt-(--card-spacing)">
-                            <div className="flex items-start gap-2.5">
-                              <Star className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-                              <p className="flex-1 text-base leading-relaxed text-foreground">
-                                {want.text}
-                              </p>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="text-muted-foreground"
-                                onClick={() => startEdit(want)}
-                                aria-label="Want bearbeiten"
-                              >
-                                <Pencil className="size-4" />
-                              </Button>
-                            </div>
-                            {want.valueId && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                                <Sparkles className="size-3" />
-                                nährt deinen Wert: {getValueLabel(want.valueId)}
-                              </span>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                      <Textarea
-                        value={newWant}
-                        onChange={(e) => setNewWant(e.target.value)}
-                        placeholder="Was zieht dich an? Z. B. „Mir macht … Spaß“ oder „Ich will …“"
-                        maxLength={300}
-                        rows={2}
-                        className="min-h-[52px] flex-1 resize-y"
-                        aria-label="Eigenes Want hinzufügen"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="mt-1 shrink-0"
-                        aria-label="Want hinzufügen"
-                        disabled={!newWant.trim()}
-                        onClick={addWant}
-                      >
-                        <Plus className="size-4" />
-                      </Button>
-                    </div>
-                  </section>
-
-                  <hr className="border-border" />
-
-                  {/* Sternsuche erneut — steht ÜBER der Brücke */}
-                  <Button
-                    variant="outline"
-                    className="w-full gap-2"
-                    render={<Link href="/me/wants/journey" />}
-                  >
-                    <RefreshCw className="size-4" /> Sternensuche nochmal machen
-                  </Button>
+                  {/* Aktionszeile unter der Karte */}
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      className="flex-1 gap-2"
+                      render={<Link href="/me/wants/journey" />}
+                    >
+                      <Binoculars className="size-4" /> Sternensuche
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 gap-2"
+                      onClick={() => setAddOpen(true)}
+                    >
+                      <Plus className="size-4" /> Eigener Stern
+                    </Button>
+                  </div>
 
                   {/* Brücke in die Sternschmiede */}
                   {forgeBridge(true)}
                 </>
               )}
 
-              {/* Bearbeiten-Dialog: Want umformulieren oder löschen */}
+              {/* Bearbeiten-Dialog: Stern umformulieren oder löschen */}
               <Dialog
                 open={editingId !== null}
                 onOpenChange={(open) => {
@@ -300,15 +278,22 @@ export function WantsMe({
               >
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Want bearbeiten</DialogTitle>
+                    <DialogTitle>Stern bearbeiten</DialogTitle>
                   </DialogHeader>
+                  <Input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    maxLength={60}
+                    placeholder="Name des Sterns (optional)"
+                    aria-label="Name des Sterns"
+                  />
                   <Textarea
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     rows={3}
                     autoFocus
                     className="resize-y"
-                    aria-label="Text des Wants"
+                    aria-label="Beschreibung des Sterns"
                   />
                   <DialogFooter>
                     <Button
@@ -319,11 +304,43 @@ export function WantsMe({
                         setEditingId(null);
                       }}
                     >
-                      Want löschen
+                      Stern löschen
                     </Button>
                     <DialogClose render={<Button variant="outline" />}>Abbrechen</DialogClose>
                     <Button onClick={saveEdit} disabled={!editText.trim()}>
                       Speichern
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              {/* Eigener Stern hinzufügen */}
+              <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Eigener Stern</DialogTitle>
+                  </DialogHeader>
+                  <Input
+                    value={addTitle}
+                    onChange={(e) => setAddTitle(e.target.value)}
+                    maxLength={60}
+                    placeholder="Name des Sterns (optional)"
+                    aria-label="Name des Sterns"
+                  />
+                  <Textarea
+                    value={addText}
+                    onChange={(e) => setAddText(e.target.value)}
+                    placeholder="Was zieht dich an? Z. B. „Mir macht … Spaß“ oder „Ich will …“"
+                    maxLength={300}
+                    rows={3}
+                    autoFocus
+                    className="resize-y"
+                    aria-label="Beschreibung des Sterns"
+                  />
+                  <DialogFooter>
+                    <DialogClose render={<Button variant="outline" />}>Abbrechen</DialogClose>
+                    <Button onClick={addOwnStar} disabled={!addText.trim()}>
+                      Stern anzünden
                     </Button>
                   </DialogFooter>
                 </DialogContent>
