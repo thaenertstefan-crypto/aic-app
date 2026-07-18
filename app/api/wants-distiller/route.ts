@@ -16,7 +16,7 @@ import { getValueLabel } from "@/lib/utils/values-bank";
 const MAX_ENTRY_LEN = 2000;
 const MAX_VALUES_IN_PROMPT = 20;
 // Obergrenzen für die Modell-Listen — mehr wird still verworfen.
-const MAX_WANTS_OUT = 6;
+const MAX_WANTS_OUT = 9;
 
 const AI_ERROR_MESSAGE =
   "Das Destillieren hat gerade nicht geklappt. Dein Audit ist gespeichert — du kannst deine Wants auch selbst formulieren.";
@@ -24,10 +24,12 @@ const AI_ERROR_MESSAGE =
 /** Ein destillierter Wants/Stern (value gegen die DB-Werte aufgelöst). */
 type WantSuggestion = {
   text: string;
+  title: string | null;
   valueId: string | null;
   valueLabel: string | null;
   reason: string | null;
   question: string | null;
+  distance: "nah" | "fern";
 };
 
 type DistillerResult = {
@@ -49,9 +51,11 @@ function parseWants(raw: unknown, valueIds: Set<string>): WantSuggestion[] {
     if (!item || typeof item !== "object") continue;
     const v = item as {
       text?: unknown;
+      title?: unknown;
       value_id?: unknown;
       reason?: unknown;
       question?: unknown;
+      distance?: unknown;
     };
     if (typeof v.text !== "string" || !v.text.trim()) continue;
 
@@ -62,6 +66,10 @@ function parseWants(raw: unknown, valueIds: Set<string>): WantSuggestion[] {
 
     wants.push({
       text: v.text.trim().slice(0, TEXT_MAX_SHORT),
+      title:
+        typeof v.title === "string" && v.title.trim()
+          ? v.title.trim().slice(0, 60)
+          : null,
       valueId,
       valueLabel: valueId ? getValueLabel(valueId) : null,
       reason:
@@ -72,6 +80,7 @@ function parseWants(raw: unknown, valueIds: Set<string>): WantSuggestion[] {
         typeof v.question === "string" && v.question.trim()
           ? v.question.trim().slice(0, TEXT_MAX_SHORT)
           : null,
+      distance: v.distance === "fern" ? "fern" : "nah",
     });
   }
 
@@ -219,6 +228,7 @@ export async function POST(request: Request) {
 <yin>${clampText(yin)}</yin>
 <yang>${clampText(yang)}</yang>
 <prinzipien>${clampText((content.principles ?? "").trim()) || "(keine Angabe)"}</prinzipien>
+<tagtraeume>${clampText((content.tagtraum ?? "").trim()) || "(keine Angabe)"}</tagtraeume>
 
 Die bestätigten Werte der Person:
 <werte>
@@ -227,10 +237,11 @@ ${valuesText}
 
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5",
-      // Kommentar + bis zu 6 Wants (text/value_id/reason/question) +
-      // JSON-Gerüst — 1200 lässt extra Luft, damit nie mitten im Satz
+      // Kommentar + bis zu 9 Wants (text/title/value_id/reason/question/
+      // distance) + JSON-Gerüst — 1600 lässt extra Luft für Titel und bis
+      // zu 3 zusätzliche ferne Wants, damit nie mitten im Satz
       // abgeschnitten wird.
-      max_tokens: 1200,
+      max_tokens: 1600,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });
