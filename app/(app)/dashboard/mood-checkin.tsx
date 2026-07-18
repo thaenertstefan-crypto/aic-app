@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 
 import { FormError } from "@/components/ui/form-error";
 import { MoodAvatar } from "@/components/dashboard/mood-avatar";
+import { MascotWeather } from "@/components/dashboard/mascot-weather";
 import {
   MOOD_FACES,
   MOOD_LABELS,
@@ -55,15 +56,18 @@ export function MoodCheckin({
     // die warme Antwort hängt dicht an den Buttons, auf die sie reagiert.
     <div>
       <p className="font-heading text-lg font-medium text-foreground">
-        Wie ist das Wetter heute in deinem Kopf?
+        Wie ist heute das Wetter in deinem Kopf?
       </p>
 
       <div className="mt-10 flex justify-center">
-        <div className="mascot-drift">
-          <MoodAvatar
-            face={MOOD_FACES[selected ?? 3]}
-            pulseSeconds={MOOD_PULSE_SECONDS[selected ?? 3]}
-          />
+        <div className="relative">
+          <MascotWeather score={selected ?? 3} />
+          <div className="mascot-drift">
+            <MoodAvatar
+              face={MOOD_FACES[selected ?? 3]}
+              pulseSeconds={MOOD_PULSE_SECONDS[selected ?? 3]}
+            />
+          </div>
         </div>
       </div>
 

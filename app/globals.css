@@ -456,9 +456,41 @@
   }
   .mascot-drift { animation: mascot-drift 7s ease-in-out infinite; }
 
+  /* ── Dashboard-Wetterbühne: Wolken-Drift, Regen, Wetterleuchten ────── */
+  @keyframes dash-cloud-drift {
+    0%, 100% { transform: translateX(0); }
+    50%      { transform: translateX(7px); }
+  }
+  .dash-cloud-drift   { animation: dash-cloud-drift 9s ease-in-out infinite; }
+  .dash-cloud-drift-2 { animation-duration: 13s; animation-delay: 1.5s; }
+  @keyframes dash-rain {
+    0%   { transform: translateY(-2px); opacity: 0; }
+    30%  { opacity: 0.65; }
+    70%  { opacity: 0.4; }
+    100% { transform: translateY(8px); opacity: 0; }
+  }
+  .dash-rain   { animation: dash-rain 2.4s linear infinite; }
+  .dash-rain-2 { animation-delay: 0.9s; }
+  .dash-rain-3 { animation-delay: 1.7s; }
+  /* Wetterleuchten: seltenes, weiches Aufglimmen — kein harter Blitz. */
+  @keyframes dash-sheetlight {
+    0%, 86%, 100% { opacity: 0; }
+    89% { opacity: 0.32; }
+    92% { opacity: 0.1; }
+    95% { opacity: 0.26; }
+  }
+  .dash-sheetlight { animation: dash-sheetlight 11s ease-in-out infinite; }
+
   @media (prefers-reduced-motion: reduce) {
     .sky-light-twinkle { animation: none; }
     .mascot-drift { animation: none; }
+    .dash-cloud-drift, .dash-cloud-drift-2,
+    .dash-rain, .dash-rain-2, .dash-rain-3 {
+      animation: none;
+    }
+    /* Reduced motion: kein Wetterleuchten (Basis-opacity-0 bleibt), Wolken
+       und Regenstriche stehen still, bleiben aber sichtbar. */
+    .dash-sheetlight { animation: none; }
   }
 
   /* Goldener Puls-Rand der Duell-Kacheln (Regel-Duell), solange keine Auswahl
