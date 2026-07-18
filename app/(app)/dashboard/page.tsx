@@ -10,7 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DashboardReveal } from "@/components/dashboard/dashboard-reveal";
 import { DashboardFocus } from "@/components/dashboard/dashboard-focus";
 import { DailyReminderScreen } from "@/components/daily-reminder/daily-reminder-screen";
-import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
+import { DashboardSky } from "@/components/dashboard/dashboard-sky";
+import { MoodScoreProvider } from "@/components/dashboard/mood-score-context";
 import type {
   Destination,
   PrimaryRecommendation,
@@ -241,59 +242,61 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-10 p-4">
-      <SkyBackdrop />
-      <DailyReminderScreen rights={activeRights.map((r) => r.text)} />
-      <DashboardReveal>
-      {/* Greeting */}
-      <header className="space-y-2">
-        <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
-          {greetingName ? `Hey ${greetingName}!` : "Hey!"}
-        </h1>
-        <p className="text-sm capitalize text-muted-foreground">{dateLabel}</p>
-      </header>
+      <MoodScoreProvider initialScore={todayMood}>
+        <DashboardSky />
+        <DailyReminderScreen rights={activeRights.map((r) => r.text)} />
+        <DashboardReveal>
+        {/* Greeting */}
+        <header className="space-y-2">
+          <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
+            {greetingName ? `Hey ${greetingName}!` : "Hey!"}
+          </h1>
+          <p className="text-sm capitalize text-muted-foreground">{dateLabel}</p>
+        </header>
 
-      {/* Mood check-in + stimmungsbasierter Fokus (client-seitig gekoppelt) */}
-      <DashboardFocus
-        initialScore={todayMood}
-        normalPrimary={normalPrimary}
-        fallbackMessage={fallbackMessage}
-        allDestinations={allDestinations}
-      />
+        {/* Mood check-in + stimmungsbasierter Fokus (client-seitig gekoppelt) */}
+        <DashboardFocus
+          initialScore={todayMood}
+          normalPrimary={normalPrimary}
+          fallbackMessage={fallbackMessage}
+          allDestinations={allDestinations}
+        />
 
-      {/* Heutiges Recht */}
-      <Card>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-              <Quote className="size-4" />
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">
-              Heutiges Recht
-            </p>
-          </div>
-
-          {todayRight ? (
-            <p className="font-affirmation text-lg leading-relaxed text-foreground">
-              {asAffirmation(todayRight.text)}
-            </p>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-base text-muted-foreground">
-                Du hast noch keine persönlichen Grundrechte formuliert. Sie
-                erinnern dich täglich daran, was du dir selbst zugestehst.
+        {/* Heutiges Recht */}
+        <Card>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <Quote className="size-4" />
+              </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Heutiges Recht
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                render={<Link href="/me/bill-of-rights" />}
-              >
-                Bill of Rights starten
-              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
-      </DashboardReveal>
+
+            {todayRight ? (
+              <p className="font-affirmation text-lg leading-relaxed text-foreground">
+                {asAffirmation(todayRight.text)}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-base text-muted-foreground">
+                  Du hast noch keine persönlichen Grundrechte formuliert. Sie
+                  erinnern dich täglich daran, was du dir selbst zugestehst.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  render={<Link href="/me/bill-of-rights" />}
+                >
+                  Bill of Rights starten
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        </DashboardReveal>
+      </MoodScoreProvider>
     </div>
   );
 }

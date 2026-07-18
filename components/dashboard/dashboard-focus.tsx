@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import { moodTier } from "@/lib/utils/mood";
 import { MoodCheckin } from "@/app/(app)/dashboard/mood-checkin";
 import {
@@ -9,6 +7,7 @@ import {
   type Destination,
   type PrimaryRecommendation,
 } from "@/components/dashboard/daily-focus";
+import { useMoodScore } from "@/components/dashboard/mood-score-context";
 
 /** Low-Tier-Empfehlung — Ausstieg aus dem Gedankenkarussell statt "weitermachen". */
 const OVERTHINKING_PRIMARY: PrimaryRecommendation = {
@@ -40,7 +39,7 @@ export function DashboardFocus({
   fallbackMessage,
   allDestinations,
 }: DashboardFocusProps) {
-  const [score, setScore] = useState<number | null>(initialScore);
+  const { score, setScore } = useMoodScore();
 
   const tier = moodTier(score);
   const primary = tier === "low" ? OVERTHINKING_PRIMARY : normalPrimary;
