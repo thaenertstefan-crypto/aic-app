@@ -63,7 +63,7 @@ export function SkyBackdrop({ score = null }: { score?: number | null }) {
         />
         <span
           className="sky-light absolute right-[34%] top-[30%]"
-          style={{ width: "4px", height: "4px", opacity: 0.3 }}
+          style={{ opacity: 0.3 }}
         />
         {/* Zusätzliche Sterne Richtung Bildschirmmitte — gleiche Größen- und
             Funkel-Sprache, unterhalb des Mascot-Glows (top ≳ 32%). */}
@@ -93,7 +93,7 @@ export function SkyBackdrop({ score = null }: { score?: number | null }) {
         />
         <span
           className="sky-light absolute right-[26%] top-[36%]"
-          style={{ width: "4px", height: "4px", opacity: 0.3 }}
+          style={{ opacity: 0.3 }}
         />
         {/* 3 neue Sterne (gleiche Sprache, freie Bereiche): */}
         <span className="sky-light sky-light-twinkle absolute left-[74%] top-[22%]" style={{ animationDelay: "3.7s" }} />
