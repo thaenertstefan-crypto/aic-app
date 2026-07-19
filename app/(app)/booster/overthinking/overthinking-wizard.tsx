@@ -661,7 +661,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
           {/* Icon mit ruhigem Feier-Moment */}
           <CompletionCelebration />
 
-          <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
             Geschafft.
           </h1>
 

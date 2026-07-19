@@ -284,7 +284,7 @@ export function MomentFlow({
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
         <CompletionCelebration />
         <div className="space-y-2">
-          <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
             Los geht&apos;s — du bist bereit.
           </h1>
           <p className="text-base leading-relaxed text-muted-foreground">

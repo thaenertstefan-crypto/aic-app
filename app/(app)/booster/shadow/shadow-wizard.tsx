@@ -207,7 +207,7 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
           <Mascot expression="smile" size="md" />
 
           <div className="space-y-2">
-            <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
+            <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
               {outcome === "kept" ? "Privat gespeichert." : "Losgelassen."}
             </h1>
             {outcome === "kept" ? (

@@ -248,7 +248,7 @@ export default async function DashboardPage() {
         <DashboardReveal>
         {/* Greeting */}
         <header className="space-y-2">
-          <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
+          <h1 className="font-heading text-5xl font-bold tracking-tight text-foreground">
             {greetingName ? `Hey ${greetingName}!` : "Hey!"}
           </h1>
           <p className="text-sm capitalize text-muted-foreground">{dateLabel}</p>

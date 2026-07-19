@@ -170,8 +170,8 @@ Gold bleibt überall die Aktions-Farbe (One-Candle-Rule). Die `scene-ornament-ti
 **Character:** A high-contrast pairing on the serif↔sans axis. Fraunces — a soft, optical serif — carries the *voice*: greetings, section titles, card titles, and above all the affirmations ("Ich habe das Recht, …"), where it reads like something written by hand. Geist carries the *work*: labels, buttons, inputs, body copy, data. The serif is where the app is warm; the sans is where it's clear.
 
 ### Hierarchy
-- **Display** (Fraunces, 700, 2.25rem / `text-4xl`, `tracking-tight`): The greeting and page H1 ("Hey Stefan!"). One per screen.
-- **Headline** (Fraunces, 600, 1.5rem): Section headings within a flow.
+- **Display** (Fraunces, 700, 3rem / `text-5xl`, `tracking-tight`): The greeting and page H1 ("Hey Stefan!"). One per screen.
+- **Headline** (Fraunces, 700, 2.25rem / `text-4xl`, `tracking-tight`): Flow-/Wizard-H1 — the step heading within an exercise.
 - **Title** (Fraunces, 500, 1rem–1.125rem): Card titles and affirmations. Set `leading-relaxed` when the line is a full sentence to read.
 - **Body** (Geist, 400, 0.875rem / `text-sm`, line-height 1.5): Default UI and prose. Cap prose at 65–75ch.
 - **Label** (Geist, 500, 0.75rem / `text-xs`): Meta text and small captions.
