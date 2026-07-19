@@ -13,7 +13,7 @@ export function SkyBackdrop({ score = null }: { score?: number | null }) {
   // Himmelsreaktion auf das Kopfwetter (nur mit Score — die Wants-Seite
   // rendert ohne und bleibt neutral): 1 = dunkel + Sterne verschleiert,
   // 2 = leicht gedimmt, 5 = Sterne heller/schneller.
-  const veil = score === 1 ? 0.35 : score === 2 ? 0.15 : 0;
+  const veil = score === 1 ? 0.2 : score === 2 ? 0.1 : 0;
   const starsOpacity = score === 1 ? 0.35 : score === 2 ? 0.6 : 1;
   const bright = score === 5;
   // Nebel zieht bei rauem Wetter herein: stürmisch am stärksten, bewölkt dezent,
@@ -35,13 +35,14 @@ export function SkyBackdrop({ score = null }: { score?: number | null }) {
         }}
       />
 
-      {/* Sterne-Gruppe: alle sky-light-Spans wandern hier hinein */}
+      {/* Sterne-Gruppe: alle sky-light-Spans wandern hier hinein. Der Twinkle-Loop
+          läuft durchgehend (feste Dauer) — nur Helligkeit/Opacity faden zwischen den
+          Moods, damit das Feld nie neu anläuft. */}
       <div
-        className="absolute inset-0 transition-[opacity,filter] duration-700 ease-out"
+        className="absolute inset-0 transition-[opacity,filter] duration-[1200ms] ease-out"
         style={{
           opacity: starsOpacity,
           filter: bright ? "brightness(1.5)" : undefined,
-          ...(bright ? ({ "--twinkle-dur": "2.8s" } as React.CSSProperties) : undefined),
         }}
       >
         {/* A handful of distant lights scattered across the upper sky. Some
@@ -123,7 +124,7 @@ export function SkyBackdrop({ score = null }: { score?: number | null }) {
       {/* Wetter-Schleier: dunkelt den Himmel bei rauem Wetter ab (liegt im
           -z-10-Stack, dimmt also nur Backdrop-Ebenen, nie den Content). */}
       <div
-        className="absolute inset-0 bg-black transition-opacity duration-700 ease-out"
+        className="absolute inset-0 bg-black transition-opacity duration-[1200ms] ease-out"
         style={{ opacity: veil }}
       />
     </div>
