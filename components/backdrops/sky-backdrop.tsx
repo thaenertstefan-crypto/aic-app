@@ -16,6 +16,9 @@ export function SkyBackdrop({ score = null }: { score?: number | null }) {
   const veil = score === 1 ? 0.35 : score === 2 ? 0.15 : 0;
   const starsOpacity = score === 1 ? 0.35 : score === 2 ? 0.6 : 1;
   const bright = score === 5;
+  // Nebel zieht bei rauem Wetter herein: stürmisch am stärksten, bewölkt dezent,
+  // ab ruhig aufgelöst.
+  const mist = score === 1 ? 0.5 : score === 2 ? 0.22 : 0;
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
@@ -99,6 +102,22 @@ export function SkyBackdrop({ score = null }: { score?: number | null }) {
         <span className="sky-light sky-light-twinkle absolute left-[74%] top-[22%]" style={{ animationDelay: "3.7s" }} />
         <span className="sky-light sky-light-twinkle absolute left-[12%] top-[44%]" style={{ animationDelay: "1.9s" }} />
         <span className="sky-light absolute right-[8%] top-[56%]" style={{ opacity: 0.3 }} />
+      </div>
+
+      {/* Nebel/Dunst-Ebene: weicher, langsam treibender Dunst im unteren Drittel,
+          kühles Lavendel-Grau. Trägt bei rauem Wetter die Stimmung mit (statt reinem
+          Abdunkeln); löst sich ab „ruhig" auf. Gemalter Gradient, kein backdrop-filter. */}
+      <div
+        className="absolute inset-x-0 bottom-0 h-2/5 overflow-hidden transition-opacity duration-[1200ms] ease-out"
+        style={{ opacity: mist }}
+      >
+        <div
+          className="sky-mist-drift absolute inset-y-0 -left-1/4 w-[150%]"
+          style={{
+            background:
+              "linear-gradient(to top, color-mix(in srgb, var(--muted-foreground) 55%, transparent) 0%, transparent 85%)",
+          }}
+        />
       </div>
 
       {/* Wetter-Schleier: dunkelt den Himmel bei rauem Wetter ab (liegt im

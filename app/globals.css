@@ -491,8 +491,17 @@
   }
   .dash-sheetlight { animation: dash-sheetlight 11s ease-in-out infinite; }
 
+  /* Nebel-Drift für den SkyBackdrop: langsame, weite Horizontalbewegung. */
+  @keyframes sky-mist-drift {
+    0%, 100% { transform: translateX(0); }
+    50%      { transform: translateX(6%); }
+  }
+  .sky-mist-drift { animation: sky-mist-drift 34s ease-in-out infinite; }
+
   @media (prefers-reduced-motion: reduce) {
     .sky-light-twinkle { animation: none; }
+    /* Nebel steht still, bleibt aber sichtbar. */
+    .sky-mist-drift { animation: none; }
     .mascot-drift { animation: none; }
     .dash-cloud-drift, .dash-cloud-drift-2,
     .dash-rain, .dash-rain-2, .dash-rain-3 {
