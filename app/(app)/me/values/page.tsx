@@ -77,14 +77,18 @@ export default async function MeValuesPage() {
       />
       <RecipeIntroGate slug="values" cards={introCards} introSeen={introSeen}>
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
-          <p className="text-center text-base leading-relaxed text-muted-foreground">
+          <p className="text-center text-base leading-relaxed text-foreground">
             Deine Werte sind dein innerer Kompass – sie zeigen dir, was dir
             tief im Inneren wirklich wichtig ist, und helfen dir, bei deinen
             alltäglichen Lebensentscheidungen den Weg einzuschlagen, der dich
-            mit Energie lädt, anstatt sie aus dir herauszusaugen. Welcher Wert
-            ist dir heute besonders wichtig?
+            mit Energie lädt, anstatt sie aus dir herauszusaugen.
           </p>
-          <ValuesCompass values={compassValues} />
+          <div className="flex flex-col gap-4">
+            <p className="text-center font-heading text-base font-medium text-foreground">
+              Welcher Wert ist dir heute besonders wichtig?
+            </p>
+            <ValuesCompass values={compassValues} />
+          </div>
           {cta(
             compassValues.length > 0 ? "mt-auto w-full gap-2" : "w-full gap-2",
           )}

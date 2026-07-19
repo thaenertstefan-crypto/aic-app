@@ -268,6 +268,18 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
         </div>
       </Reveal>
 
+      {/* ── Name des gewählten Werts, direkt an der Rose ────────────────
+         Nennt die Auswahl unmittelbar unter dem Kompass (die Rosen-Punkte
+         sind emoji-only) und meldet den Wechsel an Screenreader. */}
+      <p
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="text-center font-heading text-lg font-semibold text-foreground"
+      >
+        {selected.label}
+      </p>
+
       {/* ── Detailkarte des gewählten Werts ─────────────────────────── */}
       <Reveal delay={0.15}>
         <Card
@@ -279,10 +291,7 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
             <span className="text-2xl leading-none" aria-hidden="true">
               {selected.emoji}
             </span>
-            <div className="min-w-0 space-y-1">
-              <p className="font-heading text-base font-semibold text-primary">
-                {selected.label}
-              </p>
+            <div className="min-w-0">
               <p className="text-base leading-relaxed text-muted-foreground">
                 Dir ist wichtig, dass {selected.description}.
               </p>
@@ -291,26 +300,23 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
         </Card>
       </Reveal>
 
-      {/* ── Kompakte Liste (scanbar, auswählbar) ────────────────────── */}
+      {/* ── Legende (scanbar): ordnet jedem Emoji seinen Wert zu. Rein
+         darstellend — die Rose ist das einzige Auswahl-Steuerelement, damit
+         Screenreader/Tastatur nicht dieselben Werte doppelt durchlaufen. Die
+         aktuelle Auswahl wird ruhig (ohne Gold) mitgeführt. */}
       <ul className="divide-y divide-border/60">
-        {values.map((v, i) => (
-          <li key={v.id}>
-            <button
-              type="button"
-              onClick={() => select(v.id, i)}
-              aria-pressed={v.id === selected?.id}
-              className={cn(
-                "flex min-h-11 w-full items-center gap-3 px-1 text-left transition-colors",
-                v.id === selected?.id
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <span className="text-lg leading-none" aria-hidden="true">
-                {v.emoji}
-              </span>
-              <span className="truncate text-sm font-medium">{v.label}</span>
-            </button>
+        {values.map((v) => (
+          <li
+            key={v.id}
+            className={cn(
+              "flex min-h-11 items-center gap-3 px-1",
+              v.id === selected?.id ? "text-foreground" : "text-muted-foreground",
+            )}
+          >
+            <span className="text-lg leading-none" aria-hidden="true">
+              {v.emoji}
+            </span>
+            <span className="truncate text-sm font-medium">{v.label}</span>
           </li>
         ))}
       </ul>
