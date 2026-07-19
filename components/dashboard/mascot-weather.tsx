@@ -34,10 +34,10 @@ function CloudSvg({
   );
 }
 
-/** Äußerer Flug-Wrapper: sichtbar = an Ort und Stelle, sonst rausgeschoben. */
+/** Äußerer Flug-Wrapper: sichtbar = an Ort und Stelle, sonst seitlich ganz raus. */
 function flyClass(visible: boolean, hiddenShift: string): string {
   return cn(
-    "absolute transition-[opacity,transform] duration-700 ease-out",
+    "absolute transition-[opacity,transform] duration-[900ms] ease-in-out",
     visible ? "translate-x-0 opacity-100" : cn("opacity-0", hiddenShift),
   );
 }
@@ -52,21 +52,21 @@ export function MascotWeather({ score }: { score: number }) {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0">
       {/* Ruhige Wolke (Score 2–3), oben links vom Maskottchen */}
-      <span className={cn(flyClass(cloudA, "-translate-x-8"), "-left-8 -top-2")}>
+      <span className={cn(flyClass(cloudA, "-translate-x-[60vw]"), "-left-8 -top-2")}>
         <span className="block dash-cloud-drift">
           <CloudSvg />
         </span>
       </span>
 
       {/* Zweite Wolke (Score 2), rechts, etwas tiefer */}
-      <span className={cn(flyClass(cloudB, "translate-x-8"), "-right-10 top-6")}>
+      <span className={cn(flyClass(cloudB, "translate-x-[60vw]"), "-right-10 top-6")}>
         <span className="block dash-cloud-drift dash-cloud-drift-2">
           <CloudSvg />
         </span>
       </span>
 
       {/* Gewitter (Score 1): schwere Wolke + Regenstriche + Wetterleuchten */}
-      <span className={cn(flyClass(storm, "-translate-x-10"), "-left-12 -top-4")}>
+      <span className={cn(flyClass(storm, "-translate-x-[60vw]"), "-left-12 -top-4")}>
         <span className="relative block dash-cloud-drift">
           <span
             className="dash-sheetlight absolute -inset-3 rounded-full opacity-0"
