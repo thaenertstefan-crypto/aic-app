@@ -145,6 +145,22 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
         >
           Weiter
         </Button>
+
+        {/* Leiser Ausweg-Hinweis: signalisiert von Anfang an, dass der ganze
+            Screen antippbar ist — sonst wirkt die Sekunde bis zum „Weiter"-Button
+            wie ein eingefrorener Ladezustand. Am unteren Rand, damit der zentrale
+            Affirmations-Moment ungestört bleibt; aria-hidden, weil SR-Nutzer:innen
+            Esc und den Button haben. */}
+        <p
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-x-0 bottom-8 text-center text-sm text-muted-foreground",
+            !reduced && "transition-opacity duration-500",
+            visible ? "opacity-100" : "opacity-0",
+          )}
+        >
+          Tippen, um fortzufahren
+        </p>
       </div>
     </dialog>
   );

@@ -128,7 +128,11 @@ export function DailyFocus({
                 <p className="font-heading text-lg font-medium text-foreground">
                   {view.primary.title}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                {/* text-foreground/80 statt muted: dieser Text liegt auf der
+                    durchscheinenden Glass-Karte, wo ein heller Blob-Durchschein
+                    Lavendel-Muted unter AA drückt (3.8:1). /80 hält auch dort
+                    ≥4.5:1 und bleibt durch Größe/Gewicht sekundär. */}
+                <p className="text-sm text-foreground/80">
                   {view.primary.subtitle}
                 </p>
               </div>
@@ -144,7 +148,8 @@ export function DailyFocus({
         ) : (
           <Card variant="glass">
             <CardContent className="space-y-3">
-              <p className="text-base text-muted-foreground">
+              {/* /80 statt muted — Glass-Karten-Kontrast, siehe Subtitle oben. */}
+              <p className="text-base text-foreground/80">
                 {view.fallbackMessage}
               </p>
               <Button

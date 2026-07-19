@@ -137,20 +137,21 @@ export function SuggestionShuffle({
       </ul>
 
       {hasMultipleGroups && (
-        /* Icon-only-Trigger — bewusst ohne Schriftzug (genug Text auf dem
-           Dashboard); das aria-label trägt die Bedeutung. size-11 = volles
-           44px-Touch-Target, das Icon selbst bleibt klein und leise. */
+        /* Beschrifteter Trigger — der Schriftzug macht sichtbar, dass es mehr
+           Anlaufstellen gibt und das Icon durchblättert (icon-only war nur per
+           Hover/aria erkennbar). h-11 = volles 44px-Touch-Target; leise gehalten
+           (muted), damit er die primäre Empfehlung nicht überstimmt. */
         <button
           type="button"
           onClick={shuffle}
-          aria-label="Zeig mir was anderes"
-          className="mx-auto flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+          className="mx-auto flex h-11 items-center gap-2 rounded-full px-4 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <RefreshCw
             aria-hidden
             className="size-4 shrink-0 transition-transform duration-300 ease-out"
             style={reduced ? undefined : { rotate: `${turns * 180}deg` }}
           />
+          Zeig mir was anderes
         </button>
       )}
     </div>
