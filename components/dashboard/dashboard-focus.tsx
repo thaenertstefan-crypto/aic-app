@@ -47,7 +47,7 @@ export function DashboardFocus({
   const alternatives = allDestinations.filter((d) => d.key !== primary?.key);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-14">
       <MoodCheckin initialScore={initialScore} onSelect={setScore} />
       <DailyFocus
         tier={tier}
