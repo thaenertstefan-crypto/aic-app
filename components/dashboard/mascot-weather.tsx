@@ -12,12 +12,19 @@ import { cn } from "@/lib/utils";
  * Reduced motion stellt die Loops in globals.css still.
  */
 
-const STROKE = "var(--primary)";
+const STROKE = "var(--muted-foreground)";
 
-function CloudSvg({ heavy = false }: { heavy?: boolean }) {
+function CloudSvg({
+  heavy = false,
+  opacity,
+}: {
+  heavy?: boolean;
+  opacity?: number;
+}) {
+  const fillOpacity = opacity ?? (heavy ? 0.3 : 0.2);
   return (
-    <svg viewBox="0 0 56 28" className={heavy ? "w-16" : "w-12"} aria-hidden="true">
-      <g fill={STROKE} opacity={heavy ? 0.34 : 0.24}>
+    <svg viewBox="0 0 56 28" className={heavy ? "w-20" : "w-16"} aria-hidden="true">
+      <g fill={STROKE} opacity={fillOpacity}>
         <circle cx="18" cy="16" r="8" />
         <circle cx="30" cy="12" r="10" />
         <circle cx="40" cy="17" r="7" />
@@ -68,7 +75,7 @@ export function MascotWeather({ score }: { score: number }) {
                 "radial-gradient(closest-side, color-mix(in srgb, var(--primary) 28%, transparent), transparent 70%)",
             }}
           />
-          <CloudSvg heavy />
+          <CloudSvg heavy opacity={0.34} />
           <svg viewBox="0 0 56 22" className="w-16" aria-hidden="true">
             <path className="dash-rain" d="M16 2 l-2 7" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
             <path className="dash-rain dash-rain-2" d="M28 1 l-2 7" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
