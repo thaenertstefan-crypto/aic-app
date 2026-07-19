@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FocusQuestion } from "@/components/dashboard/focus-question";
-import { SuggestionShuffle } from "@/components/dashboard/suggestion-shuffle";
+import { AlternativesDisclosure } from "@/components/dashboard/alternatives-disclosure";
 import { CROSSFADE_MS, useCrossfade } from "@/lib/hooks/use-crossfade";
 import { cn } from "@/lib/utils";
 
@@ -159,15 +159,10 @@ export function DailyFocus({
         )}
 
         {view.alternatives.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              …oder brauchst du gerade was anderes?
-            </p>
-            {/* „Vorschlags-Shuffle": eine 3er-Gruppe + „Zeig mir was anderes".
-                Eigene kleine Motion-Maschine in der Unterkomponente — bewusst
-                getrennt von der Crossfade-Maschine dieses Blocks. */}
-            <SuggestionShuffle destinations={view.alternatives} />
-          </div>
+          /* Alternativen bewusst zurückgestellt: eingeklappt hinter einem leisen
+             Trigger, damit die Gold-Empfehlung oben die einzige offene Handlung
+             bleibt. Erst ein Tap enthüllt die „Vorschlags-Shuffle"-Gruppe. */
+          <AlternativesDisclosure destinations={view.alternatives} />
         )}
       </div>
     </div>
