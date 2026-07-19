@@ -23,7 +23,7 @@ function CloudSvg({
 }) {
   const fillOpacity = opacity ?? (heavy ? 0.3 : 0.2);
   return (
-    <svg viewBox="0 0 56 28" className={heavy ? "w-28" : "w-24"} aria-hidden="true">
+    <svg viewBox="0 0 56 28" className={heavy ? "w-[123px]" : "w-[106px]"} aria-hidden="true">
       <g fill={STROKE} opacity={fillOpacity}>
         <circle cx="18" cy="16" r="8" />
         <circle cx="30" cy="12" r="10" />
@@ -36,8 +36,11 @@ function CloudSvg({
 
 /** Äußerer Flug-Wrapper: sichtbar = an Ort und Stelle, sonst seitlich ganz raus. */
 function flyClass(visible: boolean, hiddenShift: string): string {
+  // Wichtig: Tailwind v4 kompiliert translate-x-* zur eigenständigen CSS-Property
+  // `translate` (nicht `transform`) — die Transition muss also `translate`
+  // abdecken, sonst springt die Position sofort statt zu fliegen.
   return cn(
-    "absolute transition-[opacity,transform] duration-[900ms] ease-in-out",
+    "absolute transition-[opacity,translate] duration-[900ms] ease-in-out",
     visible ? "translate-x-0 opacity-100" : cn("opacity-0", hiddenShift),
   );
 }
@@ -56,21 +59,21 @@ export function MascotWeather({ score }: { score: number }) {
     // sie sichtbar aus dem Bild fliegen, ohne die Seite scrollbar zu machen.
     <div aria-hidden className="pointer-events-none absolute inset-0">
       {/* Ruhige Wolke (Score 2–3), oben links vom Maskottchen */}
-      <span className={cn(flyClass(cloudA, "-translate-x-[60vw]"), "-left-14 -top-6")}>
+      <span className={cn(flyClass(cloudA, "-translate-x-[60vw]"), "-left-16 -top-6")}>
         <span className="block dash-cloud-drift">
           <CloudSvg />
         </span>
       </span>
 
       {/* Zweite Wolke (Score 2), rechts, etwas tiefer */}
-      <span className={cn(flyClass(cloudB, "translate-x-[60vw]"), "-right-16 top-4")}>
+      <span className={cn(flyClass(cloudB, "translate-x-[60vw]"), "-right-20 top-4")}>
         <span className="block dash-cloud-drift dash-cloud-drift-2">
           <CloudSvg />
         </span>
       </span>
 
       {/* Gewitter (Score 1): schwere Wolke + Regenstriche + Wetterleuchten */}
-      <span className={cn(flyClass(storm, "-translate-x-[60vw]"), "-left-16 -top-8")}>
+      <span className={cn(flyClass(storm, "-translate-x-[60vw]"), "-left-20 -top-8")}>
         <span className="relative block dash-cloud-drift">
           <span
             className="dash-sheetlight absolute -inset-3 rounded-full opacity-0"
@@ -80,7 +83,7 @@ export function MascotWeather({ score }: { score: number }) {
             }}
           />
           <CloudSvg heavy opacity={0.34} />
-          <svg viewBox="0 0 56 22" className="w-28" aria-hidden="true">
+          <svg viewBox="0 0 56 22" className="w-[123px]" aria-hidden="true">
             <path className="dash-rain" d="M16 2 l-2 7" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
             <path className="dash-rain dash-rain-2" d="M28 1 l-2 7" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
             <path className="dash-rain dash-rain-3" d="M40 3 l-2 7" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
@@ -89,10 +92,10 @@ export function MascotWeather({ score }: { score: number }) {
       </span>
 
       {/* Gewitter (Score 1): zweite, kleinere Regenwolke rechts, tiefer versetzt */}
-      <span className={cn(flyClass(storm, "translate-x-[60vw]"), "-right-14 top-6")}>
+      <span className={cn(flyClass(storm, "translate-x-[60vw]"), "-right-16 top-6")}>
         <span className="relative block dash-cloud-drift dash-cloud-drift-2">
           <CloudSvg opacity={0.26} />
-          <svg viewBox="0 0 56 22" className="w-24" aria-hidden="true">
+          <svg viewBox="0 0 56 22" className="w-[106px]" aria-hidden="true">
             <path className="dash-rain dash-rain-2" d="M16 2 l-2 7" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
             <path className="dash-rain" d="M28 1 l-2 7" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
             <path className="dash-rain dash-rain-3" d="M40 3 l-2 7" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
