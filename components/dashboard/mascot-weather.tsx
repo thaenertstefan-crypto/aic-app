@@ -83,6 +83,18 @@ export function MascotWeather({ score }: { score: number }) {
           </svg>
         </span>
       </span>
+
+      {/* Gewitter (Score 1): zweite, kleinere Regenwolke rechts, tiefer versetzt */}
+      <span className={cn(flyClass(storm, "translate-x-[60vw]"), "-right-10 top-8")}>
+        <span className="relative block dash-cloud-drift dash-cloud-drift-2">
+          <CloudSvg opacity={0.26} />
+          <svg viewBox="0 0 56 22" className="w-16" aria-hidden="true">
+            <path className="dash-rain dash-rain-2" d="M16 2 l-2 7" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
+            <path className="dash-rain" d="M28 1 l-2 7" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
+            <path className="dash-rain dash-rain-3" d="M40 3 l-2 7" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
+          </svg>
+        </span>
+      </span>
     </div>
   );
 }
