@@ -57,9 +57,9 @@ export function MoodCheckin({
     // braucht v. a. der obere Abstand mehr als die reine Kastenhöhe suggeriert.
     // Die warme Antwort hängt danach wieder dicht an den Buttons.
     <div>
-      <p className="font-heading text-lg font-medium text-foreground">
+      <h2 className="font-heading text-lg font-medium text-foreground">
         Wie ist heute das Wetter in deinem Kopf?
-      </p>
+      </h2>
 
       <div className="mt-14 flex justify-center">
         <div className="relative">
@@ -90,7 +90,7 @@ export function MoodCheckin({
                 setSelected(mood.score);
                 onSelect?.(mood.score);
               }}
-              className={`inline-flex h-8 shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-medium transition-[transform,background-color,border-color] duration-150 ease-out ${
+              className={`inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-medium transition-[transform,background-color,border-color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 isActive
                   ? "border-primary bg-primary/10 scale-105"
                   : "border-border bg-card hover:bg-muted/50"

@@ -108,7 +108,10 @@ export function DailyReminderScreen({ rights }: { rights: string[] }) {
       >
         <p
           className="text-lg font-medium text-primary"
-          style={{ textShadow: "0 0 18px rgba(231,182,94,0.55)" }}
+          style={{
+            textShadow:
+              "0 0 18px color-mix(in srgb, var(--primary) 55%, transparent)",
+          }}
         >
           Heutiger Reminder
         </p>

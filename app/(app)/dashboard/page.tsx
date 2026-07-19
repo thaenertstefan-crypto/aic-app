@@ -269,9 +269,9 @@ export default async function DashboardPage() {
               <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
                 <Quote className="size-4" />
               </div>
-              <p className="text-xs font-medium text-muted-foreground">
+              <h2 className="text-xs font-medium text-muted-foreground">
                 Heutiges Recht
-              </p>
+              </h2>
             </div>
 
             {todayRight ? (

@@ -32,11 +32,26 @@ export function DashboardReveal({ children }: DashboardRevealProps) {
     const ts = raw ? Number(raw) : NaN;
     return Number.isFinite(ts) && Date.now() - ts < MAX_AGE_MS;
   });
+  // Sicherheitsnetz: Sobald die Reveal-Zeit verstrichen ist, die Animations-
+  // Steuerung fallen lassen. `animation-fill-mode: both` hält die Abschnitte bis
+  // dahin bei Opacity 0 — würde der Tab mitten im Stagger in den Hintergrund
+  // gelegt, pausierte die Animation und der Abschnitt bliebe unsichtbar. Der
+  // Timer (im Hintergrund gedrosselt, feuert aber beim Zurückkehren) strippt dann
+  // die Klassen und gibt den natürlichen, sichtbaren Zustand frei.
+  const [done, setDone] = useState(false);
 
   // Flag einmalig verbrauchen, damit es bei der nächsten Navigation nicht erneut greift.
   useEffect(() => {
     if (stagger) sessionStorage.removeItem(POST_LOGIN_KEY);
   }, [stagger]);
+
+  useEffect(() => {
+    if (!stagger || reduced) return;
+    // Letzter Abschnitt endet bei count*STAGGER_MS; Puffer gegen Frame-Jitter.
+    const totalMs = Children.count(children) * STAGGER_MS + 300;
+    const timer = window.setTimeout(() => setDone(true), totalMs);
+    return () => window.clearTimeout(timer);
+  }, [stagger, reduced, children]);
 
   if (!stagger || reduced) {
     return <>{children}</>;
@@ -44,12 +59,16 @@ export function DashboardReveal({ children }: DashboardRevealProps) {
 
   return Children.map(children, (child, i) => (
     <div
-      className="animate-in fade-in slide-in-from-top-3"
-      style={{
-        animationDelay: `${i * STAGGER_MS}ms`,
-        animationDuration: `${STAGGER_MS}ms`,
-        animationFillMode: "both",
-      }}
+      className={done ? undefined : "animate-in fade-in slide-in-from-top-3"}
+      style={
+        done
+          ? undefined
+          : {
+              animationDelay: `${i * STAGGER_MS}ms`,
+              animationDuration: `${STAGGER_MS}ms`,
+              animationFillMode: "both",
+            }
+      }
     >
       {child}
     </div>
