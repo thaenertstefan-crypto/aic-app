@@ -36,7 +36,10 @@ export default async function AppLayout({
       <AppBackdrop />
       <TimezoneSync />
       <OfflineBanner />
-      <main className="flex-1">{children}</main>
+      {/* overflow-x-clip fängt horizontale Overflows (z. B. seitlich aus dem
+          Bild fliegende Dekor-Wolken) am echten Viewport-Rand ab, ohne einen
+          Scroll-Container zu erzeugen — verhindert das Seiten-Scrollen. */}
+      <main className="flex-1 overflow-x-clip">{children}</main>
       <BottomNav />
     </div>
   );
