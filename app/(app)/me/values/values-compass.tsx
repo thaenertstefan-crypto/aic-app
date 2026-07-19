@@ -299,27 +299,6 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
           </CardContent>
         </Card>
       </Reveal>
-
-      {/* ── Legende (scanbar): ordnet jedem Emoji seinen Wert zu. Rein
-         darstellend — die Rose ist das einzige Auswahl-Steuerelement, damit
-         Screenreader/Tastatur nicht dieselben Werte doppelt durchlaufen. Die
-         aktuelle Auswahl wird ruhig (ohne Gold) mitgeführt. */}
-      <ul className="divide-y divide-border/60">
-        {values.map((v) => (
-          <li
-            key={v.id}
-            className={cn(
-              "flex min-h-11 items-center gap-3 px-1",
-              v.id === selected?.id ? "text-foreground" : "text-muted-foreground",
-            )}
-          >
-            <span className="text-lg leading-none" aria-hidden="true">
-              {v.emoji}
-            </span>
-            <span className="truncate text-sm font-medium">{v.label}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
