@@ -18,7 +18,7 @@ export type RightItem = {
 /** Element von `wants.wants` (JSONB-Array): ein bestätigtes Want. */
 export type WantItem = {
   id: string;
-  /** Beschreibung des Sterns („Es macht mir Spaß …"). */
+  /** Beschreibung des Sterns („Es macht mir Spaß …“). */
   text: string;
   active: boolean;
   /** Sternname (2–3 Worte); null bei Bestandsdaten — Label fällt dann auf den gekürzten Text zurück. */
@@ -46,7 +46,7 @@ export type BetItem = {
 
 /** `journal_entries.content` bei template_type "yin_yang" (Wants-Audit). */
 export type YinYangContent = {
-  /** „Wofür nimmst du Mühsal in Kauf?" */
+  /** „Wofür nimmst du Mühsal in Kauf?“ */
   yin: string;
   /** „Was bringt dich in Flow?“ */
   yang: string;

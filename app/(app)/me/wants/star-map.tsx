@@ -48,13 +48,17 @@ function clip26(s: string): string {
   return s.length > 26 ? `${s.slice(0, 25).trimEnd()}…` : s;
 }
 
-/** Kartenlabel: Titel, sonst gekürzte Beschreibung (Bestandsdaten ohne title);
- *  beide Quellen laufen durch dieselbe 26-Zeichen-Kürzung, damit lange Titel
- *  (Input erlaubt bis zu 60 Zeichen) das Label nicht sprengen. */
-export function starLabel(w: WantItem): string {
+/** Voller Name eines Sterns: Titel, sonst die Beschreibung (Bestandsdaten ohne
+ *  title). Für die Detailansicht, wo Platz ist — hier NICHT kürzen. */
+export function starName(w: WantItem): string {
   const t = w.title?.trim();
-  if (t) return clip26(t);
-  return clip26(w.text.trim());
+  return t ? t : w.text.trim();
+}
+
+/** Kartenlabel: wie starName, aber durch dieselbe 26-Zeichen-Kürzung, damit
+ *  lange Titel (Input erlaubt bis zu 60 Zeichen) den engen Slot nicht sprengen. */
+export function starLabel(w: WantItem): string {
+  return clip26(starName(w));
 }
 
 type PlacedStar = { want: WantItem; x: number; y: number; side: "left" | "right" };
@@ -244,7 +248,7 @@ export function StarMap({
 
           <div className="space-y-2">
             <h3 className="font-heading text-2xl font-semibold text-balance break-words text-foreground">
-              {starLabel(zoomed.want)}
+              {starName(zoomed.want)}
             </h3>
             {zoomed.want.distance === "fern" && zoomed.want.active && (
               <span className="rounded-full bg-foreground/10 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
