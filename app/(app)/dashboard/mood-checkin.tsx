@@ -52,14 +52,16 @@ export function MoodCheckin({
 
   return (
     // Bewusster Rhythmus statt gleichförmiger 32px-Abstände: Prompt bekommt Luft,
-    // das Maskottchen (emotionales Zentrum) atmet oben, Buttons folgen enger, und
-    // die warme Antwort hängt dicht an den Buttons, auf die sie reagiert.
+    // dann atmet das Maskottchen (emotionales Zentrum) großzügig auf beiden Seiten
+    // — die Wetterwolken blühen bis ~32px über den size-32-Kasten hinaus, deshalb
+    // braucht v. a. der obere Abstand mehr als die reine Kastenhöhe suggeriert.
+    // Die warme Antwort hängt danach wieder dicht an den Buttons.
     <div>
       <p className="font-heading text-lg font-medium text-foreground">
         Wie ist heute das Wetter in deinem Kopf?
       </p>
 
-      <div className="mt-10 flex justify-center">
+      <div className="mt-14 flex justify-center">
         <div className="relative">
           <MascotWeather score={selected ?? 3} />
           <div className="mascot-drift">
@@ -73,7 +75,7 @@ export function MoodCheckin({
 
       <form
         action={formAction}
-        className="mt-8 -mx-1 -my-1 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="mt-10 -mx-1 -my-1 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {MOODS.map((mood) => {
           const isActive = selected === mood.score;

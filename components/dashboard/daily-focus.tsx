@@ -120,7 +120,11 @@ export function DailyFocus({
     >
       <FocusQuestion question={view.question} />
 
-      <div className="space-y-6">
+      {/* space-y-4: die Alternativen-Disclosure hängt bewusst enger an der
+          Fokus-Karte (sie ist ihr Angebot), damit sie nicht zwischen Karte und
+          „Heutiges Recht" zu schweben scheint — der größere Section-Abstand
+          darunter trennt die Blöcke. */}
+      <div className="space-y-4">
         {view.primary ? (
           <Card variant="glass" className="border border-primary">
             <CardContent className="space-y-3">
