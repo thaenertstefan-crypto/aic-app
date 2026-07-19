@@ -241,7 +241,7 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-14 p-4">
+    <div className="space-y-13 p-4">
       <MoodScoreProvider initialScore={todayMood}>
         <DashboardSky />
         <DailyReminderScreen rights={activeRights.map((r) => r.text)} />
