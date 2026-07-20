@@ -285,7 +285,7 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
         <Card
           key={selected.id}
           variant="glass"
-          className={cn("min-h-28", !reduced && "fade-swap")}
+          className={cn(!reduced && "fade-swap")}
         >
           <CardContent className="flex items-start gap-3">
             <span className="text-2xl leading-none" aria-hidden="true">

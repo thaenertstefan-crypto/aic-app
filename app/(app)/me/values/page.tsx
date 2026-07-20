@@ -85,7 +85,7 @@ export default async function MeValuesPage() {
           </p>
           <div className="flex flex-col gap-4">
             {compassValues.length > 0 && (
-              <p className="text-center font-heading text-base font-medium text-foreground">
+              <p className="text-center text-sm text-muted-foreground">
                 Tippe einen Wert an, um ihm nachzuspüren.
               </p>
             )}
