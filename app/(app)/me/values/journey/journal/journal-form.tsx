@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
+import { CompletionCelebration } from "@/components/ui/completion-celebration";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { formatDateDE, localDateKey } from "@/lib/utils/date";
@@ -155,15 +156,6 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
 
   return (
     <div className="flex flex-1 flex-col px-4 py-6">
-      {/* Header — nur noch im Abschluss-Zustand */}
-      {!pastEntry && isComplete && (
-        <header className="mb-6">
-          <p className="max-w-prose text-base text-muted-foreground">
-            Du hast alle 7 Tage ausgefüllt!
-          </p>
-        </header>
-      )}
-
       {/* Draft restore prompt */}
       {!pastEntry && pendingDraft && (
         <div className="mb-6">
@@ -177,20 +169,25 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
       {/* Completion state — die Day-View (?day=N) hat Vorrang, damit alte
           Einträge auch nach 7/7 Tagen einsehbar bleiben */}
       {!pastEntry && isComplete ? (
-        <div className="mt-4 space-y-6">
+        <div className="mt-4 flex flex-1 flex-col">
           <Card className="border-primary/30">
-            <CardContent className="space-y-3 pt-(--card-spacing)">
-              <p className="text-center text-lg font-semibold text-primary">
+            <CardContent className="space-y-4 pt-(--card-spacing)">
+              <CompletionCelebration className="mt-1" />
+              <p className="text-center font-heading text-lg font-semibold text-primary">
                 7 Tage voll
               </p>
-              <p className="text-center text-base text-muted-foreground">
-                Du hast eine ganze Woche lang deine Gedanken und Gefühle festgehalten.
-                Jetzt wird es spannend – schau dir an, welche Muster sich zeigen.
+              <p className="text-center text-base leading-relaxed text-muted-foreground">
+                Eine ganze Woche lang hast du deine Gedanken festgehalten. Jetzt
+                wird es spannend – schau dir an, welche Muster sich zeigen.
               </p>
             </CardContent>
           </Card>
 
-          <Button className="w-full" size="lg" render={<Link href="/me/values/journey/evaluation" />}>
+          <Button
+            className="mt-6 w-full"
+            size="lg"
+            render={<Link href="/me/values/journey/evaluation" />}
+          >
             Zur Auswertung
           </Button>
         </div>
@@ -217,20 +214,20 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
                     </Button>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm text-muted-foreground">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">
                       Was ist heute passiert?
-                    </Label>
-                    <p className="whitespace-pre-wrap rounded-lg bg-muted/50 px-3 py-2 text-base leading-relaxed">
+                    </p>
+                    <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
                       {activeEntry.happenings || "—"}
                     </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm text-muted-foreground">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">
                       Welche Gedanken, Gefühle, Reaktionen kamen dabei auf?
-                    </Label>
-                    <p className="whitespace-pre-wrap rounded-lg bg-muted/50 px-3 py-2 text-base leading-relaxed">
+                    </p>
+                    <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
                       {activeEntry.response || "—"}
                     </p>
                   </div>
@@ -240,11 +237,9 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
               /* ── Form ── */
               <form key={formKey} action={formAction} className="space-y-5">
                 {!pastEntry && (
-                  <div className="space-y-2">
-                    <p className="text-base leading-relaxed text-muted-foreground">
-                      {encouragement}
-                    </p>
-                  </div>
+                  <p className="font-affirmation text-base leading-relaxed text-foreground/90">
+                    {encouragement}
+                  </p>
                 )}
 
                 {pastEntry && (
