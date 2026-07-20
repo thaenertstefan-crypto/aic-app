@@ -2,7 +2,7 @@
 
 import { useActionState, useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,35 +72,41 @@ export function HypothesisForm({ initialValues }: Props) {
   };
 
   const isFull = selectedValues.length === MAX_VALUES;
+  const remaining = MAX_VALUES - selectedValues.length;
 
   // ── Completion-Screen nach erfolgreichem Speichern ──
   if (state.success) {
     return (
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center gap-6 px-4 py-8 text-center">
         <CompletionCelebration />
-        <p className="max-w-prose text-base text-muted-foreground">
+        <p className="max-w-prose text-base leading-relaxed text-foreground">
           Super! In den nächsten Tagen werden wir diese Werte-Hypothese testen.
           Beginne deine erste Reflexion.
         </p>
 
         <div className="w-full space-y-3 text-left">
-          {selectedValues.map((id) => (
-            <Card key={id}>
-              <CardContent className="flex items-start gap-3">
-                <span className="text-2xl leading-none" aria-hidden="true">
-                  {getValueEmoji(id)}
-                </span>
-                <div className="min-w-0 space-y-1">
-                  <p className="font-heading text-base font-semibold text-foreground">
-                    {getValueLabel(id)}
-                  </p>
-                  <p className="text-base leading-relaxed text-muted-foreground">
-                    Dir ist wichtig, dass {getValueDescription(id)}.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {selectedValues.map((id) => {
+            const isCustom = id.startsWith(CUSTOM_PREFIX);
+            return (
+              <Card key={id}>
+                <CardContent className="flex items-start gap-3">
+                  <span className="text-2xl leading-none" aria-hidden="true">
+                    {getValueEmoji(id)}
+                  </span>
+                  <div className="min-w-0 space-y-1">
+                    <p className="font-heading text-base font-semibold text-foreground">
+                      {getValueLabel(id)}
+                    </p>
+                    {!isCustom && (
+                      <p className="font-affirmation text-base leading-relaxed text-foreground/90">
+                        Dir ist wichtig, dass {getValueDescription(id)}.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <Button
@@ -116,28 +122,15 @@ export function HypothesisForm({ initialValues }: Props) {
   }
 
   return (
-    <div className="flex flex-1 flex-col px-4 py-6">
+    <div className="mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-6">
       {/* Header — die 7-Tage-Reise ist das führende Modell (Karte „Tag N von 7",
           Journal-Header „Tag N — Reflexion"); kein konkurrierender „Schritt"-Zähler. */}
-      <header className="mb-2">
-        <p className="max-w-prose text-lg text-muted-foreground">
+      <header className="mb-4">
+        <p className="max-w-prose text-lg leading-relaxed text-foreground">
           Wähl 5 Werte aus, die sich gerade jetzt echt für dich anfühlen — nicht
           zu viel nachdenken, einfach fühlen.
         </p>
       </header>
-
-      {/* Counter */}
-      <div className="mb-4" aria-live="polite">
-        <span
-          className={`inline-block rounded-full px-3 py-1 text-sm font-medium transition-colors ${
-            isFull
-              ? "bg-primary/15 text-primary"
-              : "bg-muted text-muted-foreground"
-          }`}
-        >
-          {selectedValues.length}/{MAX_VALUES} ausgewählt
-        </span>
-      </div>
 
       {/* Error */}
       <FormError message={state.error} className="mb-4" />
@@ -178,6 +171,7 @@ export function HypothesisForm({ initialValues }: Props) {
               <Input
                 id="custom-value"
                 type="text"
+                maxLength={30}
                 placeholder="z. B. Gelassenheit"
                 value={customValue}
                 onChange={(e) => setCustomValue(e.target.value)}
@@ -201,32 +195,54 @@ export function HypothesisForm({ initialValues }: Props) {
           </div>
         )}
 
-        {/* Selected values summary (visible when some are selected) */}
+        {/* Deine Auswahl — das einzige Zähl-Signal (Kopf trägt N/5) und zugleich
+            die Bedeutung je Wert: eine Vorschau auf die Auswertung, die die Picks
+            an einem Ort sammelt, während der Zähler beim Scrollen sonst wegläuft. */}
         {selectedValues.length > 0 && (
-          <div className="mt-4">
-            <p className="mb-2 text-sm text-muted-foreground">Deine Auswahl:</p>
-            <div className="flex flex-wrap gap-1.5">
-              {selectedValues.map((v) => (
-                <span
-                  key={v}
-                  className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary"
-                >
-                  {getValueLabel(v)}
-                  <button
-                    type="button"
-                    onClick={() => toggleValue(v)}
-                    className="-mr-1 ml-0.5 inline-flex size-7 items-center justify-center leading-none hover:text-primary"
-                    aria-label={`${getValueLabel(v)} entfernen`}
+          <div className="mt-6">
+            <p
+              className="mb-2 text-sm font-medium text-foreground"
+              aria-live="polite"
+            >
+              Deine Auswahl · {selectedValues.length}/{MAX_VALUES}
+            </p>
+            <ul className="space-y-2">
+              {selectedValues.map((id) => {
+                const isCustom = id.startsWith(CUSTOM_PREFIX);
+                return (
+                  <li
+                    key={id}
+                    className="flex items-start gap-2.5 rounded-lg bg-card px-3 py-2 ring-1 ring-border/70"
                   >
-                    &times;
-                  </button>
-                </span>
-              ))}
-            </div>
+                    <span className="mt-0.5 text-lg leading-none" aria-hidden="true">
+                      {getValueEmoji(id)}
+                    </span>
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <p className="font-heading text-sm font-medium text-foreground">
+                        {getValueLabel(id)}
+                      </p>
+                      {!isCustom && (
+                        <p className="font-affirmation text-sm leading-relaxed text-muted-foreground">
+                          Dir ist wichtig, dass {getValueDescription(id)}.
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleValue(id)}
+                      className="-my-1 -mr-1.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+                      aria-label={`${getValueLabel(id)} entfernen`}
+                    >
+                      <X className="size-4" aria-hidden="true" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         )}
 
-        {/* Submit */}
+        {/* Submit — trägt selbst den Rest-Zähler, kein separater Hinweis darunter. */}
         <div className="mt-8">
           <Button
             className="w-full"
@@ -234,15 +250,12 @@ export function HypothesisForm({ initialValues }: Props) {
             size="lg"
             disabled={!isFull || pending}
           >
-            {pending ? "Wird gespeichert …" : "Weiter"}
+            {pending
+              ? "Wird gespeichert …"
+              : isFull
+                ? "Weiter"
+                : `Noch ${remaining} ${remaining === 1 ? "Wert" : "Werte"} wählen`}
           </Button>
-          {!isFull && selectedValues.length > 0 && (
-            <p className="mt-2 text-center text-sm text-muted-foreground">
-              Wähle noch {MAX_VALUES - selectedValues.length} weitere
-              {MAX_VALUES - selectedValues.length === 1 ? "n" : ""} Wert
-              {MAX_VALUES - selectedValues.length === 1 ? "" : "e"} aus.
-            </p>
-          )}
         </div>
       </form>
     </div>
