@@ -33,10 +33,6 @@ const ENCOURAGEMENTS = [
   "Dein Ich von heute wird es dir später danken.",
 ];
 
-function randomEncouragement(): string {
-  return ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
-}
-
 // ─── Props ──────────────────────────────────────────────────────────
 
 interface JournalFormProps {
@@ -71,7 +67,10 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
   // Today's entry
   const todayEntry = entryByDate.get(todayKey) ?? null;
   const [isEditing, setIsEditing] = useState(false);
-  const [encouragement] = useState(randomEncouragement);
+  // Deterministisch aus dem Tagesfortschritt seeden statt Math.random —
+  // sonst rendern Server und Client unterschiedliche Zeilen (Hydration-
+  // Mismatch, sichtbarer Flip). Rotiert weiterhin pro Reflexionstag.
+  const encouragement = ENCOURAGEMENTS[entryCount % ENCOURAGEMENTS.length];
 
   // Vergangener Tag (?day=N): dessen Eintrag hat Vorrang vor Heute-Formular,
   // Completion-Screen und Draft-Mechanik.

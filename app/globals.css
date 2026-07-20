@@ -26,6 +26,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-text: var(--destructive-text);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -66,6 +67,11 @@
   --accent: #332818;
   --accent-foreground: #F3EFFA;
   --destructive: #E5484D;
+  /* Aufgehellter Rot-Ton für Destructive-*Text* auf dunklen/getönten Flächen
+     (z.B. aktiver „Ersetzen"-Toggle auf bg-destructive/10): #E5484D selbst
+     erreicht dort nur 3.28:1 — #F58B8E liegt bei 5.48:1 (AA). --destructive
+     bleibt der Fill/Border/Ring-Ton. */
+  --destructive-text: #F58B8E;
   --border: rgba(255,255,255,0.12);
   --input: rgba(255,255,255,0.16);
   --ring: #E7B65E;
@@ -105,6 +111,7 @@
   --accent: #332818;
   --accent-foreground: #F3EFFA;
   --destructive: #E5484D;
+  --destructive-text: #F58B8E;
   --border: rgba(255,255,255,0.12);
   --input: rgba(255,255,255,0.16);
   --ring: #E7B65E;

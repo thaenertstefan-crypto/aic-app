@@ -27,7 +27,8 @@ const cr = (a, b) => {
 
 const bg = token("background"), card = token("card"),
   fg = token("foreground"), mutedFg = token("muted-foreground"),
-  primary = token("primary"), primaryFg = token("primary-foreground");
+  primary = token("primary"), primaryFg = token("primary-foreground"),
+  destructiveText = token("destructive-text");
 
 const checks = [
   ["Card vs. Verlauf oben (Flächen-Schritt)", cr(card, GRADIENT_TOP), 1.29],
@@ -37,6 +38,9 @@ const checks = [
   ["Gold-Ink auf Gold (CTA-Text)", cr(primaryFg, primary), 4.5],
   ["Gold auf Background (CTA-Fläche)", cr(primary, bg), 3.0],
   ["Gold auf Card (CTA auf Karte)", cr(primary, card), 3.0],
+  // Solide Card als Proxy für die getönte bg-destructive/10-Fläche des aktiven
+  // „Ersetzen"-Toggles (liegt minimal darüber, also konservativ).
+  ["Destructive-Text auf Card (Ersetzen-Toggle)", cr(destructiveText, card), 4.5],
 ];
 
 let failed = false;

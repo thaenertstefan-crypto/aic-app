@@ -249,7 +249,7 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
                   "absolute flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   isSelected
                     ? "bg-primary/15 ring-2 ring-primary"
-                    : "border border-white/15 bg-white/10 hover:border-white/30 hover:bg-white/15 active:bg-white/20",
+                    : "border border-foreground/15 bg-foreground/10 hover:border-foreground/30 hover:bg-foreground/15 active:bg-foreground/20",
                 )}
                 style={{
                   left: `${(pos.x / 320) * 100}%`,

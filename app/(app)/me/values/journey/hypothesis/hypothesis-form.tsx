@@ -126,7 +126,7 @@ export function HypothesisForm({ initialValues }: Props) {
       </header>
 
       {/* Counter */}
-      <div className="mb-4">
+      <div className="mb-4" aria-live="polite">
         <span
           className={`inline-block rounded-full px-3 py-1 text-sm font-medium transition-colors ${
             isFull
@@ -153,8 +153,9 @@ export function HypothesisForm({ initialValues }: Props) {
               <button
                 key={item.id}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => toggleValue(item.id)}
-                className={`rounded-full border px-3 py-1 text-sm transition-all duration-150 active:scale-95 ${
+                className={`rounded-full border px-3 py-1 text-sm transition-all duration-150 active:scale-95 motion-reduce:active:scale-100 ${
                   isSelected
                     ? "border-primary bg-primary/15 font-medium text-primary shadow-sm"
                     : "border-border bg-card text-foreground hover:border-muted-foreground/40 hover:bg-muted"
@@ -213,7 +214,7 @@ export function HypothesisForm({ initialValues }: Props) {
                   <button
                     type="button"
                     onClick={() => toggleValue(v)}
-                    className="ml-0.5 inline-flex leading-none hover:text-primary"
+                    className="-mr-1 ml-0.5 inline-flex size-6 items-center justify-center leading-none hover:text-primary"
                     aria-label={`${getValueLabel(v)} entfernen`}
                   >
                     &times;

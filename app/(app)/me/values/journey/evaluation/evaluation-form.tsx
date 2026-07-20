@@ -196,11 +196,11 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
     <div className="flex flex-1 flex-col px-4 py-6">
       {/* ── Shared header ── */}
       <header className="mb-6 space-y-2">
-        <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+        <h2 className="font-heading text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
           {currentPhase === "reflection" && "Auswertung"}
           {currentPhase === "adjust" && "Deine Werte verfeinern"}
           {currentPhase === "complete" && "Zyklus abgeschlossen!"}
-        </h1>
+        </h2>
         <p className="text-sm text-muted-foreground">Schritt 3 von 3</p>
       </header>
 
@@ -220,9 +220,9 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
 
           {/* 7-day entry summary (collapsible) */}
           <div className="mb-6 space-y-2">
-            <h2 className="font-heading text-base font-semibold">
+            <h3 className="font-heading text-base font-semibold">
               Deine Woche im Rückblick
-            </h2>
+            </h3>
             {entries.map((entry, i) => (
               <details
                 key={entry.id}
@@ -324,9 +324,9 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
           {/* AI insights card — gentle observations before adjusting values */}
           <Card className="mb-8 border-primary/30">
             <CardContent className="space-y-3 pt-(--card-spacing)">
-              <h2 className="font-heading text-base font-semibold text-primary">
+              <h3 className="font-heading text-base font-semibold text-primary">
                 Was uns aufgefallen ist …
-              </h2>
+              </h3>
               {insights === null ? (
                 <p className="text-sm text-muted-foreground">
                   Wir schauen uns deine Woche an … einen kurzen Moment.
@@ -347,9 +347,9 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
 
           {/* Original values with Keep/Replace toggles */}
           <div className="mb-8 space-y-3">
-            <h2 className="font-heading text-base font-semibold">
+            <h3 className="font-heading text-base font-semibold">
               Deine ursprünglichen Werte
-            </h2>
+            </h3>
             {hypothesis.map((value, index) => (
               <Card key={index} size="sm">
                 <CardContent className="space-y-3 pt-(--card-spacing)">
@@ -360,10 +360,11 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                     <div className="flex shrink-0 gap-1">
                       <button
                         type="button"
+                        aria-pressed={isKept[index]}
                         onClick={() => {
                           if (!isKept[index]) toggleKeep(index);
                         }}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                        className={`inline-flex h-9 items-center rounded-full px-3 text-xs font-medium transition-all ${
                           isKept[index]
                             ? "bg-primary/15 text-primary shadow-sm"
                             : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -373,12 +374,13 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                       </button>
                       <button
                         type="button"
+                        aria-pressed={!isKept[index]}
                         onClick={() => {
                           if (isKept[index]) toggleKeep(index);
                         }}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                        className={`inline-flex h-9 items-center rounded-full px-3 text-xs font-medium transition-all ${
                           !isKept[index]
-                            ? "bg-destructive/10 text-destructive shadow-sm"
+                            ? "bg-destructive/10 text-destructive-text shadow-sm"
                             : "bg-muted text-muted-foreground hover:bg-muted/80"
                         }`}
                       >
@@ -404,8 +406,9 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                           <button
                             key={v.id}
                             type="button"
+                            aria-pressed={replacements[index] === v.id}
                             onClick={() => pickReplacement(index, v.id)}
-                            className={`rounded-full border px-2.5 py-1 text-xs transition-all active:scale-95 ${
+                            className={`rounded-full border px-2.5 py-1 text-xs transition-all active:scale-95 motion-reduce:active:scale-100 ${
                               replacements[index] === v.id
                                 ? "border-primary bg-primary/15 font-medium text-primary"
                                 : "border-border bg-card text-foreground hover:border-muted-foreground/40 hover:bg-muted"
@@ -481,9 +484,9 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
 
           {/* Additional values */}
           <div className="mb-8 space-y-3">
-            <h2 className="font-heading text-base font-semibold">
+            <h3 className="font-heading text-base font-semibold">
               Weitere Werte hinzufügen
-            </h2>
+            </h3>
             <p className="text-sm text-muted-foreground">
               Dir fällt noch ein Wert ein, der dir wichtig ist? Füg ihn
               einfach hinzu. Es gibt kein Limit.
@@ -498,7 +501,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                   key={v.id}
                   type="button"
                   onClick={() => addAdditionalValue(v.id)}
-                  className="rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground transition-all hover:border-primary hover:bg-primary/15 active:scale-95"
+                  className="rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground transition-all hover:border-primary hover:bg-primary/15 active:scale-95 motion-reduce:active:scale-100"
                 >
                   + {v.de}
                 </button>
@@ -560,7 +563,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                         <button
                           type="button"
                           onClick={() => toggleKeep(i)}
-                          className="ml-0.5 inline-flex leading-none hover:text-primary"
+                          className="-mr-1 ml-0.5 inline-flex size-6 items-center justify-center leading-none hover:text-primary"
                           aria-label={`${getValueLabel(v)} entfernen`}
                         >
                           &times;
@@ -585,7 +588,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                     <button
                       type="button"
                       onClick={() => removeAdditionalValue(v)}
-                      className="ml-0.5 inline-flex leading-none hover:text-foreground"
+                      className="-mr-1 ml-0.5 inline-flex size-6 items-center justify-center leading-none hover:text-foreground"
                       aria-label={`${getValueLabel(v)} entfernen`}
                     >
                       &times;
