@@ -379,7 +379,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                         }}
                         className={`inline-flex h-9 items-center rounded-full px-3 text-xs font-medium transition-all ${
                           !isKept[index]
-                            ? "bg-destructive/10 text-destructive-text shadow-sm"
+                            ? "bg-secondary text-secondary-foreground shadow-sm"
                             : "bg-muted text-muted-foreground hover:bg-muted/80"
                         }`}
                       >
@@ -481,66 +481,75 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
             ))}
           </div>
 
-          {/* Additional values */}
-          <div className="mb-8 space-y-3">
-            <h3 className="font-heading text-base font-semibold">
-              Weitere Werte hinzufügen
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Dir fällt noch ein Wert ein, der dir wichtig ist? Füg ihn
-              einfach hinzu. Es gibt kein Limit.
-            </p>
+          {/* Additional values — die lange Werte-Bank (~76 Chips) liegt hinter
+              einem Reveal, damit die Anpass-Phase mit EINER Entscheidung öffnet
+              (Behalten/Ersetzen); Weitere-Werte ist ein Opt-in. Gleiche
+              <details>-Anmutung wie „Deine Woche im Rückblick". */}
+          <details className="group mb-8 rounded-lg border border-border bg-card transition-colors open:border-primary/30">
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-foreground">
+              <span className="font-heading">Weiteren Wert hinzufügen</span>
+              <span className="ml-auto text-xs text-muted-foreground transition-transform group-open:rotate-45 motion-reduce:transition-none">
+                +
+              </span>
+            </summary>
 
-            {/* Value bank chips for additional values (filtered) */}
-            <div className="flex flex-wrap gap-1.5">
-              {VALUES_BANK.filter(
-                (v) => !allSelectedValues.includes(v.id),
-              ).map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => addAdditionalValue(v.id)}
-                  className="rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground transition-all hover:border-primary hover:bg-primary/15 active:scale-95 motion-reduce:active:scale-100"
-                >
-                  + {v.de}
-                </button>
-              ))}
-            </div>
+            <div className="space-y-3 border-t border-border px-3 py-3">
+              <p className="text-sm text-muted-foreground">
+                Dir fällt noch ein Wert ein, der dir wichtig ist? Füg ihn
+                einfach hinzu. Es gibt kein Limit.
+              </p>
 
-            {/* Custom additional value input */}
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <Label
-                  htmlFor="custom-additional"
-                  className="mb-1 block text-sm text-muted-foreground"
-                >
-                  Eigenen Wert hinzufügen
-                </Label>
-                <Input
-                  id="custom-additional"
-                  type="text"
-                  placeholder="z. B. Gelassenheit"
-                  value={customAdditional}
-                  onChange={(e) => setCustomAdditional(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addCustomAdditional();
-                    }
-                  }}
-                />
+              {/* Value bank chips for additional values (filtered) */}
+              <div className="flex flex-wrap gap-1.5">
+                {VALUES_BANK.filter(
+                  (v) => !allSelectedValues.includes(v.id),
+                ).map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => addAdditionalValue(v.id)}
+                    className="rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground transition-all hover:border-primary hover:bg-primary/15 active:scale-95 motion-reduce:active:scale-100"
+                  >
+                    + {v.de}
+                  </button>
+                ))}
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addCustomAdditional}
-                disabled={!customAdditional.trim()}
-              >
-                Hinzufügen
-              </Button>
+
+              {/* Custom additional value input */}
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Label
+                    htmlFor="custom-additional"
+                    className="mb-1 block text-sm text-muted-foreground"
+                  >
+                    Eigenen Wert hinzufügen
+                  </Label>
+                  <Input
+                    id="custom-additional"
+                    type="text"
+                    placeholder="z. B. Gelassenheit"
+                    value={customAdditional}
+                    onChange={(e) => setCustomAdditional(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCustomAdditional();
+                      }
+                    }}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addCustomAdditional}
+                  disabled={!customAdditional.trim()}
+                >
+                  Hinzufügen
+                </Button>
+              </div>
             </div>
-          </div>
+          </details>
 
           {/* Summary of all selected values */}
           {finalValues.length > 0 && (
