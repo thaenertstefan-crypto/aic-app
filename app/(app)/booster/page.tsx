@@ -76,7 +76,7 @@ export default function BoosterPage() {
               key={s.href}
               href={s.href}
               aria-label={`${s.title} — ${s.feeling}`}
-              className="absolute z-10 flex w-36 -translate-x-1/2 -translate-y-9 flex-col items-center gap-1 rounded-xl px-2 py-2 text-center transition-[background-color,transform] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="absolute z-10 flex w-36 -translate-x-1/2 -translate-y-9 flex-col items-center gap-1 rounded-xl px-2 py-2 text-center transition-[background-color,scale] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               style={{ left: `${(s.x / 200) * 100}%`, top: `${(s.y / 340) * 100}%` }}
             >
               {s.art}

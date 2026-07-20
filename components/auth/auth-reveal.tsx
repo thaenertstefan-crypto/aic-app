@@ -94,7 +94,7 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
       <div className="flex min-h-lvh items-center justify-center px-4 py-12">
         <div
           className={cn(
-            "w-full max-w-sm transition-[transform,opacity] duration-700 ease-out",
+            "w-full max-w-sm transition-[scale,opacity] duration-700 ease-out",
             revealed
               ? "scale-100 opacity-100"
               : "pointer-events-none scale-90 opacity-0",
@@ -127,7 +127,7 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
         className={cn(
           "absolute inset-0 z-20 isolate flex flex-col overflow-hidden",
           "bg-linear-to-br from-secondary via-accent/60 to-background",
-          "transition-[transform,opacity] duration-1000 ease-out",
+          "transition-[translate,opacity] duration-1000 ease-out",
           revealed
             ? "pointer-events-none -translate-y-full opacity-0"
             : "translate-y-0 opacity-100",
