@@ -553,6 +553,19 @@
   }
   .quiet-glow-in { animation: quiet-glow-in 1.5s ease-out forwards; }
 
+  /* Aktueller, antippbarer Stern lockt: sanfter Sonar-Ring nach außen.
+     Zentrierung läuft über transform (nicht die Tailwind-translate-Property),
+     damit sich Zentrierung und Puls nicht doppelt verschieben. */
+  @keyframes waymark-beckon {
+    0%   { opacity: 0.5; transform: translate(-50%, -50%) scale(0.9); }
+    70%  { opacity: 0;   transform: translate(-50%, -50%) scale(1.6); }
+    100% { opacity: 0;   transform: translate(-50%, -50%) scale(1.6); }
+  }
+  .waymark-beckon { animation: waymark-beckon 2.4s ease-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .waymark-beckon { animation: none; }
+  }
+
   /* Werte-Kompassrose: Detailkarte blendet beim Wertewechsel weich um. */
   @keyframes fade-swap {
     from { opacity: 0; transform: translateY(4px); }

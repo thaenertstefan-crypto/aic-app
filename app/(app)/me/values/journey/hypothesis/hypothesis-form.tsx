@@ -117,10 +117,9 @@ export function HypothesisForm({ initialValues }: Props) {
 
   return (
     <div className="flex flex-1 flex-col px-4 py-6">
-      {/* Header — Makro-Schritt (1 Hypothese · 2 Reflexion · 3 Auswertung),
-          gleiche Zeile wie Journal & Auswertung. */}
+      {/* Header — die 7-Tage-Reise ist das führende Modell (Karte „Tag N von 7",
+          Journal-Header „Tag N — Reflexion"); kein konkurrierender „Schritt"-Zähler. */}
       <header className="mb-2">
-        <p className="mb-2 text-sm text-muted-foreground">Schritt 1 von 3</p>
         <p className="max-w-prose text-lg text-muted-foreground">
           Wähl 5 Werte aus, die sich gerade jetzt echt für dich anfühlen — nicht
           zu viel nachdenken, einfach fühlen.

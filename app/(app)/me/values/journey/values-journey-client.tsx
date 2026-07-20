@@ -410,20 +410,44 @@ export function ValuesJourneyClient({
               top: `${(y / VIEW_H) * 100}%`,
             };
 
+            // Locken-Cue: nur der aktuelle, HEUTE handlungsbereite Stern lockt
+            // (an einem gesperrten Tag gibt es nichts anzutippen → kein Ring).
+            const beckon =
+              isActiveStep && !gated ? (
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "pointer-events-none absolute left-1/2 top-1/2 rounded-full",
+                    finale ? "size-11" : "size-8",
+                    reduced
+                      ? "-translate-x-1/2 -translate-y-1/2 border border-primary/40"
+                      : "waymark-beckon border border-primary/50",
+                  )}
+                />
+              ) : null;
+
             return clickable ? (
               <Link
                 key={i}
                 href={href}
-                className={nodeClass}
+                className={cn(
+                  nodeClass,
+                  "group rounded-full",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                )}
                 style={nodeStyle}
                 aria-current={isActiveStep ? "step" : undefined}
               >
-                <WaymarkGlyph
-                  state={state}
-                  reduced={reduced}
-                  finale={finale}
-                  anchor={isAnchor}
-                />
+                {/* Nur der Stern reagiert auf Hover/Tap — das Label wächst nicht mit. */}
+                <span className="relative flex items-center justify-center transition duration-150 group-hover:scale-110 group-active:scale-95 motion-reduce:transition-none motion-reduce:group-hover:scale-100 motion-reduce:group-active:scale-100">
+                  {beckon}
+                  <WaymarkGlyph
+                    state={state}
+                    reduced={reduced}
+                    finale={finale}
+                    anchor={isAnchor}
+                  />
+                </span>
                 {labelEl}
               </Link>
             ) : (
@@ -450,11 +474,18 @@ export function ValuesJourneyClient({
             `subtitle`). Kein doppelter Banner am Seitenende. */}
         {allDone && (
           <Reveal delay={0.8} className="pt-4">
-            <p className="text-center text-sm leading-relaxed text-muted-foreground">
-              Dein Kompass ist kalibriert. ✨
-              <br />
-              Schau dir deine Erkenntnisse an.
-            </p>
+            <div className="text-center">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Dein Kompass ist kalibriert. ✨
+              </p>
+              <Link
+                href="/me/values/journey/evaluation"
+                className="mt-2 inline-flex items-center gap-1 rounded-md text-sm font-medium text-primary underline-offset-4 transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                Erkenntnisse ansehen
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
           </Reveal>
         )}
       </div>

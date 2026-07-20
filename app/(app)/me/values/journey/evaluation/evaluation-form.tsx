@@ -201,7 +201,6 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
           {currentPhase === "adjust" && "Deine Werte verfeinern"}
           {currentPhase === "complete" && "Zyklus abgeschlossen!"}
         </h2>
-        <p className="text-sm text-muted-foreground">Schritt 3 von 3</p>
       </header>
 
       {/* ── Shared error banner ── */}
