@@ -246,10 +246,10 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
                 aria-label={v.label}
                 aria-pressed={isSelected}
                 className={cn(
-                  "absolute flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-colors",
+                  "absolute flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                   isSelected
                     ? "bg-primary/15 ring-2 ring-primary"
-                    : "border border-white/10 bg-white/5",
+                    : "border border-white/15 bg-white/10 hover:border-white/30 hover:bg-white/15 active:bg-white/20",
                 )}
                 style={{
                   left: `${(pos.x / 320) * 100}%`,
@@ -292,7 +292,7 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
               {selected.emoji}
             </span>
             <div className="min-w-0">
-              <p className="text-base leading-relaxed text-muted-foreground">
+              <p className="text-base leading-relaxed text-foreground">
                 Dir ist wichtig, dass {selected.description}.
               </p>
             </div>

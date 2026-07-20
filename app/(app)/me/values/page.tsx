@@ -84,9 +84,11 @@ export default async function MeValuesPage() {
             mit Energie lädt, anstatt sie aus dir herauszusaugen.
           </p>
           <div className="flex flex-col gap-4">
-            <p className="text-center font-heading text-base font-medium text-foreground">
-              Welcher Wert ist dir heute besonders wichtig?
-            </p>
+            {compassValues.length > 0 && (
+              <p className="text-center font-heading text-base font-medium text-foreground">
+                Tippe einen Wert an, um ihm nachzuspüren.
+              </p>
+            )}
             <ValuesCompass values={compassValues} />
           </div>
           {cta(
