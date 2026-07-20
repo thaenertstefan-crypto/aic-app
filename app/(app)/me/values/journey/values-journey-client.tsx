@@ -469,6 +469,20 @@ export function ValuesJourneyClient({
           </div>
         </div>
 
+        {/* Erst-Besuch-Cue: Nur beim allerersten Aufruf (nichts erledigt, bei
+            der Hypothese) sagen wir in Worten, dass der leuchtende Stern das
+            Interaktions-Element ist — der Beckon-Ring allein trägt das für
+            Erst-Nutzer nicht. Verschwindet dauerhaft, sobald Schritt 0 erledigt
+            ist. Bewusst hier unter der Karte, NICHT im Header-Untertitel (den
+            besetzt der Tages-Hinweis). Schließt `allDone` gegenseitig aus. */}
+        {!allDone && currentStep === 0 && (
+          <Reveal delay={0.6} className="pt-4">
+            <p className="text-center text-sm leading-relaxed text-muted-foreground">
+              Tipp den leuchtenden Stern an, um zu starten.
+            </p>
+          </Reveal>
+        )}
+
         {/* Tages-Gate: „Heute geschafft — morgen geht's weiter" steht als
             einziger, immer sichtbarer Hinweis im Header-Untertitel (siehe
             `subtitle`). Kein doppelter Banner am Seitenende. */}
