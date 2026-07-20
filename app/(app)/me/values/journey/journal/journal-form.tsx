@@ -155,14 +155,6 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
 
   return (
     <div className="flex flex-1 flex-col px-4 py-6">
-      {/* Makro-Schritt der Werteentdeckung (1 Hypothese · 2 Reflexion ·
-          3 Auswertung) — dieselbe Zeile wie in der Auswertung, damit alle
-          Screens dasselbe „wo bin ich" sprechen. Der Tages-Feingrad steht im
-          Header-Titel („Tag N — Reflexion"). Nicht in der Rückschau (?day=N). */}
-      {!pastEntry && (
-        <p className="mb-4 text-sm text-muted-foreground">Schritt 2 von 3</p>
-      )}
-
       {/* Header — nur noch im Abschluss-Zustand */}
       {!pastEntry && isComplete && (
         <header className="mb-6">

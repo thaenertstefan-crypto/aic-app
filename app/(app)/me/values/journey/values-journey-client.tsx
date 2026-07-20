@@ -445,19 +445,9 @@ export function ValuesJourneyClient({
           </div>
         </div>
 
-        {/* Tages-Gate: erklärt in Worten, warum der nächste Stern noch nicht
-            offen ist — statt einer stummen Sperre. gated und allDone schließen
-            sich gegenseitig aus. */}
-        {gated && (
-          <Reveal delay={0.4} className="pt-4">
-            <p className="text-center text-sm leading-relaxed text-muted-foreground">
-              Heute geschafft ✨
-              <br />
-              Dein nächster Stern leuchtet morgen.
-            </p>
-          </Reveal>
-        )}
-
+        {/* Tages-Gate: „Heute geschafft — morgen geht's weiter" steht als
+            einziger, immer sichtbarer Hinweis im Header-Untertitel (siehe
+            `subtitle`). Kein doppelter Banner am Seitenende. */}
         {allDone && (
           <Reveal delay={0.8} className="pt-4">
             <p className="text-center text-sm leading-relaxed text-muted-foreground">
