@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/ui/form-error";
+import { CompletionCelebration } from "@/components/ui/completion-celebration";
 
 import { VALUES_BANK, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
@@ -626,7 +627,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
         <>
           <Card className="mb-8 border-primary/30">
             <CardContent className="space-y-4 pt-(--card-spacing)">
-              <p className="text-center text-2xl">🎉</p>
+              <CompletionCelebration className="mt-1" />
               <p className="text-center font-heading text-lg font-semibold text-primary">
                 Erster Zyklus geschafft!
               </p>

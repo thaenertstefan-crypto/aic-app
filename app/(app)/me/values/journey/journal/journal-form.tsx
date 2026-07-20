@@ -181,7 +181,7 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
           <Card className="border-primary/30">
             <CardContent className="space-y-3 pt-(--card-spacing)">
               <p className="text-center text-lg font-semibold text-primary">
-                🎉 7 Tage voll!
+                7 Tage voll ✨
               </p>
               <p className="text-center text-base text-muted-foreground">
                 Du hast eine ganze Woche lang deine Gedanken und Gefühle festgehalten.
