@@ -156,7 +156,7 @@ export function HypothesisForm({ initialValues }: Props) {
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => toggleValue(item.id)}
-                className={`rounded-full border px-3 py-1 text-sm transition-all duration-150 active:scale-95 motion-reduce:active:scale-100 ${
+                className={`inline-flex min-h-9 items-center rounded-full border px-3.5 text-sm transition-all duration-150 active:scale-95 motion-reduce:active:scale-100 ${
                   isSelected
                     ? "border-primary bg-primary/15 font-medium text-primary shadow-sm"
                     : "border-border bg-card text-foreground hover:border-muted-foreground/40 hover:bg-muted"
@@ -215,7 +215,7 @@ export function HypothesisForm({ initialValues }: Props) {
                   <button
                     type="button"
                     onClick={() => toggleValue(v)}
-                    className="-mr-1 ml-0.5 inline-flex size-6 items-center justify-center leading-none hover:text-primary"
+                    className="-mr-1 ml-0.5 inline-flex size-7 items-center justify-center leading-none hover:text-primary"
                     aria-label={`${getValueLabel(v)} entfernen`}
                   >
                     &times;

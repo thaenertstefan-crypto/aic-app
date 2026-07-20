@@ -181,7 +181,7 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
           <Card className="border-primary/30">
             <CardContent className="space-y-3 pt-(--card-spacing)">
               <p className="text-center text-lg font-semibold text-primary">
-                7 Tage voll ✨
+                7 Tage voll
               </p>
               <p className="text-center text-base text-muted-foreground">
                 Du hast eine ganze Woche lang deine Gedanken und Gefühle festgehalten.
@@ -318,7 +318,7 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
             <div className="mt-6 space-y-1 text-center">
               {todayEntry && !isEditing && (
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Für heute geschafft ✨ — morgen geht&apos;s weiter.
+                  Für heute geschafft — morgen geht&apos;s weiter.
                 </p>
               )}
               {entryCount < 7 && (

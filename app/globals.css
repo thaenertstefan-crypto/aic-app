@@ -423,6 +423,9 @@
     50%       { opacity: 0.6;  }
   }
   .star-twinkle { animation: star-twinkle 3.5s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .star-twinkle { animation: none; }
+  }
 
   /* Aktueller Stern: sanftes Anschwellen mit goldenem Glühen. */
   @keyframes star-pulse {
@@ -436,6 +439,9 @@
     }
   }
   .star-pulse { animation: star-pulse 2.2s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .star-pulse { animation: none; }
+  }
 
   /* Wants-Sternenkarte: dezentes Funkeln der benannten Sterne. */
   @keyframes want-star-twinkle {
@@ -545,6 +551,9 @@
     to   { stroke-dashoffset: 0; }
   }
   .constellation-draw { animation: constellation-draw 1.4s ease-out forwards; }
+  @media (prefers-reduced-motion: reduce) {
+    .constellation-draw { animation: none; }
+  }
 
   /* Leises Glühen bei vollständigem Sternbild — Glow statt Konfetti. */
   @keyframes quiet-glow-in {

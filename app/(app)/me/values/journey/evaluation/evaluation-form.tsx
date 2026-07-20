@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/ui/form-error";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { VALUES_BANK, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
@@ -84,11 +85,13 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
     { error: null, success: false },
   );
 
-  // When reflection saves successfully, move to adjust phase
-  if (reflectionState.success && currentPhase === "reflection") {
-    // Use setTimeout to avoid React state-in-render warning
-    setTimeout(() => setCurrentPhase("adjust"), 0);
-  }
+  // Advance to the adjust phase once the reflection save succeeds — in an effect
+  // (not the render body) so we never schedule a state update mid-render.
+  useEffect(() => {
+    if (reflectionState.success && currentPhase === "reflection") {
+      setCurrentPhase("adjust");
+    }
+  }, [reflectionState.success, currentPhase]);
 
   // Pre-fill reflection textareas if user already saved
   const existingPositive = valueEvalEntry?.content?.positive_reflection ?? "";
@@ -113,10 +116,12 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
     { error: null, success: false },
   );
 
-  // When adjustment saves successfully, move to complete phase
-  if (adjustState.success && currentPhase === "adjust") {
-    setTimeout(() => setCurrentPhase("complete"), 0);
-  }
+  // Advance to the complete phase once the adjustment save succeeds.
+  useEffect(() => {
+    if (adjustState.success && currentPhase === "adjust") {
+      setCurrentPhase("complete");
+    }
+  }, [adjustState.success, currentPhase]);
 
   const toggleKeep = (index: number) => {
     setIsKept((prev) => {
@@ -198,7 +203,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
       {/* ── Shared header ── */}
       <header className="mb-6 space-y-2">
         <h2 className="font-heading text-4xl font-bold tracking-tight text-foreground">
-          {currentPhase === "reflection" && "Auswertung"}
+          {currentPhase === "reflection" && "Zeit zurückzublicken"}
           {currentPhase === "adjust" && "Deine Werte verfeinern"}
           {currentPhase === "complete" && "Zyklus abgeschlossen!"}
         </h2>
@@ -327,15 +332,19 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
               <h3 className="font-heading text-base font-semibold text-primary">
                 Was uns aufgefallen ist …
               </h3>
-              {insights === null ? (
-                <p className="text-sm text-muted-foreground">
-                  Wir schauen uns deine Woche an … einen kurzen Moment.
-                </p>
-              ) : (
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                  {insights}
-                </p>
-              )}
+              <div aria-live="polite" aria-busy={insights === null}>
+                {insights === null ? (
+                  <div className="space-y-2" aria-hidden="true">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-[92%]" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                    {insights}
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -408,7 +417,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                             type="button"
                             aria-pressed={replacements[index] === v.id}
                             onClick={() => pickReplacement(index, v.id)}
-                            className={`rounded-full border px-2.5 py-1 text-xs transition-all active:scale-95 motion-reduce:active:scale-100 ${
+                            className={`inline-flex min-h-8 items-center rounded-full border px-3 text-xs transition-all active:scale-95 motion-reduce:active:scale-100 ${
                               replacements[index] === v.id
                                 ? "border-primary bg-primary/15 font-medium text-primary"
                                 : "border-border bg-card text-foreground hover:border-muted-foreground/40 hover:bg-muted"
@@ -509,7 +518,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                     key={v.id}
                     type="button"
                     onClick={() => addAdditionalValue(v.id)}
-                    className="rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground transition-all hover:border-primary hover:bg-primary/15 active:scale-95 motion-reduce:active:scale-100"
+                    className="inline-flex min-h-8 items-center rounded-full border border-border bg-card px-3 text-xs text-foreground transition-all hover:border-primary hover:bg-primary/15 active:scale-95 motion-reduce:active:scale-100"
                   >
                     + {v.de}
                   </button>
@@ -572,7 +581,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                         <button
                           type="button"
                           onClick={() => toggleKeep(i)}
-                          className="-mr-1 ml-0.5 inline-flex size-6 items-center justify-center leading-none hover:text-primary"
+                          className="-mr-1 ml-0.5 inline-flex size-7 items-center justify-center leading-none hover:text-primary"
                           aria-label={`${getValueLabel(v)} entfernen`}
                         >
                           &times;
@@ -597,7 +606,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                     <button
                       type="button"
                       onClick={() => removeAdditionalValue(v)}
-                      className="-mr-1 ml-0.5 inline-flex size-6 items-center justify-center leading-none hover:text-foreground"
+                      className="-mr-1 ml-0.5 inline-flex size-7 items-center justify-center leading-none hover:text-foreground"
                       aria-label={`${getValueLabel(v)} entfernen`}
                     >
                       &times;

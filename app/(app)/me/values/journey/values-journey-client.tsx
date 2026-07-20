@@ -180,7 +180,7 @@ export function ValuesJourneyClient({
   // Phasen-/Fortschritts-Zeile für den Header-Untertitel — macht die 7-Tage-
   // Form ab dem ersten Besuch sichtbar und erklärt die Tagessperre in Worten.
   const subtitle = allDone
-    ? "Dein Kompass ist kalibriert ✨"
+    ? "Dein Kompass ist kalibriert"
     : currentStep === 0
       ? "Los geht's — deine Wertehypothese"
       : currentStep === lastIndex
@@ -490,7 +490,7 @@ export function ValuesJourneyClient({
           <Reveal delay={0.8} className="pt-4">
             <div className="text-center">
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Dein Kompass ist kalibriert. ✨
+                Dein Kompass ist kalibriert.
               </p>
               <Link
                 href="/me/values/journey/evaluation"
