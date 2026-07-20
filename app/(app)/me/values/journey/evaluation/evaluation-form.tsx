@@ -196,7 +196,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
     <div className="flex flex-1 flex-col px-4 py-6">
       {/* ── Shared header ── */}
       <header className="mb-6 space-y-2">
-        <h2 className="font-heading text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+        <h2 className="font-heading text-4xl font-bold tracking-tight text-foreground">
           {currentPhase === "reflection" && "Auswertung"}
           {currentPhase === "adjust" && "Deine Werte verfeinern"}
           {currentPhase === "complete" && "Zyklus abgeschlossen!"}

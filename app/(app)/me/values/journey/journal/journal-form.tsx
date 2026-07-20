@@ -155,6 +155,14 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
 
   return (
     <div className="flex flex-1 flex-col px-4 py-6">
+      {/* Makro-Schritt der Werteentdeckung (1 Hypothese · 2 Reflexion ·
+          3 Auswertung) — dieselbe Zeile wie in der Auswertung, damit alle
+          Screens dasselbe „wo bin ich" sprechen. Der Tages-Feingrad steht im
+          Header-Titel („Tag N — Reflexion"). Nicht in der Rückschau (?day=N). */}
+      {!pastEntry && (
+        <p className="mb-4 text-sm text-muted-foreground">Schritt 2 von 3</p>
+      )}
+
       {/* Header — nur noch im Abschluss-Zustand */}
       {!pastEntry && isComplete && (
         <header className="mb-6">
@@ -311,13 +319,22 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
             )}
           </div>
 
-          {/* Entry count progress note */}
+          {/* Fortschritts-Notiz + Tages-Gate: Ist der heutige Eintrag erledigt
+              (Read-only-Ansicht), sagen wir warm „morgen geht's weiter", statt
+              den Nutzer auf der Karte gegen eine stumme Sperre laufen zu lassen. */}
           {!pastEntry && (
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              {entryCount < 7
-                ? `Noch ${7 - entryCount} ${7 - entryCount === 1 ? "Eintrag" : "Einträge"} bis zur Auswertung`
-                : ""}
-            </p>
+            <div className="mt-6 space-y-1 text-center">
+              {todayEntry && !isEditing && (
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Für heute geschafft ✨ — morgen geht&apos;s weiter.
+                </p>
+              )}
+              {entryCount < 7 && (
+                <p className="text-sm text-muted-foreground">
+                  {`Noch ${7 - entryCount} ${7 - entryCount === 1 ? "Eintrag" : "Einträge"} bis zur Auswertung`}
+                </p>
+              )}
+            </div>
           )}
         </>
       )}

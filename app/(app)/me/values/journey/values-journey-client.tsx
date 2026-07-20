@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { Lock } from "lucide-react";
@@ -58,6 +58,10 @@ const CONSTELLATION: { x: number; y: number; side: "left" | "right" }[] = [
  *  für seine Blickrichtung zum aktuellen Stern. */
 const MASCOT_POS = { x: 40, y: 845 };
 
+/** Merker: Die filmische Kamerafahrt lief in dieser Session schon — beim
+ *  täglichen Wiederbesuch springt die Ansicht direkt zum aktuellen Stern. */
+const SWEPT_SESSION_KEY = "aic:values-journey-swept";
+
 /** Hintergrund-Funkelsterne — handgewählt abseits der Label-Bahnen. */
 const MICRO_STARS: { x: number; y: number; r: number }[] = [
   { x: 20, y: 65, r: 1.2 },
@@ -101,10 +105,15 @@ function WaymarkGlyph({
   state,
   reduced,
   finale = false,
+  anchor = false,
 }: {
   state: State;
   reduced: boolean;
   finale?: boolean;
+  /** Ein erledigter Stern, der als aktueller Ruhepunkt dient (Tages-Gate):
+   *  glüht und pulsiert wie der aktuelle Schritt, damit die Karte nie ohne
+   *  angezündeten Bezugspunkt dasteht. */
+  anchor?: boolean;
 }) {
   // Glow-Logik wie beim alten Sternglyph: die Endstation glüht wärmer,
   // erledigte Marken tragen einen leisen Goldschein.
@@ -112,11 +121,13 @@ function WaymarkGlyph({
     ? state === "open"
       ? "drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 40%, transparent))"
       : "drop-shadow(0 0 14px color-mix(in srgb, var(--primary) 85%, transparent))"
-    : state === "done"
-      ? "drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 60%, transparent))"
-      : state === "current" && reduced
-        ? "drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 75%, transparent))"
-        : undefined;
+    : anchor
+      ? "drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 75%, transparent))"
+      : state === "done"
+        ? "drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 60%, transparent))"
+        : state === "current" && reduced
+          ? "drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 75%, transparent))"
+          : undefined;
   return (
     <svg
       viewBox="0 0 24 24"
@@ -125,7 +136,7 @@ function WaymarkGlyph({
         "shrink-0",
         state === "open" && "opacity-60",
         !reduced &&
-          (state === "current" || (finale && state === "done")) &&
+          (state === "current" || anchor || (finale && state === "done")) &&
           "star-pulse",
       )}
       style={glow ? { filter: glow } : undefined}
@@ -160,28 +171,78 @@ export function ValuesJourneyClient({
   const lastIndex = STEP_LABELS.length - 1;
   const allDone = done.size > lastIndex;
 
-  // Die Reise startet unten: beim Laden ans Seitenende führen — als sanfte
-  // Kamerafahrt über den Nachthimmel (bewusste Ausnahme vom "oben starten"-
-  // Standard der App). Nutzer-Input bricht die Fahrt sofort ab; bei reduced
-  // motion landet man ohne Fahrt direkt unten.
+  // Tages-Gate: currentStep ist normalerweise der erste NICHT erledigte
+  // Schritt. Nur die Kalendersperre in page.tsx klemmt ihn auf einen bereits
+  // erledigten Reflexionstag — daran erkennen wir „heute geschafft, nächster
+  // Stern öffnet morgen", ohne ein zusätzliches Server-Signal.
+  const gated = !allDone && done.has(currentStep);
+
+  // Phasen-/Fortschritts-Zeile für den Header-Untertitel — macht die 7-Tage-
+  // Form ab dem ersten Besuch sichtbar und erklärt die Tagessperre in Worten.
+  const subtitle = allDone
+    ? "Dein Kompass ist kalibriert ✨"
+    : currentStep === 0
+      ? "Los geht's — deine Wertehypothese"
+      : currentStep === lastIndex
+        ? "Zeit für die Auswertung"
+        : gated
+          ? "Heute geschafft — morgen geht's weiter ✨"
+          : `Tag ${currentStep} von 7`;
+
+  // Bezugspunkt für die Kamerafahrt: der aktuelle Stern soll zentriert landen.
+  const mapBoxRef = useRef<HTMLDivElement>(null);
+
+  // Beim Laden zum aktuellen Stern führen — als sanfte Kamerafahrt über den
+  // Nachthimmel (bewusste Ausnahme vom "oben starten"-Standard der App). Die
+  // Fahrt landet auf der aktuellen Etappe (nicht am Seitenende = Anfang der
+  // Reise) und läuft nur beim ersten Besuch pro Session; danach springt sie
+  // direkt hin. Nutzer-Input bricht die Fahrt sofort ab; bei reduced motion
+  // landet man ohne Fahrt direkt beim aktuellen Stern.
   useEffect(() => {
-    const target =
-      document.documentElement.scrollHeight - window.innerHeight;
-    if (target <= 0) return;
+    const box = mapBoxRef.current;
+    if (!box) return;
+
+    const rect = box.getBoundingClientRect();
+    const boxTop = rect.top + window.scrollY;
+    const starY =
+      boxTop +
+      (CONSTELLATION[clamp(currentStep, 0, lastIndex)].y / VIEW_H) *
+        rect.height;
+    const maxScroll = Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight,
+    );
+    const center = clamp(starY - window.innerHeight / 2, 0, maxScroll);
 
     if (reduced) {
-      window.scrollTo(0, target);
+      window.scrollTo(0, center);
+      return;
+    }
+
+    let swept = false;
+    try {
+      swept = sessionStorage.getItem(SWEPT_SESSION_KEY) === "1";
+    } catch {
+      // sessionStorage kann im Privat-Modus werfen — dann einfach animieren.
+    }
+    if (swept) {
+      window.scrollTo(0, center);
       return;
     }
 
     const proxy = { y: window.scrollY };
     const tween = gsap.to(proxy, {
-      y: target,
+      y: center,
       duration: 1.5,
       delay: 0.15,
       ease: "power2.inOut",
       onUpdate: () => window.scrollTo(0, proxy.y),
     });
+    try {
+      sessionStorage.setItem(SWEPT_SESSION_KEY, "1");
+    } catch {
+      /* ignore */
+    }
 
     const cancel = () => tween.kill();
     const opts = { once: true, passive: true } as const;
@@ -195,7 +256,7 @@ export function ValuesJourneyClient({
       window.removeEventListener("touchstart", cancel);
       window.removeEventListener("keydown", cancel);
     };
-  }, [reduced]);
+  }, [reduced, currentStep, lastIndex]);
 
   // Gezeichnete Konstellation: Pfad durch die erledigten Sterne (der Server
   // liefert sie lückenlos ab 0) — mindestens zwei Punkte nötig.
@@ -213,10 +274,15 @@ export function ValuesJourneyClient({
 
   return (
     <div className="flex min-h-svh flex-col">
-      <SubPageHeader backHref="/me/values" title="Werteentdeckung" />
+      <SubPageHeader
+        backHref="/me/values"
+        title="Werteentdeckung"
+        subtitle={subtitle}
+      />
 
       <div className="mx-auto w-full max-w-lg flex-1 px-6 py-6">
         <div
+          ref={mapBoxRef}
           className="relative w-full"
           style={{ aspectRatio: `${VIEW_W} / ${VIEW_H}` }}
         >
@@ -291,6 +357,17 @@ export function ValuesJourneyClient({
                 ? "current"
                 : "open";
             const finale = i === lastIndex;
+            // Ein bereits erledigter Stern kann bei aktiver Tagessperre der
+            // aktuelle Ruhepunkt sein: er bleibt angezündet, damit die Karte
+            // nie ohne lebendigen Bezugspunkt dasteht.
+            const isAnchor = gated && i === currentStep;
+            const isActiveStep = isAnchor || state === "current";
+            // Zustand auch für Screenreader hörbar machen (nicht nur Farbe/Form).
+            const stateText = isActiveStep
+              ? "aktuell"
+              : state === "done"
+                ? "erledigt"
+                : "gesperrt";
             const { x, y, side } = CONSTELLATION[i];
             const clickable = state !== "open";
             // Bereits abgeschlossene Reflexionstage öffnen ihren eigenen
@@ -322,6 +399,7 @@ export function ValuesJourneyClient({
                   <Lock className="size-3.5 shrink-0 text-muted-foreground" />
                 )}
                 {label}
+                <span className="sr-only"> — {stateText}</span>
               </span>
             );
 
@@ -338,8 +416,14 @@ export function ValuesJourneyClient({
                 href={href}
                 className={nodeClass}
                 style={nodeStyle}
+                aria-current={isActiveStep ? "step" : undefined}
               >
-                <WaymarkGlyph state={state} reduced={reduced} finale={finale} />
+                <WaymarkGlyph
+                  state={state}
+                  reduced={reduced}
+                  finale={finale}
+                  anchor={isAnchor}
+                />
                 {labelEl}
               </Link>
             ) : (
@@ -360,6 +444,19 @@ export function ValuesJourneyClient({
             />
           </div>
         </div>
+
+        {/* Tages-Gate: erklärt in Worten, warum der nächste Stern noch nicht
+            offen ist — statt einer stummen Sperre. gated und allDone schließen
+            sich gegenseitig aus. */}
+        {gated && (
+          <Reveal delay={0.4} className="pt-4">
+            <p className="text-center text-sm leading-relaxed text-muted-foreground">
+              Heute geschafft ✨
+              <br />
+              Dein nächster Stern leuchtet morgen.
+            </p>
+          </Reveal>
+        )}
 
         {allDone && (
           <Reveal delay={0.8} className="pt-4">
