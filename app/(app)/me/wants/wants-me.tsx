@@ -23,11 +23,9 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { Mascot } from "@/components/brand/mascot";
-import { StarArt } from "@/components/brand/star-art";
 import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
 import { useWarp, warpPageClass } from "@/components/wants/warp-transition";
 import { cn } from "@/lib/utils";
-import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { saveWantsAction } from "@/app/(app)/recipes/wants/actions";
@@ -57,7 +55,6 @@ export function WantsMe({
   // Löschen ist endgültig → ein zweiter Tap bestätigt (statt harter confirm()).
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const reduced = useReducedMotion();
   const router = useRouter();
   // Der Warp-Übergang lebt im gemeinsamen me/wants-Layout und überlebt so die
   // Navigation. `busy` sperrt den Button während des Sturzes.
@@ -228,12 +225,11 @@ export function WantsMe({
                   >
                     <Reveal delay={0}>
                       <div className="flex flex-col items-center gap-3 pb-2 text-center">
-                        <StarArt animate={!reduced} className="size-16" />
                         <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
                           {PAGE_TITLES.meWantsHero}
                         </h2>
                         <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
-                          Die Sterne, nach denen du greifst — was dich lebendig macht.
+                          Nahe Freuden, ferne Ziele — dein eigener Himmel.
                         </p>
                       </div>
                     </Reveal>
