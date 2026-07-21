@@ -13,6 +13,7 @@ import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollLock } from "@/lib/hooks/use-scroll-lock";
 import { getValueLabel } from "@/lib/utils/values-bank";
 import { cn } from "@/lib/utils";
+import { FocusSky } from "./focus-sky";
 import type { WantItem } from "@/lib/types/db-json";
 
 /**
@@ -338,13 +339,16 @@ export function StarMap({
         focused &&
         createPortal(
           <>
-            {/* Okkludierender Himmel-Hintergrund (verdeckt Nav + verblasste Karte) */}
+            {/* Okkludierender gedimmter Sternenhimmel (verdeckt Nav + verblasste
+                Karte). Skaliert in Task 3 als Einheit für den Parallax-Push. */}
             <div
               ref={layerRef}
-              className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-xl"
+              className="fixed inset-0 z-[60]"
               style={{ opacity: 0 }}
               aria-hidden="true"
-            />
+            >
+              <FocusSky />
+            </div>
 
             {/* Zurück-zum-Himmel — leises Eck-Control oben links */}
             <button
