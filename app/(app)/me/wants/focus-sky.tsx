@@ -14,14 +14,9 @@
 export function FocusSky() {
   return (
     <div aria-hidden className="absolute inset-0 overflow-hidden bg-background">
-      {/* Abdunkel-Wash nach oben — wie SkyBackdrop, etwas tiefer gezogen. */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.04) 40%, rgba(0,0,0,0.01) 58%, transparent 72%)",
-        }}
-      />
+      {/* Abdunkel-Wash nach oben — wie SkyBackdrop, etwas tiefer gezogen.
+          Als benannter Token (--focus-sky-wash in globals.css) gepflegt. */}
+      <div className="absolute inset-0" style={{ background: "var(--focus-sky-wash)" }} />
       {/* Gedimmte, leise funkelnde Sterne (SkyBackdrop-Sprache, tiefer gedimmt). */}
       <div className="absolute inset-0" style={{ opacity: 0.9 }}>
         <span className="sky-light sky-light-twinkle absolute left-[14%] top-[16%]" />

@@ -89,10 +89,14 @@ export function WantsMe({
   // FormError-Banner verdeckende) Fokus-Ebene ihn inline zeigen kann.
   function saveWantEdit(
     id: string,
-    patch: { title: string | null; text: string },
+    patch: { title: string | null; text: string; distance: "nah" | "fern" },
   ): Promise<string | null> {
     return persistWants(
-      wants.map((w) => (w.id === id ? { ...w, title: patch.title, text: patch.text } : w)),
+      wants.map((w) =>
+        w.id === id
+          ? { ...w, title: patch.title, text: patch.text, distance: patch.distance }
+          : w,
+      ),
     );
   }
 
@@ -151,7 +155,7 @@ export function WantsMe({
   }
 
   return (
-    <div className={cn("flex min-h-svh flex-col", warpPageClass("wants", phase, direction))}>
+    <div className={cn("flex min-h-lvh flex-col", warpPageClass("wants", phase, direction))}>
       <SkyBackdrop />
       <SubPageHeader
         backHref="/me"
@@ -176,7 +180,7 @@ export function WantsMe({
                 <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
                   <Mascot expression="curious" size="lg" />
                   <div className="space-y-2">
-                    <h2 className="font-heading text-xl font-semibold text-foreground">
+                    <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
                       Noch keine Sterne entdeckt
                     </h2>
                     <p className="text-base leading-relaxed text-muted-foreground">

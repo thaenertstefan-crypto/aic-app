@@ -31,7 +31,7 @@ import type { WantItem } from "@/lib/types/db-json";
 const STAR_PATH = "M8 0 L9.8 6.2 L16 8 L9.8 9.8 L8 16 L6.2 9.8 L0 8 L6.2 6.2 Z";
 
 const VIEW_W = 360;
-const ROW_H = 96;
+const ROW_H = 80;
 const TOP_PAD = 60;
 const BOTTOM_PAD = 130; // Platz für das Maskottchen unten links
 
@@ -86,7 +86,10 @@ function layoutStars(wants: WantItem[]): { stars: PlacedStar[]; viewH: number } 
   }
   const stars = ordered.map((want, i) => {
     const side: "left" | "right" = i % 2 === 0 ? "left" : "right";
-    const baseX = side === "left" ? 96 : 264;
+    // Spalten-Zentren etwas weiter nach außen (±102 statt ±84 um die Mitte 180),
+    // damit sich die Sterne nicht in der Bildmitte sammeln. Labels zeigen nach
+    // innen und gewinnen dadurch Platz.
+    const baseX = side === "left" ? 78 : 282;
     return {
       want,
       x: baseX + (hash01(want.id) - 0.5) * 56,
@@ -104,7 +107,10 @@ export function StarMap({
   onDelete,
 }: {
   wants: WantItem[];
-  onSaveEdit: (id: string, patch: { title: string | null; text: string }) => Promise<string | null>;
+  onSaveEdit: (
+    id: string,
+    patch: { title: string | null; text: string; distance: "nah" | "fern" },
+  ) => Promise<string | null>;
   onDelete: (id: string) => void;
 }) {
   const reduced = useReducedMotion();
@@ -115,6 +121,7 @@ export function StarMap({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editText, setEditText] = useState("");
+  const [editDistance, setEditDistance] = useState<"nah" | "fern">("nah");
   const [focusError, setFocusError] = useState<string | null>(null);
 
   const mapRef = useRef<HTMLDivElement>(null);
@@ -331,6 +338,7 @@ export function StarMap({
     if (!focused) return;
     setEditTitle(focused.title ?? "");
     setEditText(focused.text);
+    setEditDistance(focused.distance === "fern" ? "fern" : "nah");
     setConfirmDelete(false);
     setFocusError(null);
     setMode("edit");
@@ -343,6 +351,7 @@ export function StarMap({
     const err = await onSaveEdit(focused.id, {
       title: editTitle.trim() ? editTitle.trim() : null,
       text: t,
+      distance: editDistance,
     });
     if (err) {
       setFocusError(err);
@@ -484,7 +493,7 @@ export function StarMap({
             <div
               ref={flyStarRef}
               className="pointer-events-none fixed z-[62]"
-              style={{ left: "50%", top: `${FOCUS_STAR_TOP * 100}vh`, opacity: 0 }}
+              style={{ left: "50%", top: `${FOCUS_STAR_TOP * 100}lvh`, opacity: 0 }}
               aria-hidden="true"
             >
               <svg
@@ -504,7 +513,7 @@ export function StarMap({
                 "fixed inset-x-0 z-[61] flex justify-center px-6 text-center transition-opacity duration-300 motion-reduce:transition-none",
                 contentVisible ? "opacity-100" : "pointer-events-none opacity-0",
               )}
-              style={{ top: `calc(${FOCUS_STAR_TOP * 100}vh + 3rem)`, bottom: 0 }}
+              style={{ top: `calc(${FOCUS_STAR_TOP * 100}lvh + 3rem)`, bottom: 0 }}
             >
               <div className="flex w-full max-w-sm flex-col items-center gap-3 overflow-y-auto pt-4 pb-10">
                 {mode === "view" ? (
@@ -548,6 +557,39 @@ export function StarMap({
                       className="resize-y"
                       aria-label="Beschreibung des Sterns"
                     />
+                    {/* Distanz: die Kern-Grammatik des Himmels selbst setzen. */}
+                    <div className="w-full space-y-1.5">
+                      <span className="block text-left text-xs font-medium text-muted-foreground">
+                        Wie weit weg ist dieser Stern?
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(
+                          [
+                            { value: "nah", label: "Naher Stern", hint: "eine Freude" },
+                            { value: "fern", label: "Ferner Stern", hint: "ein Ziel" },
+                          ] as const
+                        ).map((opt) => {
+                          const active = editDistance === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              aria-pressed={active}
+                              onClick={() => setEditDistance(opt.value)}
+                              className={cn(
+                                "flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 text-center transition-colors",
+                                active
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-border text-muted-foreground hover:bg-muted/40",
+                              )}
+                            >
+                              <span className="text-sm font-medium">{opt.label}</span>
+                              <span className="text-xs opacity-80">{opt.hint}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                     {focusError && (
                       <p className="w-full text-left text-sm text-destructive">{focusError}</p>
                     )}
