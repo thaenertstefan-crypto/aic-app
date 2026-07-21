@@ -68,7 +68,7 @@ export function WantsMe({
 
   const hasSterne = wants.length > 0;
 
-  async function persistWants(updated: WantItem[]) {
+  async function persistWants(updated: WantItem[]): Promise<string | null> {
     const previous = wants;
     setWants(updated);
     setSaveError(null);
@@ -82,10 +82,16 @@ export function WantsMe({
     } else if (res.wants) {
       setWants(res.wants);
     }
+    return res.error ?? null;
   }
 
-  function saveWantEdit(id: string, patch: { title: string | null; text: string }) {
-    void persistWants(
+  // Speichern aus dem Fokus: den Fehler zurückgeben, damit die (das seitliche
+  // FormError-Banner verdeckende) Fokus-Ebene ihn inline zeigen kann.
+  function saveWantEdit(
+    id: string,
+    patch: { title: string | null; text: string },
+  ): Promise<string | null> {
+    return persistWants(
       wants.map((w) => (w.id === id ? { ...w, title: patch.title, text: patch.text } : w)),
     );
   }

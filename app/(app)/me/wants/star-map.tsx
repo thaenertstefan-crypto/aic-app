@@ -103,7 +103,7 @@ export function StarMap({
   onDelete,
 }: {
   wants: WantItem[];
-  onSaveEdit: (id: string, patch: { title: string | null; text: string }) => void;
+  onSaveEdit: (id: string, patch: { title: string | null; text: string }) => Promise<string | null>;
   onDelete: (id: string) => void;
 }) {
   const reduced = useReducedMotion();
@@ -114,6 +114,7 @@ export function StarMap({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editText, setEditText] = useState("");
+  const [focusError, setFocusError] = useState<string | null>(null);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
@@ -145,6 +146,7 @@ export function StarMap({
     originRef.current = { x: r.left + r.width / 2, y: r.top + r.height / 2, size };
     setMode("view");
     setConfirmDelete(false);
+    setFocusError(null);
     setFocusedId(want.id);
   }
 
@@ -189,6 +191,7 @@ export function StarMap({
     setContentVisible(false);
     setMode("view");
     setConfirmDelete(false);
+    setFocusError(null);
     const fly = flyStarRef.current;
     const layer = layerRef.current;
     const origin = originRef.current;
@@ -220,14 +223,23 @@ export function StarMap({
     setEditTitle(focused.title ?? "");
     setEditText(focused.text);
     setConfirmDelete(false);
+    setFocusError(null);
     setMode("edit");
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     if (!focused) return;
     const t = editText.trim();
     if (!t) return;
-    onSaveEdit(focused.id, { title: editTitle.trim() ? editTitle.trim() : null, text: t });
+    const err = await onSaveEdit(focused.id, {
+      title: editTitle.trim() ? editTitle.trim() : null,
+      text: t,
+    });
+    if (err) {
+      setFocusError(err);
+      return;
+    }
+    setFocusError(null);
     setMode("view");
   }
 
@@ -351,7 +363,7 @@ export function StarMap({
             <div
               ref={flyStarRef}
               className="pointer-events-none fixed z-[62]"
-              style={{ left: "50%", top: `${FOCUS_STAR_TOP * 100}vh` }}
+              style={{ left: "50%", top: `${FOCUS_STAR_TOP * 100}vh`, opacity: 0 }}
               aria-hidden="true"
             >
               <svg
@@ -415,6 +427,9 @@ export function StarMap({
                       className="resize-y"
                       aria-label="Beschreibung des Sterns"
                     />
+                    {focusError && (
+                      <p className="w-full text-left text-sm text-destructive">{focusError}</p>
+                    )}
                     <div className="flex w-full gap-2">
                       <Button
                         variant="outline"
@@ -422,6 +437,7 @@ export function StarMap({
                         onClick={() => {
                           setMode("view");
                           setConfirmDelete(false);
+                          setFocusError(null);
                         }}
                       >
                         Abbrechen
