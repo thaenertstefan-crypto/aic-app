@@ -62,7 +62,7 @@ export function ReflectForm({
 
           <div className="space-y-2">
             <Label htmlFor="experience" className="text-base font-medium">
-              Wie war das Erlebnis? Hat es deine Erwartungen erfüllt oder deine
+              Wie war das Erlebnis — hat es deine Erwartungen erfüllt oder deine
               Sicht verändert?
             </Label>
             <Textarea

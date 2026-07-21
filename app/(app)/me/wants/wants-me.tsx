@@ -52,6 +52,10 @@ export function WantsMe({
   const [addOpen, setAddOpen] = useState(false);
   const [addTitle, setAddTitle] = useState("");
   const [addText, setAddText] = useState("");
+  // Fokus-Zoom: steht ein Stern im Detail, tritt das umgebende Chrome zurück.
+  const [starZoomed, setStarZoomed] = useState(false);
+  // Löschen ist endgültig → ein zweiter Tap bestätigt (statt harter confirm()).
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const reduced = useReducedMotion();
   const router = useRouter();
@@ -96,6 +100,7 @@ export function WantsMe({
     setEditingId(w.id);
     setEditTitle(w.title ?? "");
     setEditText(w.text);
+    setConfirmDelete(false);
   }
 
   function saveEdit() {
@@ -149,38 +154,25 @@ export function WantsMe({
     dive(() => router.push(FORGE_HREF));
   }
 
-  // Im Leer-Zustand steht die Sternschmiede gleichwertig NEBEN „Sternensuche
-  // starten" (siehe Kommentar unten: „Sternsuche ODER direkt in die
-  // Schmiede") — dort bleibt sie outline, damit nur eine Gold-Kerze brennt.
-  // Sobald schon Sterne existieren, ist sie die einzige verbleibende
-  // Primäraktion des Screens und wird zur Gold-Kerze.
-  function forgeBridge(primary: boolean) {
+  // Ruhiger Sekundär-Einstieg in die Sternschmiede. Das „Warum" der Schmiede
+  // lebt jetzt im Info-Overlay (Intro-Karte 4) — hier genügt eine warme Zeile,
+  // damit die eine Gold-Kerze eine Stern-Handlung bleibt, nicht der Weg weg.
+  // goToForge behält den Warp-Sturz; busy sperrt den Doppel-Klick.
+  function forgeLink() {
     return (
-      <section className="space-y-3 rounded-2xl bg-primary/5 p-5 text-center">
-        <Flame className="mx-auto size-6 text-primary" />
-        <h2 className="font-heading text-lg font-semibold text-foreground">
-          Lust, was Neues zu entdecken?
-        </h2>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          Manchmal steckt man in der Routine fest und will endlich wieder etwas
-          Neues ausprobieren — weiß aber nicht was. In der Sternschmiede schlägst du
-          Funken: kleine Wetten, aus denen ein neuer Stern werden könnte.
-        </p>
-        <Button
-          variant={primary ? "default" : "outline"}
-          className="w-full gap-2"
-          size="lg"
-          disabled={busy}
-          onClick={goToForge}
-        >
-          {busy ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Flame className="size-4" />
-          )}
-          Zur Sternschmiede
-        </Button>
-      </section>
+      <Button
+        variant="ghost"
+        className="w-full gap-2 text-muted-foreground"
+        disabled={busy}
+        onClick={goToForge}
+      >
+        {busy ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Flame className="size-4" />
+        )}
+        Lust auf Neues? Zur Sternschmiede
+      </Button>
     );
   }
 
@@ -215,28 +207,37 @@ export function WantsMe({
                     </h2>
                     <p className="text-base leading-relaxed text-muted-foreground">
                       Finde mit der Sternensuche heraus, was dich zum Leuchten
-                      bringt, was dir echte Freude bringt und dir dieses Gefühl
-                      von tiefer Zufriedenheit entlockt.
+                      bringt und dir echte Freude macht.
                     </p>
                   </div>
-                  <Button className="w-full gap-2" size="lg" render={<Link href="/me/wants/journey" />}>
-                    <Binoculars className="size-4" /> Sternensuche starten
-                  </Button>
-                  {forgeBridge(false)}
+                  <div className="flex w-full flex-col gap-2">
+                    <Button className="w-full gap-2" size="lg" render={<Link href="/me/wants/journey" />}>
+                      <Binoculars className="size-4" /> Sternensuche starten
+                    </Button>
+                    {forgeLink()}
+                  </div>
                 </div>
               ) : (
                 <>
-                  <Reveal delay={0}>
-                    <div className="flex flex-col items-center gap-3 pb-2 text-center">
-                      <StarArt animate={!reduced} className="size-16" />
-                      <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                        {PAGE_TITLES.meWantsHero}
-                      </h2>
-                      <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
-                        Die Sterne, nach denen du greifst — was dich lebendig macht.
-                      </p>
-                    </div>
-                  </Reveal>
+                  {/* Held + Untertitel treten im Fokus-Zoom zurück (Crossfade). */}
+                  <div
+                    className={cn(
+                      "transition-opacity duration-300 motion-reduce:transition-none",
+                      starZoomed && "pointer-events-none opacity-0",
+                    )}
+                  >
+                    <Reveal delay={0}>
+                      <div className="flex flex-col items-center gap-3 pb-2 text-center">
+                        <StarArt animate={!reduced} className="size-16" />
+                        <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+                          {PAGE_TITLES.meWantsHero}
+                        </h2>
+                        <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+                          Die Sterne, nach denen du greifst — was dich lebendig macht.
+                        </p>
+                      </div>
+                    </Reveal>
+                  </div>
 
                   <FormError message={saveError} />
 
@@ -244,28 +245,40 @@ export function WantsMe({
                       Zoom-State zurück (Remount) — sonst zeigt ein offener
                       Zoom nach dem Löschen ins Leere. Loslassen/Anzünden
                       ändert die Länge nicht, die Detailansicht bleibt offen. */}
-                  <StarMap key={wants.length} wants={wants} onEdit={startEdit} onToggleActive={toggleActive} />
+                  <StarMap
+                    key={wants.length}
+                    wants={wants}
+                    onEdit={startEdit}
+                    onToggleActive={toggleActive}
+                    onZoomChange={setStarZoomed}
+                  />
 
-                  {/* Aktionszeile unter der Karte */}
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      className="flex-1 gap-2"
-                      render={<Link href="/me/wants/journey" />}
-                    >
-                      <Binoculars className="size-4" /> Sternensuche
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1 gap-2"
-                      onClick={() => setAddOpen(true)}
-                    >
-                      <Plus className="size-4" /> Eigener Stern
-                    </Button>
+                  {/* Stern-Handlungen + Schmiede-Einstieg — treten im Zoom zurück.
+                      „Sternensuche" ist die eine Gold-Kerze: eine Stern-Handlung,
+                      nicht mehr der Weg weg in die Schmiede (die ist jetzt ghost). */}
+                  <div
+                    className={cn(
+                      "flex flex-col gap-3 transition-opacity duration-300 motion-reduce:transition-none",
+                      starZoomed && "pointer-events-none opacity-0",
+                    )}
+                  >
+                    <div className="flex gap-3">
+                      <Button
+                        className="flex-1 gap-2"
+                        render={<Link href="/me/wants/journey" />}
+                      >
+                        <Binoculars className="size-4" /> Sternensuche
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 gap-2"
+                        onClick={() => setAddOpen(true)}
+                      >
+                        <Plus className="size-4" /> Eigener Stern
+                      </Button>
+                    </div>
+                    {forgeLink()}
                   </div>
-
-                  {/* Brücke in die Sternschmiede */}
-                  {forgeBridge(true)}
                 </>
               )}
 
@@ -273,7 +286,10 @@ export function WantsMe({
               <Dialog
                 open={editingId !== null}
                 onOpenChange={(open) => {
-                  if (!open) setEditingId(null);
+                  if (!open) {
+                    setEditingId(null);
+                    setConfirmDelete(false);
+                  }
                 }}
               >
                 <DialogContent>
@@ -300,11 +316,16 @@ export function WantsMe({
                       variant="destructive"
                       className="sm:mr-auto"
                       onClick={() => {
+                        if (!confirmDelete) {
+                          setConfirmDelete(true);
+                          return;
+                        }
                         if (editingId) deleteWant(editingId);
                         setEditingId(null);
+                        setConfirmDelete(false);
                       }}
                     >
-                      Stern löschen
+                      {confirmDelete ? "Wirklich löschen?" : "Stern löschen"}
                     </Button>
                     <DialogClose render={<Button variant="outline" />}>Abbrechen</DialogClose>
                     <Button onClick={saveEdit} disabled={!editText.trim()}>

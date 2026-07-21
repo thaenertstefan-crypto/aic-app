@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { Pencil, Sparkles } from "lucide-react";
 
@@ -91,15 +91,26 @@ export function StarMap({
   wants,
   onEdit,
   onToggleActive,
+  onZoomChange,
 }: {
   wants: WantItem[];
   onEdit: (want: WantItem) => void;
   onToggleActive: (want: WantItem) => void;
+  /** Meldet der Seite, ob gerade ein Stern im Fokus-Zoom steht, damit sie das
+   *  umgebende Chrome (Held, Buttons, Schmiede-Link) ausblenden kann. */
+  onZoomChange?: (zoomed: boolean) => void;
 }) {
   const reduced = useReducedMotion();
   const [zoomedId, setZoomedId] = useState<string | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
+
+  // Beim (Re-)Mount ist nichts gezoomt — setzt den Fokus-Zustand der Seite
+  // zurück, damit ein Löschen aus der Detailansicht (Remount via key) das
+  // Chrome nicht dauerhaft ausgeblendet lässt.
+  useEffect(() => {
+    onZoomChange?.(false);
+  }, [onZoomChange]);
 
   const { stars, viewH } = layoutStars(wants);
   const zoomed = stars.find((s) => s.want.id === zoomedId) ?? null;
@@ -107,6 +118,7 @@ export function StarMap({
   function zoomIn(star: PlacedStar) {
     if (zoomedId) return;
     setZoomedId(star.want.id);
+    onZoomChange?.(true);
     if (reduced || !mapRef.current) {
       setDetailVisible(true);
       return;
@@ -128,6 +140,9 @@ export function StarMap({
 
   function zoomOut() {
     setDetailVisible(false);
+    // Chrome fährt schon während der Rück-Kamerafahrt wieder ein (Crossfade),
+    // statt erst nach dem Ende hart aufzupoppen.
+    onZoomChange?.(false);
     if (reduced || !mapRef.current) {
       setZoomedId(null);
       return;
@@ -171,7 +186,7 @@ export function StarMap({
               type="button"
               onClick={() => zoomIn({ want, x, y, side })}
               aria-label={`Stern ansehen: ${starLabel(want)}`}
-              className="absolute z-10 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+              className="absolute z-10 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               style={{ left: `${(x / VIEW_W) * 100}%`, top: `${(y / viewH) * 100}%` }}
             >
               {/* Dunst-Schleier hinter fernen Sternen */}
@@ -197,10 +212,13 @@ export function StarMap({
               </svg>
               <span
                 className={cn(
-                  "absolute top-1/2 -translate-y-1/2 whitespace-nowrap font-heading",
+                  // max-w + truncate: lange Titel (bis 60 Zeichen erlaubt) können
+                  // sonst über den Kartenrand laufen oder mit dem gegenüberliegenden
+                  // Label kollidieren. „…" statt Overflow.
+                  "absolute top-1/2 block max-w-[8rem] -translate-y-1/2 truncate font-heading",
                   side === "left" ? "left-full ml-1.5" : "right-full mr-1.5",
                   out
-                    ? "text-xs text-muted-foreground/70"
+                    ? "text-xs text-muted-foreground"
                     : fern
                       ? "text-xs text-muted-foreground"
                       : "text-base font-semibold text-foreground",
@@ -220,7 +238,7 @@ export function StarMap({
 
       {/* Zoom-Detailansicht: reine Betrachtung (Variante B — keine Schmiede) */}
       {zoomed && detailVisible && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center gap-4 overflow-y-auto px-2 pt-2 pb-4 text-center animate-in fade-in duration-300">
+        <div className="absolute inset-0 z-20 flex flex-col items-center gap-4 overflow-y-auto rounded-2xl bg-background/95 px-2 pt-2 pb-4 text-center backdrop-blur-sm animate-in fade-in duration-300">
           <button
             type="button"
             onClick={zoomOut}
@@ -269,7 +287,7 @@ export function StarMap({
             </span>
           )}
 
-          <div className="w-full rounded-xl bg-foreground/5 p-4 text-left">
+          <div className="w-full rounded-xl bg-card p-4 text-left">
             <p className="text-base leading-relaxed text-foreground">{zoomed.want.text}</p>
           </div>
 

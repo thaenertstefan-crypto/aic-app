@@ -245,10 +245,9 @@ export function Sternschmiede({
               Woraus Funken entstehen
             </h1>
             <p className="text-base leading-relaxed text-muted-foreground">
-              Gleich entstehen Ideen zum Ausprobieren — Dinge, die dir Spaß
-              machen und dich zum Leuchten bringen könnten. Geschmiedet werden
-              sie aus deinen Werten, deinen Sternen und einer kleinen, aber
-              feinen Frage, die oft überraschend aufschlussreich ist.
+              Gleich entstehen Ideen zum Ausprobieren — geschmiedet aus deinen
+              Werten, deinen Sternen und einer kleinen, aber überraschend
+              aufschlussreichen Frage.
             </p>
           </div>
 

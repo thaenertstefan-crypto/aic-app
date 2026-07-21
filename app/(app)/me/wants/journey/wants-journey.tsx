@@ -455,8 +455,8 @@ export function WantsJourney({
               Erst der Kompass, dann die Sterne?
             </h1>
             <p className="text-base leading-relaxed text-muted-foreground">
-              Deine Sterne leuchten heller, wenn dein Kompass schon steht. Wenn du
-              zuerst deine Werte findest, kann ich deine Wants viel besser mit dem
+              Deine Sterne leuchten heller, wenn dein Kompass schon steht. Findest
+              du zuerst deine Werte, kann ich deine Wants viel besser mit dem
               verbinden, was dir wirklich wichtig ist.
             </p>
           </div>
@@ -715,7 +715,7 @@ export function WantsJourney({
           <CompletionCelebration />
 
           <div className="space-y-2">
-            <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
               Deine Sterne leuchten.
             </h1>
             <p className="text-muted-foreground">
@@ -748,11 +748,10 @@ export function WantsJourney({
               Wovon tagträumst du?
             </h1>
             <p className="text-base leading-relaxed text-muted-foreground">
-              Die Dinge, die dich manchmal gedankenversunken in die Leere
-              starren lassen: „Irgendwann mach ich mal einen Ironman.
-              Irgendwann hole ich den Flugschein.“ Solche Sterne stehen etwas
+              Die Dinge, bei denen du gedankenversunken in die Leere starrst:
+              „Irgendwann mach ich mal einen Ironman.“ Solche Sterne stehen
               weiter weg — nach ihnen greift man. Schreib auf, was dir kommt,
-              oder überspring den Schritt einfach.
+              oder überspring den Schritt.
             </p>
           </div>
 
@@ -812,10 +811,9 @@ export function WantsJourney({
               Was bringt dich in „Flow“?
             </h1>
             <p className="text-base leading-relaxed text-muted-foreground">
-              Flow ist dieser Zustand, in dem du die Zeit vergisst: Du bist so
-              in einer Sache drin, dass die Welt (und das Gedankenchaos im
-              Kopf) einfach ausgeblendet ist. Laut Forschung eines der
-              schönsten Gefühle, die wir haben können.
+              Flow ist dieser Zustand, in dem du die Zeit vergisst — so vertieft,
+              dass die Welt und das Gedankenchaos im Kopf ausgeblendet sind. Laut
+              Forschung eines der schönsten Gefühle, die wir haben können.
             </p>
           </div>
 
@@ -824,9 +822,8 @@ export function WantsJourney({
           <form className="space-y-5">
             <div className="space-y-2">
               <Label className="text-base font-medium">
-                Bei welchen Aktivitäten vergisst du die Zeit — gehst so darin auf,
-                dass die Welt (und das Gedankenchaos im Kopf) ausgeblendet ist?
-                Schreib ruhig mehrere auf — eine reicht, drei sind ideal.
+                Bei welchen Aktivitäten vergisst du die Zeit? Eine reicht, drei
+                sind ideal.
               </Label>
               <AnswerBoxes
                 answers={yang}
@@ -930,10 +927,9 @@ export function WantsJourney({
             Wofür nimmst du Mühsal in Kauf?
           </h1>
           <p className="text-base leading-relaxed text-muted-foreground">
-            Egal wie gut dein Leben läuft — manches ist einfach anstrengend.
-            Aber interessanterweise stört uns nicht jede Anstrengung gleich:
-            Manche Mühsal nehmen wir erstaunlich bereitwillig in Kauf. Und
-            genau die verrät, was dir wirklich wichtig ist.
+            Nicht jede Anstrengung stört uns gleich — manche Mühsal nehmen wir
+            erstaunlich bereitwillig in Kauf. Genau die verrät, was dir wirklich
+            wichtig ist.
           </p>
         </div>
 
@@ -942,9 +938,9 @@ export function WantsJourney({
         <form className="space-y-5">
           <div className="space-y-2">
             <Label className="text-base font-medium">
-              Denk an Momente von Stress, Anstrengung oder Schmerz, auf die du
-              zurückblickst und denkst: „Hat mich an den Rand gebracht … war’s
-              aber wert.“ Schreib ruhig mehrere auf — eine reicht, drei sind ideal.
+              Denk an Momente von Stress oder Schmerz, auf die du zurückblickst
+              und denkst: „Hat mich an den Rand gebracht … war’s aber wert.“
+              Eine reicht, drei sind ideal.
             </Label>
             <AnswerBoxes
               answers={yin}
