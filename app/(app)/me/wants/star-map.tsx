@@ -227,7 +227,10 @@ export function StarMap({
   useEffect(() => {
     if (!focusedId) return;
     const dialog = dialogRef.current;
-    const raf = requestAnimationFrame(() => dialog?.focus());
+    // preventScroll: der Dialog-Container haengt per Portal am Ende von
+    // document.body — ohne das wuerde focus() die Seite ans Dokument-Ende
+    // scrollen (das „Aufploppen" beim Rein-Zoom).
+    const raf = requestAnimationFrame(() => dialog?.focus({ preventScroll: true }));
 
     function focusables(): HTMLElement[] {
       if (!dialog) return [];
@@ -254,7 +257,7 @@ export function StarMap({
       const els = focusables();
       if (els.length === 0) {
         e.preventDefault();
-        dialog.focus();
+        dialog.focus({ preventScroll: true });
         return;
       }
       const first = els[0];
@@ -262,10 +265,10 @@ export function StarMap({
       const active = document.activeElement as HTMLElement | null;
       if (e.shiftKey && (active === first || active === dialog || !dialog.contains(active))) {
         e.preventDefault();
-        last.focus();
+        last.focus({ preventScroll: true });
       } else if (!e.shiftKey && (active === last || !dialog.contains(active))) {
         e.preventDefault();
-        first.focus();
+        first.focus({ preventScroll: true });
       }
     }
 
@@ -283,7 +286,10 @@ export function StarMap({
     prevFocusedRef.current = focusedId;
     if (prev && !focusedId) {
       const trigger = triggerRef.current;
-      if (trigger && document.body.contains(trigger)) trigger.focus();
+      // preventScroll: Fokus zurueck auf den (evtl. weit unten liegenden)
+      // Auslöser-Stern, ohne die Seite dorthin zu scrollen — man bleibt an der
+      // Scroll-Position von vor dem Rein-Zoom.
+      if (trigger && document.body.contains(trigger)) trigger.focus({ preventScroll: true });
       triggerRef.current = null;
     }
   }, [focusedId]);
