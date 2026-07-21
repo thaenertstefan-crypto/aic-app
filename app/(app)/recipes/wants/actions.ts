@@ -269,9 +269,10 @@ export async function saveWantsAction(
     return { error: mergeError, success: false };
   }
 
-  // Fortschritt: abgeschlossen, sobald mindestens ein aktives Want bestätigt ist
-  // (Spiegel der BoR-Logik). Little Bets gaten den Abschluss nicht.
-  const completed = merged.some((w) => w.active);
+  // Fortschritt: abgeschlossen, sobald mindestens ein Want existiert. Seit dem
+  // Wegfall von „loslassen" kann kein Want mehr erlöschen (active bleibt immer
+  // true), darum ist das Gate schlicht „gibt es Sterne". Little Bets gaten nicht.
+  const completed = merged.length > 0;
 
   const { data: progress } = await supabase
     .from("user_recipe_progress")
