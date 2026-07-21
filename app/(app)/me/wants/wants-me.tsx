@@ -44,16 +44,9 @@ export function WantsMe({
 }) {
   const [wants, setWants] = useState<WantItem[]>(initialWants);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editText, setEditText] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [addTitle, setAddTitle] = useState("");
   const [addText, setAddText] = useState("");
-  // Fokus-Zoom: steht ein Stern im Detail, tritt das umgebende Chrome zurück.
-  const [starZoomed, setStarZoomed] = useState(false);
-  // Löschen ist endgültig → ein zweiter Tap bestätigt (statt harter confirm()).
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const router = useRouter();
   // Der Warp-Übergang lebt im gemeinsamen me/wants-Layout und überlebt so die
@@ -73,8 +66,6 @@ export function WantsMe({
     arrive();
   }, [arrive]);
 
-  // Erloschene Sterne halten die Karte am Leben, damit „Wieder anzünden“
-  // erreichbar bleibt.
   const hasSterne = wants.length > 0;
 
   async function persistWants(updated: WantItem[]) {
@@ -93,24 +84,10 @@ export function WantsMe({
     }
   }
 
-  function startEdit(w: WantItem) {
-    setEditingId(w.id);
-    setEditTitle(w.title ?? "");
-    setEditText(w.text);
-    setConfirmDelete(false);
-  }
-
-  function saveEdit() {
-    const t = editText.trim();
-    if (!t || !editingId) return;
+  function saveWantEdit(id: string, patch: { title: string | null; text: string }) {
     void persistWants(
-      wants.map((w) =>
-        w.id === editingId
-          ? { ...w, text: t, title: editTitle.trim() ? editTitle.trim() : null }
-          : w,
-      ),
+      wants.map((w) => (w.id === id ? { ...w, title: patch.title, text: patch.text } : w)),
     );
-    setEditingId(null);
   }
 
   function addOwnStar() {
@@ -131,12 +108,6 @@ export function WantsMe({
     setAddOpen(false);
     setAddTitle("");
     setAddText("");
-  }
-
-  function toggleActive(w: WantItem) {
-    void persistWants(
-      wants.map((x) => (x.id === w.id ? { ...x, active: !x.active } : x)),
-    );
   }
 
   function deleteWant(id: string) {
@@ -216,48 +187,27 @@ export function WantsMe({
                 </div>
               ) : (
                 <>
-                  {/* Held + Untertitel treten im Fokus-Zoom zurück (Crossfade). */}
-                  <div
-                    className={cn(
-                      "transition-opacity duration-300 motion-reduce:transition-none",
-                      starZoomed && "pointer-events-none opacity-0",
-                    )}
-                  >
-                    <Reveal delay={0}>
-                      <div className="flex flex-col items-center gap-3 pb-2 text-center">
-                        <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                          {PAGE_TITLES.meWantsHero}
-                        </h2>
-                        <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
-                          Nahe Freuden, ferne Ziele — dein eigener Himmel.
-                        </p>
-                      </div>
-                    </Reveal>
-                  </div>
+                  <Reveal delay={0}>
+                    <div className="flex flex-col items-center gap-3 pb-2 text-center">
+                      <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+                        {PAGE_TITLES.meWantsHero}
+                      </h2>
+                      <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+                        Nahe Freuden, ferne Ziele — dein eigener Himmel.
+                      </p>
+                    </div>
+                  </Reveal>
 
                   <FormError message={saveError} />
 
-                  {/* key: Add/Delete layouten die Karte neu UND setzen den
-                      Zoom-State zurück (Remount) — sonst zeigt ein offener
-                      Zoom nach dem Löschen ins Leere. Loslassen/Anzünden
-                      ändert die Länge nicht, die Detailansicht bleibt offen. */}
                   <StarMap
                     key={wants.length}
                     wants={wants}
-                    onEdit={startEdit}
-                    onToggleActive={toggleActive}
-                    onZoomChange={setStarZoomed}
+                    onSaveEdit={saveWantEdit}
+                    onDelete={deleteWant}
                   />
 
-                  {/* Stern-Handlungen + Schmiede-Einstieg — treten im Zoom zurück.
-                      „Sternensuche" ist die eine Gold-Kerze: eine Stern-Handlung,
-                      nicht mehr der Weg weg in die Schmiede (die ist jetzt ghost). */}
-                  <div
-                    className={cn(
-                      "flex flex-col gap-3 transition-opacity duration-300 motion-reduce:transition-none",
-                      starZoomed && "pointer-events-none opacity-0",
-                    )}
-                  >
+                  <div className="flex flex-col gap-3">
                     <div className="flex gap-3">
                       <Button
                         className="flex-1 gap-2"
@@ -277,59 +227,6 @@ export function WantsMe({
                   </div>
                 </>
               )}
-
-              {/* Bearbeiten-Dialog: Stern umformulieren oder löschen */}
-              <Dialog
-                open={editingId !== null}
-                onOpenChange={(open) => {
-                  if (!open) {
-                    setEditingId(null);
-                    setConfirmDelete(false);
-                  }
-                }}
-              >
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Stern bearbeiten</DialogTitle>
-                  </DialogHeader>
-                  <Input
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    maxLength={60}
-                    placeholder="Name des Sterns (optional)"
-                    aria-label="Name des Sterns"
-                  />
-                  <Textarea
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    rows={3}
-                    autoFocus
-                    className="resize-y"
-                    aria-label="Beschreibung des Sterns"
-                  />
-                  <DialogFooter>
-                    <Button
-                      variant="destructive"
-                      className="sm:mr-auto"
-                      onClick={() => {
-                        if (!confirmDelete) {
-                          setConfirmDelete(true);
-                          return;
-                        }
-                        if (editingId) deleteWant(editingId);
-                        setEditingId(null);
-                        setConfirmDelete(false);
-                      }}
-                    >
-                      {confirmDelete ? "Wirklich löschen?" : "Stern löschen"}
-                    </Button>
-                    <DialogClose render={<Button variant="outline" />}>Abbrechen</DialogClose>
-                    <Button onClick={saveEdit} disabled={!editText.trim()}>
-                      Speichern
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
 
               {/* Eigener Stern hinzufügen */}
               <Dialog open={addOpen} onOpenChange={setAddOpen}>

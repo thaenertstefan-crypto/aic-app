@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import gsap from "gsap";
-import { Pencil, Sparkles } from "lucide-react";
+import { Pencil, Sparkles, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Mascot } from "@/components/brand/mascot";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
+import { useScrollLock } from "@/lib/hooks/use-scroll-lock";
 import { getValueLabel } from "@/lib/utils/values-bank";
 import { cn } from "@/lib/utils";
 import type { WantItem } from "@/lib/types/db-json";
@@ -14,10 +18,12 @@ import type { WantItem } from "@/lib/types/db-json";
 /**
  * Die Sternenkarte: alle Wants als benannte Sterne an stabilen Positionen
  * (Slot-Leiter + ID-Hash), Tiefe rein über die Darstellung (fern = kleiner/
- * gedimmter/Dunst, erloschen = grau). Tipp auf einen Stern → GSAP-Kamerafahrt
- * (Scale um den Sternpunkt) → Detailansicht (Titel, Wert-Chip, Beschreibung,
- * Aktionen). Reduced motion: harter Wechsel ohne Fahrt. Persistenz und
- * Dialoge bleiben beim Parent (wants-me) — hier leben nur Szene und Kamera.
+ * gedimmter/Dunst). Tipp auf einen Stern → GSAP-FLIP: genau dieser Stern fliegt
+ * in die Bildmitte, während die restliche Karte komplett ausfadet — es bleibt
+ * physisch nur ein Stern. Der Fokus lebt in einer per Portal an document.body
+ * gerenderten, fixen, scroll-gesperrten Ebene über der Bottom-Nav (volle
+ * Immersion). Ansehen + Bearbeiten passieren inline in dieser Ebene; Persistenz
+ * bleibt beim Parent (wants-me). Reduced motion: harter Wechsel ohne Flug.
  */
 
 /** 4-strahliger Stern — die von der Werte-Szene freigegebene Sprache. */
@@ -27,6 +33,10 @@ const VIEW_W = 360;
 const ROW_H = 96;
 const TOP_PAD = 60;
 const BOTTOM_PAD = 130; // Platz für das Maskottchen unten links
+
+/** Fokus-Stern: Held-Größe (px) und vertikale Zielposition (Anteil der Höhe). */
+const FOCUS_STAR_SIZE = 64;
+const FOCUS_STAR_TOP = 0.26;
 
 /** Hintergrund-Funkelsterne als Anteile der Szene (x/y in 0–1). */
 const MICRO_STARS: { fx: number; fy: number; r: number }[] = [
@@ -89,80 +99,160 @@ function layoutStars(wants: WantItem[]): { stars: PlacedStar[]; viewH: number } 
 
 export function StarMap({
   wants,
-  onEdit,
-  onToggleActive,
-  onZoomChange,
+  onSaveEdit,
+  onDelete,
 }: {
   wants: WantItem[];
-  onEdit: (want: WantItem) => void;
-  onToggleActive: (want: WantItem) => void;
-  /** Meldet der Seite, ob gerade ein Stern im Fokus-Zoom steht, damit sie das
-   *  umgebende Chrome (Held, Buttons, Schmiede-Link) ausblenden kann. */
-  onZoomChange?: (zoomed: boolean) => void;
+  onSaveEdit: (id: string, patch: { title: string | null; text: string }) => void;
+  onDelete: (id: string) => void;
 }) {
   const reduced = useReducedMotion();
-  const [zoomedId, setZoomedId] = useState<string | null>(null);
-  const [detailVisible, setDetailVisible] = useState(false);
-  const mapRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [contentVisible, setContentVisible] = useState(false);
+  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editText, setEditText] = useState("");
 
-  // Beim (Re-)Mount ist nichts gezoomt — setzt den Fokus-Zustand der Seite
-  // zurück, damit ein Löschen aus der Detailansicht (Remount via key) das
-  // Chrome nicht dauerhaft ausgeblendet lässt.
-  useEffect(() => {
-    onZoomChange?.(false);
-  }, [onZoomChange]);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const layerRef = useRef<HTMLDivElement>(null);
+  const flyStarRef = useRef<HTMLDivElement>(null);
+  const originRef = useRef<{ x: number; y: number; size: number } | null>(null);
+
+  // Portal erst nach Mount (kein document auf dem Server).
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliger Client-Mount-Flag, kein document auf dem Server
+  useEffect(() => setMounted(true), []);
+  // Seite hinter dem Fokus scroll-sperren.
+  useScrollLock(focusedId !== null);
 
   const { stars, viewH } = layoutStars(wants);
-  const zoomed = stars.find((s) => s.want.id === zoomedId) ?? null;
+  const focused = wants.find((w) => w.id === focusedId) ?? null;
 
-  function zoomIn(star: PlacedStar) {
-    if (zoomedId) return;
-    setZoomedId(star.want.id);
-    onZoomChange?.(true);
-    if (reduced || !mapRef.current) {
-      setDetailVisible(true);
-      return;
-    }
-    // Kamerafahrt: Scale um den Sternpunkt — der angetippte Stern bleibt
-    // an Ort und Stelle, der Rest des Himmels weicht nach außen zurück.
-    const rect = mapRef.current.getBoundingClientRect();
-    const px = (star.x / VIEW_W) * rect.width;
-    const py = (star.y / viewH) * rect.height;
-    gsap.to(mapRef.current, {
-      scale: 2.4,
-      opacity: 0.2,
-      transformOrigin: `${px}px ${py}px`,
-      duration: 0.8,
-      ease: "power2.inOut",
-      onComplete: () => setDetailVisible(true),
-    });
+  // Ziel des Fokus-Sterns: horizontal zentriert, vertikal bei FOCUS_STAR_TOP.
+  function target() {
+    return {
+      x: window.innerWidth / 2,
+      y: window.innerHeight * FOCUS_STAR_TOP,
+    };
   }
 
-  function zoomOut() {
-    setDetailVisible(false);
-    // Chrome fährt schon während der Rück-Kamerafahrt wieder ein (Crossfade),
-    // statt erst nach dem Ende hart aufzupoppen.
-    onZoomChange?.(false);
-    if (reduced || !mapRef.current) {
-      setZoomedId(null);
+  function zoomIn(want: WantItem, el: HTMLElement) {
+    if (focusedId) return;
+    const r = el.getBoundingClientRect();
+    // Sichtbare Sterngröße (svg), nicht die 44px-Tap-Fläche des Buttons.
+    const size = want.distance === "fern" ? 14 : 24;
+    originRef.current = { x: r.left + r.width / 2, y: r.top + r.height / 2, size };
+    setMode("view");
+    setConfirmDelete(false);
+    setFocusedId(want.id);
+  }
+
+  // Kamerafahrt beim Öffnen: Stern fliegt vom Ursprung in die Mitte, Karte fadet.
+  useEffect(() => {
+    if (!focusedId) return;
+    const layer = layerRef.current;
+    const fly = flyStarRef.current;
+    const origin = originRef.current;
+
+    if (mapRef.current) {
+      gsap.to(mapRef.current, {
+        opacity: 0,
+        duration: reduced ? 0 : 0.35,
+        ease: "power2.out",
+      });
+    }
+    if (!layer || !fly) return;
+
+    gsap.set(fly, { xPercent: -50, yPercent: -50 });
+
+    if (reduced || !origin) {
+      gsap.set(fly, { x: 0, y: 0, scale: 1, opacity: 1 });
+      gsap.set(layer, { opacity: 1 });
+      setContentVisible(true);
       return;
     }
-    gsap.to(mapRef.current, {
-      scale: 1,
-      opacity: 1,
-      duration: 0.7,
-      ease: "power2.inOut",
-      onComplete: () => setZoomedId(null),
-    });
+
+    const { x: tx, y: ty } = target();
+    gsap.set(layer, { opacity: 0 });
+    gsap.fromTo(
+      fly,
+      { x: origin.x - tx, y: origin.y - ty, scale: origin.size / FOCUS_STAR_SIZE, opacity: 1 },
+      { x: 0, y: 0, scale: 1, duration: 0.6, ease: "power2.inOut" },
+    );
+    gsap.to(layer, { opacity: 1, duration: 0.4, delay: 0.25, ease: "power2.out" });
+    const t = window.setTimeout(() => setContentVisible(true), 350);
+    return () => window.clearTimeout(t);
+  }, [focusedId, reduced]);
+
+  function zoomOut() {
+    setContentVisible(false);
+    setMode("view");
+    setConfirmDelete(false);
+    const fly = flyStarRef.current;
+    const layer = layerRef.current;
+    const origin = originRef.current;
+
+    if (reduced) {
+      if (mapRef.current) gsap.set(mapRef.current, { opacity: 1 });
+      setFocusedId(null);
+      return;
+    }
+    if (fly && origin) {
+      const { x: tx, y: ty } = target();
+      gsap.to(fly, {
+        x: origin.x - tx,
+        y: origin.y - ty,
+        scale: origin.size / FOCUS_STAR_SIZE,
+        duration: 0.5,
+        ease: "power2.inOut",
+      });
+    }
+    if (layer) gsap.to(layer, { opacity: 0, duration: 0.4, ease: "power2.out" });
+    if (mapRef.current) {
+      gsap.to(mapRef.current, { opacity: 1, duration: 0.5, delay: 0.15, ease: "power2.out" });
+    }
+    window.setTimeout(() => setFocusedId(null), 500);
+  }
+
+  function enterEdit() {
+    if (!focused) return;
+    setEditTitle(focused.title ?? "");
+    setEditText(focused.text);
+    setConfirmDelete(false);
+    setMode("edit");
+  }
+
+  function saveEdit() {
+    if (!focused) return;
+    const t = editText.trim();
+    if (!t) return;
+    onSaveEdit(focused.id, { title: editTitle.trim() ? editTitle.trim() : null, text: t });
+    setMode("view");
+  }
+
+  function handleDelete() {
+    if (!focused) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    const id = focused.id;
+    // Sanft ausblenden, dann persistieren. Der Parent remountet die Karte per
+    // key={wants.length} → der Fokus setzt sich zurück (Stern ist ja weg).
+    setContentVisible(false);
+    const finish = () => onDelete(id);
+    if (reduced || !layerRef.current) {
+      finish();
+      return;
+    }
+    gsap.to(layerRef.current, { opacity: 0, duration: 0.3, ease: "power2.out", onComplete: finish });
   }
 
   return (
-    <div
-      className="relative w-full"
-      style={{ aspectRatio: `${VIEW_W} / ${viewH}`, minHeight: zoomedId ? 480 : undefined }}
-    >
-      {/* Die Karte (wird bei Zoom skaliert und gedimmt) */}
-      <div ref={mapRef} className={cn("absolute inset-0", reduced && zoomedId && "opacity-0")}>
+    <div className="relative w-full" style={{ aspectRatio: `${VIEW_W} / ${viewH}` }}>
+      {/* Die Sternenkarte (fadet beim Fokus komplett aus) */}
+      <div ref={mapRef} className="absolute inset-0">
         <svg viewBox={`0 0 ${VIEW_W} ${viewH}`} className="absolute inset-0 size-full" aria-hidden="true">
           {MICRO_STARS.map((s, i) => (
             <circle
@@ -178,13 +268,12 @@ export function StarMap({
         </svg>
 
         {stars.map(({ want, x, y, side }, i) => {
-          const out = !want.active;
-          const fern = want.distance === "fern" && !out;
+          const fern = want.distance === "fern";
           return (
             <button
               key={want.id}
               type="button"
-              onClick={() => zoomIn({ want, x, y, side })}
+              onClick={(e) => zoomIn(want, e.currentTarget)}
               aria-label={`Stern ansehen: ${starLabel(want)}`}
               className="absolute z-10 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               style={{ left: `${(x / VIEW_W) * 100}%`, top: `${(y / viewH) * 100}%` }}
@@ -198,17 +287,15 @@ export function StarMap({
                 aria-hidden="true"
                 className={cn(
                   "shrink-0",
-                  out ? "size-3 opacity-30" : fern ? "size-3.5 opacity-55" : "size-6",
-                  !reduced && !out && "want-star-twinkle",
+                  fern ? "size-3.5 opacity-55" : "size-6",
+                  !reduced && "want-star-twinkle",
                 )}
                 style={{
                   animationDelay: `${(i % 5) * 0.9}s`,
-                  filter: out
-                    ? undefined
-                    : `drop-shadow(0 0 ${fern ? 3 : 6}px color-mix(in srgb, var(--primary) ${fern ? 35 : 55}%, transparent))`,
+                  filter: `drop-shadow(0 0 ${fern ? 3 : 6}px color-mix(in srgb, var(--primary) ${fern ? 35 : 55}%, transparent))`,
                 }}
               >
-                <path d={STAR_PATH} fill={out ? "var(--muted-foreground)" : "var(--primary)"} />
+                <path d={STAR_PATH} fill="var(--primary)" />
               </svg>
               <span
                 className={cn(
@@ -217,11 +304,9 @@ export function StarMap({
                   // Label kollidieren. „…" statt Overflow.
                   "absolute top-1/2 block max-w-[8rem] -translate-y-1/2 truncate font-heading",
                   side === "left" ? "left-full ml-1.5" : "right-full mr-1.5",
-                  out
+                  fern
                     ? "text-xs text-muted-foreground"
-                    : fern
-                      ? "text-xs text-muted-foreground"
-                      : "text-base font-semibold text-foreground",
+                    : "text-base font-semibold text-foreground",
                 )}
               >
                 {starLabel(want)}
@@ -236,75 +321,130 @@ export function StarMap({
         </div>
       </div>
 
-      {/* Zoom-Detailansicht: reine Betrachtung (Variante B — keine Schmiede) */}
-      {zoomed && detailVisible && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center gap-4 overflow-y-auto rounded-2xl bg-background/95 px-2 pt-2 pb-4 text-center backdrop-blur-sm animate-in fade-in duration-300">
-          <button
-            type="button"
-            onClick={zoomOut}
-            className="flex min-h-11 items-center self-start text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            ← Zurück zum Himmel
-          </button>
-
-          <svg
-            viewBox="0 0 16 16"
-            aria-hidden="true"
-            className="size-16"
-            style={{
-              filter: zoomed.want.active
-                ? "drop-shadow(0 0 18px color-mix(in srgb, var(--primary) 80%, transparent))"
-                : undefined,
-            }}
-          >
-            <path
-              d={STAR_PATH}
-              fill={zoomed.want.active ? "var(--primary)" : "var(--muted-foreground)"}
-              opacity={zoomed.want.active ? 1 : 0.5}
+      {/* Fokus-Ebene: per Portal an document.body, fix, scroll-gesperrt, über der Nav */}
+      {mounted &&
+        focused &&
+        createPortal(
+          <>
+            {/* Okkludierender Himmel-Hintergrund (verdeckt Nav + verblasste Karte) */}
+            <div
+              ref={layerRef}
+              className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-xl"
+              style={{ opacity: 0 }}
+              aria-hidden="true"
             />
-          </svg>
 
-          <div className="space-y-2">
-            <h3 className="font-heading text-2xl font-semibold text-balance break-words text-foreground">
-              {starName(zoomed.want)}
-            </h3>
-            {zoomed.want.distance === "fern" && zoomed.want.active && (
-              <span className="rounded-full bg-foreground/10 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                Ferner Stern — nach ihm greifst du
-              </span>
-            )}
-            {!zoomed.want.active && (
-              <span className="rounded-full bg-foreground/10 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                Erloschen
-              </span>
-            )}
-          </div>
-
-          {zoomed.want.valueId && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-              <Sparkles className="size-3" />
-              nährt deinen Wert: {getValueLabel(zoomed.want.valueId)}
-            </span>
-          )}
-
-          <div className="w-full rounded-xl bg-card p-4 text-left">
-            <p className="text-base leading-relaxed text-foreground">{zoomed.want.text}</p>
-          </div>
-
-          <div className="flex w-full flex-col gap-2 pt-1">
-            <Button variant="outline" className="w-full gap-2" onClick={() => onEdit(zoomed.want)}>
-              <Pencil className="size-4" /> Bearbeiten
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full text-muted-foreground"
-              onClick={() => onToggleActive(zoomed.want)}
+            {/* Zurück-zum-Himmel — leises Eck-Control oben links */}
+            <button
+              type="button"
+              onClick={zoomOut}
+              className={cn(
+                "fixed left-3 z-[62] flex min-h-11 items-center text-sm text-muted-foreground transition-opacity duration-300 hover:text-foreground motion-reduce:transition-none",
+                contentVisible ? "opacity-100" : "pointer-events-none opacity-0",
+              )}
+              style={{ top: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
             >
-              {zoomed.want.active ? "Stern loslassen" : "Wieder anzünden"}
-            </Button>
-          </div>
-        </div>
-      )}
+              ← Zurück zum Himmel
+            </button>
+
+            {/* Der eine Stern (fliegt hier hinein, bleibt zentral) */}
+            <div
+              ref={flyStarRef}
+              className="pointer-events-none fixed z-[62]"
+              style={{ left: "50%", top: `${FOCUS_STAR_TOP * 100}vh` }}
+              aria-hidden="true"
+            >
+              <svg
+                viewBox="0 0 16 16"
+                className="size-16"
+                style={{
+                  filter: "drop-shadow(0 0 18px color-mix(in srgb, var(--primary) 80%, transparent))",
+                }}
+              >
+                <path d={STAR_PATH} fill="var(--primary)" />
+              </svg>
+            </div>
+
+            {/* Inhalt unter dem Stern (kein Karten-Kasten — schwebt auf dem Himmel) */}
+            <div
+              className={cn(
+                "fixed inset-x-0 z-[61] flex justify-center px-6 text-center transition-opacity duration-300 motion-reduce:transition-none",
+                contentVisible ? "opacity-100" : "pointer-events-none opacity-0",
+              )}
+              style={{ top: `calc(${FOCUS_STAR_TOP * 100}vh + 3rem)`, bottom: 0 }}
+            >
+              <div className="flex w-full max-w-sm flex-col items-center gap-3 overflow-y-auto pt-4 pb-10">
+                {mode === "view" ? (
+                  <>
+                    <h3 className="font-heading text-2xl font-semibold text-balance break-words text-foreground">
+                      {starName(focused)}
+                    </h3>
+                    {focused.distance === "fern" && (
+                      <span className="rounded-full bg-foreground/10 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                        Ferner Stern — nach ihm greifst du
+                      </span>
+                    )}
+                    {focused.valueId && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                        <Sparkles className="size-3" />
+                        nährt deinen Wert: {getValueLabel(focused.valueId)}
+                      </span>
+                    )}
+                    <p className="w-full rounded-xl bg-foreground/5 p-4 text-left text-base leading-relaxed text-foreground backdrop-blur-sm">
+                      {focused.text}
+                    </p>
+                    <Button variant="outline" className="mt-1 w-full gap-2" onClick={enterEdit}>
+                      <Pencil className="size-4" /> Bearbeiten
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      maxLength={60}
+                      placeholder="Name des Sterns (optional)"
+                      aria-label="Name des Sterns"
+                    />
+                    <Textarea
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      rows={4}
+                      maxLength={300}
+                      autoFocus
+                      className="resize-y"
+                      aria-label="Beschreibung des Sterns"
+                    />
+                    <div className="flex w-full gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          setMode("view");
+                          setConfirmDelete(false);
+                        }}
+                      >
+                        Abbrechen
+                      </Button>
+                      <Button className="flex-1" onClick={saveEdit} disabled={!editText.trim()}>
+                        Speichern
+                      </Button>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      className="w-full gap-2 text-destructive hover:text-destructive"
+                      onClick={handleDelete}
+                    >
+                      <Trash2 className="size-4" />
+                      {confirmDelete ? "Wirklich löschen?" : "Stern löschen"}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </>,
+          document.body,
+        )}
     </div>
   );
 }
