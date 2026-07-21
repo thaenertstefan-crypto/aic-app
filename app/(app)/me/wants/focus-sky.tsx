@@ -19,11 +19,11 @@ export function FocusSky() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.16) 20%, rgba(0,0,0,0.07) 40%, rgba(0,0,0,0.02) 58%, transparent 72%)",
+            "linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.04) 40%, rgba(0,0,0,0.01) 58%, transparent 72%)",
         }}
       />
       {/* Gedimmte, leise funkelnde Sterne (SkyBackdrop-Sprache, tiefer gedimmt). */}
-      <div className="absolute inset-0" style={{ opacity: 0.8 }}>
+      <div className="absolute inset-0" style={{ opacity: 0.9 }}>
         <span className="sky-light sky-light-twinkle absolute left-[14%] top-[16%]" />
         <span
           className="sky-light sky-light-twinkle absolute right-[18%] top-[10%]"
