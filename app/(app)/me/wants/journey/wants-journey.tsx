@@ -418,7 +418,7 @@ export function WantsJourney({
 
   if (!introSeen && !introDismissed && INTRO_CARDS.length > 0) {
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-lvh flex-col">
         <SubPageHeader backHref="/me/wants" title={PAGE_TITLES.wants} />
         <div className="flex flex-1 flex-col justify-center">
           <RecipeIntro
@@ -446,7 +446,7 @@ export function WantsJourney({
 
   if (phase === "nudge") {
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-lvh flex-col">
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
           <Mascot expression="curious" size="md" />
@@ -481,7 +481,7 @@ export function WantsJourney({
 
   if (phase === "analyzing") {
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-lvh flex-col">
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 animate-in fade-in duration-500">
           <Mascot expression="curious" size="md" gazeX={0} />
@@ -504,7 +504,7 @@ export function WantsJourney({
     const keptCount = draftWants.filter((w) => w.text.trim()).length;
 
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-lvh flex-col">
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {aiError ? (
@@ -710,7 +710,7 @@ export function WantsJourney({
 
   if (phase === "done") {
     return (
-      <div className="flex min-h-svh flex-col items-center px-4 py-10">
+      <div className="flex min-h-lvh flex-col items-center px-4 py-10">
         <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
           <CompletionCelebration />
 
@@ -739,7 +739,7 @@ export function WantsJourney({
 
   if (phase === "tagtraum") {
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-lvh flex-col">
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex flex-col items-center gap-3 text-center">
@@ -802,7 +802,7 @@ export function WantsJourney({
 
   if (phase === "yang") {
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-lvh flex-col">
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex flex-col items-center gap-3 text-center">
@@ -913,7 +913,7 @@ export function WantsJourney({
   // ── Render: Yin (Mühsal) — Einstieg ─────────────────────────────
 
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="flex min-h-lvh flex-col">
       {header}
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Draft restore prompt */}

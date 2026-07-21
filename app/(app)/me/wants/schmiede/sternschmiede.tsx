@@ -235,7 +235,7 @@ export function Sternschmiede({
   // Kindheitsfrage — von der Landing hierher gezogen (Spec 2026-07-16, §1.1).
   if (phase === "briefing") {
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-lvh flex-col">
         <ForgeBackdrop />
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -296,7 +296,7 @@ export function Sternschmiede({
   // ── Forging (Ladezustand) ───────────────────────────────────────
   if (phase === "forging") {
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-lvh flex-col">
         <ForgeBackdrop />
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 animate-in fade-in duration-500">
@@ -318,7 +318,7 @@ export function Sternschmiede({
   if (phase === "funken") {
     const selectedCount = funken.filter((f) => f.selected && f.text.trim()).length;
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-lvh flex-col">
         <ForgeBackdrop />
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -447,7 +447,7 @@ export function Sternschmiede({
   // ── Abschluss ───────────────────────────────────────────────────
   if (phase === "done") {
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-lvh flex-col">
         <ForgeBackdrop />
         {header}
         <ViewTransition
@@ -481,7 +481,7 @@ export function Sternschmiede({
   return (
     <div
       className={cn(
-        "flex min-h-svh flex-col",
+        "flex min-h-lvh flex-col",
         warpPageClass("schmiede", warpPhase, direction),
       )}
     >

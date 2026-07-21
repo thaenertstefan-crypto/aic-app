@@ -21,7 +21,7 @@ export default async function ReflectBetPage({
   // Bet fehlt oder wurde bereits reflektiert → freundlicher Rückweg.
   if (!bet || bet.status === "tried") {
     return (
-      <div className="flex min-h-svh flex-col">
+      <div className="flex min-h-lvh flex-col">
         <SubPageHeader backHref="/me/wants" title={PAGE_TITLES.meWants} />
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 text-center">
           <Mascot expression="curious" size="md" />
