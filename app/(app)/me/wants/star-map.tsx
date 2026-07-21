@@ -176,7 +176,9 @@ export function StarMap({
         gsap.to(mapRef.current, { opacity: 0, duration: reduced ? 0 : 0.35, ease: "power2.out" });
       } else {
         gsap.set(mapRef.current, { transformOrigin: `${mapOrigin.x}px ${mapOrigin.y}px` });
-        gsap.to(mapRef.current, { opacity: 0, scale: 1.15, duration: 0.35, ease: "power2.out" });
+        // Kräftiger Dive: alle Nachbarsterne streamen sichtbar nach außen an den
+        // Rändern vorbei → liest als Kamera-Flug in die Stelle (nicht reisender Stern).
+        gsap.to(mapRef.current, { opacity: 0, scale: 2.6, duration: 0.45, ease: "power2.out" });
       }
     }
     if (!layer || !fly) return;
@@ -197,7 +199,7 @@ export function StarMap({
     gsap.set(layer, { transformOrigin: `${origin.x}px ${origin.y}px` });
     gsap.fromTo(
       layer,
-      { opacity: 0, scale: 1.35 },
+      { opacity: 0, scale: 1.9 },
       { opacity: 1, scale: 1, duration: 0.6, ease: "power2.out" },
     );
 
@@ -236,7 +238,7 @@ export function StarMap({
       });
     }
     // Fokus-Himmel zieht sich zu P zusammen (Umkehr des Push) und fadet aus.
-    if (layer) gsap.to(layer, { opacity: 0, scale: 1.35, duration: 0.5, ease: "power2.in" });
+    if (layer) gsap.to(layer, { opacity: 0, scale: 1.9, duration: 0.5, ease: "power2.in" });
     // Reale Karte fadet zurück und setzt ihren Auf-Zoom zurück.
     if (mapRef.current) {
       gsap.to(mapRef.current, { opacity: 1, scale: 1, duration: 0.5, delay: 0.15, ease: "power2.out" });
