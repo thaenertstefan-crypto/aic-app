@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
@@ -14,7 +13,7 @@ import {
   tooLong,
 } from "@/lib/utils/form-validation";
 
-export type BetReflectionState = { error: string | null };
+export type BetReflectionState = { error: string | null; success?: boolean };
 
 /**
  * Reflexion zu einem Little Bet speichern: legt einen Journal-Eintrag
@@ -105,6 +104,9 @@ export async function saveBetReflectionAction(
   const res = await saveBetsAction({ error: null }, fd);
   if (res.error) return { error: res.error };
 
+  // Kein Server-Redirect mehr: der Client zeigt eine warme Abschluss-Ansicht
+  // (Feier + „Zu deinen Sternen"), wie Journey und Schmiede. revalidatePath
+  // hält /me/wants frisch, sobald dorthin navigiert wird.
   revalidatePath("/me/wants");
-  redirect("/me/wants");
+  return { error: null, success: true };
 }
