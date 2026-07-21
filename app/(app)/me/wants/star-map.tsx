@@ -120,6 +120,11 @@ export function StarMap({
   const mapRef = useRef<HTMLDivElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
   const flyStarRef = useRef<HTMLDivElement>(null);
+  // Fokus-Ebene = Dialog: der gerenderte Container (für Fokus + Tab-Falle) und
+  // der auslösende Stern-Button, auf den beim Schließen der Fokus zurückkehrt.
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const prevFocusedRef = useRef<string | null>(null);
   const originRef = useRef<{ x: number; y: number; size: number } | null>(null);
   // Karten-lokaler Ursprung (Sternposition relativ zur oberen linken Kartenecke)
   // — Transform-Ursprung für den Auf-Zoom der realen Karte.
@@ -149,6 +154,8 @@ export function StarMap({
     const size = want.distance === "fern" ? 14 : 24;
     const cx = r.left + r.width / 2;
     const cy = r.top + r.height / 2;
+    // Auslöser merken, damit der Fokus beim Schließen genau hierher zurückkehrt.
+    triggerRef.current = el;
     originRef.current = { x: cx, y: cy, size };
     // Sternposition relativ zur Karte — Ursprung für den Karten-Auf-Zoom.
     const mapRect = mapRef.current?.getBoundingClientRect();
@@ -212,6 +219,74 @@ export function StarMap({
     const t = window.setTimeout(() => setContentVisible(true), 420);
     return () => window.clearTimeout(t);
   }, [focusedId, reduced]);
+
+  // Die Fokus-Ebene wie ein Dialog behandeln: Fokus reinziehen, Tab einsperren,
+  // Escape schließt (im Edit-Modus verlässt Escape erst den Edit, damit getippter
+  // Text nicht verloren geht). Ohne das bliebe der Fokus auf dem unsichtbaren
+  // Auslöser-Stern und Tab liefe in die Seite hinter dem Overlay.
+  useEffect(() => {
+    if (!focusedId) return;
+    const dialog = dialogRef.current;
+    const raf = requestAnimationFrame(() => dialog?.focus());
+
+    function focusables(): HTMLElement[] {
+      if (!dialog) return [];
+      return Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',
+        ),
+      );
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (mode === "edit") {
+          setMode("view");
+          setConfirmDelete(false);
+          setFocusError(null);
+        } else {
+          zoomOut();
+        }
+        return;
+      }
+      if (e.key !== "Tab" || !dialog) return;
+      const els = focusables();
+      if (els.length === 0) {
+        e.preventDefault();
+        dialog.focus();
+        return;
+      }
+      const first = els[0];
+      const last = els[els.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && (active === first || active === dialog || !dialog.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !dialog.contains(active))) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [focusedId, mode]);
+
+  // Beim Schließen den Fokus auf den auslösenden Stern zurücksetzen — außer der
+  // Stern wurde gelöscht (Karte remountet per key, Button ist dann weg).
+  useEffect(() => {
+    const prev = prevFocusedRef.current;
+    prevFocusedRef.current = focusedId;
+    if (prev && !focusedId) {
+      const trigger = triggerRef.current;
+      if (trigger && document.body.contains(trigger)) trigger.focus();
+      triggerRef.current = null;
+    }
+  }, [focusedId]);
 
   function zoomOut() {
     setContentVisible(false);
@@ -291,8 +366,10 @@ export function StarMap({
 
   return (
     <div className="relative w-full" style={{ aspectRatio: `${VIEW_W} / ${viewH}` }}>
-      {/* Die Sternenkarte (fadet beim Fokus komplett aus) */}
-      <div ref={mapRef} className="absolute inset-0">
+      {/* Die Sternenkarte (fadet beim Fokus komplett aus). `inert`, solange ein
+          Stern fokussiert ist: die unsichtbare Karte darf weder Tastatur-Fokus
+          noch Screenreader bekommen. */}
+      <div ref={mapRef} className="absolute inset-0" inert={focusedId !== null}>
         <svg viewBox={`0 0 ${VIEW_W} ${viewH}`} className="absolute inset-0 size-full" aria-hidden="true">
           {MICRO_STARS.map((s, i) => (
             <circle
@@ -365,7 +442,14 @@ export function StarMap({
       {mounted &&
         focused &&
         createPortal(
-          <>
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Stern: ${starName(focused)}`}
+            tabIndex={-1}
+            className="outline-none"
+          >
             {/* Okkludierender gedimmter Sternenhimmel (verdeckt Nav + verblasste
                 Karte). Skaliert in Task 3 als Einheit für den Parallax-Push. */}
             <div
@@ -489,7 +573,7 @@ export function StarMap({
                 )}
               </div>
             </div>
-          </>,
+          </div>,
           document.body,
         )}
     </div>
