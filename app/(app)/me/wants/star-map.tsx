@@ -121,6 +121,9 @@ export function StarMap({
   const layerRef = useRef<HTMLDivElement>(null);
   const flyStarRef = useRef<HTMLDivElement>(null);
   const originRef = useRef<{ x: number; y: number; size: number } | null>(null);
+  // Karten-lokaler Ursprung (Sternposition relativ zur oberen linken Kartenecke)
+  // — Transform-Ursprung für den Auf-Zoom der realen Karte.
+  const mapOriginRef = useRef<{ x: number; y: number } | null>(null);
 
   // Portal erst nach Mount (kein document auf dem Server).
   // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliger Client-Mount-Flag, kein document auf dem Server
@@ -144,26 +147,37 @@ export function StarMap({
     const r = el.getBoundingClientRect();
     // Sichtbare Sterngröße (svg), nicht die 44px-Tap-Fläche des Buttons.
     const size = want.distance === "fern" ? 14 : 24;
-    originRef.current = { x: r.left + r.width / 2, y: r.top + r.height / 2, size };
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    originRef.current = { x: cx, y: cy, size };
+    // Sternposition relativ zur Karte — Ursprung für den Karten-Auf-Zoom.
+    const mapRect = mapRef.current?.getBoundingClientRect();
+    mapOriginRef.current = mapRect ? { x: cx - mapRect.left, y: cy - mapRect.top } : null;
     setMode("view");
     setConfirmDelete(false);
     setFocusError(null);
     setFocusedId(want.id);
   }
 
-  // Kamerafahrt beim Öffnen: Stern fliegt vom Ursprung in die Mitte, Karte fadet.
+  // Kamera-Push beim Öffnen: alle drei Ebenen wachsen von P (Tap-Punkt) nach außen
+  // — reale Karte schiebt auf + fadet, Fokus-Himmel settelt von P aus ein, der eine
+  // Stern wächst in die Fokus-Position. Reduced motion: harter Schnitt ohne Scale.
   useEffect(() => {
     if (!focusedId) return;
     const layer = layerRef.current;
     const fly = flyStarRef.current;
     const origin = originRef.current;
+    const mapOrigin = mapOriginRef.current;
 
+    // Reale Karte: fadet aus und schiebt leicht auf (Ursprung am getippten Stern)
+    // → Nachbarsterne driften nach außen, erster Moment des Reinfliegens.
     if (mapRef.current) {
-      gsap.to(mapRef.current, {
-        opacity: 0,
-        duration: reduced ? 0 : 0.35,
-        ease: "power2.out",
-      });
+      if (reduced || !mapOrigin) {
+        gsap.to(mapRef.current, { opacity: 0, duration: reduced ? 0 : 0.35, ease: "power2.out" });
+      } else {
+        gsap.set(mapRef.current, { transformOrigin: `${mapOrigin.x}px ${mapOrigin.y}px` });
+        gsap.to(mapRef.current, { opacity: 0, scale: 1.15, duration: 0.35, ease: "power2.out" });
+      }
     }
     if (!layer || !fly) return;
 
@@ -171,20 +185,29 @@ export function StarMap({
 
     if (reduced || !origin) {
       gsap.set(fly, { x: 0, y: 0, scale: 1, opacity: 1 });
-      gsap.set(layer, { opacity: 1 });
+      gsap.set(layer, { opacity: 1, scale: 1 });
       setContentVisible(true);
       return;
     }
 
     const { x: tx, y: ty } = target();
-    gsap.set(layer, { opacity: 0 });
+
+    // Fokus-Himmel: taucht von P aus ein — startet vergrößert am Tap-Punkt und
+    // settelt auf Scale 1, während er auffadet. Scale bleibt ≥ 1 → volle Occlusion.
+    gsap.set(layer, { transformOrigin: `${origin.x}px ${origin.y}px` });
+    gsap.fromTo(
+      layer,
+      { opacity: 0, scale: 1.35 },
+      { opacity: 1, scale: 1, duration: 0.6, ease: "power2.out" },
+    );
+
     gsap.fromTo(
       fly,
       { x: origin.x - tx, y: origin.y - ty, scale: origin.size / FOCUS_STAR_SIZE, opacity: 1 },
       { x: 0, y: 0, scale: 1, duration: 0.6, ease: "power2.inOut" },
     );
-    gsap.to(layer, { opacity: 1, duration: 0.4, delay: 0.25, ease: "power2.out" });
-    const t = window.setTimeout(() => setContentVisible(true), 350);
+    // Inhalt erscheint, wenn der Push weitgehend gesettelt ist.
+    const t = window.setTimeout(() => setContentVisible(true), 420);
     return () => window.clearTimeout(t);
   }, [focusedId, reduced]);
 
@@ -198,7 +221,7 @@ export function StarMap({
     const origin = originRef.current;
 
     if (reduced) {
-      if (mapRef.current) gsap.set(mapRef.current, { opacity: 1 });
+      if (mapRef.current) gsap.set(mapRef.current, { opacity: 1, scale: 1 });
       setFocusedId(null);
       return;
     }
@@ -212,9 +235,11 @@ export function StarMap({
         ease: "power2.inOut",
       });
     }
-    if (layer) gsap.to(layer, { opacity: 0, duration: 0.4, ease: "power2.out" });
+    // Fokus-Himmel zieht sich zu P zusammen (Umkehr des Push) und fadet aus.
+    if (layer) gsap.to(layer, { opacity: 0, scale: 1.35, duration: 0.5, ease: "power2.in" });
+    // Reale Karte fadet zurück und setzt ihren Auf-Zoom zurück.
     if (mapRef.current) {
-      gsap.to(mapRef.current, { opacity: 1, duration: 0.5, delay: 0.15, ease: "power2.out" });
+      gsap.to(mapRef.current, { opacity: 1, scale: 1, duration: 0.5, delay: 0.15, ease: "power2.out" });
     }
     window.setTimeout(() => setFocusedId(null), 500);
   }
