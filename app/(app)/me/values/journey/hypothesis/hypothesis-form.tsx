@@ -98,7 +98,7 @@ export function HypothesisForm({ initialValues }: Props) {
                       {getValueLabel(id)}
                     </p>
                     {!isCustom && (
-                      <p className="font-affirmation text-base leading-relaxed text-foreground/90">
+                      <p className="text-base leading-relaxed text-foreground/90">
                         Dir ist wichtig, dass {getValueDescription(id)}.
                       </p>
                     )}
@@ -126,7 +126,7 @@ export function HypothesisForm({ initialValues }: Props) {
       {/* Header — die 7-Tage-Reise ist das führende Modell (Karte „Tag N von 7",
           Journal-Header „Tag N — Reflexion"); kein konkurrierender „Schritt"-Zähler. */}
       <header className="mb-4">
-        <p className="max-w-prose text-lg leading-relaxed text-foreground">
+        <p className="max-w-prose text-base leading-relaxed text-foreground">
           Wähl 5 Werte aus, die sich gerade jetzt echt für dich anfühlen — nicht
           zu viel nachdenken, einfach fühlen.
         </p>
@@ -222,7 +222,7 @@ export function HypothesisForm({ initialValues }: Props) {
                         {getValueLabel(id)}
                       </p>
                       {!isCustom && (
-                        <p className="font-affirmation text-sm leading-relaxed text-muted-foreground">
+                        <p className="text-sm leading-relaxed text-muted-foreground">
                           Dir ist wichtig, dass {getValueDescription(id)}.
                         </p>
                       )}

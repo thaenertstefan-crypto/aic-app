@@ -215,7 +215,7 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
                   </div>
 
                   <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-muted-foreground">
+                    <p className="text-base font-medium text-muted-foreground">
                       Was ist heute passiert?
                     </p>
                     <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
@@ -224,7 +224,7 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
                   </div>
 
                   <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-muted-foreground">
+                    <p className="text-base font-medium text-muted-foreground">
                       Welche Gedanken, Gefühle, Reaktionen kamen dabei auf?
                     </p>
                     <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
@@ -247,7 +247,7 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="happenings" className="text-sm font-medium">
+                  <Label htmlFor="happenings" className="text-base font-medium">
                     Was ist heute passiert?
                   </Label>
                   <Textarea
@@ -263,7 +263,7 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="response" className="text-sm font-medium">
+                  <Label htmlFor="response" className="text-base font-medium">
                     Welche Gedanken, Gefühle, Reaktionen kamen dabei auf?
                   </Label>
                   <Textarea
