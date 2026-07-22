@@ -997,6 +997,19 @@
   .funke-spray { animation: none; opacity: 0.7; }
 }
 
+/* Success-Screen: Funken sind aus der Esse aufgestiegen und schweben als Gruppe
+   (sanftes Ein-Aufsteigen einmalig, dann Ruhe). */
+@keyframes funke-rise {
+  from { opacity: 0; transform: translateY(24px) scale(0.8); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);   }
+}
+.funke-rise {
+  animation: funke-rise 0.8s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .funke-rise { animation: none; opacity: 1; }
+}
+
 /* Amboss-Hammer schlägt rhythmisch auf den Stern (nur Ladezustand, AnvilArt). */
 .forge-hammer {
   transform-box: fill-box;

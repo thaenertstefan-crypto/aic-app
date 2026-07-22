@@ -15,7 +15,6 @@ import { FormError } from "@/components/ui/form-error";
 import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
-import { Mascot } from "@/components/brand/mascot";
 import { ForgeBackdrop } from "@/components/backdrops/forge-backdrop";
 import { CompassStarsArt } from "@/components/brand/compass-stars-art";
 import { useWarp, warpPageClass } from "@/components/wants/warp-transition";
@@ -59,6 +58,16 @@ const SPRAY_FUNKEN: { left: number; size: number; delay: number }[] = [
   { left: 74, size: 5, delay: 0.9 },
   { left: 22, size: 6, delay: 1.2 },
   { left: 54, size: 7, delay: 1.5 },
+];
+
+// Success-Screen: bis zu 5 Positionen des aufgestiegenen Funken-Schwarms
+// (viewBox-frei, Prozent im 220×150-Feld). Held-Funke in der Mitte etwas größer.
+const SWARM_FUNKEN: { x: number; y: number; size: number; delay: number }[] = [
+  { x: 30, y: 62, size: 10, delay: 0.0 },
+  { x: 66, y: 70, size: 9, delay: 0.12 },
+  { x: 48, y: 34, size: 14, delay: 0.24 },
+  { x: 80, y: 44, size: 9, delay: 0.36 },
+  { x: 16, y: 40, size: 8, delay: 0.48 },
 ];
 
 export function Sternschmiede({
@@ -484,8 +493,11 @@ export function Sternschmiede({
     );
   }
 
-  // ── Abschluss ───────────────────────────────────────────────────
+  // ── Abschluss — Funken-Schwarm ──────────────────────────────────
   if (phase === "done") {
+    const savedCount = openBets.length;
+    const n = Math.min(Math.max(savedCount, 1), SWARM_FUNKEN.length);
+    const swarm = SWARM_FUNKEN.slice(0, n);
     return (
       <div className="flex min-h-lvh flex-col">
         <ForgeBackdrop />
@@ -496,14 +508,35 @@ export function Sternschmiede({
           default="none"
         >
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Mascot expression="happy" size="lg" />
+            {/* Der aufgestiegene Funken-Schwarm schwebt über dem Feuer. */}
+            <div className="relative h-40 w-full max-w-[240px]" aria-hidden="true">
+              {swarm.map((f, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    "absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-celebrate",
+                    reduced ? undefined : "funke-rise",
+                  )}
+                  style={{
+                    left: `${f.x + 10}%`,
+                    top: `${f.y}%`,
+                    width: `${f.size}px`,
+                    height: `${f.size}px`,
+                    animationDelay: `${f.delay}s`,
+                    boxShadow: `0 0 ${f.size + 6}px ${Math.round(f.size / 4)}px color-mix(in srgb, var(--celebrate) 70%, transparent)`,
+                  }}
+                />
+              ))}
+            </div>
             <div className="space-y-2">
               <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                Funken geschlagen.
+                {savedCount <= 1
+                  ? "Der erste Funke ist geschlagen."
+                  : `${savedCount} Funken glühen jetzt in deiner Schmiede.`}
               </h1>
               <p className="text-muted-foreground">
-                Sie warten auf deiner Sterne-Seite. Probier sie aus — und danach
-                reflektierst du kurz, was der Funke dir gezeigt hat.
+                Probier sie aus — und danach reflektierst du kurz, was der Funke dir
+                gezeigt hat.
               </p>
             </div>
             <div className="flex w-full flex-col gap-3 pt-2">
