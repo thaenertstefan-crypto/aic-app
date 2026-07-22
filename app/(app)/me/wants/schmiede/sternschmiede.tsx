@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ViewTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUp, Check, Flame, FlaskConical, Plus, Sparkles } from "lucide-react";
+import { ArrowUp, Check, Flame, Plus, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +21,7 @@ import { AnvilArt } from "@/components/brand/forge-art";
 import { ForgeBackdrop } from "@/components/backdrops/forge-backdrop";
 import { CompassStarsArt } from "@/components/brand/compass-stars-art";
 import { useWarp, warpPageClass } from "@/components/wants/warp-transition";
+import { FunkenSky } from "@/components/wants/funken-sky";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
@@ -100,7 +101,7 @@ export function Sternschmiede({
     <SubPageHeader
       backHref="/me/wants"
       title="Sternschmiede"
-      backTransitionTypes={["forge-up"]}
+      onBack={goBackToStars}
       action={
         INTRO_CARDS.length > 0 ? (
           <IntroInfoButton cards={INTRO_CARDS} />
@@ -477,7 +478,8 @@ export function Sternschmiede({
     );
   }
 
-  // ── Intro + Bets (Einstieg / Landing) ───────────────────────────
+  // ── Intro + Funken (Einstieg / Landing) ─────────────────────────
+  const firstVisit = openBets.length === 0 && triedBets.length === 0;
   return (
     <div
       className={cn(
@@ -494,7 +496,6 @@ export function Sternschmiede({
       >
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
           <div className="flex flex-col items-center gap-3 text-center">
-            <AnvilArt animate={!reduced} />
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
               Willkommen in der Sternschmiede
             </h1>
@@ -511,112 +512,76 @@ export function Sternschmiede({
             )}
           </div>
 
-          {/* ── Nach den Sternen greifen (Bets leben jetzt hier) ── */}
-          {(openBets.length > 0 || triedBets.length > 0) && (
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-5 text-primary" />
-                <h2 className="font-heading text-lg font-semibold text-foreground">
-                  Nach den Sternen greifen
-                </h2>
-              </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Deine Funken — kleine Experimente. Nach jedem reflektierst du kurz,
-                was er dir gezeigt hat.
-              </p>
-
-              {openBets.length > 0 && (
-                <div className="flex flex-col gap-3">
-                  {openBets.map((bet) => (
-                    <Card key={bet.id} className="w-full">
-                      <CardContent className="space-y-3 pt-(--card-spacing)">
-                        <p className="text-base leading-relaxed text-foreground">
-                          {bet.text}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-2"
-                            render={<Link href={`/me/wants/reflect/${bet.id}`} />}
-                          >
-                            <FlaskConical className="size-4" /> Ausprobiert? Reflektieren
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-muted-foreground"
-                            onClick={() => deleteBet(bet.id)}
-                          >
-                            Verwerfen
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-
-              {triedBets.length > 0 && (
-                <div className="flex flex-col gap-2 pt-1">
-                  <SectionLabel>Schon gegriffen</SectionLabel>
-                  {triedBets.map((bet) => (
-                    <div
-                      key={bet.id}
-                      className="flex items-start gap-2 rounded-lg border border-border/60 px-3 py-2"
-                    >
-                      <Check className="mt-0.5 size-4 shrink-0 text-primary" />
-                      <span className="flex-1 text-sm leading-relaxed text-muted-foreground">
-                        {bet.text}
-                      </span>
-                      {bet.journalEntryId && (
-                        <Link
-                          href="/journal"
-                          className="shrink-0 text-xs font-medium text-primary underline-offset-4 hover:underline"
-                        >
-                          Reflexion
-                        </Link>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-start gap-2">
-                <Input
-                  value={newBet}
-                  onChange={(e) => setNewBet(e.target.value)}
-                  placeholder="Eigener Funke, z. B. „Einmal zum Bouldern gehen“"
-                  maxLength={300}
-                  aria-label="Eigenen Funken hinzufügen"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addBet();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                  aria-label="Funken hinzufügen"
-                  disabled={!newBet.trim()}
-                  onClick={addBet}
-                >
-                  <Plus className="size-4" />
-                </Button>
-              </div>
-
-              <FormError message={betError} />
-            </section>
+          {/* Offene Funken als schwebende Konstellation über der Esse. */}
+          {openBets.length > 0 && (
+            <FunkenSky
+              funken={openBets}
+              reflectHref={(id) => `/me/wants/reflect/${id}`}
+              onDelete={deleteBet}
+            />
           )}
 
+          {/* „Schon gegriffen" — leise Hairline-Zeilen (kein Karten-Kasten). */}
+          {triedBets.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <SectionLabel>Schon gegriffen</SectionLabel>
+              {triedBets.map((bet) => (
+                <div
+                  key={bet.id}
+                  className="flex items-start gap-2 rounded-lg border border-border/60 px-3 py-2"
+                >
+                  <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+                  <span className="flex-1 text-sm leading-relaxed text-muted-foreground">
+                    {bet.text}
+                  </span>
+                  {bet.journalEntryId && (
+                    <Link
+                      href="/journal"
+                      className="shrink-0 text-xs font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      Reflexion
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Eigenen Funken hinzufügen — sitzt unter der Konstellation. */}
+          <div className="flex items-start gap-2">
+            <Input
+              value={newBet}
+              onChange={(e) => setNewBet(e.target.value)}
+              placeholder="Eigener Funke, z. B. „Einmal zum Bouldern gehen“"
+              maxLength={300}
+              aria-label="Eigenen Funken hinzufügen"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addBet();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              aria-label="Funken hinzufügen"
+              disabled={!newBet.trim()}
+              onClick={addBet}
+            >
+              <Plus className="size-4" />
+            </Button>
+          </div>
+
+          <FormError message={betError} />
           <FormError message={error} />
 
+          {/* Die eine Gold-CTA. Erstbesuch ohne Funken: schlicht „Funken schlagen". */}
           <Button className="w-full gap-2" size="lg" onClick={() => setPhase("briefing")}>
-            <Flame className="size-4" /> Funken schlagen
+            <Flame className="size-4" />
+            {firstVisit ? "Funken schlagen" : "Neue Funken schlagen"}
           </Button>
 
           {/* Zurück in den Sternenhimmel — derselbe Warp, nur rückwärts (Aufstieg).
