@@ -11,12 +11,14 @@ export function StarGlyph({
   glow = 6,
   dim = false,
   twinkle = false,
+  fill = "var(--primary)",
 }: {
   className?: string;
   sizeClass?: string;
   glow?: number;
   dim?: boolean;
   twinkle?: boolean;
+  fill?: string;
 }) {
   return (
     <svg
@@ -27,7 +29,7 @@ export function StarGlyph({
         filter: `drop-shadow(0 0 ${glow}px color-mix(in srgb, var(--primary) ${dim ? 35 : 55}%, transparent))`,
       }}
     >
-      <path d={STAR_PATH} fill="var(--primary)" />
+      <path d={STAR_PATH} fill={fill} />
     </svg>
   );
 }

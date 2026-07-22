@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ChevronDown,
-  Compass,
   Plus,
   Sparkles,
   X,
@@ -196,6 +195,15 @@ export function WantsJourney({
   const [refiningId, setRefiningId] = useState<string | null>(null);
   const [refineError, setRefineError] = useState<Record<string, string | null>>({});
 
+  // Welche Vorschlags-Sterne sind aufgeklappt (Tap-to-Edit). Unabhängig togglebar.
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
+  const toggleOpen = (id: string) =>
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
   // Offline draft safety net
   const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
     useFormDraft<AuditDraft>("wants-audit");
@@ -324,10 +332,11 @@ export function WantsJourney({
   function addOwnWant() {
     const text = newWantText.trim();
     if (!text) return;
+    const id = crypto.randomUUID();
     setDraftWants((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id,
         text,
         title: null,
         distance: "nah",
@@ -338,6 +347,7 @@ export function WantsJourney({
         source: "own",
       },
     ]);
+    setOpenIds((prev) => new Set(prev).add(id));
     setNewWantText("");
   }
 
@@ -443,16 +453,6 @@ export function WantsJourney({
     );
   }
 
-  const header = (
-    <SubPageHeader
-      backHref="/me/wants"
-      title={PAGE_TITLES.wants}
-      action={
-        INTRO_CARDS.length > 0 ? <IntroInfoButton cards={INTRO_CARDS} /> : undefined
-      }
-    />
-  );
-
   const introAction =
     INTRO_CARDS.length > 0 ? <IntroInfoButton cards={INTRO_CARDS} /> : undefined;
 
@@ -548,205 +548,253 @@ export function WantsJourney({
     const keptCount = draftWants.filter((w) => w.text.trim()).length;
 
     return (
-      <div className="flex min-h-lvh flex-col">
-        {header}
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {aiError ? (
-            <>
-              <div className="flex flex-col items-center gap-3 text-center">
-                <Mascot expression="sorrowMild" size="md" />
-              </div>
-              <Card className="w-full">
-                <CardContent className="space-y-3 pt-(--card-spacing)">
-                  <p className="text-base leading-relaxed text-muted-foreground">
-                    {aiError}
-                  </p>
-                  {entryId && (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => void runDistiller(entryId)}
-                    >
-                      Nochmal versuchen
-                    </Button>
-                  )}
-                  <Button
-                    className="w-full"
-                    onClick={() => {
-                      setAiError(null);
-                      setManualMode(true);
-                    }}
-                  >
-                    Meine Wants selbst formulieren
-                  </Button>
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <>
-              <div className="flex flex-col items-center gap-3 text-center">
-                <Mascot expression="happy" size="md" />
+      <JourneyStage
+        backHref="/me/wants"
+        title={PAGE_TITLES.wants}
+        headerAction={introAction}
+        mascot={null}
+        stepKey="sterne"
+      >
+        {aiError ? (
+          <>
+            <div className="flex flex-col items-center gap-3 text-center">
+              <Mascot expression="sorrowMild" size="md" />
+            </div>
+            <Card className="w-full">
+              <CardContent className="space-y-3 pt-(--card-spacing)">
                 <p className="text-base leading-relaxed text-muted-foreground">
-                  {manualMode
-                    ? "Formuliere 3–6 Sätze dazu, was dich antreibt — so, wie es sich für dich richtig anfühlt."
-                    : "Das lese ich aus deiner Sternensuche heraus. Pass die Sätze an, verwirf, was nicht stimmt — und tauf deine Sterne: Jeder trägt einen Namensvorschlag, den du ändern kannst."}
+                  {aiError}
                 </p>
-              </div>
+                {entryId && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => void runDistiller(entryId)}
+                  >
+                    Nochmal versuchen
+                  </Button>
+                )}
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setAiError(null);
+                    setManualMode(true);
+                  }}
+                >
+                  Meine Wants selbst formulieren
+                </Button>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <>
+            {/* Held-Stern statt Maskottchen */}
+            <div className="flex flex-col items-center gap-3 text-center">
+              <StarGlyph sizeClass="size-14" glow={18} />
+              <p className="text-base leading-relaxed text-muted-foreground">
+                {manualMode
+                  ? "Formuliere 3–6 Sätze dazu, was dich antreibt — so, wie es sich für dich richtig anfühlt."
+                  : "Das lese ich aus deiner Sternensuche heraus. Tipp einen Stern an, um ihn zu taufen oder zu ändern — und verwirf, was nicht stimmt."}
+              </p>
+            </div>
 
-              {comment && (
-                <Reveal delay={0.15} className="w-full">
-                  <Card className="w-full">
-                    <CardContent className="pt-(--card-spacing)">
-                      <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                        {comment}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Reveal>
-              )}
+            {/* KI-Einschätzung als Glass-Karte */}
+            {comment && (
+              <Reveal delay={0.15} className="w-full">
+                <Card variant="glass" className="w-full">
+                  <CardContent className="pt-(--card-spacing)">
+                    <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                      {comment}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Reveal>
+            )}
 
-              <div className="flex w-full flex-col gap-3">
-                {draftWants.map((want) => (
-                  <Card key={want.id} className="w-full">
-                    <CardContent className="space-y-2 pt-(--card-spacing)">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={want.title ?? ""}
-                          onChange={(e) =>
-                            setDraftWants((prev) =>
-                              prev.map((w) =>
-                                w.id === want.id ? { ...w, title: e.target.value } : w,
-                              ),
-                            )
-                          }
-                          maxLength={60}
-                          placeholder="Name des Sterns (2–3 Worte)"
-                          className="font-heading"
-                          aria-label="Name des Sterns"
-                        />
-                        {want.distance === "fern" && (
-                          <span className="shrink-0 rounded-full bg-foreground/10 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                            Ferner Stern
+            {/* Vorschläge als kompakte Stern-Zeilen (Tap-to-Edit) */}
+            <div className="flex w-full flex-col">
+              {draftWants.map((want) => {
+                const open = openIds.has(want.id);
+                const displayName = want.title?.trim() ? want.title.trim() : want.text.trim();
+                return (
+                  <div key={want.id} className="border-b border-foreground/10 last:border-b-0">
+                    {/* Kollabierte Zeile */}
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-3 py-3 text-left"
+                      aria-expanded={open}
+                      onClick={() => toggleOpen(want.id)}
+                    >
+                      <StarGlyph
+                        sizeClass={want.distance === "fern" ? "size-4" : "size-5"}
+                        dim={want.distance === "fern"}
+                        glow={want.distance === "fern" ? 4 : 7}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-heading text-base font-semibold text-foreground">
+                          {displayName}
+                        </span>
+                        {!open && (
+                          <span className="block truncate text-sm text-muted-foreground">
+                            {want.text}
                           </span>
                         )}
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Textarea
-                          value={want.text}
-                          onChange={(e) =>
-                            setDraftWants((prev) =>
-                              prev.map((w) =>
-                                w.id === want.id ? { ...w, text: e.target.value } : w,
-                              ),
-                            )
-                          }
-                          maxLength={300}
-                          rows={2}
-                          className="min-h-[60px] resize-y text-base"
-                          aria-label="Want bearbeiten"
-                        />
-                        <button
-                          type="button"
-                          className="mt-1 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                          aria-label="Want verwerfen"
-                          onClick={() =>
-                            setDraftWants((prev) => prev.filter((w) => w.id !== want.id))
-                          }
-                        >
-                          <X className="size-4" />
-                        </button>
-                      </div>
-                      {want.valueLabel && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                          <Sparkles className="size-3" />
-                          Passt zu deinem Wert: {want.valueLabel}
-                        </span>
-                      )}
-                      {want.reason && (
-                        <p className="text-sm leading-relaxed text-muted-foreground">
-                          {want.reason}
-                        </p>
-                      )}
-                      {want.question && (
-                        <div className="mt-1 space-y-2 rounded-lg border border-primary/25 bg-primary/5 p-3">
-                          <p className="text-sm leading-relaxed text-foreground">
-                            {want.question}
-                          </p>
-                          <Textarea
-                            value={refineAnswers[want.id] ?? ""}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "size-4 shrink-0 text-muted-foreground transition-transform",
+                          open && "rotate-180",
+                        )}
+                      />
+                    </button>
+
+                    {/* Aufgeklappt: volle Bearbeitung (bestehende Felder + Refine) */}
+                    {open && (
+                      <div className="space-y-2 pb-4">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={want.title ?? ""}
                             onChange={(e) =>
-                              setRefineAnswers((a) => ({ ...a, [want.id]: e.target.value }))
+                              setDraftWants((prev) =>
+                                prev.map((w) =>
+                                  w.id === want.id ? { ...w, title: e.target.value } : w,
+                                ),
+                              )
                             }
-                            rows={2}
-                            maxLength={300}
-                            placeholder="Deine Antwort — dann mach ich es konkreter."
-                            className="min-h-[52px] resize-y bg-background text-sm"
-                            aria-label="Antwort zum Konkretisieren"
+                            maxLength={60}
+                            placeholder="Name des Sterns (2–3 Worte)"
+                            className="font-heading"
+                            aria-label="Name des Sterns"
                           />
-                          {refineError[want.id] && (
-                            <p className="text-xs text-destructive">{refineError[want.id]}</p>
+                          {want.distance === "fern" && (
+                            <span className="shrink-0 rounded-full bg-foreground/10 px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                              Ferner Stern
+                            </span>
                           )}
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={
-                              refiningId === want.id || !(refineAnswers[want.id] ?? "").trim()
-                            }
-                            onClick={() => void refineWant(want)}
-                          >
-                            {refiningId === want.id ? "Schärfe …" : "Konkreter machen"}
-                          </Button>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                        <div className="flex items-start gap-2">
+                          <Textarea
+                            value={want.text}
+                            onChange={(e) =>
+                              setDraftWants((prev) =>
+                                prev.map((w) =>
+                                  w.id === want.id ? { ...w, text: e.target.value } : w,
+                                ),
+                              )
+                            }
+                            maxLength={300}
+                            rows={2}
+                            className="min-h-[60px] resize-y text-base"
+                            aria-label="Want bearbeiten"
+                          />
+                          <button
+                            type="button"
+                            className="mt-1 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            aria-label="Want verwerfen"
+                            onClick={() => {
+                              setDraftWants((prev) => prev.filter((w) => w.id !== want.id));
+                              setOpenIds((prev) => {
+                                const next = new Set(prev);
+                                next.delete(want.id);
+                                return next;
+                              });
+                            }}
+                          >
+                            <X className="size-4" />
+                          </button>
+                        </div>
+                        {want.valueLabel && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                            <Sparkles className="size-3" />
+                            Passt zu deinem Wert: {want.valueLabel}
+                          </span>
+                        )}
+                        {want.reason && (
+                          <p className="text-sm leading-relaxed text-muted-foreground">
+                            {want.reason}
+                          </p>
+                        )}
+                        {want.question && (
+                          <div className="mt-1 space-y-2 rounded-lg border border-primary/25 bg-primary/5 p-3">
+                            <p className="text-sm leading-relaxed text-foreground">
+                              {want.question}
+                            </p>
+                            <Textarea
+                              value={refineAnswers[want.id] ?? ""}
+                              onChange={(e) =>
+                                setRefineAnswers((a) => ({ ...a, [want.id]: e.target.value }))
+                              }
+                              rows={2}
+                              maxLength={300}
+                              placeholder="Deine Antwort — dann mach ich es konkreter."
+                              className="min-h-[52px] resize-y bg-background text-sm"
+                              aria-label="Antwort zum Konkretisieren"
+                            />
+                            {refineError[want.id] && (
+                              <p className="text-xs text-destructive">{refineError[want.id]}</p>
+                            )}
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={
+                                refiningId === want.id || !(refineAnswers[want.id] ?? "").trim()
+                              }
+                              onClick={() => void refineWant(want)}
+                            >
+                              {refiningId === want.id ? "Schärfe …" : "Konkreter machen"}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
 
-              <div className="flex w-full items-start gap-2">
-                <Textarea
-                  value={newWantText}
-                  onChange={(e) => setNewWantText(e.target.value)}
-                  placeholder="Was zieht dich an? Z. B. „Mir macht … Spaß“ oder „Ich will …“"
-                  maxLength={300}
-                  rows={2}
-                  className="min-h-[60px] flex-1 resize-y"
-                  aria-label="Eigenes Want hinzufügen"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="mt-1 shrink-0"
-                  aria-label="Want hinzufügen"
-                  disabled={!newWantText.trim()}
-                  onClick={addOwnWant}
-                >
-                  <Plus className="size-4" />
-                </Button>
-              </div>
-
-              <FormError message={wantsError} />
-
+            {/* Eigenen Stern hinzufügen */}
+            <div className="flex w-full items-start gap-2">
+              <Textarea
+                value={newWantText}
+                onChange={(e) => setNewWantText(e.target.value)}
+                placeholder="Was zieht dich an? Z. B. „Mir macht … Spaß“ oder „Ich will …“"
+                maxLength={300}
+                rows={2}
+                className="min-h-[60px] flex-1 resize-y"
+                aria-label="Eigenes Want hinzufügen"
+              />
               <Button
-                className="w-full gap-2"
-                size="lg"
-                disabled={savingWants || keptCount === 0}
-                onClick={() => void confirmWants()}
+                type="button"
+                variant="outline"
+                size="icon"
+                className="mt-1 shrink-0"
+                aria-label="Want hinzufügen"
+                disabled={!newWantText.trim()}
+                onClick={addOwnWant}
               >
-                <Compass className="size-4" />
-                {savingWants
-                  ? "Wird gespeichert …"
-                  : keptCount === 1
-                    ? "Diesen Stern behalten"
-                    : `Diese ${keptCount} Sterne behalten`}
+                <Plus className="size-4" />
               </Button>
-            </>
-          )}
-          <div className="h-8" />
-        </div>
-      </div>
+            </div>
+
+            <FormError message={wantsError} />
+
+            <Button
+              className="w-full gap-2"
+              size="lg"
+              disabled={savingWants || keptCount === 0}
+              onClick={() => void confirmWants()}
+            >
+              <StarGlyph sizeClass="size-4" glow={0} fill="var(--primary-foreground)" />
+              {savingWants
+                ? "Wird gespeichert …"
+                : keptCount === 1
+                  ? "Diesen Stern behalten"
+                  : `Diese ${keptCount} Sterne behalten`}
+            </Button>
+          </>
+        )}
+      </JourneyStage>
     );
   }
 
