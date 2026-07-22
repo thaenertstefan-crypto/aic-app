@@ -1010,18 +1010,6 @@
   .funke-rise { animation: none; opacity: 1; }
 }
 
-/* Amboss-Hammer schlägt rhythmisch auf den Stern (nur Ladezustand, AnvilArt). */
-.forge-hammer {
-  transform-box: fill-box;
-  transform-origin: 90% 25%;
-  animation: forge-hammer 1.1s ease-in-out infinite;
-}
-@keyframes forge-hammer {
-  0%, 45%, 100% { transform: rotate(-17deg); }
-  60%           { transform: rotate(5deg);   }
-  74%           { transform: rotate(-5deg);  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .warp-wash,
   .warp-streak,
@@ -1029,8 +1017,7 @@
   .warp-page-exit-down,
   .warp-page-enter,
   .warp-page-enter-down,
-  .forge-spark,
-  .forge-hammer { animation: none !important; }
+  .forge-spark { animation: none !important; }
   .warp-page-below,
   .warp-page-above { transform: none; }
 }
