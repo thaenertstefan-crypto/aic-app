@@ -14,6 +14,11 @@
 export function FocusSky() {
   return (
     <div aria-hidden className="absolute inset-0 overflow-hidden bg-background">
+      {/* Höhenstabile Himmel-Ebene: an den oberen Rand + volle lvh gepinnt, damit
+          Wash + Sterne beim Höhenwechsel des Inhalts (Auf-/Zuklappen) NICHT springen.
+          Die flache bg-background-Basis (oben) darf sich strecken — eine Vollfarbe ploppt
+          nicht. */}
+      <div className="absolute inset-x-0 top-0 h-lvh">
       {/* Abdunkel-Wash nach oben — wie SkyBackdrop, etwas tiefer gezogen.
           Als benannter Token (--focus-sky-wash in globals.css) gepflegt. */}
       <div className="absolute inset-0" style={{ background: "var(--focus-sky-wash)" }} />
@@ -52,6 +57,7 @@ export function FocusSky() {
           style={{ animationDelay: "1.9s" }}
         />
         <span className="sky-light absolute right-[10%] top-[80%]" style={{ opacity: 0.3 }} />
+      </div>
       </div>
     </div>
   );

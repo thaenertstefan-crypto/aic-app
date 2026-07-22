@@ -30,7 +30,7 @@ export function JourneyStage({
   children: ReactNode;
 }) {
   return (
-    <div className="relative flex min-h-lvh flex-col overflow-hidden">
+    <div className="relative flex min-h-lvh flex-col">
       {/* Persistenter Himmel — bleibt über alle Schritte stehen. */}
       <FocusSky />
 

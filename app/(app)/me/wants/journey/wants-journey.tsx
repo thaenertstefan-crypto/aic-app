@@ -671,8 +671,14 @@ export function WantsJourney({
                       />
                     </button>
 
-                    {/* Aufgeklappt: volle Bearbeitung (bestehende Felder + Refine) */}
-                    {open && (
+                    {/* Aufgeklappt: sanft ausklappen (Grid 0fr→1fr statt hartem Mounten) */}
+                    <div
+                      className={cn(
+                        "grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none",
+                        open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                      )}
+                    >
+                      <div className="overflow-hidden">
                       <div className="space-y-2 pb-4">
                         <div className="flex items-center gap-2">
                           <Input
@@ -770,7 +776,8 @@ export function WantsJourney({
                           </div>
                         )}
                       </div>
-                    )}
+                      </div>
+                    </div>
                   </div>
                 );
               })}
@@ -830,7 +837,16 @@ export function WantsJourney({
     const path = buildDonePath(pts);
 
     return (
-      <div className="relative flex min-h-lvh flex-col items-center justify-center overflow-hidden px-4 py-10">
+      <div
+        className="relative flex min-h-lvh flex-col items-center justify-center overflow-hidden px-4 pb-10"
+        // Kein Header hier — die Safe-Area-Brücke zieht die Bühne unter den Notch, damit
+        // FocusSky bis an die obere Bildschirmkante reicht (keine Lücke). Der obere
+        // Inhaltsabstand (2.5rem = py-10) bleibt on top erhalten.
+        style={{
+          marginTop: "calc(env(safe-area-inset-top, 0px) * -1)",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 2.5rem)",
+        }}
+      >
         <FocusSky />
         <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
           {n >= 2 ? (
