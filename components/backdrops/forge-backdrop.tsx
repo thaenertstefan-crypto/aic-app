@@ -1,25 +1,29 @@
 /**
- * Sternschmiede-only atmospheric backdrop — a "suggested forge".
+ * Sternschmiede-only atmospheric backdrop — die „Esse" (Schmiedefeuer).
  *
- * Sister to SkyBackdrop, but inverted: instead of a night sky darkening upward,
- * the room deepens toward the TOP (the forge is underground, you've dived down)
- * and a warm candle-gold/amber ember-glow pools at the BOTTOM — the forge fire.
- * A few embers drift up on offset delays. Purely painted gradients (no
- * backdrop-filter) so it stays GPU-cheap and honours the Glass-Is-Rare rule.
- * Sits at -z-10 (like SkyBackdrop/AppBackdrop) so it stays behind page content;
- * rendered by the Sternschmiede component, so it unmounts on navigation away.
+ * Schwester zu SkyBackdrop, aber invertiert: der Raum vertieft sich nach OBEN
+ * (das Gewölbe), und am unteren Rand pool't eine warme Glut — das Schmiedefeuer,
+ * aus dem Funken aufsteigen. Rein gemalte Gradienten (kein backdrop-filter), GPU-
+ * günstig, iOS-freundlich. Sitzt bei -z-10 hinter dem Seiteninhalt und wird von
+ * der Sternschmiede-Komponente gerendert (unmountet beim Verlassen).
  *
- * On-brand: stays inside the aubergine + one-gold palette (no bright orange),
- * kept low-alpha so the ember pool never competes with the single gold CTA.
+ * On-brand: die Glut ist ROSÉ (--celebrate, die Wants/Schmiede-Modulfarbe), nicht
+ * Gold — Gold bleibt der einen CTA vorbehalten. Low-alpha, damit die Glut nie mit
+ * der Gold-CTA konkurriert. `intensity="hot"` (Warte-Screen) macht die Glut
+ * kräftiger und legt einen warmen Gold-Kern-Hauch an den Boden.
  *
- * aria-hidden + pointer-events-none — pure decoration.
+ * aria-hidden + pointer-events-none — reine Dekoration.
  */
-export function ForgeBackdrop() {
+export function ForgeBackdrop({
+  intensity = "calm",
+}: {
+  intensity?: "calm" | "hot";
+}) {
+  const hot = intensity === "hot";
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-      {/* Depth wash: deepen the aubergine ground toward the TOP (the vault
-          above), a long multi-stop fade so there is no hard seam and the app's
-          ambient blobs still breathe through mid-page. */}
+      {/* Tiefen-Wash: den Aubergine-Grund nach OBEN vertiefen (Gewölbe), langer
+          Mehrstufen-Fade ohne harte Naht, damit die Ambient-Blobs mittig atmen. */}
       <div
         className="absolute inset-0"
         style={{
@@ -27,27 +31,39 @@ export function ForgeBackdrop() {
             "linear-gradient(0deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.28) 18%, rgba(0,0,0,0.12) 34%, rgba(0,0,0,0.04) 48%, transparent 62%)",
         }}
       />
-      {/* Ember pool: a wide, soft bloom of warm forge-fire light rising from the
-          bottom edge. Derived from the brand gold (--primary) blended with the
-          dim amber-accent tint, kept low-alpha so it reads as heat, not as a
-          second candle. */}
+      {/* Glut-Pool: breiter, weicher Rosé-Bloom vom unteren Rand. Low-alpha =
+          Hitze, nicht zweite Kerze. „hot" (Warte-Screen) hebt die Alpha an. */}
       <div
         className="absolute inset-0"
         style={{
-          background:
-            "radial-gradient(120% 55% at 50% 100%, color-mix(in srgb, var(--primary) 22%, transparent), color-mix(in srgb, var(--primary) 8%, transparent) 42%, transparent 72%)",
+          background: hot
+            ? "radial-gradient(120% 58% at 50% 100%, color-mix(in srgb, var(--celebrate) 34%, transparent), color-mix(in srgb, var(--celebrate) 12%, transparent) 44%, transparent 74%)"
+            : "radial-gradient(120% 55% at 50% 100%, color-mix(in srgb, var(--celebrate) 22%, transparent), color-mix(in srgb, var(--celebrate) 8%, transparent) 42%, transparent 72%)",
         }}
       />
-      {/* A second, tighter core right at the anvil's feet for a hotter center. */}
+      {/* Engerer, hellerer Rosé-Kern direkt am Boden für ein heißeres Zentrum. */}
       <div
         className="absolute inset-0"
         style={{
-          background:
-            "radial-gradient(45% 26% at 50% 100%, color-mix(in srgb, var(--celebrate) 14%, transparent), transparent 70%)",
+          background: hot
+            ? "radial-gradient(48% 30% at 50% 100%, color-mix(in srgb, var(--celebrate) 22%, transparent), transparent 70%)"
+            : "radial-gradient(45% 26% at 50% 100%, color-mix(in srgb, var(--celebrate) 14%, transparent), transparent 70%)",
         }}
       />
-      {/* A handful of embers drifting up out of the fire. Some rise on offset
-          delays, one sits dimmer for depth. Positioned across the lower third. */}
+      {/* Nur „hot": ein warmer Gold-Hauch tief im Feuer — der Moment, in dem das
+          Metall glüht. Sehr low-alpha, bricht die One-Candle-Rule nicht (kein
+          CTA-Konkurrent, reine Glut ganz am Boden). */}
+      {hot && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(40% 20% at 50% 100%, color-mix(in srgb, var(--primary) 16%, transparent), transparent 68%)",
+          }}
+        />
+      )}
+      {/* Ein paar Deko-Funken, die aus dem Feuer aufsteigen (--celebrate, bereits
+          rosé in .forge-spark). Versetzte Delays, einer dimmer für Tiefe. */}
       <span className="forge-spark absolute bottom-[8%] left-[28%]" />
       <span
         className="forge-spark absolute bottom-[12%] right-[30%]"
