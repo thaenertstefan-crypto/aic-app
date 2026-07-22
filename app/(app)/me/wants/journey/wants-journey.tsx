@@ -25,6 +25,7 @@ import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { WantsIntroMascot } from "@/components/recipes/wants-intro-mascot";
 import { Mascot } from "@/components/brand/mascot";
+import { JourneyStage } from "./journey-stage";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
@@ -442,16 +443,34 @@ export function WantsJourney({
     />
   );
 
+  const introAction =
+    INTRO_CARDS.length > 0 ? <IntroInfoButton cards={INTRO_CARDS} /> : undefined;
+
+  // Fortschritt nur auf den drei Eingabeschritten (nutzt die leere Untertitelzeile).
+  const stepSubtitle =
+    phase === "yin"
+      ? "Schritt 1 von 3"
+      : phase === "yang"
+        ? "Schritt 2 von 3"
+        : phase === "tagtraum"
+          ? "Schritt 3 von 3"
+          : undefined;
+
   // ── Render: Werte-Nudge ──────────────────────────────────────────
 
   if (phase === "nudge") {
     return (
-      <div className="flex min-h-lvh flex-col">
-        {header}
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <JourneyStage
+        backHref="/me/wants"
+        title={PAGE_TITLES.wants}
+        headerAction={introAction}
+        mascot={null}
+        stepKey="nudge"
+      >
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
           <Mascot expression="curious" size="md" />
           <div className="space-y-2">
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="font-heading text-xl font-semibold tracking-tight text-foreground">
               Erst der Kompass, dann die Sterne?
             </h1>
             <p className="text-base leading-relaxed text-muted-foreground">
@@ -473,7 +492,7 @@ export function WantsJourney({
             </Button>
           </div>
         </div>
-      </div>
+      </JourneyStage>
     );
   }
 
@@ -739,62 +758,64 @@ export function WantsJourney({
 
   if (phase === "tagtraum") {
     return (
-      <div className="flex min-h-lvh flex-col">
-        {header}
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <Mascot expression="curious" size="md" />
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-              Wovon tagträumst du?
-            </h1>
-            <p className="text-base leading-relaxed text-muted-foreground">
-              Die Dinge, bei denen du gedankenversunken in die Leere starrst:
-              „Irgendwann mach ich mal einen Ironman.“ Solche Sterne stehen
-              weiter weg — nach ihnen greift man. Schreib auf, was dir kommt,
-              oder überspring den Schritt.
-            </p>
-          </div>
-
-          <FormError message={error} />
-
-          <form className="space-y-5">
-            <AnswerBoxes
-              answers={tagtraum}
-              onChange={setTagtraum}
-              idPrefix="tagtraum"
-              optional
-              placeholders={[
-                "Zum Beispiel: Irgendwann mach ich mal einen Ironman …",
-                "Noch ein Tagtraum …",
-                "Und noch einer …",
-              ]}
-              disabled={submitting}
-            />
-
-            <div className="flex flex-col gap-2">
-              <Button
-                type="button"
-                className="w-full gap-2"
-                size="lg"
-                disabled={submitting}
-                onClick={() => void handleAuditSubmit()}
-              >
-                {submitting ? "Wird gespeichert …" : "Meine Wants destillieren"}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                disabled={submitting}
-                onClick={() => setPhase("yang")}
-              >
-                Zurück
-              </Button>
-            </div>
-          </form>
-          <div className="h-8" />
+      <JourneyStage
+        backHref="/me/wants"
+        title={PAGE_TITLES.wants}
+        subtitle={stepSubtitle}
+        headerAction={introAction}
+        mascot={{ expression: "curious" }}
+        stepKey="tagtraum"
+      >
+        <div className="space-y-2 text-center">
+          <h1 className="font-heading text-xl font-semibold tracking-tight text-foreground">
+            Wovon tagträumst du?
+          </h1>
+          <p className="text-base leading-relaxed text-muted-foreground">
+            Die Dinge, bei denen du gedankenversunken in die Leere starrst:
+            „Irgendwann mach ich mal einen Ironman.“ Solche Sterne stehen
+            weiter weg — nach ihnen greift man. Schreib auf, was dir kommt,
+            oder überspring den Schritt.
+          </p>
         </div>
-      </div>
+
+        <FormError message={error} />
+
+        <form className="space-y-5">
+          <AnswerBoxes
+            answers={tagtraum}
+            onChange={setTagtraum}
+            idPrefix="tagtraum"
+            optional
+            placeholders={[
+              "Zum Beispiel: Irgendwann mach ich mal einen Ironman …",
+              "Noch ein Tagtraum …",
+              "Und noch einer …",
+            ]}
+            disabled={submitting}
+          />
+
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              className="w-full gap-2"
+              size="lg"
+              disabled={submitting}
+              onClick={() => void handleAuditSubmit()}
+            >
+              {submitting ? "Wird gespeichert …" : "Meine Sterne finden"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              disabled={submitting}
+              onClick={() => setPhase("yang")}
+            >
+              Zurück
+            </Button>
+          </div>
+        </form>
+      </JourneyStage>
     );
   }
 
@@ -802,134 +823,22 @@ export function WantsJourney({
 
   if (phase === "yang") {
     return (
-      <div className="flex min-h-lvh flex-col">
-        {header}
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <Mascot expression="smile" size="md" />
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-              Was bringt dich in „Flow“?
-            </h1>
-            <p className="text-base leading-relaxed text-muted-foreground">
-              Flow ist dieser Zustand, in dem du die Zeit vergisst — so vertieft,
-              dass die Welt und das Gedankenchaos im Kopf ausgeblendet sind. Laut
-              Forschung eines der schönsten Gefühle, die wir haben können.
-            </p>
-          </div>
-
-          <FormError message={error} />
-
-          <form className="space-y-5">
-            <div className="space-y-2">
-              <Label className="text-base font-medium">
-                Bei welchen Aktivitäten vergisst du die Zeit? Eine reicht, drei
-                sind ideal.
-              </Label>
-              <AnswerBoxes
-                answers={yang}
-                onChange={setYang}
-                idPrefix="yang"
-                placeholders={[
-                  "Zum Beispiel: Wenn ich an einem Design tüftle, sind plötzlich drei Stunden weg …",
-                  "Noch etwas, das dich in Flow bringt …",
-                  "Und noch etwas …",
-                ]}
-                disabled={submitting}
-              />
-            </div>
-
-            {/* Bonus: kognitive Prinzipien (aufklappbar) */}
-            <Card className="w-full">
-              <CardContent>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between gap-2 text-left"
-                  onClick={() => setPrinciplesOpen((o) => !o)}
-                  aria-expanded={principlesOpen}
-                >
-                  <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Sparkles className="size-4 text-primary" />
-                    Bonus: Willst du tiefer graben?
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "size-4 shrink-0 text-muted-foreground transition-transform",
-                      principlesOpen && "rotate-180",
-                    )}
-                  />
-                </button>
-                {principlesOpen && (
-                  <div className="mt-3 space-y-3 border-t pt-3">
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      Was ist das Prinzip hinter diesen Aktivitäten, das sie
-                      für dich so genussvoll macht? Wenn dich z. B. Photoshop
-                      in Flow bringt: Ist es das Erschaffen? Die Ästhetik?
-                      Diese inneren Treiber helfen dir, neue Dinge zu finden,
-                      die dich genauso erfüllen.
-                    </p>
-                    <Textarea
-                      id="principles"
-                      name="principles"
-                      value={principles}
-                      onChange={(e) => setPrinciples(e.target.value)}
-                      placeholder="Zum Beispiel: Ich glaube, es geht mir ums Erschaffen — etwas, das vorher nicht da war …"
-                      rows={3}
-                      maxLength={5000}
-                      disabled={submitting}
-                      className="min-h-[80px] resize-y"
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <div className="flex flex-col gap-2">
-              <Button
-                type="button"
-                className="w-full gap-2"
-                size="lg"
-                disabled={submitting || !yang[0]?.trim()}
-                onClick={() => setPhase("tagtraum")}
-              >
-                Weiter
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full"
-                disabled={submitting}
-                onClick={() => setPhase("yin")}
-              >
-                Zurück
-              </Button>
-            </div>
-          </form>
-          <div className="h-8" />
-        </div>
-      </div>
-    );
-  }
-
-  // ── Render: Yin (Mühsal) — Einstieg ─────────────────────────────
-
-  return (
-    <div className="flex min-h-lvh flex-col">
-      {header}
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {/* Draft restore prompt */}
-        {pendingDraft && (
-          <DraftRestoreBanner onRestore={restoreDraft} onDiscard={clearDraft} />
-        )}
-
-        <div className="flex flex-col items-center gap-3 text-center">
-          <Mascot expression="smile" size="md" />
-          <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-            Wofür nimmst du Mühsal in Kauf?
+      <JourneyStage
+        backHref="/me/wants"
+        title={PAGE_TITLES.wants}
+        subtitle={stepSubtitle}
+        headerAction={introAction}
+        mascot={{ expression: "smile" }}
+        stepKey="yang"
+      >
+        <div className="space-y-2 text-center">
+          <h1 className="font-heading text-xl font-semibold tracking-tight text-foreground">
+            Was bringt dich in „Flow“?
           </h1>
           <p className="text-base leading-relaxed text-muted-foreground">
-            Nicht jede Anstrengung stört uns gleich — manche Mühsal nehmen wir
-            erstaunlich bereitwillig in Kauf. Genau die verrät, was dir wirklich
-            wichtig ist.
+            Flow ist dieser Zustand, in dem du die Zeit vergisst — so vertieft,
+            dass die Welt und das Gedankenchaos im Kopf ausgeblendet sind. Laut
+            Forschung eines der schönsten Gefühle, die wir haben können.
           </p>
         </div>
 
@@ -938,34 +847,149 @@ export function WantsJourney({
         <form className="space-y-5">
           <div className="space-y-2">
             <Label className="text-base font-medium">
-              Denk an Momente von Stress oder Schmerz, auf die du zurückblickst
-              und denkst: „Hat mich an den Rand gebracht … war’s aber wert.“
-              Eine reicht, drei sind ideal.
+              Bei welchen Aktivitäten vergisst du die Zeit? Eine reicht, drei
+              sind ideal.
             </Label>
             <AnswerBoxes
-              answers={yin}
-              onChange={setYin}
-              idPrefix="yin"
+              answers={yang}
+              onChange={setYang}
+              idPrefix="yang"
               placeholders={[
-                "Zum Beispiel: die durchgemachten Nächte vor der Abgabe …",
-                "Noch eine Mühsal, die sich gelohnt hat …",
-                "Und noch eine …",
+                "Zum Beispiel: Wenn ich an einem Design tüftle, sind plötzlich drei Stunden weg …",
+                "Noch etwas, das dich in Flow bringt …",
+                "Und noch etwas …",
               ]}
+              disabled={submitting}
             />
           </div>
 
-          <Button
-            type="button"
-            className="w-full gap-2"
-            size="lg"
-            disabled={!yin[0]?.trim()}
-            onClick={() => setPhase("yang")}
-          >
-            Weiter zum Leuchten
-          </Button>
+          {/* Bonus: kognitive Prinzipien (aufklappbar) */}
+          <Card className="w-full">
+            <CardContent>
+              <button
+                type="button"
+                className="flex w-full items-center justify-between gap-2 text-left"
+                onClick={() => setPrinciplesOpen((o) => !o)}
+                aria-expanded={principlesOpen}
+              >
+                <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Sparkles className="size-4 text-primary" />
+                  Bonus: Willst du tiefer graben?
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "size-4 shrink-0 text-muted-foreground transition-transform",
+                    principlesOpen && "rotate-180",
+                  )}
+                />
+              </button>
+              {principlesOpen && (
+                <div className="mt-3 space-y-3 border-t pt-3">
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Was ist das Prinzip hinter diesen Aktivitäten, das sie
+                    für dich so genussvoll macht? Wenn dich z. B. Photoshop
+                    in Flow bringt: Ist es das Erschaffen? Die Ästhetik?
+                    Diese inneren Treiber helfen dir, neue Dinge zu finden,
+                    die dich genauso erfüllen.
+                  </p>
+                  <Textarea
+                    id="principles"
+                    name="principles"
+                    value={principles}
+                    onChange={(e) => setPrinciples(e.target.value)}
+                    placeholder="Zum Beispiel: Ich glaube, es geht mir ums Erschaffen — etwas, das vorher nicht da war …"
+                    rows={3}
+                    maxLength={5000}
+                    disabled={submitting}
+                    className="min-h-[80px] resize-y"
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              className="w-full gap-2"
+              size="lg"
+              disabled={submitting || !yang[0]?.trim()}
+              onClick={() => setPhase("tagtraum")}
+            >
+              Weiter
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              disabled={submitting}
+              onClick={() => setPhase("yin")}
+            >
+              Zurück
+            </Button>
+          </div>
         </form>
-        <div className="h-8" />
+      </JourneyStage>
+    );
+  }
+
+  // ── Render: Yin (Mühsal) — Einstieg ─────────────────────────────
+
+  return (
+    <JourneyStage
+      backHref="/me/wants"
+      title={PAGE_TITLES.wants}
+      subtitle={stepSubtitle}
+      headerAction={introAction}
+      mascot={{ expression: "smile" }}
+      stepKey="yin"
+    >
+      {pendingDraft && (
+        <DraftRestoreBanner onRestore={restoreDraft} onDiscard={clearDraft} />
+      )}
+
+      <div className="space-y-2 text-center">
+        <h1 className="font-heading text-xl font-semibold tracking-tight text-foreground">
+          Wofür nimmst du Mühsal in Kauf?
+        </h1>
+        <p className="text-base leading-relaxed text-muted-foreground">
+          Nicht jede Anstrengung stört uns gleich — manche Mühsal nehmen wir
+          erstaunlich bereitwillig in Kauf. Genau die verrät, was dir wirklich
+          wichtig ist.
+        </p>
       </div>
-    </div>
+
+      <FormError message={error} />
+
+      <form className="space-y-5">
+        <div className="space-y-2">
+          <Label className="text-base font-medium">
+            Denk an Momente von Stress oder Schmerz, auf die du zurückblickst
+            und denkst: „Hat mich an den Rand gebracht … war’s aber wert.“
+            Eine reicht, drei sind ideal.
+          </Label>
+          <AnswerBoxes
+            answers={yin}
+            onChange={setYin}
+            idPrefix="yin"
+            placeholders={[
+              "Zum Beispiel: die durchgemachten Nächte vor der Abgabe …",
+              "Noch eine Mühsal, die sich gelohnt hat …",
+              "Und noch eine …",
+            ]}
+          />
+        </div>
+
+        <Button
+          type="button"
+          className="w-full"
+          size="lg"
+          disabled={!yin[0]?.trim()}
+          onClick={() => setPhase("yang")}
+        >
+          Weiter
+        </Button>
+      </form>
+    </JourneyStage>
   );
 }
