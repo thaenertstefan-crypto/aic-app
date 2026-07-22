@@ -349,7 +349,15 @@ export function Sternschmiede({
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex flex-col items-center gap-3 text-center">
-            <Mascot expression="happy" size="md" />
+            {/* Held-Funke: großer glühender Rosé-Punkt (Pendant zum StarGlyph-Held
+                der Sternensuche). */}
+            <span
+              aria-hidden
+              className={cn("size-10 rounded-full bg-celebrate", !reduced && "funke-drift")}
+              style={{
+                boxShadow: "0 0 26px 6px color-mix(in srgb, var(--celebrate) 70%, transparent)",
+              }}
+            />
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
               Deine Funken
             </h1>
@@ -361,7 +369,7 @@ export function Sternschmiede({
 
           {comment && (
             <Reveal delay={0.15} className="w-full">
-              <Card className="w-full">
+              <Card variant="glass" className="w-full">
                 <CardContent className="pt-(--card-spacing)">
                   <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
                     {comment}
@@ -370,6 +378,10 @@ export function Sternschmiede({
               </Card>
             </Reveal>
           )}
+
+          <p className="text-center text-sm text-muted-foreground">
+            Tipp an, um an- oder abzuwählen.
+          </p>
 
           <div className="flex w-full flex-col gap-3">
             {funken.map((funke) => (
@@ -389,7 +401,9 @@ export function Sternschmiede({
                 <Card
                   className={cn(
                     "w-full transition-colors",
-                    funke.selected ? "border-primary/40 bg-primary/5" : "opacity-60 hover:opacity-80",
+                    funke.selected
+                      ? "border-celebrate/55 bg-celebrate/8"
+                      : "opacity-50 hover:opacity-75",
                   )}
                 >
                   <CardContent className="flex items-start gap-3 pt-(--card-spacing)">
@@ -397,7 +411,7 @@ export function Sternschmiede({
                       className={cn(
                         "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border",
                         funke.selected
-                          ? "border-primary bg-primary text-primary-foreground"
+                          ? "border-celebrate bg-celebrate text-background"
                           : "border-muted-foreground/40",
                       )}
                     >
