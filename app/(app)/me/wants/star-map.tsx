@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Mascot } from "@/components/brand/mascot";
+import { STAR_PATH } from "@/components/brand/star-glyph";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollLock } from "@/lib/hooks/use-scroll-lock";
 import { getValueLabel } from "@/lib/utils/values-bank";
@@ -26,9 +27,6 @@ import type { WantItem } from "@/lib/types/db-json";
  * Immersion). Ansehen + Bearbeiten passieren inline in dieser Ebene; Persistenz
  * bleibt beim Parent (wants-me). Reduced motion: harter Wechsel ohne Flug.
  */
-
-/** 4-strahliger Stern — die von der Werte-Szene freigegebene Sprache. */
-const STAR_PATH = "M8 0 L9.8 6.2 L16 8 L9.8 9.8 L8 16 L6.2 9.8 L0 8 L6.2 6.2 Z";
 
 const VIEW_W = 360;
 const ROW_H = 80;
