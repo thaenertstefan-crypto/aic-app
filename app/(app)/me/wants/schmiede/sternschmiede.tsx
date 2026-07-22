@@ -10,14 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SectionLabel } from "@/components/ui/section-label";
 import { FormError } from "@/components/ui/form-error";
 import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { Mascot } from "@/components/brand/mascot";
-import { AnvilArt } from "@/components/brand/forge-art";
 import { ForgeBackdrop } from "@/components/backdrops/forge-backdrop";
 import { CompassStarsArt } from "@/components/brand/compass-stars-art";
 import { useWarp, warpPageClass } from "@/components/wants/warp-transition";
@@ -51,6 +49,17 @@ type ForgeResponse = {
 };
 
 const AI_ERROR = "Das Funkenschlagen hat gerade nicht geklappt. Versuch es gleich noch einmal.";
+
+// Warte-Screen: Positionen/Größen/Delays der aufsprühenden Funken (deterministisch,
+// kein Math.random → kein Hydration-Mismatch).
+const SPRAY_FUNKEN: { left: number; size: number; delay: number }[] = [
+  { left: 30, size: 8, delay: 0 },
+  { left: 60, size: 6, delay: 0.3 },
+  { left: 46, size: 9, delay: 0.6 },
+  { left: 74, size: 5, delay: 0.9 },
+  { left: 22, size: 6, delay: 1.2 },
+  { left: 54, size: 7, delay: 1.5 },
+];
 
 export function Sternschmiede({
   hasSterne,
@@ -294,22 +303,38 @@ export function Sternschmiede({
     );
   }
 
-  // ── Forging (Ladezustand) ───────────────────────────────────────
+  // ── Forging (Ladezustand) — Esse-Funkenflug ─────────────────────
   if (phase === "forging") {
     return (
       <div className="flex min-h-lvh flex-col">
-        <ForgeBackdrop />
+        <ForgeBackdrop intensity="hot" />
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 animate-in fade-in duration-500">
-          <AnvilArt animate={!reduced} active />
+          {/* Aus der heißen Esse sprühen Funken auf. */}
+          <div className="relative h-40 w-full max-w-xs" aria-hidden="true">
+            {SPRAY_FUNKEN.map((f, i) => (
+              <span
+                key={i}
+                className={reduced ? "absolute rounded-full bg-celebrate" : "funke-spray"}
+                style={{
+                  left: `${f.left}%`,
+                  bottom: "8%",
+                  width: `${f.size}px`,
+                  height: `${f.size}px`,
+                  animationDelay: `${f.delay}s`,
+                  ...(reduced
+                    ? {
+                        boxShadow:
+                          "0 0 8px 1px color-mix(in srgb, var(--celebrate) 65%, transparent)",
+                      }
+                    : {}),
+                }}
+              />
+            ))}
+          </div>
           <p className="text-center text-base text-muted-foreground">
             Ich schlage ein paar Funken für dich …
           </p>
-          <div className="w-full max-w-sm space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
         </div>
       </div>
     );

@@ -979,6 +979,24 @@
   .funke-drift { animation: none; }
 }
 
+/* Warte-Screen: Funken sprühen schnell aus der Esse auf (schneller/kräftiger als
+   die dekorativen forge-sparks). Aufsteigen + verblassen, versetzte Delays. */
+@keyframes funke-spray {
+  0%   { opacity: 0;    transform: translateY(0) scale(1); }
+  15%  { opacity: 0.95; }
+  100% { opacity: 0;    transform: translateY(-64px) scale(0.5); }
+}
+.funke-spray {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--celebrate);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--celebrate) 65%, transparent);
+  animation: funke-spray 1.8s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .funke-spray { animation: none; opacity: 0.7; }
+}
+
 /* Amboss-Hammer schlägt rhythmisch auf den Stern (nur Ladezustand, AnvilArt). */
 .forge-hammer {
   transform-box: fill-box;
