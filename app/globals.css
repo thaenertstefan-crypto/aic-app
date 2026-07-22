@@ -967,6 +967,18 @@
   100% { opacity: 0;   transform: translateY(-38px) scale(0.6); }
 }
 
+/* Schwebende Funken der Konstellation (FunkenSky): leises Auf-und-Ab-Glimmen. */
+@keyframes funke-drift {
+  0%, 100% { transform: translateY(0);      opacity: 0.85; }
+  50%      { transform: translateY(-4px);   opacity: 1;    }
+}
+.funke-drift {
+  animation: funke-drift 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .funke-drift { animation: none; }
+}
+
 /* Amboss-Hammer schlägt rhythmisch auf den Stern (nur Ladezustand, AnvilArt). */
 .forge-hammer {
   transform-box: fill-box;
