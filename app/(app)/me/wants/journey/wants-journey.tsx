@@ -15,7 +15,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { FormError } from "@/components/ui/form-error";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
 import { Reveal } from "@/components/ui/reveal";
@@ -25,6 +24,7 @@ import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { WantsIntroMascot } from "@/components/recipes/wants-intro-mascot";
 import { Mascot } from "@/components/brand/mascot";
+import { StarGlyph } from "@/components/brand/star-glyph";
 import { JourneyStage } from "./journey-stage";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
@@ -43,6 +43,16 @@ const INTRO_CARDS = getRecipeIntro("wants") ?? [];
 
 const AI_FALLBACK_MESSAGE =
   "Das Destillieren hat gerade nicht geklappt. Deine Sternensuche ist gespeichert — du kannst deine Wants auch selbst formulieren.";
+
+// Warte-Screen: Sterne funkeln gestaffelt auf (der Himmel „entsteht").
+const ANALYZING_STARS: { x: number; y: number; delay: number; big?: boolean }[] = [
+  { x: 20, y: 60, delay: 0.0 },
+  { x: 68, y: 70, delay: 0.25 },
+  { x: 44, y: 30, delay: 0.5, big: true },
+  { x: 82, y: 38, delay: 0.8 },
+  { x: 12, y: 24, delay: 1.05 },
+  { x: 58, y: 12, delay: 1.3 },
+];
 
 type Phase = "nudge" | "yin" | "yang" | "tagtraum" | "analyzing" | "sterne" | "done";
 
@@ -500,20 +510,35 @@ export function WantsJourney({
 
   if (phase === "analyzing") {
     return (
-      <div className="flex min-h-lvh flex-col">
-        {header}
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 animate-in fade-in duration-500">
-          <Mascot expression="curious" size="md" gazeX={0} />
-          <p className="text-center text-base text-muted-foreground">
-            Ich schaue, was deine Sternensuche über deine Wants verrät …
-          </p>
-          <div className="w-full max-w-sm space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-2/3" />
+      <JourneyStage
+        backHref="/me/wants"
+        title={PAGE_TITLES.wants}
+        headerAction={introAction}
+        mascot={{ expression: "curious", gazeY: -1.4 }}
+        stepKey="analyzing"
+      >
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
+          {/* Sterne, die nach und nach auffunkeln — der Himmel entsteht. */}
+          <div className="relative h-40 w-full max-w-xs" aria-hidden="true">
+            {ANALYZING_STARS.map((s, i) => (
+              <span
+                key={i}
+                className="absolute quiet-glow-in"
+                style={{
+                  left: `${s.x}%`,
+                  top: `${s.y}%`,
+                  animationDelay: `${s.delay}s`,
+                }}
+              >
+                <StarGlyph sizeClass={s.big ? "size-5" : "size-3"} glow={s.big ? 10 : 5} />
+              </span>
+            ))}
           </div>
+          <p className="text-base leading-relaxed text-muted-foreground">
+            Dein Himmel entsteht gerade …
+          </p>
         </div>
-      </div>
+      </JourneyStage>
     );
   }
 

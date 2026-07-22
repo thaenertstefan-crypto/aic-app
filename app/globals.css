@@ -561,6 +561,9 @@
     to   { opacity: 0.35; }
   }
   .quiet-glow-in { animation: quiet-glow-in 1.5s ease-out forwards; }
+  @media (prefers-reduced-motion: reduce) {
+    .quiet-glow-in { animation: none; opacity: 0.35; }
+  }
 
   /* Aktueller, antippbarer Stern lockt: sanfter Sonar-Ring nach außen.
      Zentrierung läuft über transform (nicht die Tailwind-translate-Property),
