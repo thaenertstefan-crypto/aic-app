@@ -833,7 +833,7 @@
 .warp-overlay[data-phase="arriving"] .warp-wash {
   animation: warp-wash-out 350ms var(--forge-ease) both;
 }
-/* Rampt auf VOLL deckend (1): sobald der Exit-Slide durch ist (340ms =
+/* Rampt auf VOLL deckend (1): sobald der Exit-Slide durch ist (260ms =
    ACCEL_MS), ist nur noch der Tunnel sichtbar — keine Seite scheint durch,
    und der Unmount der Quell-Seite bei der Navigation bleibt unsichtbar. */
 @keyframes warp-wash-in  { 0% { opacity: 0; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
@@ -867,10 +867,10 @@
 /* Während des Sturzes (inkl. Tunnel-Beat) loopen die Streifen kontinuierlich,
    damit der Tunnel durchgehend gefüllt ist. */
 .warp-overlay[data-direction="down"][data-phase="diving"] .warp-streak {
-  animation: warp-streak-up var(--warp-dur, 520ms) cubic-bezier(0.4, 0, 0.85, 0.7) infinite;
+  animation: warp-streak-up var(--warp-dur, 400ms) cubic-bezier(0.4, 0, 0.85, 0.7) infinite;
 }
 .warp-overlay[data-direction="up"][data-phase="diving"] .warp-streak {
-  animation: warp-streak-down var(--warp-dur, 520ms) cubic-bezier(0.4, 0, 0.85, 0.7) infinite;
+  animation: warp-streak-down var(--warp-dur, 400ms) cubic-bezier(0.4, 0, 0.85, 0.7) infinite;
 }
 .warp-overlay[data-direction="down"][data-phase="arriving"] .warp-streak {
   animation: warp-streak-up-settle 340ms ease-out both;
