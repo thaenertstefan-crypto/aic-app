@@ -31,14 +31,12 @@ type Phase = "idle" | "diving" | "arriving";
 // "up" = Aufstieg zurück in den Sternenhimmel (schmiede→wants).
 type Direction = "down" | "up";
 
-// Navigation exakt am Ende des Exit-Slides der Quell-Seite (= Dauer von
-// warp-page-exit/-down); der Wash ist dann voll deckend und verdeckt die Naht.
-const ACCEL_MS = 340;
-// Reiner Streifen-Tunnel-Beat: Phase bleibt so lange auf "diving" (Streifen
-// loopen weiter), beide Seiten sind off-screen — der prominente Tunnel-Moment.
-const TUNNEL_MS = 180;
-// Dauer der Auflösung/Ankunft, bevor das Overlay wieder verschwindet.
-const DECEL_MS = 460;
+// Navigation exakt am Ende des Exit-Slides der Quell-Seite; Wash dann voll deckend.
+const ACCEL_MS = 260;
+// Reiner Streifen-Tunnel-Beat: beide Seiten off-screen, prominenter Tunnel-Moment.
+const TUNNEL_MS = 140;
+// Dauer der Auflösung/Ankunft, bevor das Overlay verschwindet.
+const DECEL_MS = 350;
 
 type WarpValue = {
   phase: Phase;
@@ -138,7 +136,7 @@ export function WarpProvider({ children }: { children: ReactNode }) {
 // Deterministisches Streifenfeld (kein Math.random → kein Hydration-Mismatch).
 // Dicht über Breite UND Höhe verteilt, mit versetzten Delays → beim Endlos-Loop
 // ein durchgehend gefüllter, aufwärts fließender Tunnel.
-const STREAK_COUNT = 48;
+const STREAK_COUNT = 24;
 const STREAKS = Array.from({ length: STREAK_COUNT }, (_, i) => ({
   id: i,
   // gestreute, nicht bandende Horizontalverteilung
