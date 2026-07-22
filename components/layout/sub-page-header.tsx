@@ -10,6 +10,13 @@ interface SubPageHeaderProps {
   action?: React.ReactNode;
   /** View-Transition-Typen für die Zurück-Navigation (z.B. ["forge-up"]). */
   backTransitionTypes?: string[];
+  /**
+   * Optionaler Escape-Hatch: ist er gesetzt, rendert der Zurück-Pfeil als
+   * <button> und ruft onBack statt als <Link> zu navigieren. Für Screens mit
+   * eigener Übergangs-Animation (Schmiede-Warp), die die iOS-PWA sonst nicht
+   * rendert. Ohne onBack bleibt das Link-Verhalten unverändert.
+   */
+  onBack?: () => void;
 }
 
 export function SubPageHeader({
@@ -18,6 +25,7 @@ export function SubPageHeader({
   subtitle,
   action,
   backTransitionTypes,
+  onBack,
 }: SubPageHeaderProps) {
   return (
     // Header animiert nur beim Sternschmiede-Übergang und teilt dieselben
@@ -41,14 +49,25 @@ export function SubPageHeader({
         }}
       >
         <div className="mx-auto flex max-w-lg items-center gap-2 px-4 py-3">
-          <Link
-            href={backHref}
-            aria-label="Zurück"
-            transitionTypes={backTransitionTypes}
-            className="-ml-2 inline-flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ChevronLeft className="size-5" />
-          </Link>
+          {onBack ? (
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Zurück"
+              className="-ml-2 inline-flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+          ) : (
+            <Link
+              href={backHref}
+              aria-label="Zurück"
+              transitionTypes={backTransitionTypes}
+              className="-ml-2 inline-flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ChevronLeft className="size-5" />
+            </Link>
+          )}
           <div className="min-w-0 flex-1">
             <h1 className="truncate font-heading text-lg font-semibold text-foreground">
               {title}
