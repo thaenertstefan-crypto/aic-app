@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
-import { CompletionCelebration } from "@/components/ui/completion-celebration";
 import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
@@ -25,10 +24,12 @@ import { WantsIntroMascot } from "@/components/recipes/wants-intro-mascot";
 import { Mascot } from "@/components/brand/mascot";
 import { StarGlyph } from "@/components/brand/star-glyph";
 import { JourneyStage } from "./journey-stage";
+import { FocusSky } from "@/app/(app)/me/wants/focus-sky";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
+import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
 import type { WantItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,27 @@ const ANALYZING_STARS: { x: number; y: number; delay: number; big?: boolean }[] 
   { x: 12, y: 24, delay: 1.05 },
   { x: 58, y: 12, delay: 1.3 },
 ];
+
+// Abschluss-Konstellation: bis zu 5 Punkte auf einer geschwungenen Bahn (viewBox 240x150).
+const DONE_POINTS: { x: number; y: number }[] = [
+  { x: 34, y: 110 },
+  { x: 96, y: 58 },
+  { x: 150, y: 96 },
+  { x: 200, y: 44 },
+  { x: 122, y: 128 },
+];
+
+function buildDonePath(points: { x: number; y: number }[]): string {
+  if (points.length < 2) return "";
+  let d = `M${points[0].x},${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1];
+    const b = points[i];
+    const mx = (a.x + b.x) / 2;
+    d += ` Q ${mx},${a.y} ${b.x},${b.y}`;
+  }
+  return d;
+}
 
 type Phase = "nudge" | "yin" | "yang" | "tagtraum" | "analyzing" | "sterne" | "done";
 
@@ -168,6 +190,7 @@ export function WantsJourney({
 
   const [phase, setPhase] = useState<Phase>(hasValuesHypothesis ? "yin" : "nudge");
   useScrollTopOnChange(phase);
+  const reduced = useReducedMotion();
 
   // Audit
   const [yin, setYin] = useState<string[]>(Array(START_BOXES).fill(""));
@@ -801,14 +824,56 @@ export function WantsJourney({
   // ── Render: Abschluss ───────────────────────────────────────────
 
   if (phase === "done") {
+    const keptStarCount = draftWants.filter((w) => w.text.trim()).length;
+    const n = Math.min(keptStarCount, DONE_POINTS.length);
+    const pts = DONE_POINTS.slice(0, Math.max(n, 1));
+    const path = buildDonePath(pts);
+
     return (
-      <div className="flex min-h-lvh flex-col items-center px-4 py-10">
-        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <CompletionCelebration />
+      <div className="relative flex min-h-lvh flex-col items-center justify-center overflow-hidden px-4 py-10">
+        <FocusSky />
+        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+          {n >= 2 ? (
+            <div className="relative h-[150px] w-[240px]" aria-hidden="true">
+              <svg viewBox="0 0 240 150" className="absolute inset-0 size-full">
+                {path && (
+                  <path
+                    d={path}
+                    fill="none"
+                    stroke="var(--primary)"
+                    strokeWidth="1.3"
+                    strokeLinecap="round"
+                    opacity="0.6"
+                    pathLength={1}
+                    strokeDasharray="1"
+                    strokeDashoffset={reduced ? 0 : undefined}
+                    className={reduced ? undefined : "constellation-draw"}
+                  />
+                )}
+              </svg>
+              {pts.map((p, i) => (
+                <span
+                  key={i}
+                  className="absolute -translate-x-1/2 -translate-y-1/2"
+                  style={{ left: `${(p.x / 240) * 100}%`, top: `${(p.y / 150) * 100}%` }}
+                >
+                  <StarGlyph
+                    sizeClass={i === Math.floor(pts.length / 2) ? "size-8" : "size-5"}
+                    glow={i === Math.floor(pts.length / 2) ? 16 : 9}
+                    twinkle={!reduced}
+                  />
+                </span>
+              ))}
+            </div>
+          ) : (
+            <StarGlyph sizeClass="size-16" glow={22} twinkle={!reduced} />
+          )}
 
           <div className="space-y-2">
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-              Deine Sterne leuchten.
+              {n >= 2
+                ? `${keptStarCount} Sterne stehen jetzt an deinem Himmel.`
+                : "Dein Stern leuchtet."}
             </h1>
             <p className="text-muted-foreground">
               Sie warten auf deiner Sterne-Seite. Und wenn du Lust hast, etwas
