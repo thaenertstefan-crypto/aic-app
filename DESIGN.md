@@ -163,6 +163,8 @@ This rule governs **emphasis, not identity.** Gold-tinted icon chips (`bg-primar
 Modulfarbe lebt ausschließlich in Szenen-Ornamenten und Glows (`--scene-glow`).
 Gold bleibt überall die Aktions-Farbe (One-Candle-Rule). **Wants trägt Gold** als Modul- *und* Aktionsfarbe — die Sternenkarte (`/me/wants`) ist die Haupt-Wants-Fläche, ihre Ornamente sind gold. **Rosé (`--celebrate`) ist auf die Sternschmiede-Subpage begrenzt** (`/me/wants/schmiede`): dort bewusster Feier-/Completion-Akzent in Esse-Glow, Funken, Auswahl-Ornamenten — aber auch dort bleiben die Aktions-CTAs (z. B. „Reflektieren") Gold.
 
+**The Completion Beat.** Jeder Abschluss-Moment teilt eine Grammatik: das geteilte `CompletionCelebration`-Icon (Sage-`--success`-Haken + ein einmaliger Rosé-`--celebrate`-Glow) plus eine **Gold**-Headline (`--primary`). Sage und Rosé leben *im* Icon; der Headline-Text daneben bleibt Gold (Markenwärme, One-Candle) — nicht auf eine semantische Abschluss-Farbe umgestellt. So sieht ein Abschluss überall gleich aus. Rosé als *flächige* Farbe bleibt der Sternschmiede-Subpage vorbehalten (siehe Modul-Lichtfarben oben).
+
 ## 3. Typography
 
 **Display Font:** Fraunces (with Georgia, serif fallback)
@@ -181,6 +183,8 @@ Gold bleibt überall die Aktions-Farbe (One-Candle-Rule). **Wants trägt Gold** 
 **The Serif-Is-Voice Rule.** Fraunces is for language the user should *feel* — names, affirmations, encouragements. Never set a button, a data value, or a form label in the serif. If it's an action or a fact, it's Geist. Affirmationen — Sätze, die die App dem User zuspricht — stehen in Fraunces Italic (Utility `.font-affirmation`).
 
 **The Fixed-Scale Rule.** This is product UI: type sizes are fixed rem steps, not fluid `clamp()`. A heading that shrinks with the viewport looks worse in a phone-width column, not better.
+
+**The Single-Title Rule.** Trägt ein Screen den sticky `SubPageHeader`, ist dieser Header (Titel + optionaler Untertitel) die Titel-Fläche. Kein zweiter großer `text-4xl`-Display-Titel, der den Screen oder seine aktuelle Phase bloß nochmal benennt — der Phasen-/Moment-Text gehört in den Header-**Untertitel** (z. B. values-Auswertung: Header „Auswertung" + Untertitel „Zeit zurückzublicken"). Die `text-4xl`-*Headline* (oben) bleibt der *eigenen*, singulären H1 eines Flows vorbehalten — ein Wizard-/Booster-Schritt oder der Abschluss-Payoff („Geschafft."), der nicht ohnehin schon vom sticky Header benannt wird.
 
 ## 4. Elevation
 

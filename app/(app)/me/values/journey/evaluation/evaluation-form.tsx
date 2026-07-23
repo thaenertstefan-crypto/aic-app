@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/ui/form-error";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SubPageHeader } from "@/components/layout/sub-page-header";
 
 import { VALUES_BANK, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
@@ -198,17 +199,24 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
 
   // ── Render ──────────────────────────────────────────────────────
 
-  return (
-    <div className="flex flex-1 flex-col px-4 py-6">
-      {/* ── Shared header ── */}
-      <header className="mb-6 space-y-2">
-        <h2 className="font-heading text-4xl font-bold tracking-tight text-foreground">
-          {currentPhase === "reflection" && "Zeit zurückzublicken"}
-          {currentPhase === "adjust" && "Deine Werte verfeinern"}
-          {currentPhase === "complete" && "Zyklus abgeschlossen!"}
-        </h2>
-      </header>
+  // Der phasen-spezifische Moment lebt als Header-Untertitel (ein Titel-System:
+  // der sticky SubPageHeader trägt Titel + Moment), statt als zweiter großer
+  // In-Body-Screen-Titel neben dem Header.
+  const phaseSubtitle =
+    currentPhase === "reflection"
+      ? "Zeit zurückzublicken"
+      : currentPhase === "adjust"
+        ? "Deine Werte verfeinern"
+        : "Zyklus abgeschlossen!";
 
+  return (
+    <>
+      <SubPageHeader
+        backHref="/me/values/journey"
+        title="Auswertung"
+        subtitle={phaseSubtitle}
+      />
+      <div className="flex flex-1 flex-col px-4 py-6">
       {/* ── Shared error banner ── */}
       <FormError
         message={reflectionState.error || adjustState.error}
@@ -689,6 +697,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
           </div>
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }
