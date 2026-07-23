@@ -2,9 +2,63 @@
 
 _Maintained by the `/feierabend` skill at the end of each session. Read this at session start to get oriented before diving into the code._
 
-_Last updated: 2026-07-22 (Session 2 — drei iPhone-Regressions an der neu umgebauten Sternensuche gefixt: Header wieder sticky, Sterne-Liste klappt weich aus, Himmel bleibt ruhig, Completion-Luecke zu; `1048c48`)_
+_Last updated: 2026-07-23 (Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbeitet: A1 FK-CASCADE auf Prod, C1 Gold-vs-Rose, C2 a11y, C3, C4 Leitsatz, C5 Yang-Toggle, D1 useDialogFocus-Hook, E1 Titel-System, E2 Abschluss-Farbe; alle baubaren Punkte durch, `e2add09..98d1c2b`, gepusht; nur noch iPhone-Gate + Re-Critiques offen)_
 
 ## Current State
+- **Backlog-Roadmap 13.-22.07. komplett abgearbeitet (2026-07-23).** Per `brainstorming` einen
+  Roadmap-Plan ueber alle offenen Punkte gebaut (Spec `2026-07-23-backlog-roadmap-design.md`,
+  `e2add09`) und Runde fuer Runde durchgezogen — **die gesamte baubare Roadmap ist durch**, offen
+  bleibt nur Stefans iPhone-Gate + die bewusst geschobenen Re-Critiques. Umgesetzt: **A1** FK-CASCADE
+  via Supabase-MCP `execute_sql` auf Prod angewandt (CLI fehlt auf Stefans Maschine; Migration
+  idempotent -> kein Drift; `delete_rule = CASCADE` verifiziert, DSGVO-Loeschung ist ein Einzeiler).
+  **C1** Gold-vs-Rose-Zonierung (`f801f17`, Entscheid **Wants=Gold, Schmiede-Subpage=Rose**):
+  DESIGN.md-Modultabelle gesplittet, `/me`-Hub-Wants-Kachel entgoldet-Leckage gefixt, Reflektieren-CTA
+  auf Gold, `--celebrate` (5,79:1) ins Kontrast-Gate, Stale-Label umbenannt. **C2** funken-sky a11y
+  (`aria-live` Verwerfen-Swap, Backdrop `aria-hidden`+`tabIndex -1`, Focus-Trap-Query). **C3**
+  `savedCount`->`openCount`. **C4** Leitsatz (`a0dccf7`) an den drei wetter-staerksten Kopfwetter-
+  Abschluessen (Overthinking, Schattenseite, Things-got-messy) — bewusst NICHT an Wants (Sterne werden
+  dort erst erzeugt). **C5** Yang-Bonus-Toggle (`b294d9d`) auf Grid-`0fr->1fr`-Ausklappen. **D1**
+  (`9da298b`) `lib/hooks/use-dialog-focus.ts` extrahiert: `star-map` + `funken-sky` teilen jetzt
+  Scroll-Lock + `preventScroll`-Fokus + Tab-Falle + Fokus-Rueckkehr — **Wurzel-Fix der wiederkehrenden
+  device-only-Portal-Regressions-Klasse** (netto -10 Zeilen). **E1** (`98d1c2b`) values-Auswertung auf
+  ein Titel-System: kein zweiter grosser In-Body-`text-4xl`, der Phasen-Moment lebt als sticky-Header-
+  Untertitel (`SubPageHeader` in die Client-Form gezogen). **E2** (doc-only): Completion-Headline bleibt
+  Gold, Semantik traegt das geteilte Sage+Rose-Icon; zwei neue Named Rules in DESIGN.md (Single-Title
+  Rule, Completion Beat). **D2** entfaellt (kein Grid-Jank). Jede Runde tsc + `npm run gate` (11/11) +
+  build gruen, plus ESLint bei D1; kein Wegwerf-Account, kein Browser-Subagent. **iPhone-Final +
+  Re-Critiques stehen aus.**
+- **Sternschmiede-Redesign „Schwester der Sternensuche" (2026-07-22, Session 3).** Die
+  Sternschmiede (`/me/wants/schmiede`, `sternschmiede.tsx` 4-Phasen-State-Machine) auf dieselbe
+  Nachthimmel-/Esse-Grammatik wie die Sternensuche gezogen — subagent-driven, 9 Tasks, **nach
+  einem VS-Code-Crash (grauer Bildschirm) aus dem Ledger + `git log` wiederaufgenommen** (Task 1
+  war committed + geledgert → sauber bei Task 2 aufgesetzt, kein Task doppelt dispatcht). Spec:
+  `docs/superpowers/specs/2026-07-22-sternschmiede-schwester-design.md`, Plan:
+  `docs/superpowers/plans/2026-07-22-sternschmiede-schwester.md`, Ledger:
+  `.superpowers/sdd/progress.md`. Umgesetzt: (1) **`ForgeBackdrop` entgoldet auf `--celebrate`**
+  (Rose) + optionales `intensity?: "calm"|"hot"`-Prop (hot = hellerer Glow + leiser Gold-Hint am
+  Boden). (2) **Warp gezaehmt** (`warp-transition.tsx` + `globals.css`): ~750 ms statt ~980, 24
+  kuehl-weisse Streifen (`--foreground`) statt 48 goldenen, entgoldeter Wash — kein goldener Blitz
+  mehr. (3) **`SubPageHeader` `onBack?`-Escape-Hatch**: rendert `<button onClick>` statt `<Link
+  transitionTypes>`, damit iOS-PWA-Screens mit eigener Uebergangs-Animation (Schmiede-Warp) den
+  echten Rueckflug fliegen statt hart zu springen. (4) **Neue `FunkenSky`-Komponente**
+  (`components/wants/funken-sky.tsx`): offene Funken als schwebende Rose-Konstellation ueber der
+  Esse (Slot-Leiter + ID-Hash = stabile Positionen) + hand-gerollte Portal-Fokus-Ebene (Antippen
+  → Reflektieren/Verwerfen-mit-Rueckfrage/Schliessen; Scroll-Lock, Focus-Trap, Escape,
+  Focus-Restore, `preventScroll` auf allen `focus()`, `inert` am Hintergrund, reduced-motion). (5)
+  **Vier Phasen umgebaut** (`sternschmiede.tsx`): intro = Funken-Konstellation (Amboss/H2 raus,
+  Header `onBack=goBackToStars`); forging = Esse-Funkenflug (`intensity="hot"` + `.funke-spray`,
+  Skeletons+Amboss raus); funken = Rose-Held-Funke + `Card variant="glass"`-Einschaetzung +
+  „antippen"-Hinweis + Auswahl-Karten auf `--celebrate` statt Gold; done = aufsteigender
+  Funken-Schwarm (`.funke-rise` + N/1-Titel-Fallback, goldener Stern bewusst ausgespart). (6)
+  **Cleanup:** `forge-art.tsx` (AnvilArt) geloescht + totes `.forge-hammer`-CSS gestrichen.
+  Drei neue Keyframes (`.funke-drift`/`-spray`/`-rise`) je mit reduced-motion-Fallback. Jeder Task
+  tsc + `npm run gate` gruen, Task 9 zusaetzlich `npm run build` (40 Seiten). **Final
+  Whole-Branch-Review (Fable) Ready = Yes, keine Critical/Important** — verifizierte
+  State-Machine-Kohaerenz, CSS/reduced-motion-Integritaet, alle Producer/Consumer-Vertraege
+  (`ForgeBackdrop.intensity`, `FunkenSky`-Props, `SubPageHeader.onBack`), One-Candle-Rule
+  end-to-end, T9-Cleanup schonte die geteilten `.me-star-glow`/`.bs-ember`. Commits
+  `af6d4af..881a564` (inkl. Task-2-Fix `d3b0e5b`), gepusht (`fb22c74..881a564`). **iPhone-Final
+  steht aus.**
 - **Sternensuche-Nachthimmel-Redesign + drei Folge-Fixes (2026-07-22).** Redesign der
   Sternensuche-Reise (`/me/wants/journey`) von Formular-Wizard auf Nachthimmel-Szenen-Grammatik
   per subagent-driven (6 Tasks, `40a8fd4..17b5779`, Final Review Ready = Yes): geteilte
@@ -46,6 +100,22 @@ _Last updated: 2026-07-22 (Session 2 — drei iPhone-Regressions an der neu umge
 - Final whole-branch review (Sonnet — Fable 5 hit the session limit mid-round): Ready = with fixes; one Important fixed (`4aaa5a3`: detail heading was truncating the title, now uses `starName`). Gates green: `tsc`, `npm run build`, contrast 7/7.
 
 ## Open Items
+
+> **Durch die Roadmap-Session 2026-07-23 ERLEDIGT** (die einzeln weiter unten gelisteten Punkte sind damit geschlossen): Wants Gold-vs-Rose-Modulfarbe entschieden + gebaut (C1), `--celebrate` im Kontrast-Gate (C1), Stale-„Ersetzen-Toggle"-Label umbenannt (C1), funken-sky `aria-live` + Backdrop-a11y (C2), `savedCount`->`openCount` (C3), Leitsatz-Runde platziert (C4), Yang-Bonus-Toggle auf Grid-Ausklappen (C5), `/impeccable extract` Fokus-Ebene -> geteiltes `useDialogFocus`-Primitive (D1), Seitentitel-Konsistenz entschieden + Auswertung angeglichen (E1), flaechenuebergreifende Abschluss-Farbe entschieden = Gold bleibt (E2), FK-CASCADE auf Prod angewandt (A1). **Real noch offen: nur Stefans iPhone-Gate + die geschobenen Re-Critiques** (die iPhone-Check-Zeilen unten bleiben gueltig, plus die neu dazugekommenen Flaechen C4/E1/D1/Gold-Kachel).
+
+- **Sternschmiede-Redesign iPhone-Final offen (2026-07-22, S3):** am Live-Deploy in EINEM
+  Durchgang: (a) Warp `/me/wants` ↔ Schmiede liest dezent-kuehl (~0,75 s, kuehl-weisse duenne
+  Streifen, kein goldener Blitz), reduced-motion = harter Schnitt; (b) die vier Phasen —
+  Landing-Funken-Konstellation, Warte-Esse-Funkenflug (heisserer Rose-Glow + spruehende Funken),
+  Funken-Auswahl (Held-Funke, Glass-Card, Rose-Auswahl-Ring, gedimmt „aus"), Success-Schwarm; (c)
+  **Funken-Fokus-Ebene** (Antippen eines Funkens): Ebene ploppt NICHT (Portal-`preventScroll`),
+  Focus-Trap/Escape/Fokus-Rueckgabe funktionieren, Verwerfen fragt zweistufig nach; (d)
+  Header-Zurueck fliegt den echten Warp (nicht harter Sprung). **Deferred (alle vom Final Review
+  als acceptable-to-ship, im Ledger):** Reflektieren-CTA `outline` vs. Gold (Design-System, an die
+  Gold-vs-Rose-Frage gekoppelt), VoiceOver-Backdrop-Button + `aria-live` beim Verwerfen-Swap
+  (a11y-Einzeiler in `funken-sky.tsx`), `--celebrate` fehlt im Kontrast-Gate, `savedCount`→
+  `openCount` (Verhalten korrekt, Name irrefuehrend), JS/CSS-reduced-motion-Duplikat im
+  Warte-Screen, `.warp-streak-*-settle` 340 statt 350 ms.
 - **Sternensuche-Redesign + drei Fixes iPhone-Final offen (2026-07-22):** am Live-Deploy in
   EINEM Durchgang gegenchecken: (a) Wizard-Header klebt beim Scrollen oben, verdeckt keinen
   Inhalt, kein Leerraum oben; (b) Sterne antippen → Detail klappt **weich** auf/zu, Chevron
@@ -79,6 +149,19 @@ _Last updated: 2026-07-22 (Session 2 — drei iPhone-Regressions an der neu umge
 - **FK-CASCADE-Migration geschrieben, Apply offen:** `supabase/migrations/20260720120000_cleanser_checkins_cascade.sql` committet (`0618f50`). **`supabase db push` muss noch laufen** — die CLI ist in der Claude-Arbeitsumgebung nicht installiert; bewusst **nicht** via Supabase-MCP angewandt (MCP-`apply_migration` erzeugt eine eigene History-Version → Drift zur Datei, späterer `db push` würde das nicht-idempotente `add constraint` erneut laufen lassen). Stefan pusht per CLI. Danach Kaskade prüfen. Deferred palette change ("für später", candidates documented, verifiable via the contrast gate) bleibt offen.
 
 ## Next Steps
+
+- **Der einzige verbleibende AIC-Block ist der iPhone-Verifikations-Stau — jetzt abarbeiten, bevor eine neue Flaeche aufgemacht wird.** Die komplette baubare Roadmap ist durch; alles Weitere haengt an Stefans Geraete-Gate. In Buendeln pro Reise am Live-Deploy abnehmen (ein Durchgang je Flaeche), dabei die **neu dazugekommenen** Aenderungen mitpruefen: (a) C4-Leitsatz an den drei Booster-Abschluessen (Overthinking/Schattenseite/Things-got-messy); (b) `/me`-Hub-Wants-Kachel jetzt gold; (c) E1-Auswertungs-Header (sticky Header + phasen-dynamischer Untertitel — die `SubPageHeader`-in-die-Form-Verschiebung testet die sticky-Klasse, die schon mal gezickt hat); (d) D1-Dialog-Verhalten (Escape/Schliessen/Fokus-Rueckkehr an Stern- und Funken-Fokus — verhaltens-identisch, aber die Fokus/Scroll-Klasse verdient einen Blick). **Danach die geschobenen Re-Critiques** der values/journey- und Wants-Flaechen (Erwartung: Scores steigen). Die detaillierten Check-Listen je Flaeche stehen unten unveraendert.
+- **Beim naechsten Wants-Anfassen Track F mitnehmen** (jetzt wo `useDialogFocus` die Dialog-Flaeche konsolidiert): generische Save-Error-Strings (`/impeccable clarify`), harter Karten-Remount bei Add/Delete (`/impeccable animate`), Vibe-Pillen als „(optional)" markieren, Fokus-Edit-Save-Erfolgssignal.
+- **Kuenftige Portal-Overlays auf `useDialogFocus` setzen** statt Focus/Scroll neu zu rollen (Memory `portal-focus-needs-preventscroll` aktualisiert).
+
+- **Sternschmiede-Redesign am iPhone final abnehmen (S3):** Warp entgoldet/gezaehmt, die vier
+  Phasen, die Funken-Fokus-Ebene (kein Ploppen, Escape/Fokus-Rueckgabe, zweistufiges Verwerfen),
+  Header-Rueckflug. Die Sternschmiede ist damit die zweite Wants-Reise auf Nachthimmel-Grammatik
+  (Geschwister zur Sternensuche). Danach loest sich die **Gold-vs-Rose-Modulfarbe** von einer
+  offenen Frage zu einer faelligen Runde: die Schmiede ist bewusst auf Rose (`--celebrate`), die
+  Sternenkarte (Wants-Hauptflaeche) noch Gold — beide dasselbe Modul. Entweder Wants auf Gold
+  festschreiben (DESIGN.md-Mapping) oder Karte + Ornamente auf Rose; danach `--celebrate` ins
+  `check-contrast.mjs` aufnehmen (Rose ist jetzt breite Ornament-/Auswahl-Farbe).
 - **Sternensuche am iPhone final abnehmen (Redesign + die drei Fixes in EINEM Durchgang):**
   Header sticky & verdeckt nichts, Sterne-Liste klappt weich, Himmel ruhig, Completion ohne
   Luecke oben, plus die Redesign-Screens (Warte/Ergebnis/Abschluss). Bei fuehlbarem
