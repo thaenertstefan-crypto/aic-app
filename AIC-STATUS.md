@@ -2,9 +2,10 @@
 
 _Maintained by the `/feierabend` skill at the end of each session. Read this at session start to get oriented before diving into the code._
 
-_Last updated: 2026-07-23 (Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbeitet: A1 FK-CASCADE auf Prod, C1 Gold-vs-Rose, C2 a11y, C3, C4 Leitsatz, C5 Yang-Toggle, D1 useDialogFocus-Hook, E1 Titel-System, E2 Abschluss-Farbe; alle baubaren Punkte durch, `e2add09..98d1c2b`, gepusht; nur noch iPhone-Gate + Re-Critiques offen)_
+_Last updated: 2026-07-23 (spaeter am Tag: `/me/bill-of-rights` in zwei Sessions ueberarbeitet — Runde 1 „Der gesteuerte Kurs"-Nachthimmel-Szene `e352d32..b03c706`, Runde 2 Nachbesserung nach iPhone-Feedback `0a5f947`: Maskottchen raus, Gold-Siegel als Kopf, dezente Sternbilder statt Kurslinie, /values-grosses weisses Intro, Wants-Stil-Buttons mit Gold-CTA. Alles gepusht, tsc+gate+build gruen, iPhone-Final offen. Davor: Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbeitet, `e2add09..98d1c2b`.)_
 
 ## Current State
+- **`/me/bill-of-rights` in die Nachthimmel-Bildwelt geholt + nach iPhone-Feedback nachgebessert (2026-07-23, zwei Sessions).** **Runde 1** (`e352d32..b03c706`, gepusht): „Der gesteuerte Kurs" — gepunktete Kurslinie + pulsende Wegpunkte als Szene, Richter-Maskottchen zum Navigator-mit-Sextant umgebaut, Sparkles->Waypoints-Icon, zwei differenzierte Aktions-Kacheln, Zwei-Tap-Delete. **Runde 2** (`0a5f947`, gepusht, diese Session): Stefans iPhone-Blick verwarf den Ansatz teils — der Sextant war unlesbar, daraus wurde eine groessere Nachbesserung. Umgesetzt: **Maskottchen komplett entfernt** (`components/brand/mascot-navigator.tsx` geloescht), **Gold-Siegel (`GoldSeal`, bereits in `bill-of-rights-me.tsx`) wandert als Seitenkopf-Crest nach oben** (das doppelte „verdiente" Siegel am Urkundenfuss entfernt); **Einfuehrungstext auf /values-Groesse** (`text-base`) + weiss (`text-foreground`), neuer Leitsatz („Diese Regeln hast du dir selbst gegeben – sie helfen dir beim Navigieren durch deinen Alltag und beim Treffen von Entscheidungen. …", zweiter Satz behalten); **Hintergrund neu**: `course-line.tsx` geloescht + `course-waypoint`-CSS entfernt (Wegpunkte zu hell), neue **`app/(app)/me/bill-of-rights/constellations.tsx`** — drei stilisierte Sternbilder, Sterne gestrichelt verbunden (Sage `--success` sehr gedaempft, Sterne gedaempftes Foreground, **komplett statisch**, sehr dezent); **Aktions-Kacheln -> zwei echte Buttons im Wants-Stil** (`flex gap-3`, je `flex-1`), „Recht generieren" = **goldene Default-CTA**, „Selbst schreiben" = `variant="outline"` (Labels gekuerzt, damit einzeilig nebeneinander wie bei Wants; per AskUserQuestion mit Stefan bestaetigt). tsc + `npm run gate` (Kontrast/Typo/Motion) + build gruen; kein Wegwerf-Account, iPhone bleibt das Gate. **iPhone-Final offen** (u. a. Sternbild-Dichte/-Position sind Startwerte, in `constellations.tsx` je Stern einzeilig justierbar).
 - **Backlog-Roadmap 13.-22.07. komplett abgearbeitet (2026-07-23).** Per `brainstorming` einen
   Roadmap-Plan ueber alle offenen Punkte gebaut (Spec `2026-07-23-backlog-roadmap-design.md`,
   `e2add09`) und Runde fuer Runde durchgezogen — **die gesamte baubare Roadmap ist durch**, offen
@@ -103,6 +104,22 @@ _Last updated: 2026-07-23 (Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbe
 
 > **Durch die Roadmap-Session 2026-07-23 ERLEDIGT** (die einzeln weiter unten gelisteten Punkte sind damit geschlossen): Wants Gold-vs-Rose-Modulfarbe entschieden + gebaut (C1), `--celebrate` im Kontrast-Gate (C1), Stale-„Ersetzen-Toggle"-Label umbenannt (C1), funken-sky `aria-live` + Backdrop-a11y (C2), `savedCount`->`openCount` (C3), Leitsatz-Runde platziert (C4), Yang-Bonus-Toggle auf Grid-Ausklappen (C5), `/impeccable extract` Fokus-Ebene -> geteiltes `useDialogFocus`-Primitive (D1), Seitentitel-Konsistenz entschieden + Auswertung angeglichen (E1), flaechenuebergreifende Abschluss-Farbe entschieden = Gold bleibt (E2), FK-CASCADE auf Prod angewandt (A1). **Real noch offen: nur Stefans iPhone-Gate + die geschobenen Re-Critiques** (die iPhone-Check-Zeilen unten bleiben gueltig, plus die neu dazugekommenen Flaechen C4/E1/D1/Gold-Kachel).
 
+- **`/me/bill-of-rights` iPhone-Final offen (2026-07-23, Runde 2, `0a5f947`):** am Live-Deploy in
+  EINEM Durchgang: (a) **Siegel** sitzt sauber als Kopf ueber der Urkunde, ohne sie zu ueberlappen,
+  kein zweites Siegel mehr am Fuss; (b) **Intro** gross + weiss (`text-base`/`text-foreground`,
+  wie /values), Kontrast klar; (c) **Hintergrund** zeigt die drei dezenten, gestrichelt verbundenen
+  Sternbilder — **nicht zu hell**, keine Kurslinie/Wegpunkte mehr; **Position/Dichte sind
+  Startwerte, ggf. je Stern in `constellations.tsx` einen Tick nachziehen** (isolierte Koordinaten);
+  (d) **Buttons** einzeilig nebeneinander, „Recht generieren" liest als die eine Gold-Kerze,
+  „Selbst schreiben" outline. Beide Zielrouten (`/generate`, `/add`) oeffnen korrekt. **Minor
+  (Runde-1-Erbe, nicht angefasst):** Kommentar-ASCII-Schliesszeichen in den neuen Dateien
+  (gate-exempt, unsichtbar).
+- **`npm run lint` ist auf `main` vorbestehend ROT (wiederkehrend, 2. Session geflaggt):** 3 ESLint-
+  Fehler aus dem Sternschmiede-Projekt — `funken-sky.tsx` (`react-hooks/refs`, Render-`origin`),
+  `evaluation-form.tsx`, `wants-journey.tsx`. tsc + `npm run gate` + build sind gruen; nur eslint
+  ist rot, und jede Session muss „ist vorbestehend, nicht meins" dazuschreiben. **Vorschlag (Stefan
+  entscheidet): eine kleine dedizierte Runde, die die 3 Fehler raeumt, dann `npm run lint` an
+  `npm run gate` haengen** — beendet das Dazuschreiben und faengt neue Lint-Regressionen hart.
 - **Sternschmiede-Redesign iPhone-Final offen (2026-07-22, S3):** am Live-Deploy in EINEM
   Durchgang: (a) Warp `/me/wants` ↔ Schmiede liest dezent-kuehl (~0,75 s, kuehl-weisse duenne
   Streifen, kein goldener Blitz), reduced-motion = harter Schnitt; (b) die vier Phasen —
@@ -151,6 +168,8 @@ _Last updated: 2026-07-23 (Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbe
 ## Next Steps
 
 - **Der einzige verbleibende AIC-Block ist der iPhone-Verifikations-Stau — jetzt abarbeiten, bevor eine neue Flaeche aufgemacht wird.** Die komplette baubare Roadmap ist durch; alles Weitere haengt an Stefans Geraete-Gate. In Buendeln pro Reise am Live-Deploy abnehmen (ein Durchgang je Flaeche), dabei die **neu dazugekommenen** Aenderungen mitpruefen: (a) C4-Leitsatz an den drei Booster-Abschluessen (Overthinking/Schattenseite/Things-got-messy); (b) `/me`-Hub-Wants-Kachel jetzt gold; (c) E1-Auswertungs-Header (sticky Header + phasen-dynamischer Untertitel — die `SubPageHeader`-in-die-Form-Verschiebung testet die sticky-Klasse, die schon mal gezickt hat); (d) D1-Dialog-Verhalten (Escape/Schliessen/Fokus-Rueckkehr an Stern- und Funken-Fokus — verhaltens-identisch, aber die Fokus/Scroll-Klasse verdient einen Blick). **Danach die geschobenen Re-Critiques** der values/journey- und Wants-Flaechen (Erwartung: Scores steigen). Die detaillierten Check-Listen je Flaeche stehen unten unveraendert.
+- **`/me/bill-of-rights` am iPhone final abnehmen (Runde 2, `0a5f947`):** Siegel-Kopf sitzt sauber, Intro gross+weiss lesbar, die drei Sternbilder dezent (nicht zu hell), zwei Buttons einzeilig mit goldenem „Recht generieren". Ist die Sternbild-Dichte/-Position daneben, je Stern einen Tick in `constellations.tsx` (isolierte Koordinaten). Das ist die einzige frische Flaeche im iPhone-Stau.
+- **`npm run lint` gruen machen und ins `npm run gate` nehmen** (kleine, abgegrenzte Runde, Stefan entscheidet): die 3 vorbestehenden Sternschmiede-ESLint-Fehler raeumen, dann eslint an die Gate-Kette haengen — beendet das sessionweise „ist-vorbestehend"-Dazuschreiben und macht neue Lint-Regressionen zu harten Fehlern.
 - **Beim naechsten Wants-Anfassen Track F mitnehmen** (jetzt wo `useDialogFocus` die Dialog-Flaeche konsolidiert): generische Save-Error-Strings (`/impeccable clarify`), harter Karten-Remount bei Add/Delete (`/impeccable animate`), Vibe-Pillen als „(optional)" markieren, Fokus-Edit-Save-Erfolgssignal.
 - **Kuenftige Portal-Overlays auf `useDialogFocus` setzen** statt Focus/Scroll neu zu rollen (Memory `portal-focus-needs-preventscroll` aktualisiert).
 
