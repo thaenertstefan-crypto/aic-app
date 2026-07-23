@@ -21,7 +21,7 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { BillOfRightsSky } from "./bill-of-rights-sky";
-import { MascotJudge } from "@/components/brand/mascot-judge";
+import { MascotNavigator } from "@/components/brand/mascot-navigator";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
@@ -257,7 +257,7 @@ export function BillOfRightsMe({
           Thront frei über der Urkunde, ohne sie zu überlappen. */}
       {introDone && (
         <div className="flex justify-center px-4 pt-6">
-          <MascotJudge />
+          <MascotNavigator />
         </div>
       )}
 
