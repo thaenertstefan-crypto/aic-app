@@ -224,6 +224,10 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
             )}
           </div>
 
+          <p className="font-affirmation text-base leading-relaxed text-foreground/90">
+            Auch wenn das Wetter sie manchmal versteckt: Deine Sterne leuchten weiter.
+          </p>
+
           {/* Weiche Verzahnung — bewusst opt-in und ignorierbar. */}
           <Card className="w-full border-dashed">
             <CardContent className="space-y-2 pt-(--card-spacing)">

@@ -670,6 +670,10 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
             festgelegt. Das war mutig – nimm diesen Moment mit.
           </p>
 
+          <p className="font-affirmation text-base leading-relaxed text-foreground/90">
+            Auch wenn das Wetter sie manchmal versteckt: Deine Sterne leuchten weiter.
+          </p>
+
           {/* Reframe als ruhiger Schlusspunkt — erscheint nach dem Icon */}
           <Reveal delay={0.4} className="w-full">
             <ReframeAnimation

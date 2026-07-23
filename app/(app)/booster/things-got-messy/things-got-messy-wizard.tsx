@@ -282,6 +282,10 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
             </p>
           </div>
 
+          <p className="font-affirmation text-base leading-relaxed text-foreground/90">
+            Auch wenn das Wetter sie manchmal versteckt: Deine Sterne leuchten weiter.
+          </p>
+
           {aiError ? (
             <Card className="w-full">
               <CardContent className="space-y-3 pt-(--card-spacing)">
