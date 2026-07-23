@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Mascot } from "@/components/brand/mascot";
 import { STAR_PATH } from "@/components/brand/star-glyph";
+import { useDialogFocus } from "@/lib/hooks/use-dialog-focus";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
-import { useScrollLock } from "@/lib/hooks/use-scroll-lock";
 import { getValueLabel } from "@/lib/utils/values-bank";
 import { cn } from "@/lib/utils";
 import { FocusSky } from "./focus-sky";
@@ -129,7 +129,6 @@ export function StarMap({
   // der auslösende Stern-Button, auf den beim Schließen der Fokus zurückkehrt.
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
-  const prevFocusedRef = useRef<string | null>(null);
   const originRef = useRef<{ x: number; y: number; size: number } | null>(null);
   // Karten-lokaler Ursprung (Sternposition relativ zur oberen linken Kartenecke)
   // — Transform-Ursprung für den Auf-Zoom der realen Karte.
@@ -138,8 +137,24 @@ export function StarMap({
   // Portal erst nach Mount (kein document auf dem Server).
   // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliger Client-Mount-Flag, kein document auf dem Server
   useEffect(() => setMounted(true), []);
-  // Seite hinter dem Fokus scroll-sperren.
-  useScrollLock(focusedId !== null);
+
+  // Scroll-Lock + Fokus reinziehen (preventScroll) + Tab-Falle + Fokus-Rückkehr.
+  // Escape verlässt im Edit-Modus erst den Edit (getippter Text bleibt), sonst
+  // schließt es die Fokus-Ebene.
+  useDialogFocus({
+    open: focusedId !== null,
+    dialogRef,
+    triggerRef,
+    onEscape: () => {
+      if (mode === "edit") {
+        setMode("view");
+        setConfirmDelete(false);
+        setFocusError(null);
+      } else {
+        zoomOut();
+      }
+    },
+  });
 
   const { stars, viewH } = layoutStars(wants);
   const focused = wants.find((w) => w.id === focusedId) ?? null;
@@ -224,80 +239,6 @@ export function StarMap({
     const t = window.setTimeout(() => setContentVisible(true), 420);
     return () => window.clearTimeout(t);
   }, [focusedId, reduced]);
-
-  // Die Fokus-Ebene wie ein Dialog behandeln: Fokus reinziehen, Tab einsperren,
-  // Escape schließt (im Edit-Modus verlässt Escape erst den Edit, damit getippter
-  // Text nicht verloren geht). Ohne das bliebe der Fokus auf dem unsichtbaren
-  // Auslöser-Stern und Tab liefe in die Seite hinter dem Overlay.
-  useEffect(() => {
-    if (!focusedId) return;
-    const dialog = dialogRef.current;
-    // preventScroll: der Dialog-Container haengt per Portal am Ende von
-    // document.body — ohne das wuerde focus() die Seite ans Dokument-Ende
-    // scrollen (das „Aufploppen" beim Rein-Zoom).
-    const raf = requestAnimationFrame(() => dialog?.focus({ preventScroll: true }));
-
-    function focusables(): HTMLElement[] {
-      if (!dialog) return [];
-      return Array.from(
-        dialog.querySelectorAll<HTMLElement>(
-          'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',
-        ),
-      );
-    }
-
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        if (mode === "edit") {
-          setMode("view");
-          setConfirmDelete(false);
-          setFocusError(null);
-        } else {
-          zoomOut();
-        }
-        return;
-      }
-      if (e.key !== "Tab" || !dialog) return;
-      const els = focusables();
-      if (els.length === 0) {
-        e.preventDefault();
-        dialog.focus({ preventScroll: true });
-        return;
-      }
-      const first = els[0];
-      const last = els[els.length - 1];
-      const active = document.activeElement as HTMLElement | null;
-      if (e.shiftKey && (active === first || active === dialog || !dialog.contains(active))) {
-        e.preventDefault();
-        last.focus({ preventScroll: true });
-      } else if (!e.shiftKey && (active === last || !dialog.contains(active))) {
-        e.preventDefault();
-        first.focus({ preventScroll: true });
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [focusedId, mode]);
-
-  // Beim Schließen den Fokus auf den auslösenden Stern zurücksetzen — außer der
-  // Stern wurde gelöscht (Karte remountet per key, Button ist dann weg).
-  useEffect(() => {
-    const prev = prevFocusedRef.current;
-    prevFocusedRef.current = focusedId;
-    if (prev && !focusedId) {
-      const trigger = triggerRef.current;
-      // preventScroll: Fokus zurueck auf den (evtl. weit unten liegenden)
-      // Auslöser-Stern, ohne die Seite dorthin zu scrollen — man bleibt an der
-      // Scroll-Position von vor dem Rein-Zoom.
-      if (trigger && document.body.contains(trigger)) trigger.focus({ preventScroll: true });
-      triggerRef.current = null;
-    }
-  }, [focusedId]);
 
   function zoomOut() {
     setContentVisible(false);

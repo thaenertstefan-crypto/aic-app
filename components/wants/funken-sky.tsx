@@ -6,8 +6,8 @@ import Link from "next/link";
 import { Flame } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useDialogFocus } from "@/lib/hooks/use-dialog-focus";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
-import { useScrollLock } from "@/lib/hooks/use-scroll-lock";
 import { cn } from "@/lib/utils";
 import type { BetItem } from "@/lib/types/db-json";
 
@@ -76,14 +76,20 @@ export function FunkenSky({
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
-  const prevFocusedRef = useRef<string | null>(null);
   // Tap-Punkt (viewport-relativ) → transform-origin für den Auf-Zoom der Ebene.
   const originRef = useRef<{ x: number; y: number } | null>(null);
 
   // Portal erst nach Mount (kein document auf dem Server).
   // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliger Client-Mount-Flag
   useEffect(() => setMounted(true), []);
-  useScrollLock(focusedId !== null);
+
+  // Scroll-Lock + Fokus reinziehen (preventScroll) + Tab-Falle + Fokus-Rückkehr.
+  useDialogFocus({
+    open: focusedId !== null,
+    dialogRef,
+    triggerRef,
+    onEscape: close,
+  });
 
   const { placed, viewH } = layout(funken);
   const focused = funken.find((f) => f.id === focusedId) ?? null;
@@ -115,68 +121,6 @@ export function FunkenSky({
     const raf = requestAnimationFrame(() => setReady(true));
     return () => cancelAnimationFrame(raf);
   }, [focusedId, reduced]);
-
-  // Fokus-Ebene wie ein Dialog: Fokus reinziehen (preventScroll!), Tab einsperren,
-  // Escape schließt. Ohne preventScroll scrollt focus() die Seite ans Dokumentende
-  // (Portal hängt am body-Ende).
-  useEffect(() => {
-    if (!focusedId) return;
-    const dialog = dialogRef.current;
-    const raf = requestAnimationFrame(() => dialog?.focus({ preventScroll: true }));
-
-    function focusables(): HTMLElement[] {
-      if (!dialog) return [];
-      return Array.from(
-        dialog.querySelectorAll<HTMLElement>(
-          'a[href],button:not([disabled]):not([tabindex="-1"]),[tabindex]:not([tabindex="-1"])',
-        ),
-      );
-    }
-
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        close();
-        return;
-      }
-      if (e.key !== "Tab" || !dialog) return;
-      const els = focusables();
-      if (els.length === 0) {
-        e.preventDefault();
-        dialog.focus({ preventScroll: true });
-        return;
-      }
-      const first = els[0];
-      const last = els[els.length - 1];
-      const active = document.activeElement as HTMLElement | null;
-      if (e.shiftKey && (active === first || active === dialog || !dialog.contains(active))) {
-        e.preventDefault();
-        last.focus({ preventScroll: true });
-      } else if (!e.shiftKey && (active === last || !dialog.contains(active))) {
-        e.preventDefault();
-        first.focus({ preventScroll: true });
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [focusedId]);
-
-  // Beim Schließen den Fokus auf den auslösenden Funken zurück — außer er wurde
-  // verworfen (Button dann weg). preventScroll: nicht zum evtl. weit unten
-  // liegenden Funken scrollen.
-  useEffect(() => {
-    const prev = prevFocusedRef.current;
-    prevFocusedRef.current = focusedId;
-    if (prev && !focusedId) {
-      const t = triggerRef.current;
-      if (t && document.body.contains(t)) t.focus({ preventScroll: true });
-      triggerRef.current = null;
-    }
-  }, [focusedId]);
 
   function handleDelete() {
     if (!focused) return;
