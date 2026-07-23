@@ -168,6 +168,7 @@ export function BillOfRightsMe({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   // Folgt dem Gate-Zustand (nicht nur der server-gelieferten Prop), damit das
   // Richter-Maskottchen schon beim ersten Durchklicken der Intro erscheint und
   // nicht erst beim erneuten Öffnen der Seite.
@@ -238,6 +239,7 @@ export function BillOfRightsMe({
   function startEdit(r: RightItem) {
     setEditingId(r.id);
     setEditText(r.text);
+    setConfirmDelete(false);
   }
 
   function saveEdit() {
@@ -392,7 +394,10 @@ export function BillOfRightsMe({
           <Dialog
             open={editingId !== null}
             onOpenChange={(open) => {
-              if (!open) setEditingId(null);
+              if (!open) {
+                setEditingId(null);
+                setConfirmDelete(false);
+              }
             }}
           >
             <DialogContent>
@@ -412,11 +417,16 @@ export function BillOfRightsMe({
                   variant="destructive"
                   className="sm:mr-auto"
                   onClick={() => {
+                    if (!confirmDelete) {
+                      setConfirmDelete(true);
+                      return;
+                    }
                     if (editingId) deleteRight(editingId);
                     setEditingId(null);
+                    setConfirmDelete(false);
                   }}
                 >
-                  Recht löschen
+                  {confirmDelete ? "Wirklich löschen?" : "Recht löschen"}
                 </Button>
                 <DialogClose render={<Button variant="outline" />}>
                   Abbrechen
