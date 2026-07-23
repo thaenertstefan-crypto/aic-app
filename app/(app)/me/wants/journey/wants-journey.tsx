@@ -1037,28 +1037,36 @@ export function WantsJourney({
                   )}
                 />
               </button>
-              {principlesOpen && (
-                <div className="mt-3 space-y-3 border-t pt-3">
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Was ist das Prinzip hinter diesen Aktivitäten, das sie
-                    für dich so genussvoll macht? Wenn dich z. B. Photoshop
-                    in Flow bringt: Ist es das Erschaffen? Die Ästhetik?
-                    Diese inneren Treiber helfen dir, neue Dinge zu finden,
-                    die dich genauso erfüllen.
-                  </p>
-                  <Textarea
-                    id="principles"
-                    name="principles"
-                    value={principles}
-                    onChange={(e) => setPrinciples(e.target.value)}
-                    placeholder="Zum Beispiel: Ich glaube, es geht mir ums Erschaffen — etwas, das vorher nicht da war …"
-                    rows={3}
-                    maxLength={5000}
-                    disabled={submitting}
-                    className="min-h-[80px] resize-y"
-                  />
+              {/* Aufgeklappt: sanft ausklappen (Grid 0fr→1fr statt hartem Mounten) */}
+              <div
+                className={cn(
+                  "grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none",
+                  principlesOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                )}
+              >
+                <div className="overflow-hidden">
+                  <div className="mt-3 space-y-3 border-t pt-3">
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      Was ist das Prinzip hinter diesen Aktivitäten, das sie
+                      für dich so genussvoll macht? Wenn dich z. B. Photoshop
+                      in Flow bringt: Ist es das Erschaffen? Die Ästhetik?
+                      Diese inneren Treiber helfen dir, neue Dinge zu finden,
+                      die dich genauso erfüllen.
+                    </p>
+                    <Textarea
+                      id="principles"
+                      name="principles"
+                      value={principles}
+                      onChange={(e) => setPrinciples(e.target.value)}
+                      placeholder="Zum Beispiel: Ich glaube, es geht mir ums Erschaffen — etwas, das vorher nicht da war …"
+                      rows={3}
+                      maxLength={5000}
+                      disabled={submitting}
+                      className="min-h-[80px] resize-y"
+                    />
+                  </div>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 
