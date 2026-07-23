@@ -170,7 +170,7 @@ export function BillOfRightsMe({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   // Folgt dem Gate-Zustand (nicht nur der server-gelieferten Prop), damit das
-  // Richter-Maskottchen schon beim ersten Durchklicken der Intro erscheint und
+  // Navigator-Maskottchen schon beim ersten Durchklicken der Intro erscheint und
   // nicht erst beim erneuten Öffnen der Seite.
   const [introDone, setIntroDone] = useState(introSeen);
   const reduced = useReducedMotion();
@@ -266,7 +266,7 @@ export function BillOfRightsMe({
         }
       />
 
-      {/* Maskottchen als Richter — nur sobald die Intro-Sequenz vorbei ist.
+      {/* Maskottchen als Navigator — nur sobald die Intro-Sequenz vorbei ist.
           Thront frei über der Urkunde, ohne sie zu überlappen. */}
       {introDone && (
         <div className="flex justify-center px-4 pt-6">
@@ -288,7 +288,7 @@ export function BillOfRightsMe({
           </p>
 
           {/* Die Urkunde: ein zusammenhängendes Dokument statt Einzelkarten,
-              der Richter sitzt frei darüber. */}
+              der Navigator sitzt frei darüber. */}
           <GlassPanel
             className="rounded-2xl border-primary/25 px-5 pb-8 pt-8"
             contentClassName="flex flex-col"
