@@ -471,6 +471,25 @@
     animation: sky-light-twinkle var(--twinkle-dur, 6s) ease-in-out infinite;
   }
 
+  /* Bill of Rights „Der gesteuerte Kurs": Wegpunkte glimmen langsam in der
+     Szenen-Lichtfarbe (--scene-glow = Sage). Linie selbst ist statisch. */
+  @keyframes course-waypoint {
+    0%, 100% {
+      opacity: 0.45;
+      filter: drop-shadow(0 0 2px color-mix(in srgb, var(--scene-glow, var(--primary)) 40%, transparent));
+    }
+    50% {
+      opacity: 0.85;
+      filter: drop-shadow(0 0 6px color-mix(in srgb, var(--scene-glow, var(--primary)) 70%, transparent));
+    }
+  }
+  .course-waypoint {
+    animation: course-waypoint 7s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .course-waypoint { animation: none; opacity: 0.6; }
+  }
+
   /* Slow vertical drift for the dashboard mascot, layered on top of its own
      breathe/glow (consumed by mood-checkin). */
   @keyframes mascot-drift {
