@@ -495,8 +495,8 @@ export function Sternschmiede({
 
   // ── Abschluss — Funken-Schwarm ──────────────────────────────────
   if (phase === "done") {
-    const savedCount = openBets.length;
-    const n = Math.min(Math.max(savedCount, 1), SWARM_FUNKEN.length);
+    const openCount = openBets.length;
+    const n = Math.min(Math.max(openCount, 1), SWARM_FUNKEN.length);
     const swarm = SWARM_FUNKEN.slice(0, n);
     return (
       <div className="flex min-h-lvh flex-col">
@@ -530,9 +530,9 @@ export function Sternschmiede({
             </div>
             <div className="space-y-2">
               <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                {savedCount <= 1
+                {openCount <= 1
                   ? "Der erste Funke ist geschlagen."
-                  : `${savedCount} Funken glühen jetzt in deiner Schmiede.`}
+                  : `${openCount} Funken glühen jetzt in deiner Schmiede.`}
               </h1>
               <p className="text-muted-foreground">
                 Probier sie aus — und danach reflektierst du kurz, was der Funke dir

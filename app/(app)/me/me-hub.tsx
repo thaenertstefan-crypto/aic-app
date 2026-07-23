@@ -213,17 +213,7 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
         <Scene
           href="/me/wants"
           ariaLabel={`${PAGE_TITLES.meWants} öffnen`}
-          art={
-            <span
-              style={{ "--scene-glow": "var(--celebrate)" } as React.CSSProperties}
-            >
-              <StarArt
-                animate={animate}
-                dim={wantsCount === 0}
-                className="scene-ornament-tint"
-              />
-            </span>
-          }
+          art={<StarArt animate={animate} dim={wantsCount === 0} />}
         >
           <SceneTitle>{PAGE_TITLES.meWants}</SceneTitle>
           {openBetsCount > 0 ? (

@@ -651,17 +651,6 @@
   }
   .me-star-glow { animation: me-star-glow 4s ease-in-out infinite; }
 
-  /* Wants-Szene im /me-Hub: Stern-Ornament folgt der Modulfarbe (Rosé) statt
-   * dem Gold-Fallback — geschwisterlich zum --scene-glow-Glühen oben.
-   * Attribut-Selektoren treffen gezielt die Fill- bzw. Stroke-Variante des
-   * Sterns (StarArt), ohne die geteilte Komponente selbst anzufassen. */
-  .scene-ornament-tint polygon:not([fill="none"]) {
-    fill: var(--scene-glow, var(--primary));
-  }
-  .scene-ornament-tint polygon[fill="none"] {
-    stroke: var(--scene-glow, var(--primary));
-  }
-
   /* Einzug beim Öffnen (einmalig): Rosenring zeichnet sich. */
   @keyframes me-ring-draw {
     from { stroke-dashoffset: 200; }

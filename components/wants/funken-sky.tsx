@@ -128,7 +128,7 @@ export function FunkenSky({
       if (!dialog) return [];
       return Array.from(
         dialog.querySelectorAll<HTMLElement>(
-          'a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])',
+          'a[href],button:not([disabled]):not([tabindex="-1"]),[tabindex]:not([tabindex="-1"])',
         ),
       );
     }
@@ -237,10 +237,14 @@ export function FunkenSky({
             tabIndex={-1}
             className="fixed inset-0 z-[60] outline-none"
           >
-            {/* Gedimmte Esse: klick = schließen. */}
+            {/* Gedimmte Esse: klick = schließen. Für Screenreader/Tastatur inert
+                (aria-hidden + tabIndex -1) — der explizite „Schließen"-Button unten
+                trägt den barrierefreien Weg, sonst läge diese Fläche als erstes
+                „Schließen" vor dem eigentlichen Funken in der VoiceOver-Reihenfolge. */}
             <button
               type="button"
-              aria-label="Schließen"
+              aria-hidden="true"
+              tabIndex={-1}
               onClick={close}
               className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             />
@@ -270,7 +274,6 @@ export function FunkenSky({
                   <Button
                     className="w-full gap-2"
                     size="lg"
-                    variant="outline"
                     render={<Link href={reflectHref(focused.id)} />}
                   >
                     <Flame className="size-4" /> Ausprobiert? Reflektieren
@@ -280,7 +283,11 @@ export function FunkenSky({
                     className="w-full text-muted-foreground"
                     onClick={handleDelete}
                   >
-                    {confirmDelete ? "Wirklich verwerfen?" : "Verwerfen"}
+                    {/* aria-live: der Text-Swap zur Rückfrage wird sonst nicht
+                        angesagt (gleicher Button behält den Fokus). */}
+                    <span aria-live="polite">
+                      {confirmDelete ? "Wirklich verwerfen?" : "Verwerfen"}
+                    </span>
                   </Button>
                   <Button
                     variant="ghost"

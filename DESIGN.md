@@ -154,13 +154,14 @@ This rule governs **emphasis, not identity.** Gold-tinted icon chips (`bg-primar
 | Modul | Lichtfarbe | Token |
 |---|---|---|
 | Werte | Gold | `--primary` |
-| Wants / Sternschmiede | Rosé | `--celebrate` |
+| Wants | Gold | `--primary` |
+| Sternschmiede (Wants-Subpage) | Rosé | `--celebrate` |
 | Confidence | Lilac | `--cleanser-confidence` |
 | Bill of Rights | Sage | `--success` |
 | Kopfwetter (Akut-Hilfen) | Lilac | `--cleanser-confidence` |
 
 Modulfarbe lebt ausschließlich in Szenen-Ornamenten und Glows (`--scene-glow`).
-Gold bleibt überall die Aktions-Farbe (One-Candle-Rule). Die `scene-ornament-tint`-Konvention (Attribut-Selektoren + `--scene-glow`) lebt in `app/globals.css`.
+Gold bleibt überall die Aktions-Farbe (One-Candle-Rule). **Wants trägt Gold** als Modul- *und* Aktionsfarbe — die Sternenkarte (`/me/wants`) ist die Haupt-Wants-Fläche, ihre Ornamente sind gold. **Rosé (`--celebrate`) ist auf die Sternschmiede-Subpage begrenzt** (`/me/wants/schmiede`): dort bewusster Feier-/Completion-Akzent in Esse-Glow, Funken, Auswahl-Ornamenten — aber auch dort bleiben die Aktions-CTAs (z. B. „Reflektieren") Gold.
 
 ## 3. Typography
 

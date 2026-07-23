@@ -28,7 +28,7 @@ const cr = (a, b) => {
 const bg = token("background"), card = token("card"),
   fg = token("foreground"), mutedFg = token("muted-foreground"),
   primary = token("primary"), primaryFg = token("primary-foreground"),
-  destructiveText = token("destructive-text");
+  destructiveText = token("destructive-text"), celebrate = token("celebrate");
 
 const checks = [
   ["Card vs. Verlauf oben (Flächen-Schritt)", cr(card, GRADIENT_TOP), 1.29],
@@ -38,9 +38,15 @@ const checks = [
   ["Gold-Ink auf Gold (CTA-Text)", cr(primaryFg, primary), 4.5],
   ["Gold auf Background (CTA-Fläche)", cr(primary, bg), 3.0],
   ["Gold auf Card (CTA auf Karte)", cr(primary, card), 3.0],
-  // Solide Card als Proxy für die getönte bg-destructive/10-Fläche des aktiven
-  // „Ersetzen"-Toggles (liegt minimal darüber, also konservativ).
-  ["Destructive-Text auf Card (Ersetzen-Toggle)", cr(destructiveText, card), 4.5],
+  // Destructive-Text auf Card (destructive-Button-Variante, z. B. Fehler-/
+  // Löschaktionen). Solide Card als konservativer Proxy für die getönte Fläche.
+  ["Destructive-Text auf Card", cr(destructiveText, card), 4.5],
+  // Rosé (--celebrate) ist seit dem Sternschmiede-Redesign breite Ornament-/
+  // Auswahlfarbe. Kritisches Paar: die aktive Auswahl-Glyphe trägt --background
+  // als Icon-/Textfarbe auf voller bg-celebrate-Fläche (sternschmiede.tsx). Die
+  // symmetrische Ratio deckt zugleich die Rosé-Ornament-Sichtbarkeit auf dem
+  // dunklen Feld ab (≥ 3:1 impliziert).
+  ["Background-Glyph auf Rosé (Schmiede-Auswahl aktiv)", cr(bg, celebrate), 4.5],
 ];
 
 let failed = false;
