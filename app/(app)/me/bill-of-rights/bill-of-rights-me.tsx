@@ -21,7 +21,6 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { BillOfRightsSky } from "./bill-of-rights-sky";
-import { MascotNavigator } from "@/components/brand/mascot-navigator";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
@@ -106,57 +105,6 @@ function asAffirmation(text: string): string {
     : `Ich habe das Recht, ${text}`;
 }
 
-function ActionTile({
-  href,
-  icon: Icon,
-  label,
-  tone = "lead",
-}: {
-  href: string;
-  icon: typeof PenLine;
-  label: string;
-  tone?: "lead" | "quiet";
-}) {
-  return (
-    <Link href={href} className="block">
-      <Card className="h-full transition-colors hover:bg-muted/40">
-        <CardContent className="flex h-full flex-col items-center gap-2 text-center">
-          <div
-            className={cn(
-              "flex size-9 items-center justify-center rounded-full",
-              tone === "lead"
-                ? "bg-primary/15 text-primary"
-                : "bg-muted text-muted-foreground",
-            )}
-          >
-            <Icon className="size-4" />
-          </div>
-          <p className="text-sm font-medium text-foreground">{label}</p>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-function ActionTiles({ className }: { className?: string }) {
-  return (
-    <div className={`grid grid-cols-2 gap-3 ${className ?? ""}`}>
-      <ActionTile
-        href="/me/bill-of-rights/generate"
-        icon={Waypoints}
-        label="Vorschlag generieren"
-        tone="lead"
-      />
-      <ActionTile
-        href="/me/bill-of-rights/add"
-        icon={PenLine}
-        label="Manuell hinzufügen"
-        tone="quiet"
-      />
-    </div>
-  );
-}
-
 export function BillOfRightsMe({
   initialRights,
   introSeen,
@@ -170,8 +118,8 @@ export function BillOfRightsMe({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   // Folgt dem Gate-Zustand (nicht nur der server-gelieferten Prop), damit das
-  // Navigator-Maskottchen schon beim ersten Durchklicken der Intro erscheint und
-  // nicht erst beim erneuten Öffnen der Seite.
+  // Siegel schon beim ersten Durchklicken der Intro erscheint und nicht erst
+  // beim erneuten Öffnen der Seite.
   const [introDone, setIntroDone] = useState(introSeen);
   const reduced = useReducedMotion();
 
@@ -266,11 +214,11 @@ export function BillOfRightsMe({
         }
       />
 
-      {/* Maskottchen als Navigator — nur sobald die Intro-Sequenz vorbei ist.
+      {/* Gold-Siegel als Seitenkopf — nur sobald die Intro-Sequenz vorbei ist.
           Thront frei über der Urkunde, ohne sie zu überlappen. */}
       {introDone && (
         <div className="flex justify-center px-4 pt-6">
-          <MascotNavigator />
+          <GoldSeal />
         </div>
       )}
 
@@ -281,14 +229,15 @@ export function BillOfRightsMe({
         onSeen={() => setIntroDone(true)}
       >
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
-          <p className="text-center text-sm leading-relaxed text-muted-foreground">
-            Diese Regeln hast du dir selbst gegeben – sie sind deine
-            persönlichen Rechte. Komm hierher zurück, wann immer du eine
-            Erinnerung brauchst, was du dir erlauben darfst.
+          <p className="text-center text-base leading-relaxed text-foreground">
+            Diese Regeln hast du dir selbst gegeben – sie helfen dir beim
+            Navigieren durch deinen Alltag und beim Treffen von Entscheidungen.
+            Komm hierher zurück, wann immer du eine Erinnerung brauchst, was du
+            dir erlauben darfst.
           </p>
 
           {/* Die Urkunde: ein zusammenhängendes Dokument statt Einzelkarten,
-              der Navigator sitzt frei darüber. */}
+              das Siegel sitzt frei darüber. */}
           <GlassPanel
             className="rounded-2xl border-primary/25 px-5 pb-8 pt-8"
             contentClassName="flex flex-col"
@@ -316,7 +265,7 @@ export function BillOfRightsMe({
 
             {activeRights.length === 0 ? (
               <>
-                {/* Unbeschriebenes Dokument — noch ohne Siegel */}
+                {/* Unbeschriebenes Dokument — wartet auf das erste Recht */}
                 <div className="mt-4 space-y-5 px-2">
                   <div className="h-5 border-b border-dashed border-primary/15" />
                   <div className="h-5 border-b border-dashed border-primary/15" />
@@ -361,18 +310,29 @@ export function BillOfRightsMe({
                     </div>
                   ))}
                 </div>
-                <div className="border-t border-primary/15" />
-                <div className="mt-6 flex justify-center">
-                  <GoldSeal />
-                </div>
               </>
             )}
           </GlassPanel>
 
           <FormError message={saveError} />
 
-          {/* Immer sichtbar: zwei Wege, ein Recht hinzuzufügen */}
-          <ActionTiles className="mt-auto pt-4" />
+          {/* Immer sichtbar: zwei Wege, ein Recht hinzuzufügen. Generieren ist
+              die eine Gold-Kerze der Aktion, Selbst schreiben der ruhige Weg. */}
+          <div className="mt-auto flex gap-3 pt-4">
+            <Button
+              className="flex-1 gap-2"
+              render={<Link href="/me/bill-of-rights/generate" />}
+            >
+              <Waypoints className="size-4" /> Recht generieren
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 gap-2"
+              render={<Link href="/me/bill-of-rights/add" />}
+            >
+              <PenLine className="size-4" /> Selbst schreiben
+            </Button>
+          </div>
 
           {/* Verzahnung: Things Got Messy für den akuten Moment. */}
           <Card className="border-dashed">
