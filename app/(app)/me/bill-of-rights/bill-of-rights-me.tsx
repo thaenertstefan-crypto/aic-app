@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Pencil, PenLine, Sparkles } from "lucide-react";
+import { Pencil, PenLine, Waypoints } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -110,16 +110,25 @@ function ActionTile({
   href,
   icon: Icon,
   label,
+  tone = "lead",
 }: {
   href: string;
   icon: typeof PenLine;
   label: string;
+  tone?: "lead" | "quiet";
 }) {
   return (
     <Link href={href} className="block">
       <Card className="h-full transition-colors hover:bg-muted/40">
         <CardContent className="flex h-full flex-col items-center gap-2 text-center">
-          <div className="flex size-9 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <div
+            className={cn(
+              "flex size-9 items-center justify-center rounded-full",
+              tone === "lead"
+                ? "bg-primary/15 text-primary"
+                : "bg-muted text-muted-foreground",
+            )}
+          >
             <Icon className="size-4" />
           </div>
           <p className="text-sm font-medium text-foreground">{label}</p>
@@ -133,14 +142,16 @@ function ActionTiles({ className }: { className?: string }) {
   return (
     <div className={`grid grid-cols-2 gap-3 ${className ?? ""}`}>
       <ActionTile
+        href="/me/bill-of-rights/generate"
+        icon={Waypoints}
+        label="Vorschlag generieren"
+        tone="lead"
+      />
+      <ActionTile
         href="/me/bill-of-rights/add"
         icon={PenLine}
         label="Manuell hinzufügen"
-      />
-      <ActionTile
-        href="/me/bill-of-rights/generate"
-        icon={Sparkles}
-        label="Vorschlag generieren"
+        tone="quiet"
       />
     </div>
   );
