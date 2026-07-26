@@ -857,9 +857,9 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                     Ich denk mir gerade eine Situation für dich aus …
                   </p>
                   <span className="flex gap-1.5" aria-hidden="true">
-                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-bounce" />
-                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-bounce [animation-delay:150ms]" />
-                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-bounce [animation-delay:300ms]" />
+                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-pulse" />
+                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-pulse [animation-delay:150ms]" />
+                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-pulse [animation-delay:300ms]" />
                   </span>
                 </div>
               ) : (
