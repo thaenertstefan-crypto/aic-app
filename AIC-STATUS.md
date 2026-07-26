@@ -2,29 +2,30 @@
 
 _Maintained by the `/feierabend` skill at the end of each session. Read this at session start to get oriented before diving into the code._
 
-_Last updated: 2026-07-23 (noch spaeter: `/booster` (Kopfwetter-Hub) kritisiert (27/40) + Redesign zur echten synoptischen Druckkarte per brainstorming durchgeplant — Spec `89df50c` + Plan `c0d36a5` committet, **Umsetzung bewusst vertagt** auf eine spaetere Session. Davor am selben Tag: `/me/bill-of-rights` in zwei Sessions ueberarbeitet — Runde 1 „Der gesteuerte Kurs"-Nachthimmel-Szene `e352d32..b03c706`, Runde 2 Nachbesserung nach iPhone-Feedback `0a5f947`: Maskottchen raus, Gold-Siegel als Kopf, dezente Sternbilder statt Kurslinie, /values-grosses weisses Intro, Wants-Stil-Buttons mit Gold-CTA. Alles gepusht, tsc+gate+build gruen, iPhone-Final offen. Davor: Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbeitet, `e2add09..98d1c2b`.)_
+_Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. vertagte Plan per `subagent-driven-development` umgesetzt: PressureField-Grund + Maeander-Flow + Nebenfix, Commits `62a8f99..f06499b`, nach `main` gepusht, Final Review (opus) Ready = Yes, tsc+gate+build gruen. iPhone-Final + Re-Critique offen. Zuvor am 23.07.: `/booster` kritisiert (27/40) + Redesign per brainstorming durchgeplant — Spec `89df50c` + Plan `c0d36a5`. Davor am selben Tag: `/me/bill-of-rights` in zwei Sessions ueberarbeitet — Runde 1 „Der gesteuerte Kurs"-Nachthimmel-Szene `e352d32..b03c706`, Runde 2 Nachbesserung nach iPhone-Feedback `0a5f947`: Maskottchen raus, Gold-Siegel als Kopf, dezente Sternbilder statt Kurslinie, /values-grosses weisses Intro, Wants-Stil-Buttons mit Gold-CTA. Alles gepusht, tsc+gate+build gruen, iPhone-Final offen. Davor: Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbeitet, `e2add09..98d1c2b`.)_
 
 ## Current State
-- **`/booster` (Kopfwetter-Hub) kritisiert + Redesign geplant, Umsetzung vertagt (2026-07-23).**
-  `/impeccable critique /booster` (Single-Context/DEGRADED = settled, `detect.mjs` lief): **27/40
-  (Acceptable)**, kein AI-Slop. Kernbefund = Stefans Bauchgefuehl: die "Wetterkarte" lebt nur im
-  Code, nicht am Screen (Isobaren 0.18 / Kopf-Insel 0.06 Fuellung unsichtbar → 5 gleich schwere
-  Icons als verstreute Sticker, kein Einstieg, obere Ziele ausser Daumenreichweite, laengere Copy
-  sprengt die `w-36`-Labels). Snapshot `.impeccable/critique/2026-07-23T15-24-49Z__app-app-booster.md`.
-  Daraus per `superpowers:brainstorming` das Redesign konkretisiert (Stefans 3 Punkte +
-  Critique) — **Entscheidungen:** Szene bleibt raeumlich, aber der Grund wird sichtbar = **echte
-  synoptische Druckkarte** (gluehende Isobaren); **5 gleichrangig, kein Ranking** (Einstieg =
-  Wiedererkennen des eigenen Wetters); **volle warme Ich-Saetze sichtbar**; Komposition **Ansatz A =
-  maeandernde Front** (Flow-Layout, Zickzack links/rechts, kollisionsfrei/daumenfreundlich statt
-  hartkodierter `x/y`); Kopf-Silhouette raus. Neue Copy eingebaut (Subheader + 5 Ich-Saetze; "du"
-  klein, "Things Got Messy" bleibt); `things-got-messy` via `/api/messy-guilt-coach` als
-  Schuld-Coach verifiziert → Copy #3 "Ich fuehl mich schuldig …" ist eine Verbesserung. **Spec**
-  `docs/superpowers/specs/2026-07-23-kopfwetter-hub-druckkarte-design.md` (`89df50c`) + **Plan**
-  `docs/superpowers/plans/2026-07-23-kopfwetter-hub-druckkarte.md` (`c0d36a5`, 3 Tasks: PressureField-
-  Grund + CSS-Glows, Hub-Rewrite, `animate-bounce`-Nebenfix `saying-no-wizard.tsx:860`) committet.
-  **Bau bewusst vertagt** (Stefan-Wunsch) — bau-fertiger Wiedereinstieg fuer die naechste Session;
-  **obsoletiert** den alten Nachthimmel-II-Offenpunkt "Kopfwetter-Karte: 5 Koordinaten @375px
-  feinjustieren" (die `x/y` fallen komplett weg).
+- **`/booster` (Kopfwetter-Hub) als synoptische Druckkarte GEBAUT + gepusht (2026-07-26).** Der am
+  23.07. geplante und bewusst vertagte Umbau ist umgesetzt — per `subagent-driven-development`
+  (aufgerufen als `/impeccable subagent-driven-development @spec`), 3 Tasks, je frischer Implementer
+  (haiku, Code komplett im Plan = Transkription), Spec+Quality-Review (sonnet) pro Task, Final
+  Whole-Branch-Review (opus) **Ready = Yes**. Commits `62a8f99..f06499b`, nach `main` gepusht.
+  Umgesetzt: (1) **`app/(app)/booster/pressure-field.tsx`** (neu) — dekorative (`aria-hidden`,
+  `pointer-events-none`) SVG-Schicht: gluehende Gold-Isobaren (`.iso-glow` Drop-Shadow, `vector-effect`
+  per-Pfad — non-inherited-Fix aus dem Task-Review) + driftende Lilac-Front (`bs-sway`) +
+  wertungsfreier Aubergine-Tiefenverlauf; zwei neue statische CSS-Utilities `.iso-glow`/`.kw-cell-glow`
+  in `globals.css`. (2) **`booster/page.tsx`** Voll-Rewrite — `WeatherSystem` ohne `x/y`,
+  **Maeander-Flow** (5 gleichrangige Zellen, Alternierung via `i % 2` → `self-start`/`self-end`,
+  rechte Zellen `flex-row-reverse`/`text-right`), volle warme Ich-Saetze immer sichtbar in Fraunces
+  `text-foreground` (Kontrast **12,42:1**), `.kw-cell-glow` Lilac-Kern hinter jedem `size-14`-Symbol,
+  neuer Subheader, Kopf-Silhouette raus, `Reveal`-Stagger (0,6 s, reduced-motion → instant). Copy:
+  "du" klein, "Things Got Messy" bleibt; `things-got-messy`-Ich-Satz auf "Ich fuehl mich schuldig,
+  obwohl ich es nicht sollte" (Schuld-Coach). (3) **Nebenfix** `saying-no-wizard.tsx` — drei
+  Lade-Punkte `animate-bounce` → `animate-pulse` (impeccable-Detector danach clean `[]`). Jeder Task
+  tsc + `npm run gate` + build gruen, autoritative End-Verifikation bei HEAD gruen, kein
+  Wegwerf-Account, kein Browser-Subagent. **iPhone-Final + `/impeccable critique app/(app)/booster`
+  Re-Critique (Baseline 27/40) offen.** Spec `89df50c` / Plan `c0d36a5`; Ledger
+  `.superpowers/sdd/progress.md`.
 - **`/me/bill-of-rights` in die Nachthimmel-Bildwelt geholt + nach iPhone-Feedback nachgebessert (2026-07-23, zwei Sessions).** **Runde 1** (`e352d32..b03c706`, gepusht): „Der gesteuerte Kurs" — gepunktete Kurslinie + pulsende Wegpunkte als Szene, Richter-Maskottchen zum Navigator-mit-Sextant umgebaut, Sparkles->Waypoints-Icon, zwei differenzierte Aktions-Kacheln, Zwei-Tap-Delete. **Runde 2** (`0a5f947`, gepusht, diese Session): Stefans iPhone-Blick verwarf den Ansatz teils — der Sextant war unlesbar, daraus wurde eine groessere Nachbesserung. Umgesetzt: **Maskottchen komplett entfernt** (`components/brand/mascot-navigator.tsx` geloescht), **Gold-Siegel (`GoldSeal`, bereits in `bill-of-rights-me.tsx`) wandert als Seitenkopf-Crest nach oben** (das doppelte „verdiente" Siegel am Urkundenfuss entfernt); **Einfuehrungstext auf /values-Groesse** (`text-base`) + weiss (`text-foreground`), neuer Leitsatz („Diese Regeln hast du dir selbst gegeben – sie helfen dir beim Navigieren durch deinen Alltag und beim Treffen von Entscheidungen. …", zweiter Satz behalten); **Hintergrund neu**: `course-line.tsx` geloescht + `course-waypoint`-CSS entfernt (Wegpunkte zu hell), neue **`app/(app)/me/bill-of-rights/constellations.tsx`** — drei stilisierte Sternbilder, Sterne gestrichelt verbunden (Sage `--success` sehr gedaempft, Sterne gedaempftes Foreground, **komplett statisch**, sehr dezent); **Aktions-Kacheln -> zwei echte Buttons im Wants-Stil** (`flex gap-3`, je `flex-1`), „Recht generieren" = **goldene Default-CTA**, „Selbst schreiben" = `variant="outline"` (Labels gekuerzt, damit einzeilig nebeneinander wie bei Wants; per AskUserQuestion mit Stefan bestaetigt). tsc + `npm run gate` (Kontrast/Typo/Motion) + build gruen; kein Wegwerf-Account, iPhone bleibt das Gate. **iPhone-Final offen** (u. a. Sternbild-Dichte/-Position sind Startwerte, in `constellations.tsx` je Stern einzeilig justierbar).
 - **Backlog-Roadmap 13.-22.07. komplett abgearbeitet (2026-07-23).** Per `brainstorming` einen
   Roadmap-Plan ueber alle offenen Punkte gebaut (Spec `2026-07-23-backlog-roadmap-design.md`,
@@ -124,6 +125,16 @@ _Last updated: 2026-07-23 (noch spaeter: `/booster` (Kopfwetter-Hub) kritisiert 
 
 > **Durch die Roadmap-Session 2026-07-23 ERLEDIGT** (die einzeln weiter unten gelisteten Punkte sind damit geschlossen): Wants Gold-vs-Rose-Modulfarbe entschieden + gebaut (C1), `--celebrate` im Kontrast-Gate (C1), Stale-„Ersetzen-Toggle"-Label umbenannt (C1), funken-sky `aria-live` + Backdrop-a11y (C2), `savedCount`->`openCount` (C3), Leitsatz-Runde platziert (C4), Yang-Bonus-Toggle auf Grid-Ausklappen (C5), `/impeccable extract` Fokus-Ebene -> geteiltes `useDialogFocus`-Primitive (D1), Seitentitel-Konsistenz entschieden + Auswertung angeglichen (E1), flaechenuebergreifende Abschluss-Farbe entschieden = Gold bleibt (E2), FK-CASCADE auf Prod angewandt (A1). **Real noch offen: nur Stefans iPhone-Gate + die geschobenen Re-Critiques** (die iPhone-Check-Zeilen unten bleiben gueltig, plus die neu dazugekommenen Flaechen C4/E1/D1/Gold-Kachel).
 
+- **Kopfwetter-Hub-Druckkarte iPhone-Final + Re-Critique offen (2026-07-26, `f06499b`):** am
+  Live-Deploy (~375px) pruefen: (a) Isobaren-/Front-Grund **deutlich sichtbar** (kein
+  Geisterlinien-Effekt), verbindet die Systeme zu einer Wetterlage; (b) alle 5 Ich-Saetze voll +
+  lesbar, keiner kollidiert — auch der Confidence-6-Zeiler nicht; (c) Lesefluss top→bottom, alle
+  Ziele im Daumenbereich, ganze Zeile = Tap-Ziel, Gold-Fokusring; (d) Lilac-Kern-Glow hinter jedem
+  Symbol erkennbar, Reveal ruhig (kein abgehacktes Stagger), reduced-motion = alles statisch
+  sichtbar, keine Drift. Danach **`/impeccable critique app/(app)/booster` erneut** (Baseline 27/40,
+  Snapshot `.impeccable/critique/2026-07-23T15-24-49Z__app-app-booster.md`). **Deferred Minor (Final
+  Review, bewusst offen):** der eine hartkodierte `#0f0c1a` im Tiefenverlauf von `pressure-field.tsx`
+  — plan-sanktioniert, dekorativ/aria-hidden, Single-Theme → Risiko 0; optional spaeter `color-mix`.
 - **`/me/bill-of-rights` iPhone-Final offen (2026-07-23, Runde 2, `0a5f947`):** am Live-Deploy in
   EINEM Durchgang: (a) **Siegel** sitzt sauber als Kopf ueber der Urkunde, ohne sie zu ueberlappen,
   kein zweites Siegel mehr am Fuss; (b) **Intro** gross + weiss (`text-base`/`text-foreground`,
