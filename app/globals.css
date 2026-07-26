@@ -709,6 +709,19 @@
     50%      { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--scene-glow, var(--primary)) 65%, transparent)); }
   }
   .bs-glow { animation: bs-glow 5s ease-in-out infinite; }
+  /* Kopfwetter-Hub: statischer Gold-Glow auf den Isobaren (pixelbasiert,
+     daher keine Verzerrung trotz preserveAspectRatio="none"). */
+  .iso-glow {
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--primary) 40%, transparent));
+  }
+  /* Kopfwetter-Hub: Lilac-Kern hinter jedem Wetter-Symbol (Druckzentrum). */
+  .kw-cell-glow {
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--cleanser-confidence) 35%, transparent),
+      transparent 70%
+    );
+  }
   @media (prefers-reduced-motion: reduce) {
     .bs-sway, .bs-ember, .bs-ember-2, .bs-glow,
     .bs-rain, .bs-rain-2, .bs-rain-3 {
