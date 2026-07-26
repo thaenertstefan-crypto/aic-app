@@ -35,12 +35,11 @@ export function PressureField() {
         stroke="var(--primary)"
         strokeOpacity="0.4"
         strokeWidth="1.1"
-        vectorEffect="non-scaling-stroke"
       >
-        <path d="M18,-4 C 30,25 8,55 22,104" />
-        <path d="M40,-4 C 54,28 34,60 46,104" />
-        <path d="M62,-4 C 74,24 58,58 70,104" />
-        <path d="M84,-4 C 94,30 80,62 90,104" />
+        <path d="M18,-4 C 30,25 8,55 22,104" vectorEffect="non-scaling-stroke" />
+        <path d="M40,-4 C 54,28 34,60 46,104" vectorEffect="non-scaling-stroke" />
+        <path d="M62,-4 C 74,24 58,58 70,104" vectorEffect="non-scaling-stroke" />
+        <path d="M84,-4 C 94,30 80,62 90,104" vectorEffect="non-scaling-stroke" />
       </g>
 
       {/* Lilac-Front, driftet langsam quer */}
