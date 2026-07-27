@@ -3,6 +3,11 @@
  * damit die Druckzellen (siehe pressure-cell.tsx) nicht auf flachem Schwarz
  * schweben. Die Isobaren selbst leben jetzt pro Booster in den PressureCells;
  * dieser Hintergrund trägt nur noch die weiche Tiefe. Rein dekorativ.
+ *
+ * Fixe Viewport-Ebene (wie AppBackdrop, `fixed inset-0 -z-10`): deckt immer bis
+ * zur Bottom-Nav — so entsteht unten kein unbedeckter Hintergrund-Streifen, egal
+ * wie hoch der Seiteninhalt ist. Liegt hinter allem Seiteninhalt (z ≥ 0), aber
+ * über dem AppBackdrop (späterer DOM-Knoten bei gleichem -z-10).
  */
 export function PressureField() {
   return (
@@ -10,7 +15,7 @@ export function PressureField() {
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 size-full"
+      className="pointer-events-none fixed inset-0 -z-10 size-full"
     >
       <defs>
         <linearGradient id="kw-depth" x1="0" y1="0" x2="0" y2="1">

@@ -1,17 +1,16 @@
 /**
  * Eine Druckzelle des Kopfwetter-Hubs: konzentrische, geschwungene Gold-
  * Isobaren, in deren Auge das Booster-Icon sitzt — statt der „T"/„H"-Lettern
- * einer synoptischen Karte. Fünf handgezeichnete Ring-Sets (CELLS), je Booster
- * eins.
+ * einer synoptischen Karte. Fünf handgesetzte Zellen (CELLS), je Booster eine.
  *
- * Aufbau: Jede Zelle definiert EINE geschwungene Grund-Kontur (outline: Radius
- * an 10 gleichmäßig verteilten Winkeln), aus der die inneren Ringe als
- * gleichmäßig herunterskalierte Kopien entstehen (scales, außen→innen). Weil
- * alle Ringe dieselbe skalierte Kontur sind, laufen sie parallel — sie kreuzen
- * sich nie und halten überall denselben Abstand. Die Kontur wird als glatter,
- * geschlossener Catmull-Rom-Spline gezeichnet → fließend, nicht eiförmig.
+ * Aufbau: Jede Zelle ist eine glatte analytische Kontur — eine Ellipse (rx,ry)
+ * mit einem sanften Komma-Faktor (bulge zu bulgeDir), an N Winkeln gesampelt
+ * und per Catmull-Rom verbunden. Weil der Radius eine glatte Funktion ist,
+ * entstehen fließende, nicht-eiförmige und nicht-wackelige Linien. Die inneren
+ * Ringe sind gleichmäßig herunterskalierte Kopien (scales, außen→innen) → sie
+ * laufen parallel, kreuzen sich nie und halten überall denselben Abstand.
  *
- * Ausbuchtung zeigt zur Blattmitte: authored mit größeren Radien rechts;
+ * Ausbuchtung zeigt zur Blattmitte: authored mit bulge nach rechts;
  * side="right" wird horizontal gespiegelt (scaleX(-1)). Koordinatenraum
  * 200×160, Icon-Auge bei (100,80). Der langsame Drift (kw-cell-drift) sitzt
  * eine Ebene höher in page.tsx, damit Icon + Text als Einheit mitziehen.
@@ -19,12 +18,19 @@
  */
 const CX = 100;
 const CY = 80;
+/** Punkte pro Kontur — hoch genug, dass der Catmull-Rom die Funktion glatt trifft. */
+const SAMPLES = 24;
 
 type Cell = {
+  /** Horizontaler / vertikaler Grund-Radius (rx > ry = breiter als hoch). */
+  rx: number;
+  ry: number;
+  /** Stärke des Komma-Versatzes (klein halten, ~0.1–0.15, sonst Beulen). */
+  bulge: number;
+  /** Richtung des Versatzes in Radiant (0 = rechts, negativ = nach oben). */
+  bulgeDir: number;
   /** Neigung der ganzen Zelle in Grad (Fluss-Richtung des Tiefs). */
   tilt: number;
-  /** Radius an 10 gleichmäßig verteilten Winkeln (0°=rechts, im Uhrzeigersinn). */
-  outline: number[];
   /** Skalierungsfaktoren außen→innen; arithmetische Schritte = gleiche Abstände. */
   scales: number[];
 };
@@ -32,13 +38,21 @@ type Cell = {
 /** Auf 1 Nachkommastelle runden — hält die Pfad-Strings kompakt. */
 const q = (n: number) => Math.round(n * 10) / 10;
 
+/** Glatter Radius am Winkel a: Ellipse × sanfter Komma-Faktor. */
+function radiusAt(c: Cell, a: number): number {
+  const ell = 1 / Math.hypot(Math.cos(a) / c.rx, Math.sin(a) / c.ry);
+  return ell * (1 + c.bulge * Math.cos(a - c.bulgeDir));
+}
+
 /** Punkte der (skalierten) Kontur auf ihren Winkeln um das Auge (CX,CY). */
-function ringPoints(outline: number[], scale: number): [number, number][] {
-  const n = outline.length;
-  return outline.map((r, k) => {
-    const a = (k / n) * Math.PI * 2;
-    return [CX + scale * r * Math.cos(a), CY + scale * r * Math.sin(a)];
-  });
+function ringPoints(c: Cell, scale: number): [number, number][] {
+  const pts: [number, number][] = [];
+  for (let k = 0; k < SAMPLES; k++) {
+    const a = (k / SAMPLES) * Math.PI * 2;
+    const r = scale * radiusAt(c, a);
+    pts.push([CX + r * Math.cos(a), CY + r * Math.sin(a)]);
+  }
+  return pts;
 }
 
 /** Glatter, geschlossener Catmull-Rom-Spline durch alle Punkte als Bezier. */
@@ -61,37 +75,17 @@ function smoothClosedPath(pts: [number, number][]): string {
 }
 
 /**
- * Fünf handgesetzte Zellen. outline-Werte variieren sanft (kein Sprung > ~25 %
- * zwischen Nachbarn → keine Knicke) und sind rechts größer (Ausbuchtung zur
- * Blattmitte). scales sind so gewählt, dass der innerste Ring das Icon frei
- * umschließt (kleinster Innen-Radius ≳ 26) und die Abstände gleichmäßig sind.
+ * Fünf handgesetzte Zellen: breiter als hoch (ry < rx) → begrenzter vertikaler
+ * Ausschlag, damit diagonale Nachbarn weniger kollidieren. bulge klein für
+ * glatte Linien. scales so gewählt, dass der innerste Ring das Icon frei
+ * umschließt (kleinster Innen-Radius ≳ 26; im Build-Script gegengeprüft).
  */
 const CELLS = {
-  overthinking: {
-    tilt: -8,
-    outline: [108, 100, 92, 90, 94, 88, 92, 98, 96, 104],
-    scales: [1, 0.76, 0.52, 0.32],
-  },
-  sayingNo: {
-    tilt: 5,
-    outline: [118, 98, 76, 74, 94, 106, 88, 72, 76, 110],
-    scales: [1, 0.67, 0.37],
-  },
-  messy: {
-    tilt: -4,
-    outline: [104, 98, 96, 92, 96, 90, 94, 100, 96, 102],
-    scales: [1, 0.76, 0.52, 0.32],
-  },
-  shadow: {
-    tilt: 8,
-    outline: [110, 100, 88, 86, 92, 96, 90, 96, 94, 106],
-    scales: [1, 0.65, 0.34],
-  },
-  confidence: {
-    tilt: -6,
-    outline: [120, 100, 78, 74, 96, 108, 90, 72, 78, 112],
-    scales: [1, 0.66, 0.37],
-  },
+  overthinking: { rx: 100, ry: 66, bulge: 0.13, bulgeDir: -0.5, tilt: -5, scales: [1, 0.72, 0.45] },
+  sayingNo: { rx: 106, ry: 60, bulge: 0.14, bulgeDir: 0.15, tilt: 4, scales: [1, 0.73, 0.47] },
+  messy: { rx: 98, ry: 66, bulge: 0.11, bulgeDir: 0.35, tilt: -4, scales: [1, 0.72, 0.45] },
+  shadow: { rx: 102, ry: 62, bulge: 0.14, bulgeDir: -0.2, tilt: 7, scales: [1, 0.73, 0.47] },
+  confidence: { rx: 108, ry: 60, bulge: 0.14, bulgeDir: 0.1, tilt: -6, scales: [1, 0.73, 0.47] },
 } satisfies Record<string, Cell>;
 
 export type CellVariant = keyof typeof CELLS;
@@ -119,7 +113,7 @@ export function PressureCell({
       {/* Isobaren-Ringe: absolut, größer als die Icon-Box, hinter dem Icon */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 h-56 w-72 -translate-x-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-48 w-64 -translate-x-1/2 -translate-y-1/2"
       >
         <svg
           viewBox="0 0 200 160"
@@ -130,11 +124,11 @@ export function PressureCell({
             {cell.scales.map((s, i) => (
               <path
                 key={i}
-                d={smoothClosedPath(ringPoints(cell.outline, s))}
+                d={smoothClosedPath(ringPoints(cell, s))}
                 fill="none"
                 stroke="var(--primary)"
                 strokeWidth="1.1"
-                strokeOpacity={0.22 + (i / last) * 0.28}
+                strokeOpacity={0.18 + (i / last) * 0.3}
               />
             ))}
           </g>
