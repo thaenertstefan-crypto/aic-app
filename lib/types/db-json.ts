@@ -75,7 +75,7 @@ export type LittleBetContent = {
 /** `journal_entries.content` bei template_type "daily_value" (Werte-Tagebuch). */
 export type DailyValueContent = {
   happenings: string;
-  response: string;
+  response?: string;
 };
 
 /** `journal_entries.content` bei template_type "value_eval" (Werte-Auswertung). */
