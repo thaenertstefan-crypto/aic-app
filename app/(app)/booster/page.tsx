@@ -54,7 +54,7 @@ export default function BoosterPage() {
 
       <div className="relative -mx-4 overflow-x-clip">
         <PressureField />
-        <div className="relative z-10 flex flex-col gap-14 px-4 py-4">
+        <div className="relative z-10 flex flex-col gap-16 px-4 py-4">
           {SYSTEMS.map((s, i) => {
             const left = i % 2 === 0;
             return (

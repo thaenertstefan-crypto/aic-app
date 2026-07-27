@@ -103,7 +103,7 @@ export function PressureCell({
   const last = cell.scales.length - 1;
 
   return (
-    <span className="relative flex size-14 shrink-0 items-center justify-center">
+    <span className="relative flex size-16 shrink-0 items-center justify-center">
       {/* Lilac-Kern (Druckzentrum) hinter dem Icon */}
       <span
         aria-hidden="true"
@@ -113,7 +113,7 @@ export function PressureCell({
       {/* Isobaren-Ringe: absolut, größer als die Icon-Box, hinter dem Icon */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 h-48 w-64 -translate-x-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-56 w-72 -translate-x-1/2 -translate-y-1/2"
       >
         <svg
           viewBox="0 0 200 160"
@@ -135,8 +135,9 @@ export function PressureCell({
         </svg>
       </span>
 
-      {/* Das Icon im Auge des Tiefs */}
-      <span className="relative">{art}</span>
+      {/* Das Icon im Auge des Tiefs — im Hub etwas größer als die geteilte
+          WeatherSvg-Grundgröße (size-14), ohne andere Verwender zu berühren. */}
+      <span className="relative [&>svg]:size-16">{art}</span>
     </span>
   );
 }
