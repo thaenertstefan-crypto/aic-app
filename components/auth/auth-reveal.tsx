@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { ChevronUp } from "lucide-react";
 
 import { AmbientBlobs } from "@/components/ui/ambient-blobs";
 import { MascotPeek } from "@/components/brand/mascot-peek";
@@ -59,8 +59,9 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   }
 
   function handleWheel(e: React.WheelEvent) {
+    // Nur aufdecken; nie wieder verstecken (sonst schlägt der Hero beim
+    // Hoch-Scrollen über das halb ausgefüllte Formular zurück).
     if (e.deltaY > 0) setRevealed(true);
-    else if (e.deltaY < 0) setRevealed(false);
   }
 
   // Nicht-gegateter Pfad: reduced-motion UND alle Nicht-Signup-Routen (Login,
@@ -152,7 +153,7 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
           className="group flex flex-col items-center gap-2 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] pt-4 text-muted-foreground transition-colors hover:text-foreground"
         >
           <span className="text-sm font-medium">Nach oben wischen</span>
-          <ChevronDown
+          <ChevronUp
             className="size-6 motion-safe:animate-[nudge-y_1.6s_ease-in-out_infinite]"
             aria-hidden
           />
