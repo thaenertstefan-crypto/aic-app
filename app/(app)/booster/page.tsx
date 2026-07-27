@@ -82,11 +82,8 @@ export default function BoosterPage() {
                       variant={s.variant}
                     />
                     <span className="relative z-10 flex flex-col gap-1">
-                      <span className="kw-legible font-heading text-sm font-medium leading-snug text-balance text-foreground">
+                      <span className="kw-legible font-heading text-lg font-medium leading-snug text-balance text-foreground">
                         {s.feeling}
-                      </span>
-                      <span className="kw-legible text-[11px] text-muted-foreground">
-                        {s.title}
                       </span>
                     </span>
                   </span>
