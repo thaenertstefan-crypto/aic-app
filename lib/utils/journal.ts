@@ -231,10 +231,19 @@ export { formatDateDE } from "./date";
 /* ------------------------------------------------------------------ */
 
 function formatDailyValue(content: Record<string, unknown>): ContentSection[] {
-  return [
+  const sections: ContentSection[] = [
     { label: "Was ist passiert?", value: stringField(content, "happenings") },
-    { label: "Gedanken und Gefühle", value: stringField(content, "response") },
   ];
+
+  // Alt-Einträge (vor der 1-Feld-Zusammenlegung) tragen noch ein eigenes
+  // `response` — neue Einträge haben das Feld gar nicht mehr. Nur zeigen,
+  // wenn tatsächlich etwas da ist, sonst bleibt eine leere Sektion stehen.
+  const response = stringField(content, "response");
+  if (response) {
+    sections.push({ label: "Gedanken und Gefühle", value: response });
+  }
+
+  return sections;
 }
 
 function formatValueEval(content: Record<string, unknown>): ContentSection[] {

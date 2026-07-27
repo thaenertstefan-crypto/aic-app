@@ -295,8 +295,6 @@ export async function saveJournalEntryAction(
     return { error: lengthError };
   }
 
-  const content = { happenings };
-
   // Bearbeitung eines bestehenden (auch vergangenen) Eintrags: update-only per
   // id — kein Insert, damit das Tages-Gating nicht über ein Client-Datum
   // umgangen werden kann. Der Eintrag muss dem User gehören.
@@ -304,7 +302,7 @@ export async function saveJournalEntryAction(
   if (typeof entryIdRaw === "string" && entryIdRaw.length > 0) {
     const { data: target } = await supabase
       .from("journal_entries")
-      .select("id")
+      .select("id, content")
       .eq("id", entryIdRaw)
       .eq("user_id", user.id)
       .eq("recipe_slug", "values")
@@ -315,9 +313,16 @@ export async function saveJournalEntryAction(
       return { error: "Der Eintrag konnte nicht gefunden werden." };
     }
 
+    // Merge statt Überschreiben: Alt-Einträge tragen noch ein `response`-Feld
+    // im JSONB-content, das hier sonst beim Speichern verloren ginge.
     const { error: updateError } = await supabase
       .from("journal_entries")
-      .update({ content })
+      .update({
+        content: {
+          ...((target.content as Record<string, unknown>) ?? {}),
+          happenings,
+        },
+      })
       .eq("id", target.id);
 
     if (updateError) {
@@ -331,24 +336,29 @@ export async function saveJournalEntryAction(
   // Check if an entry already exists for this date
   const { data: existingEntry } = await supabase
     .from("journal_entries")
-    .select("id")
+    .select("id, content")
     .eq("user_id", user.id)
     .eq("entry_date", entryDate)
     .eq("template_type", "daily_value")
     .maybeSingle();
 
   if (existingEntry) {
-    // Update existing entry
+    // Update existing entry — merge, see Kommentar oben.
     const { error: updateError } = await supabase
       .from("journal_entries")
-      .update({ content })
+      .update({
+        content: {
+          ...((existingEntry.content as Record<string, unknown>) ?? {}),
+          happenings,
+        },
+      })
       .eq("id", existingEntry.id);
 
     if (updateError) {
       return { error: dbError(updateError, "values") };
     }
   } else {
-    // Insert new entry
+    // Insert new entry — frischer Eintrag hat nichts zu bewahren.
     const { error: insertError } = await supabase
       .from("journal_entries")
       .insert({
@@ -356,7 +366,7 @@ export async function saveJournalEntryAction(
         recipe_slug: "values",
         template_type: "daily_value",
         entry_date: entryDate,
-        content,
+        content: { happenings },
       });
 
     if (insertError) {
