@@ -24,7 +24,7 @@ import { MePreview, BoosterPreview } from "@/components/onboarding/intro-preview
 import { POST_LOGIN_KEY } from "@/components/dashboard/dashboard-reveal";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
-import { ONBOARDING_INTRO } from "@/lib/content/onboarding-intro";
+import { ONBOARDING_INTRO, confidenceReaction } from "@/lib/content/onboarding-intro";
 import { cn } from "@/lib/utils";
 import { localDateKey } from "@/lib/utils/date";
 
@@ -41,7 +41,9 @@ type Step =
   | "intro1"
   | "intro2"
   | "intro3"
-  | "intro4";
+  | "intro4"
+  | "intro5"
+  | "intro6";
 
 const STEPS: Step[] = [
   "name",
@@ -52,6 +54,8 @@ const STEPS: Step[] = [
   "intro2",
   "intro3",
   "intro4",
+  "intro5",
+  "intro6",
 ];
 
 const REASON_OPTIONS = [
@@ -234,7 +238,7 @@ export default function OnboardingPage() {
 
   const stepIndex = STEPS.indexOf(step);
   const progressPercent = ((stepIndex + 1) / STEPS.length) * 100;
-  const isLast = step === "intro4";
+  const isLast = step === "intro6";
 
   const canAdvance =
     step === "name"
@@ -260,9 +264,14 @@ export default function OnboardingPage() {
   };
 
   const displayName = name.trim() || "du";
+  // intro1 = dynamische Confidence-Reaktion (nach Score). intro2–intro6 kommen
+  // aus ONBOARDING_INTRO; intro2 → Index 0, daher Offset -2.
   const introCard =
-    step.startsWith("intro") &&
-    ONBOARDING_INTRO[Number(step.replace("intro", "")) - 1];
+    step === "intro1"
+      ? confidenceReaction(confidenceBaseline)
+      : step.startsWith("intro")
+        ? ONBOARDING_INTRO[Number(step.replace("intro", "")) - 2]
+        : null;
 
   return (
     <div className="flex min-h-svh flex-col justify-center px-4 py-8">
@@ -331,13 +340,14 @@ export default function OnboardingPage() {
             <>
               <CardTitle className="text-xl">Willkommen 👋</CardTitle>
               <CardDescription className="text-base">
-                Willkommen im Anti Imposter Club – einem Ort, der Dir helfen soll,
-                aus Gedankenspiralen auszubrechen, schuldgefühlfrei &bdquo;Nein&ldquo;
-                zu sagen und Dich einfach wieder gut genug zu fühlen.
+                Willkommen im Anti Imposter Club – einem Ort, der dir helfen soll,
+                aus Gedankenspiralen auszubrechen, schuldgefühlfrei nach deinen
+                eigenen Regeln zu leben, &bdquo;Nein&ldquo; zu sagen, ohne dich
+                schlecht zu fühlen, und wieder zu spüren, dass du gut genug bist.
               </CardDescription>
               <CardDescription className="text-base">
-                Bevor ich Dich mit unserer Club-App vertraut mache, magst Du mir
-                verraten, wie Du heißt?
+                Bevor ich dich mit unserer Club-App vertraut mache – magst du mir
+                verraten, wie du heißt?
               </CardDescription>
             </>
           )}
@@ -381,7 +391,7 @@ export default function OnboardingPage() {
           <FormError message={state.error} className="mb-4" />
 
           {step === "intro2" && <MePreview />}
-          {step === "intro3" && <BoosterPreview />}
+          {step === "intro5" && <BoosterPreview />}
 
           {step === "name" && (
             <div className="flex flex-col gap-2">
