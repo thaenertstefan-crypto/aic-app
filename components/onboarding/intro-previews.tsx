@@ -1,65 +1,64 @@
+import { StarArt } from "@/components/brand/star-art";
+import { CompassArt, SealArt } from "@/components/brand/me-ornaments";
 import {
-  Cloudy,
-  Heart,
-  Quote,
-  ScrollText,
-  Sparkles,
-  Wind,
-  type LucideIcon,
-} from "lucide-react";
+  ClearingStar,
+  CloudStack,
+  StormCloud,
+  UmbrellaRain,
+  WindSwirl,
+} from "@/app/(app)/booster/weather-art";
 
 /**
- * Stilisierte Mini-Vorschauen der App-Bereiche für die Onboarding-Intro-Karten.
- * Bewusst rein präsentativ (kein echter Screenshot) und im selben Look wie die
- * echten Seiten ([me/page.tsx], [booster/page.tsx]) — Icons/Labels gespiegelt,
- * damit die Vorschau zur Realität passt.
+ * Mini-Vorschauen der App-Bereiche für die Onboarding-Intro-Karten. Bewusst
+ * rein präsentativ und mit denselben Ornamenten wie die echten Seiten gerendert
+ * ([me-hub.tsx] / [booster/page.tsx]) — die Vorschau kann so nicht mehr von der
+ * Realität abdriften. Ornamente ruhig (animate={false}), klein skaliert.
  */
 
-function PreviewRow({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
-  return (
-    <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card px-2.5 py-2">
-      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-        <Icon className="size-3.5" />
-      </div>
-      <span className="font-heading text-xs font-medium text-foreground">
-        {label}
-      </span>
-    </div>
-  );
-}
-
-function PreviewTile({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
-  return (
-    <div className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-card px-2 py-2">
-      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-        <Icon className="size-3" />
-      </div>
-      <span className="font-heading text-[11px] font-medium leading-tight text-foreground">
-        {label}
-      </span>
-    </div>
-  );
-}
-
-/** Vorschau auf den „Me“-Bereich (vgl. [me/page.tsx]). */
+/** Vorschau auf den „Me"-Bereich — die drei Szenen wie im Hub. */
 export function MePreview() {
+  const scenes = [
+    { art: <CompassArt emojis={[]} animate={false} className="size-9" />, label: "Meine Werte" },
+    { art: <StarArt animate={false} className="size-9" />, label: "Meine Wants" },
+    { art: <SealArt animate={false} className="size-9" />, label: "Meine Bill of Rights" },
+  ];
   return (
-    <div aria-hidden="true" className="space-y-2">
-      <PreviewRow icon={Sparkles} label="Meine Werte" />
-      <PreviewRow icon={Heart} label="Meine Wants" />
-      <PreviewRow icon={ScrollText} label="Meine Bill of Rights" />
+    <div aria-hidden="true" className="divide-y divide-border/70">
+      {scenes.map((s) => (
+        <div key={s.label} className="flex items-center gap-3 py-2.5">
+          <span className="flex size-9 shrink-0 items-center justify-center">
+            {s.art}
+          </span>
+          <span className="font-heading text-sm font-medium text-foreground">
+            {s.label}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
 
-/** Vorschau auf das Kopfwetter (vgl. [booster/page.tsx]). */
+/** Vorschau auf das Kopfwetter — die fünf Wetter-Systeme (vgl. [booster/page.tsx]). */
 export function BoosterPreview() {
+  const systems = [
+    { art: <WindSwirl className="size-9" />, label: "Overthinking" },
+    { art: <UmbrellaRain className="size-9" />, label: "Nein sagen" },
+    { art: <CloudStack className="size-9" />, label: "Things Got Messy" },
+    { art: <StormCloud className="size-9" />, label: "Schattenseite" },
+    { art: <ClearingStar className="size-9" />, label: "Confidence" },
+  ];
   return (
-    <div aria-hidden="true" className="grid grid-cols-2 gap-2">
-      <PreviewTile icon={Wind} label="Overthinking" />
-      <PreviewTile icon={Cloudy} label="Things Got Messy" />
-      <PreviewTile icon={Sparkles} label="Confidence" />
-      <PreviewTile icon={Quote} label="Mantra" />
+    <div aria-hidden="true" className="grid grid-cols-2 gap-x-3 gap-y-1">
+      {systems.map((s) => (
+        <div key={s.label} className="flex items-center gap-2 py-1.5">
+          <span className="flex size-9 shrink-0 items-center justify-center">
+            {s.art}
+          </span>
+          <span className="font-heading text-[11px] font-medium leading-tight text-foreground">
+            {s.label}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

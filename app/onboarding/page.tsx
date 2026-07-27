@@ -19,6 +19,8 @@ import { Slider } from "@/components/ui/slider";
 import { SpinnerOverlay } from "@/components/ui/spinner";
 import { FormError } from "@/components/ui/form-error";
 import { Mascot, type MascotExpression } from "@/components/brand/mascot";
+import { StarArt } from "@/components/brand/star-art";
+import { CompassArt, SealArt } from "@/components/brand/me-ornaments";
 import { Crossfade } from "@/components/dashboard/crossfade";
 import { MePreview, BoosterPreview } from "@/components/onboarding/intro-previews";
 import { POST_LOGIN_KEY } from "@/components/dashboard/dashboard-reveal";
@@ -43,7 +45,9 @@ type Step =
   | "intro3"
   | "intro4"
   | "intro5"
-  | "intro6";
+  | "intro6"
+  | "intro7"
+  | "intro8";
 
 const STEPS: Step[] = [
   "name",
@@ -56,6 +60,8 @@ const STEPS: Step[] = [
   "intro4",
   "intro5",
   "intro6",
+  "intro7",
+  "intro8",
 ];
 
 const REASON_OPTIONS = [
@@ -238,7 +244,7 @@ export default function OnboardingPage() {
 
   const stepIndex = STEPS.indexOf(step);
   const progressPercent = ((stepIndex + 1) / STEPS.length) * 100;
-  const isLast = step === "intro6";
+  const isLast = step === "intro8";
 
   const canAdvance =
     step === "name"
@@ -319,11 +325,9 @@ export default function OnboardingPage() {
         suppressHydrationWarning
         style={showLoginIntro ? { opacity: 0 } : undefined}
       >
-      {/* Fortschrittsanzeige */}
-      <div className="mx-auto mb-6 flex w-full max-w-sm flex-col gap-2">
-        <span className="text-sm font-medium text-muted-foreground">
-          Schritt {stepIndex + 1} von {STEPS.length}
-        </span>
+      {/* Fortschrittsanzeige — nur der ruhige Balken (bei 12 Schritten wirkt eine
+          „Schritt X von 12"-Zeile eher einschüchternd als hilfreich). */}
+      <div className="mx-auto mb-6 w-full max-w-sm">
         <div className="h-1 w-full rounded-full bg-muted">
           <div
             className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
@@ -332,9 +336,11 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Karte — Inhalt blendet beim Schrittwechsel sanft über (Token = Step). */}
+      {/* Karte — Inhalt blendet beim Schrittwechsel sanft über (Token = Step).
+          Weiche „Kerzenlicht"-Fläche statt harter Box: kein Ring, weicher
+          Schatten auf dem Nachthimmel (kein Glas → Glass-is-rare + iOS-Ghosting). */}
       <Crossfade token={step}>
-      <Card className="mx-auto w-full max-w-sm">
+      <Card className="mx-auto w-full max-w-sm rounded-2xl shadow-xl shadow-black/25 ring-0">
         <CardHeader>
           {step === "name" && (
             <>
@@ -391,7 +397,24 @@ export default function OnboardingPage() {
           <FormError message={state.error} className="mb-4" />
 
           {step === "intro2" && <MePreview />}
-          {step === "intro5" && <BoosterPreview />}
+          {/* Passendes Ornament je Anlaufpunkt — bindet die Copy an die echten
+              Hub-Signaturen (ruhig, nicht animiert). */}
+          {step === "intro3" && (
+            <div className="flex justify-center py-2">
+              <CompassArt emojis={[]} animate={false} className="size-20" />
+            </div>
+          )}
+          {step === "intro4" && (
+            <div className="flex justify-center py-2">
+              <StarArt animate={false} className="size-20" />
+            </div>
+          )}
+          {step === "intro5" && (
+            <div className="flex justify-center py-2">
+              <SealArt animate={false} className="size-16" />
+            </div>
+          )}
+          {step === "intro7" && <BoosterPreview />}
 
           {step === "name" && (
             <div className="flex flex-col gap-2">

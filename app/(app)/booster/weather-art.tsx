@@ -8,21 +8,25 @@
  * Koordinatenraum 0 0 56 64 wie zuvor die Gefäße.
  */
 
+import { cn } from "@/lib/utils";
+
 const STROKE = "var(--primary)";
 const ACCENT = "var(--cleanser-confidence)";
 
-function WeatherSvg({ children }: { children: React.ReactNode }) {
+type ArtProps = { className?: string };
+
+function WeatherSvg({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <svg viewBox="0 0 56 64" className="size-14" aria-hidden="true">
+    <svg viewBox="0 0 56 64" className={cn("size-14", className)} aria-hidden="true">
       {children}
     </svg>
   );
 }
 
 /** Overthinking — die Gedankenspirale als Windwirbel, Böen queren sie. */
-export function WindSwirl() {
+export function WindSwirl({ className }: ArtProps = {}) {
   return (
-    <WeatherSvg>
+    <WeatherSvg className={className}>
       <path d="M7,20 h13" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.35" />
       <path d="M36,52 h13" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.35" />
       <path d="M40,16 h9" stroke={STROKE} strokeWidth="1.3" strokeLinecap="round" opacity="0.25" />
@@ -42,9 +46,9 @@ export function WindSwirl() {
 }
 
 /** Things Got Messy — zwei schwere Wolkenbänke übereinander: alles zu viel. */
-export function CloudStack() {
+export function CloudStack({ className }: ArtProps = {}) {
   return (
-    <WeatherSvg>
+    <WeatherSvg className={className}>
       {/* Hintere Wolkenbank */}
       <g fill={STROKE} opacity="0.14">
         <circle cx="20" cy="22" r="7" />
@@ -68,9 +72,9 @@ export function CloudStack() {
 }
 
 /** Nein-Trainer — Schirm im Regen: die freundliche Grenze, an der es abperlt. */
-export function UmbrellaRain() {
+export function UmbrellaRain({ className }: ArtProps = {}) {
   return (
-    <WeatherSvg>
+    <WeatherSvg className={className}>
       <path className="bs-rain" d="M10,10 l-1.5,5" stroke={ACCENT} strokeWidth="1.3" strokeLinecap="round" opacity="0.85" />
       <path className="bs-rain bs-rain-2" d="M28,5 l-1.5,5" stroke={ACCENT} strokeWidth="1.3" strokeLinecap="round" opacity="0.85" />
       <path className="bs-rain bs-rain-3" d="M45,11 l-1.5,5" stroke={ACCENT} strokeWidth="1.3" strokeLinecap="round" opacity="0.85" />
@@ -92,9 +96,9 @@ export function UmbrellaRain() {
 }
 
 /** Schattenseite — Gewitterwolke, der Blitz ist die Entladung (Dampf ablassen). */
-export function StormCloud() {
+export function StormCloud({ className }: ArtProps = {}) {
   return (
-    <WeatherSvg>
+    <WeatherSvg className={className}>
       <g fill={STROKE} opacity="0.28">
         <circle cx="20" cy="26" r="8" />
         <circle cx="31" cy="22" r="9" />
@@ -117,9 +121,9 @@ export function StormCloud() {
 }
 
 /** Confidence-Boost — die Wolke zieht beiseite, dahinter steht der Stern schon. */
-export function ClearingStar() {
+export function ClearingStar({ className }: ArtProps = {}) {
   return (
-    <WeatherSvg>
+    <WeatherSvg className={className}>
       <circle cx="16" cy="18" r="1.1" fill={STROKE} opacity="0.45" />
       <circle cx="24" cy="10" r="0.9" fill={STROKE} opacity="0.35" />
       {/* Vierzack-Stern (Lilac), glüht wie die alte Confidence-Essenz */}
