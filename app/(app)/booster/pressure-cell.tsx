@@ -2,101 +2,95 @@
  * Eine Druckzelle des Kopfwetter-Hubs: konzentrische, geschwungene Gold-
  * Isobaren, in deren Auge das Booster-Icon sitzt — statt der „T"/„H"-Lettern
  * einer synoptischen Karte. Fünf handgezeichnete Ring-Sets (CELLS), je Booster
- * eins; jeder Ring ist eine eigene asymmetrische Kontur (kein prozeduraler
- * Generator, die Radien sind pro Zelle und Quadrant handgesetzt). Die Ringe
- * liegen absolut hinter dem Icon und glühen über .iso-glow. Rein dekorativ.
+ * eins.
  *
- * Ausbuchtung zeigt zur Blattmitte: authored mit rR > rL (bulge nach rechts);
- * side="right" wird horizontal gespiegelt (scaleX(-1)), sodass die Ausbuchtung
- * dort nach links zeigt. Der Koordinatenraum ist 200×160, das Icon-Auge liegt
- * bei (100,80). Der langsame Drift (kw-cell-drift) sitzt eine Ebene höher in
- * page.tsx, damit Icon + Text als Einheit mitziehen.
+ * Aufbau: Jede Zelle definiert EINE geschwungene Grund-Kontur (outline: Radius
+ * an 10 gleichmäßig verteilten Winkeln), aus der die inneren Ringe als
+ * gleichmäßig herunterskalierte Kopien entstehen (scales, außen→innen). Weil
+ * alle Ringe dieselbe skalierte Kontur sind, laufen sie parallel — sie kreuzen
+ * sich nie und halten überall denselben Abstand. Die Kontur wird als glatter,
+ * geschlossener Catmull-Rom-Spline gezeichnet → fließend, nicht eiförmig.
+ *
+ * Ausbuchtung zeigt zur Blattmitte: authored mit größeren Radien rechts;
+ * side="right" wird horizontal gespiegelt (scaleX(-1)). Koordinatenraum
+ * 200×160, Icon-Auge bei (100,80). Der langsame Drift (kw-cell-drift) sitzt
+ * eine Ebene höher in page.tsx, damit Icon + Text als Einheit mitziehen.
+ * Rein dekorativ.
  */
-/** Kreis→Bezier-Konstante für einen 4-Segment-Bezier-Pfad. */
-const K = 0.5523;
+const CX = 100;
+const CY = 80;
 
-/**
- * Ein Ring mit vier getrennten Kardinal-Radien (rechts/links/oben/unten) um
- * (cx,cy). Getrennte Radien brechen die Ellipsen-Symmetrie → geschwungenes,
- * nieren-/eiförmiges Isobar statt perfektem Kreis. `rot` kippt den Ring extra
- * gegen die Zell-Neigung, damit die Ringe leicht gegeneinander „wackeln".
- */
-type Ring = {
-  cx: number;
-  cy: number;
-  rR: number;
-  rL: number;
-  rT: number;
-  rB: number;
-  rot?: number;
+type Cell = {
+  /** Neigung der ganzen Zelle in Grad (Fluss-Richtung des Tiefs). */
+  tilt: number;
+  /** Radius an 10 gleichmäßig verteilten Winkeln (0°=rechts, im Uhrzeigersinn). */
+  outline: number[];
+  /** Skalierungsfaktoren außen→innen; arithmetische Schritte = gleiche Abstände. */
+  scales: number[];
 };
-type Cell = { tilt: number; rings: Ring[] };
 
-/** Geschlossener, asymmetrischer Bezier-Pfad mit vier Quadranten-Radien. */
-function blob({ cx, cy, rR, rL, rT, rB }: Ring): string {
-  const kR = K * rR;
-  const kL = K * rL;
-  const kT = K * rT;
-  const kB = K * rB;
-  return [
-    `M${cx + rR},${cy}`,
-    `C${cx + rR},${cy + kB} ${cx + kR},${cy + rB} ${cx},${cy + rB}`,
-    `C${cx - kL},${cy + rB} ${cx - rL},${cy + kB} ${cx - rL},${cy}`,
-    `C${cx - rL},${cy - kT} ${cx - kL},${cy - rT} ${cx},${cy - rT}`,
-    `C${cx + kR},${cy - rT} ${cx + rR},${cy - kT} ${cx + rR},${cy}`,
-    "Z",
-  ].join(" ");
+/** Auf 1 Nachkommastelle runden — hält die Pfad-Strings kompakt. */
+const q = (n: number) => Math.round(n * 10) / 10;
+
+/** Punkte der (skalierten) Kontur auf ihren Winkeln um das Auge (CX,CY). */
+function ringPoints(outline: number[], scale: number): [number, number][] {
+  const n = outline.length;
+  return outline.map((r, k) => {
+    const a = (k / n) * Math.PI * 2;
+    return [CX + scale * r * Math.cos(a), CY + scale * r * Math.sin(a)];
+  });
+}
+
+/** Glatter, geschlossener Catmull-Rom-Spline durch alle Punkte als Bezier. */
+function smoothClosedPath(pts: [number, number][]): string {
+  const n = pts.length;
+  const d = [`M${q(pts[0][0])},${q(pts[0][1])}`];
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n];
+    const p1 = pts[i];
+    const p2 = pts[(i + 1) % n];
+    const p3 = pts[(i + 2) % n];
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
+    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
+    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d.push(`C${q(c1x)},${q(c1y)} ${q(c2x)},${q(c2y)} ${q(p2[0])},${q(p2[1])}`);
+  }
+  d.push("Z");
+  return d.join(" ");
 }
 
 /**
- * Fünf handgesetzte Ring-Sets, außen → innen. Leitlinien: jeder Ring deutlich
- * elongiert (nie rR≈rL≈rT≈rB, sonst wirkt er rund); rR > rL = Ausbuchtung zur
- * Blattmitte; kleine rot-Variation pro Ring bricht die Zielscheibe auf. Der
- * innerste Ring sitzt zentriert (cx=100) und groß genug, dass das Icon-Auge
- * frei darin sitzt (Radien ~26–34, nicht am Icon knabbernd).
+ * Fünf handgesetzte Zellen. outline-Werte variieren sanft (kein Sprung > ~25 %
+ * zwischen Nachbarn → keine Knicke) und sind rechts größer (Ausbuchtung zur
+ * Blattmitte). scales sind so gewählt, dass der innerste Ring das Icon frei
+ * umschließt (kleinster Innen-Radius ≳ 26) und die Abstände gleichmäßig sind.
  */
 const CELLS = {
   overthinking: {
     tilt: -8,
-    rings: [
-      { cx: 110, cy: 80, rR: 70, rL: 54, rT: 60, rB: 66, rot: 0 },
-      { cx: 106, cy: 80, rR: 52, rL: 40, rT: 45, rB: 49, rot: 4 },
-      { cx: 103, cy: 80, rR: 39, rL: 31, rT: 34, rB: 37, rot: -3 },
-      { cx: 100, cy: 80, rR: 32, rL: 27, rT: 27, rB: 29, rot: 6 },
-    ],
+    outline: [108, 100, 92, 90, 94, 88, 92, 98, 96, 104],
+    scales: [1, 0.76, 0.52, 0.32],
   },
   sayingNo: {
-    tilt: 4,
-    rings: [
-      { cx: 116, cy: 79, rR: 84, rL: 60, rT: 44, rB: 50, rot: -2 },
-      { cx: 109, cy: 80, rR: 60, rL: 43, rT: 33, rB: 37, rot: 4 },
-      { cx: 100, cy: 80, rR: 34, rL: 29, rT: 26, rB: 28, rot: -3 },
-    ],
+    tilt: 5,
+    outline: [118, 98, 76, 74, 94, 106, 88, 72, 76, 110],
+    scales: [1, 0.67, 0.37],
   },
   messy: {
     tilt: -4,
-    rings: [
-      { cx: 112, cy: 81, rR: 68, rL: 52, rT: 54, rB: 60, rot: 3 },
-      { cx: 108, cy: 80, rR: 52, rL: 39, rT: 42, rB: 46, rot: -4 },
-      { cx: 104, cy: 80, rR: 38, rL: 30, rT: 32, rB: 35, rot: 5 },
-      { cx: 100, cy: 80, rR: 32, rL: 27, rT: 27, rB: 29, rot: -2 },
-    ],
+    outline: [104, 98, 96, 92, 96, 90, 94, 100, 96, 102],
+    scales: [1, 0.76, 0.52, 0.32],
   },
   shadow: {
     tilt: 8,
-    rings: [
-      { cx: 114, cy: 80, rR: 72, rL: 54, rT: 52, rB: 58, rot: -3 },
-      { cx: 107, cy: 80, rR: 50, rL: 38, rT: 38, rB: 42, rot: 5 },
-      { cx: 100, cy: 80, rR: 34, rL: 28, rT: 27, rB: 29, rot: -4 },
-    ],
+    outline: [110, 100, 88, 86, 92, 96, 90, 96, 94, 106],
+    scales: [1, 0.65, 0.34],
   },
   confidence: {
     tilt: -6,
-    rings: [
-      { cx: 118, cy: 79, rR: 86, rL: 60, rT: 42, rB: 48, rot: 2 },
-      { cx: 110, cy: 80, rR: 60, rL: 42, rT: 32, rB: 36, rot: -4 },
-      { cx: 100, cy: 80, rR: 34, rL: 28, rT: 26, rB: 28, rot: 3 },
-    ],
+    outline: [120, 100, 78, 74, 96, 108, 90, 72, 78, 112],
+    scales: [1, 0.66, 0.37],
   },
 } satisfies Record<string, Cell>;
 
@@ -112,7 +106,7 @@ export function PressureCell({
   variant: CellVariant;
 }) {
   const cell = CELLS[variant];
-  const last = cell.rings.length - 1;
+  const last = cell.scales.length - 1;
 
   return (
     <span className="relative flex size-14 shrink-0 items-center justify-center">
@@ -125,24 +119,25 @@ export function PressureCell({
       {/* Isobaren-Ringe: absolut, größer als die Icon-Box, hinter dem Icon */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 h-48 w-60 -translate-x-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-56 w-72 -translate-x-1/2 -translate-y-1/2"
       >
         <svg
           viewBox="0 0 200 160"
           className="iso-glow size-full overflow-visible"
           style={{ transform: side === "right" ? "scaleX(-1)" : undefined }}
         >
-          {cell.rings.map((r, i) => (
-            <path
-              key={i}
-              d={blob(r)}
-              transform={`rotate(${cell.tilt + (r.rot ?? 0)} 100 80)`}
-              fill="none"
-              stroke="var(--primary)"
-              strokeWidth="1.1"
-              strokeOpacity={0.22 + (i / last) * 0.28}
-            />
-          ))}
+          <g transform={`rotate(${cell.tilt} ${CX} ${CY})`}>
+            {cell.scales.map((s, i) => (
+              <path
+                key={i}
+                d={smoothClosedPath(ringPoints(cell.outline, s))}
+                fill="none"
+                stroke="var(--primary)"
+                strokeWidth="1.1"
+                strokeOpacity={0.22 + (i / last) * 0.28}
+              />
+            ))}
+          </g>
         </svg>
       </span>
 

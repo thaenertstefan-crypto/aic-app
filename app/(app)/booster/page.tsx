@@ -39,7 +39,7 @@ const SYSTEMS: WeatherSystem[] = [
 
 export default function BoosterPage() {
   return (
-    <div className="space-y-6 p-4">
+    <div className="flex min-h-full flex-col gap-6 p-4">
       <header className="space-y-3">
         <h1 className="font-heading text-5xl font-bold tracking-tight text-foreground">
           {PAGE_TITLES.booster}
@@ -52,7 +52,7 @@ export default function BoosterPage() {
         </p>
       </header>
 
-      <div className="relative -mx-4 overflow-x-clip">
+      <div className="relative -mx-4 flex-1 overflow-x-clip">
         <PressureField />
         <div className="relative z-10 flex flex-col gap-8 px-4 py-4">
           {SYSTEMS.map((s, i) => {
