@@ -286,21 +286,16 @@ export async function saveJournalEntryAction(
   // vertrauen) — damit Schreiben und Gating dieselbe Tagesgrenze nutzen.
   const entryDate = await serverTodayKey();
   const happenings = formData.get("happenings");
-  const response = formData.get("response");
 
   if (!happenings || typeof happenings !== "string") {
     return { error: "Bitte beschreib, was heute passiert ist." };
   }
-  if (!response || typeof response !== "string") {
-    return { error: "Bitte teil deine Gedanken und Gefühle dazu mit." };
-  }
-  const lengthError =
-    tooLong(happenings, TEXT_MAX_LONG) ?? tooLong(response, TEXT_MAX_LONG);
+  const lengthError = tooLong(happenings, TEXT_MAX_LONG);
   if (lengthError) {
     return { error: lengthError };
   }
 
-  const content = { happenings, response };
+  const content = { happenings };
 
   // Bearbeitung eines bestehenden (auch vergangenen) Eintrags: update-only per
   // id — kein Insert, damit das Tages-Gating nicht über ein Client-Datum

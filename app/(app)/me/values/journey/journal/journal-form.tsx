@@ -20,7 +20,7 @@ import {
 } from "@/app/(app)/recipes/values/actions";
 import type { ActionState } from "@/lib/types/action-state";
 
-type JournalDraft = { happenings: string; response: string };
+type JournalDraft = { happenings: string };
 
 // ─── Microcopy ──────────────────────────────────────────────────────
 
@@ -116,7 +116,6 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
     async (prev: ActionState, formData: FormData) => {
       const draft: JournalDraft = {
         happenings: (formData.get("happenings") as string) ?? "",
-        response: (formData.get("response") as string) ?? "",
       };
 
       // Beim Bearbeiten eines vergangenen Tages keine Drafts anlegen — die
@@ -216,21 +215,23 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
 
                   <div className="space-y-1.5">
                     <p className="text-base font-medium text-muted-foreground">
-                      Was ist heute passiert?
+                      Was ist heute passiert? Welche Gedanken, Gefühle, Reaktionen kamen dabei auf?
                     </p>
                     <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
                       {activeEntry.happenings || "—"}
                     </p>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <p className="text-base font-medium text-muted-foreground">
-                      Welche Gedanken, Gefühle, Reaktionen kamen dabei auf?
-                    </p>
-                    <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                      {activeEntry.response || "—"}
-                    </p>
-                  </div>
+                  {activeEntry.response && (
+                    <div className="space-y-1.5">
+                      <p className="text-base font-medium text-muted-foreground">
+                        Deine Gedanken & Gefühle dazu
+                      </p>
+                      <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                        {activeEntry.response}
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ) : (
@@ -248,29 +249,13 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
 
                 <div className="space-y-2">
                   <Label htmlFor="happenings" className="text-base font-medium">
-                    Was ist heute passiert?
+                    Was ist heute passiert? Welche Gedanken, Gefühle, Reaktionen kamen dabei auf?
                   </Label>
                   <Textarea
                     id="happenings"
                     name="happenings"
                     placeholder="z. B. ein Gespräch, eine Situation, ein Moment, der hängen geblieben ist …"
                     defaultValue={restoredDraft?.happenings ?? activeEntry?.happenings ?? ""}
-                    rows={4}
-                    required
-                    disabled={pending}
-                    className="min-h-[100px] resize-y"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="response" className="text-base font-medium">
-                    Welche Gedanken, Gefühle, Reaktionen kamen dabei auf?
-                  </Label>
-                  <Textarea
-                    id="response"
-                    name="response"
-                    placeholder="Hast du was gefühlt, das dich überrascht hat? War da Freude, Frust, Stolz, Verwirrung?"
-                    defaultValue={restoredDraft?.response ?? activeEntry?.response ?? ""}
                     rows={4}
                     required
                     disabled={pending}

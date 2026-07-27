@@ -260,14 +260,16 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
                       {entry.content.happenings}
                     </p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Gedanken & Gefühle
-                    </p>
-                    <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                      {entry.content.response}
-                    </p>
-                  </div>
+                  {entry.content.response && (
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Gedanken & Gefühle
+                      </p>
+                      <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                        {entry.content.response}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </details>
             ))}
