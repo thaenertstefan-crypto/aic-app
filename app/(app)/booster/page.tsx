@@ -52,9 +52,9 @@ export default function BoosterPage() {
         </p>
       </header>
 
-      <div className="relative overflow-x-clip">
+      <div className="relative -mx-4 overflow-x-clip">
         <PressureField />
-        <div className="relative z-10 flex flex-col gap-8 py-4">
+        <div className="relative z-10 flex flex-col gap-8 px-4 py-4">
           {SYSTEMS.map((s, i) => {
             const left = i % 2 === 0;
             return (
@@ -66,22 +66,28 @@ export default function BoosterPage() {
                 <Link
                   href={s.href}
                   aria-label={`${s.title} — ${s.feeling}`}
-                  className={`group flex w-[min(17rem,82vw)] items-center gap-3 rounded-xl px-3 py-3 transition-[background-color,scale] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
-                    left ? "flex-row text-left" : "flex-row-reverse text-right"
-                  }`}
+                  className="group block w-[min(17rem,82vw)] rounded-xl px-3 py-3 transition-[background-color,scale] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 >
-                  <PressureCell
-                    art={s.art}
-                    side={left ? "left" : "right"}
-                    variant={s.variant}
-                    phase={i}
-                  />
-                  <span className="relative z-10 flex flex-col gap-1">
-                    <span className="font-heading text-sm font-medium leading-snug text-balance text-foreground">
-                      {s.feeling}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {s.title}
+                  {/* Icon + Text driften als Einheit mit den Ringen mit
+                      („ziehendes Wetter"); der Link bleibt fester Tap-Target. */}
+                  <span
+                    className={`kw-cell-drift flex items-center gap-3 ${
+                      left ? "flex-row text-left" : "flex-row-reverse text-right"
+                    }`}
+                    style={{ animationDelay: `${i * -1.7}s` }}
+                  >
+                    <PressureCell
+                      art={s.art}
+                      side={left ? "left" : "right"}
+                      variant={s.variant}
+                    />
+                    <span className="relative z-10 flex flex-col gap-1">
+                      <span className="font-heading text-sm font-medium leading-snug text-balance text-foreground">
+                        {s.feeling}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {s.title}
+                      </span>
                     </span>
                   </span>
                 </Link>
