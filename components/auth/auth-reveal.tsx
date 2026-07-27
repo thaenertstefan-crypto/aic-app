@@ -37,6 +37,11 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   const pathname = usePathname();
   const showCardMascot = pathname === "/login" || pathname === "/signup";
 
+  // Das Vollbild-Swipe-Gate ist bewusst NUR noch der Signup-Bühne vorbehalten.
+  // Rückkehrer (Login) und die Reset-Seiten sehen die Karte sofort — kein
+  // Gate, keine versteckt-fokussierbare Karte hinter dem Hero.
+  const gated = !reduced && pathname === "/signup";
+
   function handleTouchStart(e: React.TouchEvent) {
     touchStartY.current = e.touches[0]?.clientY ?? null;
   }
@@ -58,8 +63,10 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
     else if (e.deltaY < 0) setRevealed(false);
   }
 
-  // Reduced-Motion: zugänglicher Fallback ohne Overlay/Gating.
-  if (reduced) {
+  // Nicht-gegateter Pfad: reduced-motion UND alle Nicht-Signup-Routen (Login,
+  // Reset). Hero oben, Karte direkt sichtbar im Fluss darunter — kein Overlay,
+  // keine versteckt-fokussierbare Karte.
+  if (!gated) {
     return (
       <div className="relative flex min-h-lvh flex-col overflow-hidden">
         <div className="relative isolate overflow-hidden">{hero}</div>
@@ -93,6 +100,7 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
       {/* Karten-Panel: zoomt von hinten nach vorne herein, sobald aufgedeckt. */}
       <div className="flex min-h-lvh items-center justify-center px-4 py-12">
         <div
+          inert={!revealed || undefined}
           className={cn(
             "w-full max-w-sm transition-[scale,opacity] duration-700 ease-out",
             revealed
