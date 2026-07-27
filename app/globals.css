@@ -714,6 +714,17 @@
   .iso-glow {
     filter: drop-shadow(0 0 3px color-mix(in srgb, var(--primary) 40%, transparent));
   }
+  /* Kopfwetter-Hub: Druckzellen driften langsam seitlich („ziehendes Wetter").
+     Versetzte Phase pro Zelle via inline animation-delay. */
+  @keyframes kw-cell-drift {
+    0%, 100% { transform: translateX(-3px); }
+    50%      { transform: translateX(3px);  }
+  }
+  .kw-cell-drift {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: kw-cell-drift 11s ease-in-out infinite;
+  }
   /* Kopfwetter-Hub: Lilac-Kern hinter jedem Wetter-Symbol (Druckzentrum). */
   .kw-cell-glow {
     background: radial-gradient(
@@ -724,7 +735,8 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .bs-sway, .bs-ember, .bs-ember-2, .bs-glow,
-    .bs-rain, .bs-rain-2, .bs-rain-3 {
+    .bs-rain, .bs-rain-2, .bs-rain-3,
+    .kw-cell-drift {
       animation: none !important;
     }
   }
