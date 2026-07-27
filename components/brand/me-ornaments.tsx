@@ -36,14 +36,14 @@ export function CompassArt({
         r="26"
         fill="none"
         stroke="var(--primary)"
-        strokeWidth="1"
-        opacity="0.3"
+        strokeWidth="1.2"
+        opacity="0.5"
         className={animate ? "me-ring-draw" : undefined}
       />
-      <circle cx="32" cy="32" r="20" fill="none" stroke="var(--primary)" strokeWidth="0.6" opacity="0.16" />
+      <circle cx="32" cy="32" r="20" fill="none" stroke="var(--primary)" strokeWidth="0.8" opacity="0.3" />
       <g className={animate ? "me-needle-sway" : undefined}>
-        <polygon points="32,10 35,32 32,30 29,32" fill="var(--primary)" opacity="0.9" />
-        <polygon points="32,54 29,32 32,34 35,32" fill="var(--primary)" opacity="0.35" />
+        <polygon points="32,10 35,32 32,30 29,32" fill="var(--primary)" opacity="0.95" />
+        <polygon points="32,54 29,32 32,34 35,32" fill="var(--primary)" opacity="0.5" />
       </g>
       {emojis.slice(0, 4).map((e, i) => (
         <text key={i} x={pos[i].x} y={pos[i].y} textAnchor="middle" dominantBaseline="central" fontSize="9">
