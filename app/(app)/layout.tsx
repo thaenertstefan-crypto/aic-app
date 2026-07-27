@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { OfflineBanner } from "@/components/offline/offline-banner";
 import { AppBackdrop } from "@/components/ui/app-backdrop";
 import { TimezoneSync } from "@/components/timezone-sync";
+import { ZoneTheme } from "@/components/layout/zone-theme";
 
 export default async function AppLayout({
   children,
@@ -35,6 +36,7 @@ export default async function AppLayout({
     >
       <AppBackdrop />
       <TimezoneSync />
+      <ZoneTheme />
       <OfflineBanner />
       {/* overflow-x-clip fängt horizontale Overflows (z. B. seitlich aus dem
           Bild fliegende Dekor-Wolken) am echten Viewport-Rand ab, ohne einen

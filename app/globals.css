@@ -60,6 +60,7 @@
   --popover-foreground: #F3EFFA;
   --primary: #E7B65E;
   --primary-foreground: #2B1B06;
+  --mascot-body: #E7B65E;
   --secondary: #3A3158;
   --secondary-foreground: #F3EFFA;
   --muted: #272041;
@@ -104,6 +105,7 @@
   --popover-foreground: #F3EFFA;
   --primary: #E7B65E;
   --primary-foreground: #2B1B06;
+  --mascot-body: #E7B65E;
   --secondary: #3A3158;
   --secondary-foreground: #F3EFFA;
   --muted: #272041;
@@ -132,6 +134,13 @@
   --sidebar-accent-foreground: #F3EFFA;
   --sidebar-border: rgba(255,255,255,0.12);
   --sidebar-ring: #E7B65E;
+}
+
+/* Schmiede-Zone: alles Goldene wird Rosé (Buttons, Wizard-Akzente, Bottom-Nav).
+   Greift, solange die Sternschmiede-Route aktiv ist (Marker via ZoneTheme).
+   Das Maskottchen bleibt gold (nutzt --mascot-body, hier bewusst unberührt). */
+body[data-zone="schmiede"] {
+  --primary: var(--celebrate);
 }
 
 @layer base {

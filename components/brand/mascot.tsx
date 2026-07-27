@@ -105,7 +105,7 @@ export function Mascot({
         className="absolute"
         style={{
           inset: "-12px",
-          background: "var(--primary)",
+          background: "var(--mascot-body)",
           borderRadius: BLOB_RADIUS,
           opacity: 0.28,
           filter: "blur(14px)",

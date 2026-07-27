@@ -47,6 +47,11 @@ const checks = [
   // symmetrische Ratio deckt zugleich die Rosé-Ornament-Sichtbarkeit auf dem
   // dunklen Feld ab (≥ 3:1 impliziert).
   ["Background-Glyph auf Rosé (Schmiede-Auswahl aktiv)", cr(bg, celebrate), 4.5],
+  // Route-abhängiger Zone-Remap (body[data-zone="schmiede"] setzt --primary
+  // auf --celebrate, siehe globals.css): Der CTA-Text (--primary-foreground)
+  // landet dadurch auf Rosé statt Gold — dieses Paar muss eigenständig AA
+  // erreichen, unabhängig vom Gold-Ink-auf-Gold-Check oben.
+  ["Gold-Ink auf Rosé (Schmiede-CTA-Text)", cr(primaryFg, celebrate), 4.5],
 ];
 
 let failed = false;
