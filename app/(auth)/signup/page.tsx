@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { signupAction } from "@/app/(auth)/auth.actions";
@@ -79,10 +80,9 @@ export default function SignupPage() {
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="password">Passwort</Label>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               placeholder="Mindestens 6 Zeichen"
               autoComplete="new-password"
               required
