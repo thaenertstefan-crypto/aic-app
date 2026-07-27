@@ -299,7 +299,7 @@ export default function OnboardingPage() {
       />
 
       {/* Mascot über der Karte (z-50 → über dem Cover während der Intro) */}
-      <div className="relative z-50 mb-4 flex justify-center">
+      <div className="relative z-50 mb-8 flex justify-center">
         <div
           ref={mascotRef}
           suppressHydrationWarning
@@ -401,17 +401,17 @@ export default function OnboardingPage() {
               Hub-Signaturen (ruhig, nicht animiert). */}
           {step === "intro3" && (
             <div className="flex justify-center py-2">
-              <CompassArt emojis={[]} animate={false} className="size-20" />
+              <CompassArt emojis={[]} animate={true} className="size-20" />
             </div>
           )}
           {step === "intro4" && (
             <div className="flex justify-center py-2">
-              <StarArt animate={false} className="size-20" />
+              <StarArt animate={true} className="size-20" />
             </div>
           )}
           {step === "intro5" && (
             <div className="flex justify-center py-2">
-              <SealArt animate={false} className="size-16" />
+              <SealArt animate={true} className="size-16" />
             </div>
           )}
           {step === "intro7" && <BoosterPreview />}

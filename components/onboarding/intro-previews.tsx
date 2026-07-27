@@ -18,9 +18,9 @@ import {
 /** Vorschau auf den „Me"-Bereich — die drei Szenen wie im Hub. */
 export function MePreview() {
   const scenes = [
-    { art: <CompassArt emojis={[]} animate={false} className="size-9" />, label: "Meine Werte" },
-    { art: <StarArt animate={false} className="size-9" />, label: "Meine Wants" },
-    { art: <SealArt animate={false} className="size-9" />, label: "Meine Bill of Rights" },
+    { art: <CompassArt emojis={[]} animate={true} className="size-9" />, label: "Meine Werte" },
+    { art: <StarArt animate={true} className="size-9" />, label: "Meine Wants" },
+    { art: <SealArt animate={true} className="size-9" />, label: "Meine Bill of Rights" },
   ];
   return (
     <div aria-hidden="true" className="divide-y divide-border/70">
