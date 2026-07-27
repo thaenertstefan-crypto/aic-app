@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Reveal } from "@/components/ui/reveal";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { PressureField } from "./pressure-field";
+import { PressureCell } from "./pressure-cell";
 import {
   ClearingStar,
   CloudStack,
@@ -17,19 +18,21 @@ type WeatherSystem = {
   /** Modulname, leise Meta-Zeile. */
   title: string;
   art: React.ReactNode;
+  variant: "overthinking" | "sayingNo" | "messy" | "shadow" | "confidence";
   href: string;
 };
 
 const SYSTEMS: WeatherSystem[] = [
-  { feeling: "Ich bin am overthinken", title: "Overthinking", art: <WindSwirl />, href: "/booster/overthinking" },
-  { feeling: "Ich will zu etwas Nein sagen, aber weiß nicht wie", title: PAGE_TITLES.sayingNo, art: <UmbrellaRain />, href: "/booster/saying-no" },
-  { feeling: "Ich fühl mich schuldig, obwohl ich es nicht sollte", title: PAGE_TITLES.thingsGotMessy, art: <CloudStack />, href: "/booster/things-got-messy" },
-  { feeling: "Ich muss Dampf ablassen", title: PAGE_TITLES.shadow, art: <StormCloud />, href: "/booster/shadow" },
+  { feeling: "Ich bin am overthinken", title: "Overthinking", art: <WindSwirl />, variant: "overthinking", href: "/booster/overthinking" },
+  { feeling: "Ich will zu etwas Nein sagen, aber weiß nicht wie", title: PAGE_TITLES.sayingNo, art: <UmbrellaRain />, variant: "sayingNo", href: "/booster/saying-no" },
+  { feeling: "Ich fühl mich schuldig, obwohl ich es nicht sollte", title: PAGE_TITLES.thingsGotMessy, art: <CloudStack />, variant: "messy", href: "/booster/things-got-messy" },
+  { feeling: "Ich muss Dampf ablassen", title: PAGE_TITLES.shadow, art: <StormCloud />, variant: "shadow", href: "/booster/shadow" },
   {
     feeling:
       "Ich gehe gleich in eine nervenaufreibende Situation und brauche einen schnellen Confidence Boost",
     title: PAGE_TITLES.confidence,
     art: <ClearingStar />,
+    variant: "confidence",
     href: "/booster/confidence",
   },
 ];
@@ -49,7 +52,7 @@ export default function BoosterPage() {
         </p>
       </header>
 
-      <div className="relative">
+      <div className="relative overflow-x-clip">
         <PressureField />
         <div className="relative z-10 flex flex-col gap-8 py-4">
           {SYSTEMS.map((s, i) => {
@@ -67,13 +70,12 @@ export default function BoosterPage() {
                     left ? "flex-row text-left" : "flex-row-reverse text-right"
                   }`}
                 >
-                  <span className="relative flex size-14 shrink-0 items-center justify-center">
-                    <span
-                      aria-hidden="true"
-                      className="kw-cell-glow absolute inset-0 rounded-full blur-md"
-                    />
-                    <span className="relative">{s.art}</span>
-                  </span>
+                  <PressureCell
+                    art={s.art}
+                    side={left ? "left" : "right"}
+                    variant={s.variant}
+                    phase={i}
+                  />
                   <span className="flex flex-col gap-1">
                     <span className="font-heading text-sm font-medium leading-snug text-balance text-foreground">
                       {s.feeling}
