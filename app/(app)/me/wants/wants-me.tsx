@@ -203,7 +203,7 @@ export function WantsMe({
                         {PAGE_TITLES.meWantsHero}
                       </h2>
                       <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
-                        Nahe Freuden, ferne Ziele — dein eigener Himmel.
+                        Meine Freudenquellen und Ziele, nach denen ich greife.
                       </p>
                     </div>
                   </Reveal>
