@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Reveal } from "@/components/ui/reveal";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { PressureField } from "./pressure-field";
-import { PressureCell } from "./pressure-cell";
+import { PressureCell, type CellVariant } from "./pressure-cell";
 import {
   ClearingStar,
   CloudStack,
@@ -18,7 +18,7 @@ type WeatherSystem = {
   /** Modulname, leise Meta-Zeile. */
   title: string;
   art: React.ReactNode;
-  variant: "overthinking" | "sayingNo" | "messy" | "shadow" | "confidence";
+  variant: CellVariant;
   href: string;
 };
 
@@ -76,7 +76,7 @@ export default function BoosterPage() {
                     variant={s.variant}
                     phase={i}
                   />
-                  <span className="flex flex-col gap-1">
+                  <span className="relative z-10 flex flex-col gap-1">
                     <span className="font-heading text-sm font-medium leading-snug text-balance text-foreground">
                       {s.feeling}
                     </span>

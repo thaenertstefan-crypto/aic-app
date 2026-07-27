@@ -11,8 +11,6 @@
  * side="right" wird horizontal gespiegelt (scaleX(-1)). Der Koordinatenraum
  * ist 200×160, das Icon-Auge liegt bei (100,80).
  */
-import type { CSSProperties } from "react";
-
 /** Kreis→Bezier-Konstante für einen 4-Segment-Oval-Pfad. */
 const K = 0.5523;
 
@@ -83,6 +81,8 @@ const CELLS = {
   },
 } satisfies Record<string, Cell>;
 
+export type CellVariant = keyof typeof CELLS;
+
 export function PressureCell({
   art,
   side,
@@ -91,7 +91,7 @@ export function PressureCell({
 }: {
   art: React.ReactNode;
   side: "left" | "right";
-  variant: keyof typeof CELLS;
+  variant: CellVariant;
   phase?: number;
 }) {
   const cell = CELLS[variant];
@@ -117,7 +117,7 @@ export function PressureCell({
         >
           <g
             className="kw-cell-drift"
-            style={{ animationDelay: `${phase * -1.7}s` } as CSSProperties}
+            style={{ animationDelay: `${phase * -1.7}s` }}
           >
             {cell.rings.map((r, i) => (
               <path
