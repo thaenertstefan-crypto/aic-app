@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Reveal } from "@/components/ui/reveal";
 import { PAGE_TITLES } from "@/lib/content/labels";
-import { PressureField } from "./pressure-field";
+import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
 import { PressureCell, type CellVariant } from "./pressure-cell";
 import {
   ClearingStar,
@@ -53,7 +53,9 @@ export default function BoosterPage() {
       </header>
 
       <div className="relative -mx-4 overflow-x-clip">
-        <PressureField />
+        {/* Nachthimmel-Hintergrund wie auf dem Dashboard (geteilte fixe
+            -z-10-Ebene: Sky-Wash + funkelnde Sterne, neutral/„ruhig"). */}
+        <SkyBackdrop />
         <div className="relative z-10 flex flex-col gap-16 px-4 py-4">
           {SYSTEMS.map((s, i) => {
             const left = i % 2 === 0;
