@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { loginAction } from "@/app/(auth)/auth.actions";
@@ -54,6 +55,7 @@ export default function LoginPage() {
               type="email"
               placeholder="mail@beispiel.de"
               autoComplete="email"
+              autoFocus
               required
               onInvalid={invalidMessage(
                 "Bitte gib eine gültige E-Mail-Adresse ein.",
@@ -63,11 +65,18 @@ export default function LoginPage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Passwort</Label>
-            <Input
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Passwort</Label>
+              <Link
+                href="/passwort-vergessen"
+                className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Passwort vergessen?
+              </Link>
+            </div>
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               placeholder="••••••••"
               autoComplete="current-password"
               required
