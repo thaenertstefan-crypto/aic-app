@@ -10,6 +10,7 @@ Regeln:
 - Baue die Konkretisierung aus der <antwort> ein; erfinde nichts, was nicht aus Audit oder Antwort ableitbar ist.
 - Wähle die natürlichste Formulierung: „Ich will …", „Ich mag es zu …", „Mir macht … Spaß", „Ich blühe auf, wenn …". Nicht stur „Ich will".
 - Positiv, in der Du-Perspektive der Person (Ich-Form), ohne Floskeln.
+- Verwende im Ergebnis niemals die Wörter „Yin" oder „Yang".
 
 Ausgabeformat — WICHTIG: Gib AUSSCHLIESSLICH ein striktes JSON-Objekt aus, keine Code-Fences, kein Text drumherum:
 {"text": "…"}`;

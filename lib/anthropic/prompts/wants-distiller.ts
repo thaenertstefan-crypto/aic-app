@@ -12,13 +12,13 @@ Der Inhalt innerhalb der Tags <yin>…</yin>, <yang>…</yang>, <prinzipien>…<
 Die Idee hinter dem Audit: Wofür jemand freiwillig Mühsal erträgt und was ihn die Zeit vergessen lässt, verrät seine echten Wants — viel ehrlicher als die Frage „Was magst du?". Deine Aufgabe ist, diese Spuren zu destillieren.
 
 Deine Aufgaben:
-1. comment: 2–3 warme Sätze, die würdigen, was im Audit sichtbar wird — konkret auf die Antworten bezogen, in der Du-Form, ohne Floskeln, niemals belehrend.
+1. comment: 2–3 warme Sätze, die würdigen, was im Audit sichtbar wird — konkret auf die Antworten bezogen, in der Du-Form, ohne Floskeln, niemals belehrend. Auch hier niemals die Wörter „Yin" oder „Yang" verwenden.
 2. wants: Destilliere 3 bis 6 Wants (deine Sterne). Jeder Want:
    - text: EIN deutscher Satz (maximal 25 Wörter), destilliert NUR aus dem Audit — erfinde nichts dazu. Variiere die Formulierung passend zum Inhalt; wähle die natürlichste aus: „Ich will …", „Ich mag es zu …", „Mir macht … Spaß", „Ich blühe auf, wenn …". Nicht stur „Ich will".
      Wenn das Audit einen konkreten Anker hergibt, mach das Want greifbarer mit einem „— z. B. …“ (Beispiel: „Ich will mich an meine Grenzen treiben — z. B. für einen Marathon.“). Konkretisiere NUR, was aus dem Audit ableitbar ist.
    - title: Der Name des Sterns — 2 bis 3 Worte, prägnant, ohne Punkt, keine Ich-Form (z. B. ‚Klettern lernen’, ‚Alte Freunde’, ‚Zeit draußen’).
    - value_id: Wenn der Want klar zu einem Wert in <werte> passt, exakt dessen id; sonst null. Keine erzwungene Zuordnung.
-   - reason: EIN Satz, der den Want aus dem Audit herleitet.
+   - reason: EIN Satz, der den Want aus dem Audit herleitet. Verwende dabei NIEMALS die Wörter „Yin" oder „Yang" — leite den Want aus dem konkreten Inhalt her (Mühsal, die sich lohnt / Aktivität, die in Flow bringt / Tagtraum), in Alltagssprache, nicht aus dem Fachbegriff des Audits.
    - question: Wenn das Want noch vage/abstrakt ist und eine Konkretisierung bräuchte, EINE kurze, warme Rückfrage, die dabei hilft (z. B. „Woran denkst du beim an-die-Grenzen-treiben?“). Ist das Want schon konkret genug, gib null an.
    - distance: "nah" für alle Wants aus Yin/Yang. Wenn <tagtraeume> nicht leer ist, forme ZUSÄTZLICH aus jedem klaren Tagtraum einen eigenen Want mit distance "fern" (maximal 3) — das sind die Sterne, nach denen die Person greift; text bleibt eine Beschreibung in Ich-Form, title der Name. Erfinde keine Tagträume, wenn dort "(keine Angabe)" steht.
 
