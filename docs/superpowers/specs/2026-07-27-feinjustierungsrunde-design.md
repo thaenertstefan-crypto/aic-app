@@ -115,8 +115,9 @@ Aktuell zwei Textareas:
 1. „Was ist heute passiert?" → `happenings`
 2. „Welche Gedanken, Gefühle, Reaktionen kamen dabei auf?" → `response`
 
-**Änderung:** eine Textarea, eine zusammengeführte Frage:
-> **„Was ist heute passiert – und was hat es in dir ausgelöst?"**
+**Änderung:** eine Textarea, eine zusammengeführte Frage — der exakte Fragetext
+über dem aktuell 2. Feld wird hinten an die erste Frage angehängt:
+> **„Was ist heute passiert? Welche Gedanken, Gefühle, Reaktionen kamen dabei auf?"**
 
 - Speichern in `happenings`; `response` wird nicht mehr abgefragt (neue Einträge
   schreiben nur `happenings`).
@@ -314,6 +315,35 @@ ziehen:
 als Wetterkarte, /me als ruhiger innerer Raum; gleiche Grammatik, anderer Ton.
 
 ---
+
+## Plan-Schnitt (2 Pläne)
+
+Geschnitten nach Arbeits-/Verifikations-Natur, nicht strikt nach Seite. Die zwei
+Pläne sind unabhängig und in beliebiger Reihenfolge ausführbar; jeder Task bleibt
+einzeln commit-/testbar.
+
+**Plan 1 — Feinschliff: Copy, Ornamente & Theming** (überwiegend statisch,
+gate-verifiziert, geringes Device-Risiko):
+- 1a Yin/Yang aus Distiller/Refiner-Prompt
+- 1b Wants-Einleitungstext
+- 3 Journal: ein Feld
+- 2b Schmiede-Rosé-Zone (route-aware Theming + `--mascot-body`-Ausnahme)
+- 6a Onboarding-Maskottchen höher
+- 6b `StarArt` auf 4-Strahlen angleichen (fixt /me-Hub + Onboarding + Preview)
+- 6c Kompass weniger dezent
+- 6d Preview-Ornamente + Kopfwetter-Preview animiert
+
+**Plan 2 — Bewegung & Layout: Meander, Zoom-Nav & Login** (Motion/Architektur/
+Layout, iPhone ist das entscheidende Gate):
+- 2a Schmiede-Funken driften auf/ab
+- 4a Booster-Icon auf Landing (Maskottchen dort raus)
+- 4b Booster→Sub-Page Zoom-Übergang (`BoosterZoomProvider`, Warp-Architektur)
+- 5 /login Variante B (Sky-Backdrop + Hero-Rücknahme + Signup-Nebenfix + Reset-Seiten)
+- 7 /me Nachthimmel-Raum (Meander-Hub)
+
+_Hinweis:_ Beide Pläne berühren [app/globals.css](../../../app/globals.css) (Plan 1:
+Zone-Token; Plan 2: Funken-/Warp-Keyframes) und die geteilten Ornamente, aber in
+getrennten Abschnitten — kein Merge-Konflikt bei sequentieller Ausführung.
 
 ## Nicht im Scope
 
