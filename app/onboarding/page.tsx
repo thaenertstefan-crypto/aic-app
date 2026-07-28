@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RichText } from "@/components/ui/rich-text";
 import { Slider } from "@/components/ui/slider";
 import { SpinnerOverlay } from "@/components/ui/spinner";
 import { FormError } from "@/components/ui/form-error";
@@ -387,7 +388,9 @@ export default function OnboardingPage() {
             <>
               {introCard.title && <CardTitle className="text-xl">{introCard.title}</CardTitle>}
               {introCard.body.map((paragraph, i) => (
-                <CardDescription key={i} className="text-base">{paragraph}</CardDescription>
+                <CardDescription key={i} className="text-base">
+                  <RichText text={paragraph} />
+                </CardDescription>
               ))}
             </>
           )}

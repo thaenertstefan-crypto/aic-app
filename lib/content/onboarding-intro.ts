@@ -5,6 +5,9 @@
  * deutschen Anführungszeichen („ … ") im Text kein doppeltes Quote-Literal
  * beenden (sonst TS1005 / unterminated string). Immer echte Unicode-Quotes
  * U+201E („) und U+201C (") verwenden, nie ASCII ".
+ *
+ * Die Kartentexte tragen leichtes Inline-Markup (`**fett**` / `*kursiv*`), das
+ * [RichText](../../components/ui/rich-text.tsx) beim Rendern auflöst.
  */
 export type OnboardingIntroCard = { title?: string; body: string[] };
 
@@ -17,7 +20,7 @@ export function confidenceReaction(score: number): OnboardingIntroCard {
     return {
       title: 'Das war mutig.',
       body: [
-        'Danke für deine Ehrlichkeit – zu mir und vor allem zu dir selbst. Es ist nicht immer leicht, sich die Wahrheit einzugestehen. Aber nur wer wirklich ehrlich zu sich selbst ist, wird es schaffen, das Gefühl von „gut genug" zurückzugewinnen.',
+        'Danke für deine Ehrlichkeit – zu mir und vor allem zu dir selbst. Es ist nicht immer leicht, sich die Wahrheit einzugestehen. Aber nur wer wirklich **ehrlich zu sich selbst** ist, wird es schaffen, das Gefühl von „gut genug" zurückzugewinnen.',
       ],
     };
   }
@@ -25,14 +28,14 @@ export function confidenceReaction(score: number): OnboardingIntroCard {
     return {
       title: 'Danke für deine Ehrlichkeit.',
       body: [
-        'Ehrlich zu sich selbst zu sein ist nicht immer leicht – und genau darum geht es hier. Nur wer sich wahrnimmt, wie er gerade wirklich ist, findet zurück zu dem Gefühl, gut genug zu sein.',
+        'Ehrlich zu sich selbst zu sein ist nicht immer leicht – und genau darum geht es hier. Nur wer sich wahrnimmt, wie er gerade wirklich ist, findet zurück zu dem Gefühl, **gut genug** zu sein.',
       ],
     };
   }
   return {
     title: 'Schön, dass du dir so sicher bist.',
     body: [
-      'Danke für deine Ehrlichkeit. Dieses Gefühl von Sicherheit ist genau das, was wir hier bewahren und stärken wollen – damit es dein Normalzustand bleibt, auch wenn es mal stürmisch wird.',
+      'Danke für deine Ehrlichkeit. Dieses Gefühl von Sicherheit ist genau das, was wir hier bewahren und stärken wollen – damit es dein **Normalzustand** bleibt, auch wenn es mal stürmisch wird.',
     ],
   };
 }
@@ -48,31 +51,31 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
     // intro2 (Schritt 6) — „Me"-Überblick: Prämisse + die drei Anlaufpunkte
     title: 'Was dich erwartet: „Me"',
     body: [
-      'Die AIC-App vertritt eine zentrale Prämisse, die mein Leben seit ihrer Entdeckung komplett verändert hat: Die Essenz eines gesunden Selbstbewusstseins ist das: Sei dir bewusst, wer du bist. – und zwar auf einer tieferen Ebene, als du sie bisher vielleicht betrachtet hast.',
+      'Die AIC-App vertritt eine zentrale Prämisse, die mein Leben seit ihrer Entdeckung komplett verändert hat: Die Essenz eines gesunden Selbstbewusstseins ist das: *Sei dir bewusst, wer du bist.* – und zwar auf einer tieferen Ebene, als du sie bisher vielleicht betrachtet hast.',
       'Denn nur wenn du dich wirklich kennst, kannst du dein Leben so gestalten, dass du die Dinge tust, die dir wirklich Energie geben, statt sie dir zu nehmen.',
-      'Wir müssen nur herausfinden, was diese Dinge sind! Dabei helfen dir vor allem drei innere Anlaufpunkte:',
+      'Wir müssen nur herausfinden, was diese Dinge sind! Dabei helfen dir vor allem **drei innere Anlaufpunkte**:',
     ],
   },
   {
     // intro3 (Schritt 7) — Anlaufpunkt 1: Werte (Kompass)
     title: 'Deine Werte',
     body: [
-      'Die fundamentale Grundlage für dein persönliches Wohlbefinden sind dabei deine Werte. Sie sind wie dein innerer Kompass, der dir den Weg weist und darauf zeigt, was dir wirklich wichtig ist, sei es Abenteuerlust oder Gelassenheit.',
+      'Die fundamentale Grundlage für dein persönliches Wohlbefinden sind dabei deine **Werte**. Sie sind wie dein *innerer Kompass*, der dir den Weg weist und darauf zeigt, was dir wirklich wichtig ist, sei es Abenteuerlust oder Gelassenheit.',
     ],
   },
   {
     // intro4 (Schritt 8) — Anlaufpunkt 2: Wants (Sterne)
     title: 'Deine Wants',
     body: [
-      'Deine Wants hingegen sind wie Sterne, nach denen du entlang dieses von deinem Kompass vorgegebenen Weges greifst. Sie sind Dinge, die echte Freudenquellen für dich sind, wie z.B. Wanderurlaube oder ein chilliger Spieleabend mit Freunden, aber auch deine Ziele, die dich tagträumen lassen und dich antreiben.',
-      'Mit anderen Worten: Deine Wants sind die Dinge, die dich so richtig zum Leuchten bringen. Wie einen Stern.',
+      'Deine **Wants** hingegen sind wie Sterne, nach denen du entlang dieses von deinem Kompass vorgegebenen Weges greifst. Sie sind Dinge, die echte Freudenquellen für dich sind, wie z.B. Wanderurlaube oder ein chilliger Spieleabend mit Freunden, aber auch deine Ziele, die dich tagträumen lassen und dich antreiben.',
+      'Mit anderen Worten: Deine Wants sind die Dinge, die dich so richtig zum Leuchten bringen. *Wie einen Stern.*',
     ],
   },
   {
     // intro5 (Schritt 9) — Anlaufpunkt 3: Bill of Rights + Bridge zum Caveat
     title: 'Deine Bill of Rights',
     body: [
-      'Und dann gibt es noch deine inneren Regeln. Sie sind wie unbewusste Rechte, die wir uns selbst geben und die uns sagen, was wir dürfen und was nicht.',
+      'Und dann gibt es noch deine **inneren Regeln**. Sie sind wie unbewusste Rechte, die wir uns selbst geben und die uns sagen, was wir dürfen und was nicht.',
       'Leider sind sie nicht immer nützlich – vor allem, wenn sie „Ich darf niemanden enttäuschen" lauten und uns vom Weg abbringen, der uns an unseren Sternen vorbeiführt.',
       'Diese App hilft dir, deine inneren Regeln neu zu schreiben und dir selbst die Rechte zu verleihen, nach denen du wirklich leben willst.',
       'Aber eins sei von Anfang an ganz klar gesagt:',
@@ -82,7 +85,7 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
     // intro6 (Schritt 10) — Caveat (titellos, Fortführung der Bridge)
     body: [
       'Immer den Weg einzuschlagen, den unser Kompass vorgibt, wird nicht leicht sein. Manchmal zieht in unserem Kopf ein Unwetter auf, das unsere Sterne verdeckt – als Overthinking oder als Schuldgefühl, etwa wenn wir nach unseren Regeln leben und dabei andere enttäuschen müssen.',
-      'Das ist normal: Wetter kommt und vergeht, doch die eigenen Sterne leuchten weiter. Wir müssen bloß einen Weg finden, mit dem Wetter umzugehen. Genau dabei hilft dir der Teil Kopfwetter:',
+      'Das ist normal: *Wetter kommt und vergeht, doch die eigenen Sterne leuchten weiter.* Wir müssen bloß einen Weg finden, mit dem Wetter umzugehen. Genau dabei hilft dir der Teil **Kopfwetter**:',
     ],
   },
   {
@@ -90,14 +93,14 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
     title: 'Was dich erwartet: Kopfwetter',
     body: [
       'Das Kopfwetter ist der zweite Teil dieser App und stellt dir eine Reihe von Schnellhilfen bereit, wenn es mal etwas stürmisch wird.',
-      'Sie helfen dir, Overthinking-Spiralen zu überwinden, eine schuldgefühlfreie „Nein"-Antwort zu formulieren oder dir selbst Rückenwind zu geben, bevor du in ein nervenaufreibendes Gespräch, Treffen oder eine Präsentation gehst. Sprich: schnell abrufbare kleine Unterstützer für mittendrin im Alltag.',
+      'Sie helfen dir, Overthinking-Spiralen zu überwinden, eine schuldgefühlfreie „Nein"-Antwort zu formulieren oder dir selbst Rückenwind zu geben, bevor du in ein nervenaufreibendes Gespräch, Treffen oder eine Präsentation gehst. Sprich: *schnell abrufbare kleine Unterstützer für mittendrin im Alltag*.',
     ],
   },
   {
     // intro8 (Schritt 12) — Abschluss
     title: 'Schön, dass du da bist.',
     body: [
-      '„Me", um dich Stück für Stück kennenzulernen. Das Kopfwetter, um dir im Alltag den Rücken zu stärken. Zusammen bringen sie dich zu dem Gefühl zurück, das eigentlich dein Normalzustand sein sollte: ich bin gut genug.',
+      '„Me", um dich Stück für Stück kennenzulernen. Das Kopfwetter, um dir im Alltag den Rücken zu stärken. Zusammen bringen sie dich zu dem Gefühl zurück, das eigentlich dein Normalzustand sein sollte: *ich bin gut genug*.',
       'Bereit?',
     ],
   },
