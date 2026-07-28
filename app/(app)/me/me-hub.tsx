@@ -50,7 +50,7 @@ function MeanderScene({
       <Link
         href={scene.href}
         aria-label={scene.ariaLabel}
-        className="group block w-[min(20rem,86vw)] rounded-xl px-3 py-4 transition-[background-color,scale] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="group block w-[min(17rem,76vw)] rounded-xl px-3 py-4 transition-[background-color,scale] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
       >
         <span className={`flex items-center gap-4 ${left ? "flex-row" : "flex-row-reverse"}`}>
           <span className="shrink-0">{scene.art}</span>
@@ -73,11 +73,7 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
   const openBetsCount = openBets.length;
 
   const wantsMeta =
-    wantsCount > 0
-      ? openBetsCount > 0
-        ? `${wantsCount} Wants · ${openBetsCount} offene ${openBetsCount === 1 ? "Bet" : "Bets"}`
-        : `${wantsCount} Wants entdeckt`
-      : "Noch keine Wants entdeckt";
+    wantsCount > 0 ? `${wantsCount} Wants entdeckt` : "Noch keine Wants entdeckt";
 
   const scenes: Scene[] = [
     {
@@ -153,7 +149,7 @@ export function MeHub({ values, firstRight, rightsCount, wantsCount, openBets }:
     <div className="relative -mx-4 overflow-x-clip">
       {/* Geteilter Nachthimmel wie auf Dashboard/Booster (neutral, kein Score). */}
       <SkyBackdrop />
-      <div className="relative z-10 flex flex-col gap-12 px-4 py-4">
+      <div className="relative z-10 flex flex-col gap-16 px-4 py-4">
         {scenes.map((scene, i) => (
           <MeanderScene
             key={scene.href}

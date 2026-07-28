@@ -7,9 +7,6 @@ import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { ValuesIntroMascot } from "@/components/recipes/values-intro-mascot";
 import { WantsIntroMascot } from "@/components/recipes/wants-intro-mascot";
 import { BillOfRightsIntroMascot } from "@/components/recipes/bill-of-rights-intro-mascot";
-import { ThingsGotMessyIntroMascot } from "@/components/recipes/things-got-messy-intro-mascot";
-import { SayingNoIntroMascot } from "@/components/recipes/saying-no-intro-mascot";
-import { ShadowIntroMascot } from "@/components/recipes/shadow-intro-mascot";
 import type { IntroCard } from "@/lib/utils/recipe-intros";
 
 type RecipeIntroGateProps = {
@@ -64,13 +61,7 @@ export function RecipeIntroGate({
         ? (i: number) => <WantsIntroMascot index={i} />
         : slug === "bill-of-rights"
           ? (i: number) => <BillOfRightsIntroMascot index={i} />
-          : slug === "things-got-messy"
-            ? (i: number) => <ThingsGotMessyIntroMascot index={i} />
-            : slug === "saying-no"
-              ? (i: number) => <SayingNoIntroMascot index={i} />
-              : slug === "shadow"
-                ? (i: number) => <ShadowIntroMascot index={i} />
-                : undefined;
+          : undefined;
 
     return (
       <div className="flex min-h-svh flex-col justify-center">

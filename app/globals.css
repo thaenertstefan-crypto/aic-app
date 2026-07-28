@@ -606,25 +606,6 @@ body[data-zone="schmiede"] {
    * statt als Karte. Alle Bewegungen sind bewusst langsam („nichts schreit")
    * und haben unten einen reduced-motion-Fallback. */
 
-  /* Eine einzelne Kerze wandert langsam quer durch den Hub-Hintergrund
-   * (Blob per background-position, unabhängig von der Elementgröße) und
-   * flackert dabei leise. */
-  @keyframes me-candle-wander {
-    0%   { background-position: 8% 22%;  }
-    50%  { background-position: 92% 78%; }
-    100% { background-position: 8% 22%;  }
-  }
-  @keyframes me-candle-flicker {
-    0%, 100% { opacity: 0.85; }
-    45%      { opacity: 1;    }
-    60%      { opacity: 0.7;  }
-    75%      { opacity: 0.95; }
-  }
-  .me-candle-bg {
-    animation: me-candle-wander 20s ease-in-out infinite,
-               me-candle-flicker 4.5s ease-in-out infinite;
-  }
-
   /* Kompassnadel schwingt sanft — wie die suchende Rose in der Werte-Übung. */
   @keyframes me-needle-sway {
     0%, 100% { transform: rotate(-8deg); }
@@ -676,7 +657,7 @@ body[data-zone="schmiede"] {
   .me-seal-stamp { animation: me-seal-stamp 0.6s ease-out both; }
 
   @media (prefers-reduced-motion: reduce) {
-    .me-candle-bg, .me-needle-sway, .me-seal-glow, .me-star-glow, .me-bubble,
+    .me-needle-sway, .me-seal-glow, .me-star-glow, .me-bubble,
     .me-ring-draw, .me-seal-stamp {
       animation: none !important;
     }

@@ -15,7 +15,8 @@ import { cn } from "@/lib/utils";
 const SWIPE_THRESHOLD = 50;
 
 type AuthRevealProps = {
-  /** Hero-Inhalt (Logo + BrandPanel), wird als Vollbild-Intro gezeigt. */
+  /** Hero-Inhalt (Logo + BrandPanel) — wird nur auf der gegateten Signup-Route
+   *  als Vollbild-Intro gezeigt; Login/Reset ignorieren diesen Prop. */
   hero: ReactNode;
   /** Die eigentliche Auth-Karte (Login-/Signup-Formular). */
   children: ReactNode;

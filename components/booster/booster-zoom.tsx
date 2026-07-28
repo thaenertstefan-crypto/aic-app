@@ -35,7 +35,7 @@ const SETTLE_MS = 360;
 // erwarteter Zustand), zwingt dieser Deckel "zooming" zurück auf "idle",
 // statt den User hinter dem deckenden, input-schluckenden Overlay stecken
 // zu lassen.
-const WATCHDOG_MS = ACCEL_MS + 2000;
+const WATCHDOG_MS = ACCEL_MS + 4000;
 
 type ZoomValue = {
   phase: Phase;
@@ -95,8 +95,12 @@ export function BoosterZoomProvider({ children }: { children: ReactNode }) {
       // "zooming" verlassen hat.
       const watchdog = window.setTimeout(() => {
         if (phaseRef.current === "zooming") {
-          set("idle");
-          setOrigin(null);
+          set("arriving");
+          const settleTimer = window.setTimeout(() => {
+            set("idle");
+            setOrigin(null);
+          }, SETTLE_MS);
+          timers.current.push(settleTimer);
         }
       }, WATCHDOG_MS);
       timers.current.push(watchdog);
