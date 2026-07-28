@@ -22,12 +22,12 @@ type AuthRevealProps = {
 };
 
 /**
- * Vollbild-„Bühne" für die Auth-Seiten: zuerst sieht man nur den Hero mit
- * Blob-Hintergrund und einem Pfeil. Wischt man nach oben (oder tippt den
- * Pfeil), schiebt der Hero nach oben weg und die Auth-Karte zoomt von hinten
- * nach vorne herein.
+ * Vollbild-„Bühne“ für die Auth-Seiten: zuerst sieht man nur den Hero auf dem
+ * Nachthimmel (SkyBackdrop) und einem Pfeil. Wischt man nach oben (oder tippt
+ * den Pfeil), schiebt der Hero nach oben weg und die Auth-Karte zoomt von
+ * hinten nach vorne herein.
  *
- * Bei „Bewegung reduzieren" entfällt das Gating komplett: Hero und Karte
+ * Bei „Bewegung reduzieren“ entfällt das Gating komplett: Hero und Karte
  * stehen im normalen Fluss untereinander, ohne Animation und ohne versteckte
  * Inhalte.
  */
@@ -79,7 +79,7 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   }
 
   // Nicht-gegateter Pfad: reduced-motion UND alle Nicht-Signup-Routen (Login,
-  // Reset). Kompakter Kopf (Logo + Brand-Zeile) + Karte auf dem Nachthimmel —
+  // Reset). Kompakter Kopf (nur Logo) + Karte auf dem Nachthimmel —
   // KEIN großer Hero (der brächte ein zweites Maskottchen). Genau ein Peek.
   if (!gated) {
     return (
@@ -188,12 +188,24 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
             (CSSPlugin normalisiert Individual-Transform-Properties weg) — auf
             diesem Element wäre unser `translate-x-*` toter Code. Der Wrapper
             bleibt von GSAP unberührt, seine `translate`/`opacity` gewinnen also
-            zuverlässig. */}
+            zuverlässig.
+
+            Der Wrapper trägt bewusst KEINE eigene Opacity: das Hero-Panel
+            faded schon (s.u.), eine zweite Fade-Ebene würde die Alpha-Werte
+            multiplizieren (0.32 × 0.32 ≈ 0.10 bei t = 500ms statt 0.32 — das
+            Maskottchen verschwindet, statt sichtbar zur Seite zu ziehen) und
+            zusätzlich zwei opacity-animierende Vorfahren um das
+            `backdrop-filter` des Maskottchens stapeln — das ist in diesem
+            Repo der dokumentierte Trigger für iOS-Compositing-Ghosting. Nur
+            `translate` hier, die Fade übernimmt allein das Hero-Panel unten.
+            `flex` blockifiziert `MascotPeek`s `inline-block`-Root (sonst
+            hebt die Inline-Baseline-Lücke unter dem Maskottchen es von
+            seiner austarierten `-mb-3`-Ruheposition ab). */}
         <div
           className={cn(
-            "pointer-events-none absolute bottom-0 right-0 -mb-3 -mr-12 z-10",
-            "transition-[translate,opacity] duration-1000 ease-out",
-            revealed ? "translate-x-[140%] opacity-0" : "translate-x-0 opacity-100",
+            "pointer-events-none absolute bottom-0 right-0 -mb-3 -mr-12 z-10 flex",
+            "transition-[translate] duration-1000 ease-out",
+            revealed ? "translate-x-[140%]" : "translate-x-0",
           )}
         >
           <MascotPeek
