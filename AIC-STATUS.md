@@ -5,6 +5,30 @@ _Maintained by the `/feierabend` skill at the end of each session. Read this at 
 _Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. vertagte Plan per `subagent-driven-development` umgesetzt: PressureField-Grund + Maeander-Flow + Nebenfix, Commits `62a8f99..f06499b`, nach `main` gepusht, Final Review (opus) Ready = Yes, tsc+gate+build gruen. iPhone-Final + Re-Critique offen. Zuvor am 23.07.: `/booster` kritisiert (27/40) + Redesign per brainstorming durchgeplant — Spec `89df50c` + Plan `c0d36a5`. Davor am selben Tag: `/me/bill-of-rights` in zwei Sessions ueberarbeitet — Runde 1 „Der gesteuerte Kurs"-Nachthimmel-Szene `e352d32..b03c706`, Runde 2 Nachbesserung nach iPhone-Feedback `0a5f947`: Maskottchen raus, Gold-Siegel als Kopf, dezente Sternbilder statt Kurslinie, /values-grosses weisses Intro, Wants-Stil-Buttons mit Gold-CTA. Alles gepusht, tsc+gate+build gruen, iPhone-Final offen. Davor: Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbeitet, `e2add09..98d1c2b`.)_
 
 ## Current State
+- **Nacht-Slot 1/3 der Feinjustierungs-Runde autonom durchgelaufen (2026-07-28, 17:01 — Stefan nicht
+  anwesend).** Zwei Pläne per `subagent-driven-development` umgesetzt, beide nach `main` gepusht:
+  **Plan 3 (Auth)** `3411bae..5d61938` — (1) Brand-Zeile aus dem kompakten Login-Kopf entfernt
+  (Signup-Hero-Headline bleibt); (2) Signup-Hero auf den geteilten `SkyBackdrop` statt eigenem
+  Verlauf, `AmbientBlobs` raus; (3) Hero-Maskottchen aus `(auth)/layout.tsx` nach `AuthReveal`
+  gezogen und wischt beim Aufdecken nach rechts von der Bühne statt mit nach oben zu fahren.
+  **Plan 2 (Booster), NUR Task 1+2** `5d61938..ed1165c` — Hub-Einleitungstext gekürzt; die vier in
+  `dbde5b0`/`aac85c9` verlorenen Intro-Maskottchen byte-identisch aus `dbde5b0^` restauriert und
+  alle fünf Wizards zurückverdrahtet. **Task 3 (Modul-Icon) und Task 4 (Zoom-Umbau) bewusst NICHT
+  angefasst** — sie warten auf eine beaufsichtigte Session.
+  **Zwei Funde, die kein statisches Gate sehen konnte:** (a) Der Plan-Code für das wischende
+  Maskottchen war tot — GSAP schreibt in `CSSPlugin.js:865` beim Mount inline `translate: none`
+  (und `opacity`) auf den `MascotPeek`-Root und überschreibt damit die Tailwind-Klassen; tsc, Gate
+  und Build waren grün, während die Animation schlicht nicht stattfand. Fix: Positionierung und
+  Exit-Klassen auf einen Wrapper-`div`, den GSAP nie anfasst. (b) Der Wrapper trug zunächst eine
+  eigene Opacity, die sich mit der des Hero-Panels multiplizierte (~0,10 bei t=500 ms) — das
+  Maskottchen wäre weggefadet statt seitlich rauszugleiten; jetzt trägt nur noch das Panel die
+  Blende, was zugleich die dokumentierte iOS-`backdrop-filter`-Ghosting-Falle entschärft.
+  Verifikation: `tsc` + `npm run gate` + `npm run build` pro Task grün, Final Whole-Branch-Review
+  (opus) je Plan (Plan 3 „With fixes" → eine Fix-Welle → sauber; Plan 2 **Ready = Yes**),
+  Playwright 17/17 Routen sauber, Screenshots gesichtet: `/login` ohne Brand-Zeile, `/signup` auf
+  dem Nachthimmel, und alle vier Booster-Intros zeigen wieder ihr eigenes Maskottchen
+  (Gewitterwolke, Spiral-Augen, entwischendes „JA", Knäuel) statt des Wetter-Icons.
+  **iPhone-Final offen** (siehe Open Items).
 - **`/booster` (Kopfwetter-Hub) als synoptische Druckkarte GEBAUT + gepusht (2026-07-26).** Der am
   23.07. geplante und bewusst vertagte Umbau ist umgesetzt — per `subagent-driven-development`
   (aufgerufen als `/impeccable subagent-driven-development @spec`), 3 Tasks, je frischer Implementer
@@ -125,6 +149,43 @@ _Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. ve
 
 > **Durch die Roadmap-Session 2026-07-23 ERLEDIGT** (die einzeln weiter unten gelisteten Punkte sind damit geschlossen): Wants Gold-vs-Rose-Modulfarbe entschieden + gebaut (C1), `--celebrate` im Kontrast-Gate (C1), Stale-„Ersetzen-Toggle"-Label umbenannt (C1), funken-sky `aria-live` + Backdrop-a11y (C2), `savedCount`->`openCount` (C3), Leitsatz-Runde platziert (C4), Yang-Bonus-Toggle auf Grid-Ausklappen (C5), `/impeccable extract` Fokus-Ebene -> geteiltes `useDialogFocus`-Primitive (D1), Seitentitel-Konsistenz entschieden + Auswertung angeglichen (E1), flaechenuebergreifende Abschluss-Farbe entschieden = Gold bleibt (E2), FK-CASCADE auf Prod angewandt (A1). **Real noch offen: nur Stefans iPhone-Gate + die geschobenen Re-Critiques** (die iPhone-Check-Zeilen unten bleiben gueltig, plus die neu dazugekommenen Flaechen C4/E1/D1/Gold-Kachel).
 
+- **Nacht-Slot-1 iPhone-Final offen (2026-07-28, `ed1165c`):** am Live-Deploy in EINEM Durchgang:
+  (a) **`/login`** — nur Logo über der Karte, keine Brand-Zeile; sitzt das Logo jetzt zu dicht an
+  der Karte? Falls ja, `pb-2` an den Kopf-`div` in `auth-reveal.tsx` (NICHT das `py-8` des
+  Karten-Containers ändern, das trägt auch den Reset-Pfad). (b) **`/signup`** — Hero zeigt den
+  Nachthimmel mit funkelnden Lichtern; **ist die Kante am oberen Rand weg?** Wenn nicht, ist es
+  kein Verlaufs-Übergang, sondern ein safe-area/`lvh`-Thema und wird separat verfolgt.
+  (c) **Aufwischen auf `/signup`** — das Maskottchen gleitet **nach rechts** aus dem Bild, während
+  der Hero nach oben geht; es darf nicht springen und nicht mit nach oben fahren, beide Bewegungen
+  enden gleichzeitig (1000 ms). Zu keinem Zeitpunkt zwei Maskottchen sichtbar. Sitzt es in Ruhe
+  noch auf der gewohnten Peek-Tiefe? (d) **Reduced motion an** — Gate entfällt komplett, Hero und
+  Karte untereinander, nichts fehlt oder doppelt sich. (e) **Die vier Booster-Intros** — die
+  Maskottchen sind da (per Screenshot bestätigt), aber **bewegen sie sich auch?** Die Komponenten
+  animieren über global definierte `@keyframes`, die per inline-`style` referenziert werden; alle
+  18 Namen sind in `globals.css` vorhanden, aber das ist statisch geprüft, nicht gesehen. Mit
+  aktiviertem Reduce Motion gegenprüfen: diese Maskottchen entscheiden das in JS
+  (`useReducedMotion`), nicht über den CSS-Block.
+- **Aus dem Nacht-Slot-1-Review geparkt, Stefans Entscheidung (2026-07-28):**
+  (1) **Plandefekt in Plan 3 Task 2:** Der gegatete Zweig rendert hinter der Karte KEINEN
+  `SkyBackdrop` — nach dem Aufwischen endet `/signup` auf flachem `bg-background`. Die
+  Abnahme-Zeile des Plans („darunter liegt der Nachthimmel des ungegateten Zweigs") beschreibt
+  einen Zustand, den es nicht gibt: der ungegatete Zweig wird bei `gated = true` nie gerendert.
+  Kein Regress, aber Task 2s Ziel ist nur halb erreicht — `/login` behält seinen Himmel dauerhaft,
+  `/signup` zeigt einen und wirft ihn weg. Reviewer-Vorschlag: `<SkyBackdrop />` als erstes Kind
+  des gegateten Roots; das Hero-Panel ist opak, der zweite Himmel bliebe bis zur Bewegung
+  verdeckt. Braucht einen Geräte-Check auf Schimmern während der ~1 s Überlappung.
+  (2) **`BrandPanel` malt weiter einen eigenen Blur-Blob** — dieselbe Kategorie „zweite
+  atmosphärische Ebene", die Task 2 bei `AmbientBlobs` entfernt hat. Auf dem Screenshot
+  unauffällig, aber eine bewusste Geräte-Entscheidung wert.
+  (3) **Hero-Panel ist bei `revealed` nicht `inert`** — der „Nach oben wischen"-Button bleibt
+  unsichtbar fokussierbar. Vorbestehend, echter a11y-Punkt; symmetrischer Fix wäre
+  `inert={revealed || undefined}` (das Karten-Panel macht es bereits richtig).
+  (4) **`saying-no` hat 5 Intro-Karten, aber nur 4 Maskottchen-Varianten** — Karten 4 und 5 teilen
+  sich denselben Begleiter. Vorbestehend, originalgetreu restauriert, kein Defekt dieser Runde.
+  (5) **Lehre für künftige Restores:** Der Plan prüfte per grep auf gelöschte CSS-*Klassen*. Die
+  Komponenten koppeln aber über `@keyframes`-Namen im inline-`style`, nie über Klassen — der
+  Check zielte auf die falsche Kopplung und konnte nicht fehlschlagen. Bei Restores von
+  Komponenten, die per inline-`style` animieren: **Keyframe-Namen prüfen, nicht Klassennamen.**
 - **Kopfwetter-Hub-Druckkarte iPhone-Final + Re-Critique offen (2026-07-26, `f06499b`):** am
   Live-Deploy (~375px) pruefen: (a) Isobaren-/Front-Grund **deutlich sichtbar** (kein
   Geisterlinien-Effekt), verbindet die Systeme zu einer Wetterlage; (b) alle 5 Ich-Saetze voll +
