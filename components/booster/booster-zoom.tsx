@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -29,6 +30,12 @@ type Origin = { x: number; y: number };
 const ACCEL_MS = 300;
 // Dauer der Auflösung/Ankunft, bevor das Overlay verschwindet.
 const SETTLE_MS = 360;
+// Notbremse: falls arrive() nie feuert (Navigation hängt/schlägt fehl, z.B.
+// auf wackliger Verbindung — PWA mit OfflineBanner, offline ist ein
+// erwarteter Zustand), zwingt dieser Deckel "zooming" zurück auf "idle",
+// statt den User hinter dem deckenden, input-schluckenden Overlay stecken
+// zu lassen.
+const WATCHDOG_MS = ACCEL_MS + 2000;
 
 type ZoomValue = {
   phase: Phase;
@@ -59,9 +66,23 @@ export function BoosterZoomProvider({ children }: { children: ReactNode }) {
     setPhase(p);
   }, []);
 
+  // Timer nur beim Unmount des Providers aufräumen (Provider lebt im
+  // Booster-Layout, überlebt normalerweise die ganze Session — dies fängt
+  // z.B. Fast-Refresh/StrictMode-Remounts ab).
+  useEffect(() => {
+    return () => {
+      timers.current.forEach((t) => window.clearTimeout(t));
+    };
+  }, []);
+
   const zoomInto = useCallback(
     (o: Origin, navigate: () => void) => {
-      if (phaseRef.current !== "idle") return;
+      if (phaseRef.current !== "idle") {
+        // Zoom blockiert (z.B. sehr schneller Doppel-Tap) → Tap darf nicht
+        // verschluckt werden, normal navigieren.
+        navigate();
+        return;
+      }
       setOrigin(o);
       if (reduced) {
         navigate();
@@ -70,6 +91,15 @@ export function BoosterZoomProvider({ children }: { children: ReactNode }) {
       set("zooming");
       const t = window.setTimeout(() => navigate(), ACCEL_MS);
       timers.current.push(t);
+      // Notbremse: löst nur aus, wenn arrive() bis dahin nicht schon
+      // "zooming" verlassen hat.
+      const watchdog = window.setTimeout(() => {
+        if (phaseRef.current === "zooming") {
+          set("idle");
+          setOrigin(null);
+        }
+      }, WATCHDOG_MS);
+      timers.current.push(watchdog);
     },
     [reduced, set],
   );
