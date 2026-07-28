@@ -973,10 +973,12 @@ body[data-zone="schmiede"] {
   100% { opacity: 0;   transform: translateY(-38px) scale(0.6); }
 }
 
-/* Schwebende Funken der Konstellation (FunkenSky): leises Auf-und-Ab-Glimmen. */
+/* Schwebende Funken der Konstellation (FunkenSky): leises Auf-und-Ab-Glimmen.
+   Halber Ausschlag (±3 px statt ±6) — die Konstellation soll atmen, nicht
+   wandern. Periode bleibt bei 6 s. */
 @keyframes funke-drift {
-  0%, 100% { transform: translateY(-6px); opacity: 0.82; }
-  50%      { transform: translateY(6px);  opacity: 1;    }
+  0%, 100% { transform: translateY(-3px); opacity: 0.82; }
+  50%      { transform: translateY(3px);  opacity: 1;    }
 }
 .funke-drift {
   animation: funke-drift 6s ease-in-out infinite;

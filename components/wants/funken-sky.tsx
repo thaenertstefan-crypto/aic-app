@@ -24,8 +24,17 @@ import type { BetItem } from "@/lib/types/db-json";
 
 const VIEW_W = 360;
 const ROW_H = 76;
-const TOP_PAD = 42;
-const BOTTOM_PAD = 48;
+
+/** Ziel-Abstand (viewBox-Einheiten) an beiden Rändern — derselbe Wert wie auf
+ *  der Sternenkarte ([star-map.tsx](../../app/(app)/me/wants/star-map.tsx)).
+ *  Ohne Maskottchen-Zuschlag: unter der Konstellation folgt direkt die
+ *  „Eigener Funke"-Zeile. */
+const EDGE_PAD = 40;
+/** Halbe y-Jitter-Amplitude (Slot-Versatz ±15, s. layout) als Reserve. */
+const Y_JITTER_RESERVE = 15;
+
+const TOP_PAD = EDGE_PAD + Y_JITTER_RESERVE;
+const BOTTOM_PAD = EDGE_PAD + Y_JITTER_RESERVE;
 
 /** Stabiler Hash 0..1 aus einem String — gleiche Konstellation bei jedem Besuch. */
 function hash01(seed: string): number {
@@ -47,10 +56,14 @@ type Placed = { bet: BetItem; x: number; y: number; side: "left" | "right" };
 function layout(funken: BetItem[]): { placed: Placed[]; viewH: number } {
   const placed = funken.map((bet, i) => {
     const side: "left" | "right" = i % 2 === 0 ? "left" : "right";
-    const baseX = side === "left" ? 92 : 268;
+    // Spalten-Zentren wie auf der Sternenkarte (78 / 282 statt 92 / 268), damit
+    // sich die Funken nicht in der Bildmitte sammeln — und damit die beiden
+    // Schwesterseiten dieselbe Sprache sprechen. Labels zeigen nach innen und
+    // bleiben bei max-w-[8rem] (≈134 Einheiten) innerhalb der 360er-Breite.
+    const baseX = side === "left" ? 78 : 282;
     return {
       bet,
-      x: baseX + (hash01(bet.id) - 0.5) * 52,
+      x: baseX + (hash01(bet.id) - 0.5) * 56,
       y: TOP_PAD + i * ROW_H + (hash01(`${bet.id}y`) - 0.5) * 30,
       side,
     };
