@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
 import gsap from "gsap";
 
 import { Button } from "@/components/ui/button";
@@ -17,13 +18,13 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { RichText } from "@/components/ui/rich-text";
 import { Slider } from "@/components/ui/slider";
-import { SpinnerOverlay } from "@/components/ui/spinner";
 import { FormError } from "@/components/ui/form-error";
 import { Mascot, type MascotExpression } from "@/components/brand/mascot";
 import { StarArt } from "@/components/brand/star-art";
 import { CompassArt, SealArt } from "@/components/brand/me-ornaments";
 import { Crossfade } from "@/components/dashboard/crossfade";
 import { MePreview, BoosterPreview } from "@/components/onboarding/intro-previews";
+import { IgnitingSky } from "@/components/onboarding/igniting-sky";
 import { POST_LOGIN_KEY } from "@/components/dashboard/dashboard-reveal";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
@@ -39,6 +40,15 @@ import { completeOnboardingAction } from "@/app/onboarding/onboarding.actions";
 
 /** Gültigkeitsfenster für den Post-Login-Marker (analog dashboard-reveal). */
 const POST_LOGIN_MAX_AGE_MS = 10_000;
+
+/** Sternenhimmel-Übergabe aufs Dashboard: Karte/Fortschritt/Navigation faden
+ *  (0–400 ms), Maskottchen löst sich auf und der Himmel zündet Sterne
+ *  (400–900 ms), danach wird navigiert. */
+const HANDOVER_FADE_MS = 400;
+const HANDOVER_TOTAL_MS = 900;
+/** Notbremse: greift die Client-Navigation nicht (Onboarding-Gate sieht das
+ *  Profil-Flag noch nicht), holt der harte Redirect die Übergabe ein. */
+const HANDOVER_FALLBACK_MS = 1500;
 
 type Step =
   | "name"
@@ -103,11 +113,16 @@ function expressionForStep(step: Step): MascotExpression {
 
 export default function OnboardingPage() {
   const reduced = useReducedMotion();
+  const router = useRouter();
   const [step, setStep] = useState<Step>("name");
   useScrollTopOnChange(step);
   const [reason, setReason] = useState("");
   const [confidenceBaseline, setConfidenceBaseline] = useState(5);
   const [name, setName] = useState("");
+  // Läuft die Übergabe? Startet mit dem Tap auf „Ich bin bereit", parallel zur
+  // Server-Action.
+  const [handover, setHandover] = useState(false);
+  const handoverStart = useRef<number | null>(null);
 
   const mascotRef = useRef<HTMLDivElement>(null);
   const coverRef = useRef<HTMLDivElement>(null);
@@ -147,17 +162,52 @@ export default function OnboardingPage() {
     success: false,
   });
 
+  const fallbackTimer = useRef<number | null>(null);
+
   useEffect(() => {
-    if (state.success) {
-      // Reminder am Onboarding-Tag unterdrücken (Sicherheitsnetz).
-      try {
-        localStorage.setItem("aic_reminder_date", localDateKey());
-      } catch {
-        // ignore
-      }
-      window.location.href = "/dashboard";
+    if (!state.success) return;
+    // Reminder am Onboarding-Tag unterdrücken (Sicherheitsnetz).
+    try {
+      localStorage.setItem("aic_reminder_date", localDateKey());
+    } catch {
+      // ignore
     }
-  }, [state.success]);
+    // Marker für DashboardReveal: das Dashboard staffelt seine Abschnitte von
+    // oben ein, genau wie nach dem Login. 10 s Gültigkeit — reicht.
+    try {
+      sessionStorage.setItem(POST_LOGIN_KEY, String(Date.now()));
+    } catch {
+      // ignore
+    }
+
+    const elapsed = handoverStart.current ? Date.now() - handoverStart.current : 0;
+    const wait = reduced ? 0 : Math.max(0, HANDOVER_TOTAL_MS - elapsed);
+
+    const go = window.setTimeout(() => {
+      // Client-Navigation, damit der fixe SkyBackdrop wirklich stehenbleibt.
+      router.push("/dashboard");
+      fallbackTimer.current = window.setTimeout(() => {
+        if (window.location.pathname !== "/dashboard") {
+          window.location.href = "/dashboard";
+        }
+      }, HANDOVER_FALLBACK_MS);
+    }, wait);
+
+    return () => {
+      window.clearTimeout(go);
+      if (fallbackTimer.current) window.clearTimeout(fallbackTimer.current);
+    };
+  }, [state.success, reduced, router]);
+
+  // Fehlerfall: die Sequenz zieht sich zurück, die Karte kommt mit FormError
+  // zurück — wie bisher.
+  useEffect(() => {
+    if (state.error) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Rücknahme der Übergabe-Sequenz nach Server-Fehler
+      setHandover(false);
+      handoverStart.current = null;
+    }
+  }, [state.error]);
 
   // Mascot-Entrance: entweder die Login→Onboarding-Sprungsequenz (nur beim
   // allerersten Eintritt nach Login) oder der normale Mount-Tween.
@@ -264,6 +314,11 @@ export default function OnboardingPage() {
       formData.set("reason", reason);
       formData.set("confidenceBaseline", String(confidenceBaseline));
       formData.set("name", name);
+      // Die Sequenz startet SOFORT und läuft parallel zur Server-Action —
+      // dauert die Action länger, bleibt der gezündete Himmel einfach ruhig
+      // stehen. Kein Loop, kein Spinner.
+      setHandover(true);
+      handoverStart.current = Date.now();
       formAction(formData);
       return;
     }
@@ -286,9 +341,10 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex min-h-svh flex-col justify-center px-4 py-8">
-      {/* Abschluss-Übergang: goldener Spinner, solange die Server-Action läuft und
-          während der anschließenden Hard-Navigation aufs Dashboard. */}
-      {(pending || state.success) && <SpinnerOverlay />}
+      {/* Sternenhimmel-Übergabe: der Nachthimmel zündet gestaffelt Sterne,
+          während Karte und Maskottchen faden. Kein Spinner — die Fläche selbst
+          trägt die Wartezeit. */}
+      {handover && <IgnitingSky />}
 
       {/* Clean-Cover für den Login→Onboarding-Übergang: verdeckt Logo + Layout,
           sodass beim Sprung nur das Maskottchen sichtbar ist. Immer gerendert
@@ -304,7 +360,13 @@ export default function OnboardingPage() {
       />
 
       {/* Mascot über der Karte (z-50 → über dem Cover während der Intro) */}
-      <div className="relative z-50 mb-8 flex justify-center">
+      <div
+        className={cn(
+          "relative z-50 mb-8 flex justify-center transition-opacity duration-500 ease-out",
+          handover && "opacity-0",
+        )}
+        style={handover ? { transitionDelay: `${HANDOVER_FADE_MS}ms` } : undefined}
+      >
         <div
           ref={mascotRef}
           suppressHydrationWarning
@@ -326,9 +388,15 @@ export default function OnboardingPage() {
           dem Cover. */}
       <div
         ref={contentRef}
-        className="relative z-50 flex flex-col"
+        className="relative z-50 flex flex-col transition-opacity ease-out"
         suppressHydrationWarning
-        style={showLoginIntro ? { opacity: 0 } : undefined}
+        style={
+          showLoginIntro
+            ? { opacity: 0 }
+            : handover
+              ? { opacity: 0, transitionDuration: `${HANDOVER_FADE_MS}ms` }
+              : undefined
+        }
       >
       {/* Fortschrittsanzeige — nur der ruhige Balken (bei 12 Schritten wirkt eine
           „Schritt X von 12"-Zeile eher einschüchternd als hilfreich). */}
