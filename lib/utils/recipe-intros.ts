@@ -22,11 +22,11 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
     },
     {
       title: "Deine Werte.",
-      body: "Werte sind dein innerer Kompass — die Prinzipien und Überzeugungen, die deine Entscheidungen, Gedanken und Gefühle leiten, auch wenn du dir dessen gar nicht bewusst bist. Das Problem ist: Die meisten Menschen wissen gar nicht, was ihre eigentlich sind. Und wer seinen Kompass nicht kennt, navigiert auf gut Glück.",
+      body: "Werte sind dein innerer Kompass — die Prinzipien und Überzeugungen, die deine Entscheidungen, Gedanken und Gefühle leiten, auch wenn du dir dessen gar nicht bewusst bist. Das Problem ist: Die meisten Menschen wissen gar nicht, was ihre Werte eigentlich sind. Und wer seinen Kompass nicht kennt, navigiert auf gut Glück.",
     },
     {
       title: "Was dich erwartet",
-      body: "In diesem Rezept findest du deine Werte nicht durch stundenlange Selbstreflexion — sondern durch echte Beobachtung von dir selbst. Wie ein Wissenschaftler. Du startest mit deiner Hypothese: 5 Werte, von denen du vermutest, dass sie deine sind — ohne zu viel nachzudenken. Dann beobachtest du dich selbst für 7 Tage mit kurzen Tagebuch-Einträgen: Was hat dich heute wirklich bewegt? Was hat dich genervt? Was hat dir Energie gegeben oder gekostet? Und vor allem: warum? Am Ende wertest du aus, ob deine Hypothese stimmt — oder ob du dich selbst überrascht hast. Pro Tag brauchst du dafür nur 2–3 Minuten. Bist du dabei?",
+      body: "In dieser Übung findest du deine Werte nicht durch stundenlange Selbstreflexion heraus — sondern durch echte Beobachtung von dir selbst. Wie ein Wissenschaftler. Du startest mit deiner Hypothese: 5 Werte, von denen du vermutest, dass sie deine sind — ohne zu viel nachzudenken. Dann beobachtest du dich selbst für 7 Tage mit kurzen Tagebuch-Einträgen: Was hat dich heute wirklich bewegt? Was hat dich genervt? Was hat dir Energie gegeben oder gekostet? Und vor allem: warum? Am Ende wertest du aus, ob deine Hypothese stimmt — oder ob du dich selbst überrascht hast. Pro Tag brauchst du dafür nur 2–3 Minuten. Bist du dabei?",
     },
   ],
   wants: [
@@ -44,7 +44,7 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
     },
     {
       title: "Und wenn du nicht weißt, was du willst?",
-      body: "Manchmal weiß man nicht so richtig, was man eigentlich will. Man lebt in einer Routine, macht immer dasselbe, lebt denselben Tag fünfmal — um am Wochenende zwei Tage lang einen anderen zu leben. Irgendwas macht einen unzufrieden, man will ausbrechen und endlich wieder etwas tun, das einen zum Leuchten bringt, aber man weiß nicht was. Dafür gibt es die Sternschmiede: Dort schlägst du Funken — kleine Wetten mit dir selbst, in denen du neue oder alte vergessene Dinge entdeckst, aus denen ein neuer Stern werden könnte. Bist du dabei?",
+      body: "Manchmal weiß man nicht so richtig, was man eigentlich will. Man lebt in einer Routine, macht immer dasselbe, lebt denselben Tag fünfmal — um am Wochenende zwei Tage lang einen anderen zu leben. Irgendwas macht einen unzufrieden, man will ausbrechen und endlich wieder etwas tun, das einen zum Leuchten bringt, aber man weiß nicht was. Falls das auf dich zutreffen sollte, dann gibt es hier die Sternschmiede: Dort schlägst du Funken — kleine Wetten mit dir selbst, in denen du neue oder alte vergessene Dinge entdeckst, aus denen ein neuer Stern werden könnte. Bist du dabei?",
     },
   ],
   "bill-of-rights": [
@@ -86,7 +86,7 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
     },
     {
       title: "Wenn es kein „Hell yes!“ ist, ist es ein Nein.",
-      body: "Diese simple Regel (nach Dr. Aziz Gazipura) ist dein neuer Kompass: Spürst du bei einer Anfrage kein klares, freudiges „Hell yes!“, dann ist die ehrliche Antwort ein Nein. Das ist kein Egoismus — im Gegenteil: Dein Ja ist nur so viel wert wie dein Nein. Wer zu allem Ja sagt, sagt in Wahrheit zu nichts richtig Ja. Jedes ehrliche Nein macht Platz für die Dinge und Menschen, die dir wirklich wichtig sind.",
+      body: "Diese simple Regel ist dein neuer Filter: Spürst du bei einer Anfrage kein klares, freudiges „Hell yes!“, dann ist die ehrliche Antwort ein Nein. Das ist kein Egoismus — im Gegenteil: Dein Ja ist nur so viel wert wie dein Nein. Wer zu allem Ja sagt, sagt in Wahrheit zu nichts richtig Ja. Jedes ehrliche Nein macht Platz für die Dinge und Menschen, die dir wirklich wichtig sind.",
     },
     {
       title: "Du musst nicht sofort antworten.",
