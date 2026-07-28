@@ -12,7 +12,7 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
-import { StormCloud } from "@/app/(app)/booster/weather-art";
+import { ShadowIntroMascot } from "@/components/recipes/shadow-intro-mascot";
 import { Mascot } from "@/components/brand/mascot";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
@@ -181,7 +181,7 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
             cards={INTRO_CARDS}
             onComplete={handleIntroSeen}
             onSkip={handleIntroSeen}
-            renderMascot={() => <StormCloud className="size-20" />}
+            renderMascot={(index) => <ShadowIntroMascot index={index} />}
           />
         </div>
       </div>

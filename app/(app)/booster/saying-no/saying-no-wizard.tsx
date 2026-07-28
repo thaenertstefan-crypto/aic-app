@@ -23,7 +23,7 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
-import { UmbrellaRain } from "@/app/(app)/booster/weather-art";
+import { SayingNoIntroMascot } from "@/components/recipes/saying-no-intro-mascot";
 import { Mascot } from "@/components/brand/mascot";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
@@ -415,7 +415,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
             cards={INTRO_CARDS}
             onComplete={handleIntroSeen}
             onSkip={handleIntroSeen}
-            renderMascot={() => <UmbrellaRain className="size-20" />}
+            renderMascot={(index) => <SayingNoIntroMascot index={index} />}
           />
         </div>
       </div>
