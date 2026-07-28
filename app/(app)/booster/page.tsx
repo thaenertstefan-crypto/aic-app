@@ -11,9 +11,9 @@ export default function BoosterPage() {
         </h1>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Manchmal schlägt das Wetter um: Zweifel, Gedankenspiralen oder
-          Überforderung ziehen auf. Das ist normal und das zieht auch wieder
-          vorbei. Die folgenden Hilfen machen dich wetterfest gegen die Stürme
-          und Regenwolken in deinem Kopf. Was brauchst du gerade?
+          Überforderung ziehen auf. Die folgenden Hilfen machen dich wetterfest
+          gegen die Stürme und Regenwolken in deinem Kopf. Was brauchst du
+          gerade?
         </p>
       </header>
 
