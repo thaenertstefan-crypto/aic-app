@@ -91,9 +91,6 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
           style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}
         >
           <Logo size="default" />
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
-            Der Club, den niemand zugibt zu brauchen.
-          </p>
         </div>
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-8">
           <div className="w-full max-w-sm">{children}</div>
