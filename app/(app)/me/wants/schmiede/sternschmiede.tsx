@@ -657,16 +657,20 @@ export function Sternschmiede({
           </Button>
 
           {/* Zurück in den Sternenhimmel — derselbe Warp, nur rückwärts (Aufstieg).
-              Gedämpft (ghost), damit „Funken schlagen" die eine Gold-CTA bleibt. */}
-          <Button
-            variant="ghost"
-            className="w-full gap-2 text-muted-foreground"
-            disabled={warpBusy}
-            onClick={goBackToStars}
-          >
-            <ArrowUp className="size-4" /> Zurück zu meinen Sternen
-          </Button>
-          <div className="h-8" />
+              Gedämpft (ghost), damit „Funken schlagen" die eine Gold-CTA bleibt.
+              Sitzt mittig zwischen der Gold-CTA und der Bottom-Nav: der
+              flex-1-Spacer absorbiert den Rest der Seitenhöhe, pt-2 hält einen
+              Mindestabstand nach oben. Ersetzt den früheren harten h-8-Spacer. */}
+          <div className="flex flex-1 flex-col justify-center pt-2">
+            <Button
+              variant="ghost"
+              className="w-full gap-2 text-muted-foreground"
+              disabled={warpBusy}
+              onClick={goBackToStars}
+            >
+              <ArrowUp className="size-4" /> Zurück zu meinen Sternen
+            </Button>
+          </div>
         </div>
       </ViewTransition>
     </div>
