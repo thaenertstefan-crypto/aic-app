@@ -217,22 +217,28 @@ export function WantsMe({
                     onDelete={deleteWant}
                   />
 
-                  <div className="flex flex-col gap-3">
-                    <div className="flex gap-3">
-                      <Button
-                        className="flex-1 gap-2"
-                        render={<Link href="/me/wants/journey" />}
-                      >
-                        <Binoculars className="size-4" /> Sternensuche
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="flex-1 gap-2"
-                        onClick={() => setAddOpen(true)}
-                      >
-                        <Plus className="size-4" /> Eigener Stern
-                      </Button>
-                    </div>
+                  <div className="flex gap-3">
+                    <Button
+                      className="flex-1 gap-2"
+                      render={<Link href="/me/wants/journey" />}
+                    >
+                      <Binoculars className="size-4" /> Sternensuche
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 gap-2"
+                      onClick={() => setAddOpen(true)}
+                    >
+                      <Plus className="size-4" /> Eigener Stern
+                    </Button>
+                  </div>
+
+                  {/* „Lust auf Neues?" sitzt mittig zwischen der Button-Reihe und
+                      der Bottom-Nav — der flex-1-Spacer absorbiert den Rest der
+                      Seitenhöhe (Karte und Buttons haben feste Höhen), pt-2 hält
+                      einen Mindestabstand nach oben, damit der Link bei vielen
+                      Sternen nicht an der Button-Reihe klebt. */}
+                  <div className="flex flex-1 flex-col justify-center pt-2">
                     {forgeLink()}
                   </div>
                 </>
