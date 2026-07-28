@@ -7,7 +7,7 @@ import { ArrowRight, Zap } from "lucide-react";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
-import { Mascot } from "@/components/brand/mascot";
+import { ClearingStar } from "@/app/(app)/booster/weather-art";
 import { markCleanserIntroSeenAction } from "@/app/(app)/cleansers/actions";
 import { getCleanserIntro } from "@/lib/utils/cleanser-intros";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,9 +23,6 @@ import type { MantraCardData } from "./actions";
 // ---------------------------------------------------------------------------
 
 const INTRO_CARDS = getCleanserIntro("confidence-boost") ?? [];
-
-/** Mascot-Ausdruck je Intro-Karte: neugierig ankommen, strahlend rausgehen. */
-const INTRO_EXPRESSIONS = ["smile", "curious", "radiant"] as const;
 
 export function ConfidenceBooster({
   doneToday,
@@ -57,12 +54,7 @@ export function ConfidenceBooster({
             cards={INTRO_CARDS}
             onComplete={handleIntroSeen}
             onSkip={handleIntroSeen}
-            renderMascot={(index) => (
-              <Mascot
-                expression={INTRO_EXPRESSIONS[index] ?? "smile"}
-                size="md"
-              />
-            )}
+            renderMascot={() => <ClearingStar className="size-20" />}
           />
         </div>
       </div>

@@ -20,7 +20,7 @@ import {
   OverthinkingCompanion,
   OverthinkingPeekCompanion,
 } from "@/components/recipes/overthinking-companion";
-import { OverthinkingIntroMascot } from "@/components/recipes/overthinking-intro-mascot";
+import { WindSwirl } from "@/app/(app)/booster/weather-art";
 import type { MascotExpression } from "@/components/brand/mascot";
 import { Reveal } from "@/components/ui/reveal";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
@@ -645,7 +645,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
             cards={INTRO_CARDS}
             onComplete={handleIntroSeen}
             onSkip={handleIntroSeen}
-            renderMascot={(index) => <OverthinkingIntroMascot index={index} />}
+            renderMascot={() => <WindSwirl className="size-20" />}
           />
         </div>
       </div>

@@ -17,7 +17,7 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
-import { ThingsGotMessyIntroMascot } from "@/components/recipes/things-got-messy-intro-mascot";
+import { CloudStack } from "@/app/(app)/booster/weather-art";
 import { Mascot } from "@/components/brand/mascot";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
@@ -236,7 +236,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
             cards={INTRO_CARDS}
             onComplete={handleIntroSeen}
             onSkip={handleIntroSeen}
-            renderMascot={(index) => <ThingsGotMessyIntroMascot index={index} />}
+            renderMascot={() => <CloudStack className="size-20" />}
           />
         </div>
       </div>
