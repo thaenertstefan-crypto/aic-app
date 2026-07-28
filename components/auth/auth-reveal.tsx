@@ -170,6 +170,30 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
 
         <div className="flex flex-1 flex-col">{hero}</div>
 
+        {/* Maskottchen lugt von unten rechts halb über den Bildschirmrand
+            herein, gekippt, Blick nach links oben zur Headline. Es verlässt die
+            Bühne beim Aufdecken NACH RECHTS, während der Hero nach oben geht —
+            gleiche Dauer und Kurve, damit die beiden Bewegungen als eine
+            gelesen werden.
+
+            Tailwind v4: `translate-x-*` kompiliert zu der eigenständigen
+            CSS-Property `translate`, nicht zu `transform`. Die Transition muss
+            `translate` deshalb namentlich nennen, sonst springt die Position
+            statt zu gleiten. */}
+        <MascotPeek
+          from="right"
+          size="lg"
+          rotate={-45}
+          gazeX={0}
+          gazeY={-3}
+          expression="curious"
+          className={cn(
+            "pointer-events-none absolute bottom-0 right-0 -mb-3 -mr-12 z-10",
+            "transition-[translate,opacity] duration-1000 ease-out",
+            revealed ? "translate-x-[140%] opacity-0" : "translate-x-0 opacity-100",
+          )}
+        />
+
         {/* Aufdeck-Hinweis: Pfeil + Text, dezent pulsierend. */}
         <button
           type="button"
