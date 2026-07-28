@@ -27,7 +27,11 @@ import { MePreview, BoosterPreview } from "@/components/onboarding/intro-preview
 import { POST_LOGIN_KEY } from "@/components/dashboard/dashboard-reveal";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
-import { ONBOARDING_INTRO, confidenceReaction } from "@/lib/content/onboarding-intro";
+import {
+  ONBOARDING_INTRO,
+  ONBOARDING_COMPASS_EMOJIS,
+  confidenceReaction,
+} from "@/lib/content/onboarding-intro";
 import { cn } from "@/lib/utils";
 import { localDateKey } from "@/lib/utils/date";
 
@@ -404,7 +408,11 @@ export default function OnboardingPage() {
               Hub-Signaturen (ruhig, nicht animiert). */}
           {step === "intro3" && (
             <div className="flex justify-center py-2">
-              <CompassArt emojis={[]} animate={true} className="size-20" />
+              <CompassArt
+                emojis={ONBOARDING_COMPASS_EMOJIS}
+                animate={true}
+                className="size-20"
+              />
             </div>
           )}
           {step === "intro4" && (

@@ -9,7 +9,25 @@
  * Die Kartentexte tragen leichtes Inline-Markup (`**fett**` / `*kursiv*`), das
  * [RichText](../../components/ui/rich-text.tsx) beim Rendern auflöst.
  */
+import { getValueEmoji } from "@/lib/utils/values-emojis";
+
 export type OnboardingIntroCard = { title?: string; body: string[] };
+
+/**
+ * Beispiel-Werte für die Kompassrose im Onboarding (Karte intro3 + Mini-Vorschau).
+ * Ohne Emojis dimmt sich [CompassArt](../../components/brand/me-ornaments.tsx)
+ * auf 40 % — im Onboarding wäre das ein Leer-Zustand ohne Aussage. Abenteuerlust
+ * und Ausgeglichenheit stehen wörtlich im Kartentext („sei es Abenteuerlust oder
+ * Gelassenheit"). Integrität (🧭) ist bewusst NICHT dabei: ein Kompass-Emoji im
+ * Kompass liest sich falsch. Aus der echten Emoji-Quelle abgeleitet, damit die
+ * Vorschau nicht von der Realität abdriften kann.
+ */
+export const ONBOARDING_COMPASS_EMOJIS = [
+  getValueEmoji("adventurousness"), // 🧗 Abenteuerlust
+  getValueEmoji("balance"), // ⚖️ Ausgeglichenheit
+  getValueEmoji("growth"), // 🌱 Wachstum
+  getValueEmoji("honesty"), // 🪞 Ehrlichkeit
+];
 
 /**
  * Reaktion auf den Confidence-Check (Step intro1) — verzweigt nach Score-Band,

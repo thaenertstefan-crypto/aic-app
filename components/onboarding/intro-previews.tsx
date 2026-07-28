@@ -7,6 +7,7 @@ import {
   UmbrellaRain,
   WindSwirl,
 } from "@/app/(app)/booster/weather-art";
+import { ONBOARDING_COMPASS_EMOJIS } from "@/lib/content/onboarding-intro";
 
 /**
  * Mini-Vorschauen der App-Bereiche für die Onboarding-Intro-Karten. Bewusst
@@ -18,7 +19,16 @@ import {
 /** Vorschau auf den „Me"-Bereich — die drei Szenen wie im Hub. */
 export function MePreview() {
   const scenes = [
-    { art: <CompassArt emojis={[]} animate={true} className="size-9" />, label: "Meine Werte" },
+    {
+      art: (
+        <CompassArt
+          emojis={ONBOARDING_COMPASS_EMOJIS}
+          animate={true}
+          className="size-9"
+        />
+      ),
+      label: "Meine Werte",
+    },
     { art: <StarArt animate={true} className="size-9" />, label: "Meine Wants" },
     { art: <SealArt animate={true} className="size-9" />, label: "Meine Bill of Rights" },
   ];
