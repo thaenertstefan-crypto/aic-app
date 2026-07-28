@@ -202,7 +202,7 @@ export function WantsMe({
                       <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
                         {PAGE_TITLES.meWantsHero}
                       </h2>
-                      <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+                      <p className="max-w-sm text-base leading-relaxed text-muted-foreground">
                         Meine Freudenquellen und Ziele, nach denen ich greife.
                       </p>
                     </div>
