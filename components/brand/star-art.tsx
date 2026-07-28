@@ -23,7 +23,11 @@ export function StarArt({
       aria-hidden="true"
     >
       <g className={animate ? "me-star-glow" : undefined}>
-        <path d={STAR_PATH} fill="var(--primary)" opacity={dim ? 0.6 : 0.95} />
+        {/* Innere Gruppe trägt den Glitzer-Aufblitz — getrennt vom Grundschein,
+            damit sich die beiden Animationen nicht um filter/opacity streiten. */}
+        <g className={animate ? "me-star-sparkle" : undefined}>
+          <path d={STAR_PATH} fill="var(--primary)" opacity={dim ? 0.6 : 0.95} />
+        </g>
       </g>
     </svg>
   );
