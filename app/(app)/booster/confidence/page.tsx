@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { computeStreak } from "@/lib/utils/streak";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { getSeenCleanserIntros } from "@/app/(app)/cleansers/actions";
+import { BoosterArrive } from "@/components/booster/booster-arrive";
 
 import { ConfidenceBooster } from "./confidence-booster";
 import { getMantraData } from "./actions";
@@ -45,12 +46,15 @@ export default async function ConfidenceBoosterPage() {
   }
 
   return (
-    <ConfidenceBooster
-      doneToday={doneToday}
-      streak={streak}
-      mantra={mantra}
-      cards={cards}
-      introSeen={seenIntros.includes("confidence-boost")}
-    />
+    <>
+      <BoosterArrive />
+      <ConfidenceBooster
+        doneToday={doneToday}
+        streak={streak}
+        mantra={mantra}
+        cards={cards}
+        introSeen={seenIntros.includes("confidence-boost")}
+      />
+    </>
   );
 }

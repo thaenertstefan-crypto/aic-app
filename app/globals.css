@@ -1055,3 +1055,36 @@ body[data-zone="schmiede"] {
     animation-delay: 0s !important;
   }
 }
+
+/* Kopfwetter-Hub → Sub-Page: Kamera-Push aus dem getippten Icon.
+   Die Zellen skalieren vom Tap-Punkt weg (Umgebung streamt nach außen), ein
+   Lilac-Bloom aus dem Origin deckt die Navigation, die Sub-Page taucht auf. */
+.booster-zoom-overlay { pointer-events: auto; }
+.booster-zoom-bloom {
+  opacity: 0;
+  will-change: opacity;
+  background: radial-gradient(closest-side at var(--bz-x, 50%) var(--bz-y, 50%),
+    color-mix(in srgb, var(--cleanser-confidence) 55%, transparent) 0%,
+    color-mix(in srgb, var(--background) 90%, #000) 42%,
+    var(--background) 100%);
+}
+.booster-zoom-overlay[data-phase="zooming"] .booster-zoom-bloom {
+  animation: booster-bloom-in 300ms ease-in both;
+}
+.booster-zoom-overlay[data-phase="arriving"] .booster-zoom-bloom {
+  animation: booster-bloom-out 360ms ease-out both;
+}
+@keyframes booster-bloom-in  { 0% { opacity: 0; } 55% { opacity: 0.55; } 100% { opacity: 1; } }
+@keyframes booster-bloom-out { from { opacity: 1; } to { opacity: 0; } }
+
+.booster-cells-zoom {
+  animation: booster-cells-push 300ms ease-in both;
+}
+@keyframes booster-cells-push {
+  from { transform: scale(1);   opacity: 1; }
+  to   { transform: scale(1.6); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booster-zoom-bloom, .booster-cells-zoom { animation: none; }
+}
