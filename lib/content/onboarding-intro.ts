@@ -48,23 +48,23 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
     // intro2 (Schritt 6) — „Me"-Überblick: Prämisse + die drei Anlaufpunkte
     title: 'Was dich erwartet: „Me"',
     body: [
-      'Die AIC-App vertritt eine zentrale Prämisse, die mein Leben seit ihrer Entdeckung komplett verändert hat: Die Essenz eines gesunden Selbstbewusstseins ist, dir bewusst zu sein, wer du bist – und zwar auf einer tieferen Ebene, als du sie bisher vielleicht betrachtet hast.',
+      'Die AIC-App vertritt eine zentrale Prämisse, die mein Leben seit ihrer Entdeckung komplett verändert hat: Die Essenz eines gesunden Selbstbewusstseins ist das: Sei dir bewusst, wer du bist. – und zwar auf einer tieferen Ebene, als du sie bisher vielleicht betrachtet hast.',
       'Denn nur wenn du dich wirklich kennst, kannst du dein Leben so gestalten, dass du die Dinge tust, die dir wirklich Energie geben, statt sie dir zu nehmen.',
-      'Wir müssen nur herausfinden, was diese Dinge sind. Dabei helfen dir vor allem drei innere Anlaufpunkte:',
+      'Wir müssen nur herausfinden, was diese Dinge sind! Dabei helfen dir vor allem drei innere Anlaufpunkte:',
     ],
   },
   {
     // intro3 (Schritt 7) — Anlaufpunkt 1: Werte (Kompass)
     title: 'Deine Werte',
     body: [
-      'Die fundamentale Grundlage für dein persönliches Wohlbefinden sind deine Werte. Sie sind wie dein innerer Kompass: Er weist dir den Weg und zeigt dir, was dir wirklich wichtig ist – sei es Abenteuerlust oder Gelassenheit.',
+      'Die fundamentale Grundlage für dein persönliches Wohlbefinden sind dabei deine Werte. Sie sind wie dein innerer Kompass, der dir den Weg weist und darauf zeigt, was dir wirklich wichtig ist, sei es Abenteuerlust oder Gelassenheit.',
     ],
   },
   {
     // intro4 (Schritt 8) — Anlaufpunkt 2: Wants (Sterne)
     title: 'Deine Wants',
     body: [
-      'Deine Wants hingegen sind wie Sterne, nach denen du entlang dieses vom Kompass vorgegebenen Weges greifst. Es sind echte Freudenquellen – ein Wanderurlaub oder ein chilliger Spieleabend mit Freunden –, aber auch deine Ziele, die dich tagträumen lassen und antreiben.',
+      'Deine Wants hingegen sind wie Sterne, nach denen du entlang dieses von deinem Kompass vorgegebenen Weges greifst. Sie sind Dinge, die echte Freudenquellen für dich sind, wie z.B. Wanderurlaube oder ein chilliger Spieleabend mit Freunden, aber auch deine Ziele, die dich tagträumen lassen und dich antreiben.',
       'Mit anderen Worten: Deine Wants sind die Dinge, die dich so richtig zum Leuchten bringen. Wie einen Stern.',
     ],
   },

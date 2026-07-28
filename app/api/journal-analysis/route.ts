@@ -102,7 +102,7 @@ export async function POST() {
     const entriesText = entries
       .map(
         (entry, i) =>
-          `Tag ${i + 1}\nWas ist passiert: ${clampEntryText(entry.content.happenings)}\nGedanken & Gefühle: ${clampEntryText(entry.content.response ?? "")}`,
+          `Tag ${i + 1}\nWas ist passiert: ${clampEntryText(entry.content.happenings)}\nGedanken & Gefühle: ${clampEntryText(entry.content.response ?? "") || "(keine Angabe)"}`,
       )
       .join("\n\n");
 
