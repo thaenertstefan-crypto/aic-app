@@ -121,7 +121,7 @@ export default function GenerateRightPage() {
     <div className="flex min-h-svh flex-col">
       <SubPageHeader
         backHref="/me/bill-of-rights"
-        title="Vorschlag generieren"
+        title="Recht generieren"
         action={
           INTRO_CARDS.length > 0 ? (
             <IntroInfoButton cards={INTRO_CARDS} />
@@ -159,7 +159,7 @@ export default function GenerateRightPage() {
               disabled={!canGenerate}
               onClick={generate}
             >
-              {loading ? "Wird erstellt …" : "Vorschlag generieren"}
+              {loading ? "Wird erstellt …" : "Recht generieren"}
             </Button>
           </>
         ) : (

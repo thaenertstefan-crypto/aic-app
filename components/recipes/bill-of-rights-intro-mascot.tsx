@@ -8,7 +8,7 @@ import { Mascot } from "@/components/brand/mascot";
 // Leitmotiv über alle 4 Karten:
 //   geschlucktes „Nein" → „ja" (Karte 0) → alte Regeln (Karte 1) → altes Regelwerk
 //   wird durchgestrichen & neues geschrieben (Karte 2) → zwei Regeln im Duell
-//   (Karte 3, „Vorschlag generieren").
+//   (Karte 3, „Recht generieren").
 // Karte 0 nutzt das Mascot-Overlay (kleine Sprechblase im Blob). Karten 1–3
 // rendern Schriftrollen als Geschwister VOR/UNTER dem Blob (nicht geclippt),
 // damit sie über das Maskottchen hinausragen können und das Gesicht oben frei
