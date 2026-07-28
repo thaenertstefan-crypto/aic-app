@@ -30,8 +30,21 @@ import type { WantItem } from "@/lib/types/db-json";
 
 const VIEW_W = 360;
 const ROW_H = 80;
-const TOP_PAD = 60;
-const BOTTOM_PAD = 130; // Platz für das Maskottchen unten links
+
+/** Ziel-Abstand (viewBox-Einheiten) an BEIDEN Rändern der Karte: oben bis zum
+ *  ersten Stern, unten bis zum Maskottchen. Ein Wert steuert beide Seiten. */
+const EDGE_PAD = 40;
+/** Halbe y-Jitter-Amplitude (Slot-Versatz ±18, s. layoutStars) — als Reserve
+ *  mitgerechnet, damit ein nach außen gewürfelter Stern den Zielabstand nicht
+ *  auffrisst. */
+const Y_JITTER_RESERVE = 18;
+/** Maskottchen unten links: size-14 (56 px) + bottom-1 (4 px) = 60 px. Bei
+ *  ~375 px Viewport ist die Karte ca. 343 px breit bei 360 viewBox-Einheiten
+ *  → 60 px ≈ 63 Einheiten. */
+const MASCOT_BOX = 63;
+
+const TOP_PAD = EDGE_PAD + Y_JITTER_RESERVE;
+const BOTTOM_PAD = EDGE_PAD + Y_JITTER_RESERVE + MASCOT_BOX;
 
 /** Fokus-Stern: Held-Größe (px) und vertikale Zielposition (Anteil der Höhe). */
 const FOCUS_STAR_SIZE = 64;

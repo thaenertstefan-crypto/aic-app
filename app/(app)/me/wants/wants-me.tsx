@@ -198,7 +198,7 @@ export function WantsMe({
               ) : (
                 <>
                   <Reveal delay={0}>
-                    <div className="flex flex-col items-center gap-3 pb-2 text-center">
+                    <div className="flex flex-col items-center gap-3 text-center">
                       <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
                         {PAGE_TITLES.meWantsHero}
                       </h2>
