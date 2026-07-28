@@ -49,3 +49,6 @@ supabase/.temp
 
 # Superpowers brainstorming (throwaway visual mockups)
 .superpowers/
+
+# Playwright-Screenshots
+scripts/e2e/shots/
