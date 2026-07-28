@@ -1,11 +1,13 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronUp } from "lucide-react";
 
 import { AmbientBlobs } from "@/components/ui/ambient-blobs";
+import { Logo } from "@/components/brand/logo";
 import { MascotPeek } from "@/components/brand/mascot-peek";
+import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +44,18 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   // Gate, keine versteckt-fokussierbare Karte hinter dem Hero.
   const gated = !reduced && pathname === "/signup";
 
+  // Der Karten-Peek erscheint erst, nachdem der Hero (inkl. Hero-Maskottchen)
+  // weggeslidet ist — sonst blitzen beim Aufwischen kurz zwei Maskottchen.
+  const [heroGone, setHeroGone] = useState(false);
+  useEffect(() => {
+    if (!revealed) {
+      setHeroGone(false);
+      return;
+    }
+    const t = window.setTimeout(() => setHeroGone(true), 1000);
+    return () => window.clearTimeout(t);
+  }, [revealed]);
+
   function handleTouchStart(e: React.TouchEvent) {
     touchStartY.current = e.touches[0]?.clientY ?? null;
   }
@@ -65,13 +79,22 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   }
 
   // Nicht-gegateter Pfad: reduced-motion UND alle Nicht-Signup-Routen (Login,
-  // Reset). Hero oben, Karte direkt sichtbar im Fluss darunter — kein Overlay,
-  // keine versteckt-fokussierbare Karte.
+  // Reset). Kompakter Kopf (Logo + Brand-Zeile) + Karte auf dem Nachthimmel —
+  // KEIN großer Hero (der brächte ein zweites Maskottchen). Genau ein Peek.
   if (!gated) {
     return (
       <div className="relative flex min-h-lvh flex-col overflow-hidden">
-        <div className="relative isolate overflow-hidden">{hero}</div>
-        <div className="flex flex-1 items-center justify-center px-4 py-12">
+        <SkyBackdrop />
+        <div
+          className="relative z-10 px-6 pt-6 md:px-10 md:pt-8"
+          style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}
+        >
+          <Logo size="default" />
+          <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
+            Der Club, den niemand zugibt zu brauchen.
+          </p>
+        </div>
+        <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-8">
           <div className="w-full max-w-sm">{children}</div>
         </div>
         {showCardMascot && (
@@ -116,7 +139,7 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
             hinunter zur Login-Karte. Positioniert relativ zum Vollbild-Root
             (wird oben geclippt → nur die Augen sind sichtbar). Mountet erst beim
             Aufdecken, damit die Slide-down-Animation spielt. */}
-        {showCardMascot && revealed && (
+        {showCardMascot && revealed && heroGone && (
           <MascotPeek
             from="top"
             size="lg"
