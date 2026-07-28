@@ -5,6 +5,19 @@ _Maintained by the `/feierabend` skill at the end of each session. Read this at 
 _Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. vertagte Plan per `subagent-driven-development` umgesetzt: PressureField-Grund + Maeander-Flow + Nebenfix, Commits `62a8f99..f06499b`, nach `main` gepusht, Final Review (opus) Ready = Yes, tsc+gate+build gruen. iPhone-Final + Re-Critique offen. Zuvor am 23.07.: `/booster` kritisiert (27/40) + Redesign per brainstorming durchgeplant — Spec `89df50c` + Plan `c0d36a5`. Davor am selben Tag: `/me/bill-of-rights` in zwei Sessions ueberarbeitet — Runde 1 „Der gesteuerte Kurs"-Nachthimmel-Szene `e352d32..b03c706`, Runde 2 Nachbesserung nach iPhone-Feedback `0a5f947`: Maskottchen raus, Gold-Siegel als Kopf, dezente Sternbilder statt Kurslinie, /values-grosses weisses Intro, Wants-Stil-Buttons mit Gold-CTA. Alles gepusht, tsc+gate+build gruen, iPhone-Final offen. Davor: Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbeitet, `e2add09..98d1c2b`.)_
 
 ## Current State
+- **Nacht-Slot 2/3 durchgelaufen (2026-07-28, 22:01) — Plan 4 (Wants + Sternschmiede), alle 5
+  Tasks umgesetzt und gepusht `122e33d..4ba551b`.** (1) Ränder der Sternenkarte aus einem
+  `EDGE_PAD` abgeleitet statt handgesetzt; (2) „Lust auf Neues?" aus dem Button-Stapel in einen
+  `flex-1`-Spacer gezogen; (3) Wants-Einleitetext auf Schmiede-Größe (`text-base max-w-sm`);
+  (4) Funken driften halb so weit (±3 px), übernehmen die Spalten-Streuung der Sternenkarte
+  (78/282, ±28) und dieselbe Rand-Ableitung; (5) Schmiede-„Zurück zu meinen Sternen" mittig,
+  harter `h-8`-Spacer der Landing raus. Pro Task tsc + Gate + Build grün, Review sauber.
+  **ABER — das Goal des Plans ist NICHT erreicht, siehe Open Items.** Tasks 2–5 liefern was sie
+  sollen; die Rand-Angleichung (Tasks 1 und 4) zielt auf die falsche Größe.
+  **Neu: der E2E-Account hat jetzt Testdaten** (5 Wants, 4 offene Funken, `intro_seen` für
+  `wants`) — vorher zeigte `/me/wants` im Browser-Check nur die Intro-Sequenz und die Schmiede
+  den Leer-Zustand, der Playwright-Lauf konnte also über Layout gar nichts sagen. Nur der
+  E2E-Account (`thaenert.stefan+e2e@…`) wurde angefasst.
 - **Nacht-Slot 1/3 der Feinjustierungs-Runde autonom durchgelaufen (2026-07-28, 17:01 — Stefan nicht
   anwesend).** Zwei Pläne per `subagent-driven-development` umgesetzt, beide nach `main` gepusht:
   **Plan 3 (Auth)** `3411bae..5d61938` — (1) Brand-Zeile aus dem kompakten Login-Kopf entfernt
@@ -149,6 +162,45 @@ _Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. ve
 
 > **Durch die Roadmap-Session 2026-07-23 ERLEDIGT** (die einzeln weiter unten gelisteten Punkte sind damit geschlossen): Wants Gold-vs-Rose-Modulfarbe entschieden + gebaut (C1), `--celebrate` im Kontrast-Gate (C1), Stale-„Ersetzen-Toggle"-Label umbenannt (C1), funken-sky `aria-live` + Backdrop-a11y (C2), `savedCount`->`openCount` (C3), Leitsatz-Runde platziert (C4), Yang-Bonus-Toggle auf Grid-Ausklappen (C5), `/impeccable extract` Fokus-Ebene -> geteiltes `useDialogFocus`-Primitive (D1), Seitentitel-Konsistenz entschieden + Auswertung angeglichen (E1), flaechenuebergreifende Abschluss-Farbe entschieden = Gold bleibt (E2), FK-CASCADE auf Prod angewandt (A1). **Real noch offen: nur Stefans iPhone-Gate + die geschobenen Re-Critiques** (die iPhone-Check-Zeilen unten bleiben gueltig, plus die neu dazugekommenen Flaechen C4/E1/D1/Gold-Kachel).
 
+- **⚠️ PLANDEFEKT Plan 4: die Phantom-Zeile — das Goal „gleiche Ränder oben und unten" ist NICHT
+  erreicht und mit den Konstanten des Plans auch nicht erreichbar (2026-07-28, `4ba551b`).**
+  Beide Schwester-Dateien setzen die Sterne auf `y = TOP_PAD + i * ROW_H`, der letzte also bei
+  `TOP_PAD + (n-1) * ROW_H`. Die Leinwandhöhe rechnet aber mit `TOP_PAD + n * ROW_H + BOTTOM_PAD`.
+  Unter dem letzten Stern bleibt damit eine **komplette Phantom-Zeile** stehen, und `BOTTOM_PAD`
+  kommt erst darunter — der sichtbare untere Rand ist `ROW_H + BOTTOM_PAD`. An Playwright-
+  Screenshots bei 375 px mit 5 Sternen gemessen: oben ~58 Einheiten, unten ~138 bis zum
+  Maskottchen, Faktor 2,4. In `funken-sky` dasselbe Verhältnis (131 gegen 55). **Task 1 war
+  dadurch faktisch ein visueller No-op** (−9 Einheiten auf einen 138-Einheiten-Abstand); Task 4
+  hat das Verhältnis immerhin von 2,95 auf 2,38 verbessert. Die Umsetzung ist korrekt — der Plan
+  hat auf die falsche Größe gezielt (Plan-Zeile 35 behauptet, `BOTTOM_PAD` steuere den Abstand
+  bis zum Maskottchen). Korrektur-Block steht auch oben im Plan-Dokument.
+  **Bewusst nicht unbeaufsichtigt gefixt.** Der Fix ist klein — in `star-map.tsx` und
+  `funken-sky.tsx` je die `viewH`-Zeile auf `Math.max(0, length - 1) * ROW_H` — aber er verändert
+  die Höhe beider Seiten und damit die Komposition, die du gerade tunst. Der Reviewer hat die
+  Kopplungen geprüft: GSAP-Zoom liest Live-Rects und ist nicht betroffen, Stern-Positionen und
+  `aspectRatio` skalieren mit, `key={wants.length}` ist unkritisch. Einzige echte Wechselwirkung:
+  eine kürzere Karte verlängert den `flex-1`-Spacer aus Task 2, „Lust auf Neues?" rutscht also
+  tiefer — beides in EINEM Blick beurteilen.
+  **Mit zu entscheiden, gehört in dieselbe Runde:**
+  (a) Die Böden `Math.max(430, …)` / `Math.max(200, …)` greifen nach dem Fix bei bis zu 4 Sternen
+  bzw. 2 Funken und lassen den unteren Rand dort weiterhin tief (n=1 → 309 Einheiten, n=2 → 229,
+  n=3 → 149, n=4 → 69, ab n=5 exakt 58). Echte Parität gibt es also erst ab 5 Sternen / 3 Funken.
+  Das kann gewollt sein — ein fast leerer Himmel darf Raum haben — ist aber unbenannt: `430` und
+  `200` sind kommentarlose Magic Numbers in Dateien, wo inzwischen jede andere Konstante ihre
+  Begründung trägt.
+  (b) `MASCOT_BOX` wird immer berechnet, das Maskottchen sitzt aber nur unten **links**. Bei
+  gerader Sternzahl endet die Leiter rechts, der Zuschlag ist dann unnötig und der untere Rand
+  liest ~103 statt 40 Einheiten. Mein Testfall mit 5 Sternen endet links, also im günstigen Fall.
+  (c) `EDGE_PAD = 40` steht doppelt in zwei Dateien, zusammengehalten nur von einem Kommentar —
+  die Plan-Architektur („aus EINEM Abstandswert") ist auf Dateiebene nicht durchgesetzt. Ein
+  geteiltes `sky-metrics.ts` wäre der ehrliche Weg.
+- **Nacht-Slot-2 iPhone-Final offen (2026-07-28, `4ba551b`):** am Live-Deploy: (a) `/me/wants` —
+  Einleitetext jetzt so groß wie in der Schmiede, bricht er sauber? (b) `/me/wants/schmiede` —
+  Funken schweben ruhiger und stehen breiter verteilt; läuft kein Label über den Rand?
+  (c) beide Seiten — sitzt der Sekundär-CTL wirklich mittig? **Rechne mit „sitzt etwas zu tief":**
+  der Spacer zentriert innerhalb des Containers, der `py-6` hat, während die Bottom-Nav
+  `sticky bottom-0 h-16` ist — rechnerisch landet der Link ~36 px unter der optischen Mitte.
+  Vorbestehendes app-weites Muster, kein Fehler dieser Runde, aber gut zu wissen, was man sieht.
 - **Nacht-Slot-1 iPhone-Final offen (2026-07-28, `ed1165c`):** am Live-Deploy in EINEM Durchgang:
   (a) **`/login`** — nur Logo über der Karte, keine Brand-Zeile; sitzt das Logo jetzt zu dicht an
   der Karte? Falls ja, `pb-2` an den Kopf-`div` in `auth-reveal.tsx` (NICHT das `py-8` des

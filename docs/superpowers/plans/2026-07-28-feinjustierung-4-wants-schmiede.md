@@ -8,6 +8,38 @@
 
 **Tech Stack:** Next.js 16 App Router, React 19, TailwindCSS v4, GSAP (in `star-map.tsx`).
 
+> ## ⚠️ Korrektur nach der Umsetzung (2026-07-28, Nacht-Slot 2)
+>
+> **Alle 5 Tasks sind umgesetzt und gepusht (`122e33d..4ba551b`) — aber das Goal
+> „gleiche Ränder oben und unten" ist damit NICHT erreicht, und es ist mit diesen
+> Konstanten auch nicht erreichbar.** Der Fehler liegt in der Prämisse dieses Plans,
+> nicht in der Umsetzung.
+>
+> Beide Dateien setzen die Sterne auf `y = TOP_PAD + i * ROW_H + jitter` für
+> `i ∈ 0…n-1`, der letzte Stern sitzt also bei `TOP_PAD + (n-1) * ROW_H`. Die
+> Leinwandhöhe rechnet aber mit `viewH = TOP_PAD + n * ROW_H + BOTTOM_PAD`. Damit
+> bleibt unter dem letzten Stern eine **komplette Phantom-Zeile** von `ROW_H` stehen,
+> und `BOTTOM_PAD` kommt erst darunter. Der sichtbare untere Rand ist also
+> `ROW_H + BOTTOM_PAD`, nicht `BOTTOM_PAD`.
+>
+> Gemessen an Playwright-Screenshots bei 375 px (5 Sterne): oben ~58 Einheiten,
+> unten ~138 bis zum Maskottchen — Faktor 2,4. Für `funken-sky` dasselbe Verhältnis
+> (131 gegen 55). **Zeile 35 dieses Plans behauptet, `BOTTOM_PAD` steuere „der
+> Abstand *bis zum Maskottchen*". Das stimmt nicht.** Task 1 war dadurch faktisch ein
+> visueller No-op (−9 Einheiten auf einen 138-Einheiten-Abstand).
+>
+> **Minimaler Fix** (bewusst NICHT unbeaufsichtigt gesetzt — er verändert die Höhe
+> beider Seiten und gehört mit einem iPhone-Blick zusammen):
+> `star-map.tsx` und `funken-sky.tsx`, jeweils die `viewH`-Zeile, auf
+> `Math.max(0, length - 1) * ROW_H`.
+>
+> **Mit zu entscheiden:** die `Math.max(430, …)` / `Math.max(200, …)`-Böden greifen
+> nach dem Fix bei bis zu 4 Sternen bzw. 2 Funken und lassen den unteren Rand dort
+> weiterhin tief. Sie sind unbenannte Magic Numbers ohne Kommentar. Details und die
+> Tabelle pro Sternzahl stehen in `AIC-STATUS.md`.
+
+
+
 Quelle: [`docs/superpowers/specs/2026-07-28-feinjustierung-runde-design.md`](../specs/2026-07-28-feinjustierung-runde-design.md), Pakete 5 und 6.
 
 ## Global Constraints
