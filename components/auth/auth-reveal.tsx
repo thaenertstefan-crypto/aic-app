@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronUp } from "lucide-react";
 
-import { AmbientBlobs } from "@/components/ui/ambient-blobs";
 import { Logo } from "@/components/brand/logo";
 import { MascotPeek } from "@/components/brand/mascot-peek";
 import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
@@ -152,18 +151,22 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
         )}
       </div>
 
-      {/* Hero-Panel: liegt darüber und schiebt beim Aufdecken nach oben weg. */}
+      {/* Hero-Panel: liegt darüber und schiebt beim Aufdecken nach oben weg.
+          Nachthimmel statt eigenem Verlauf — derselbe SkyBackdrop wie Dashboard,
+          /me und Kopfwetter, damit der Erstkontakt die Bildsprache der App
+          dahinter spricht. AmbientBlobs entfällt: der Himmel bringt seine eigene
+          Tiefe mit, zwei atmosphärische Ebenen übereinander werden matschig. */}
       <div
         className={cn(
           "absolute inset-0 z-20 isolate flex flex-col overflow-hidden",
-          "bg-linear-to-br from-secondary via-accent/60 to-background",
+          "bg-background",
           "transition-[translate,opacity] duration-1000 ease-out",
           revealed
             ? "pointer-events-none -translate-y-full opacity-0"
             : "translate-y-0 opacity-100",
         )}
       >
-        <AmbientBlobs className="-z-10" />
+        <SkyBackdrop />
 
         <div className="flex flex-1 flex-col">{hero}</div>
 
