@@ -56,6 +56,12 @@ export function NavigationSpinner() {
       const anchor = (e.target as Element | null)?.closest("a");
       if (!anchor) return;
 
+      // Opt-out: Bereiche, die ihre Navigation selbst inszenieren (Booster-Zoom).
+      // Dieser Listener hört in der CAPTURE-Phase — das preventDefault() der
+      // Booster-Zellen kommt zu spät, der Spinner erschiene sonst nach 150 ms
+      // mitten im Zoom. Lokal, ohne Nebenwirkung auf andere Navigationen.
+      if (anchor.closest('[data-nav-spinner="off"]')) return;
+
       const href = anchor.getAttribute("href");
       if (
         !href ||

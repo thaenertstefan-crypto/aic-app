@@ -50,7 +50,7 @@ export function BoosterCells() {
   // Zoom-Klasse, ohne dass der Render-Pfad eine Ref lesen muss.
   const [localOrigin, setLocalOrigin] = useState<{ x: number; y: number } | null>(null);
 
-  function handleClick(e: MouseEvent<HTMLAnchorElement>, href: string) {
+  function handleClick(e: MouseEvent<HTMLAnchorElement>, system: WeatherSystem) {
     // Modifier/Mittelklick → normaler Link (neuer Tab etc.).
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
       return;
@@ -63,7 +63,10 @@ export function BoosterCells() {
     const vy = r.top + r.height / 2;
     const c = containerRef.current?.getBoundingClientRect();
     setLocalOrigin(c ? { x: vx - c.left, y: vy - c.top } : null);
-    zoomInto({ x: vx, y: vy }, () => router.push(href));
+    zoomInto(
+      { rect: { x: vx, y: vy, size: r.width }, variant: system.variant },
+      () => router.push(system.href),
+    );
   }
 
   const pushing = phase === "zooming";
@@ -71,6 +74,7 @@ export function BoosterCells() {
   return (
     <div
       ref={containerRef}
+      data-nav-spinner="off"
       className={pushing ? "booster-cells-zoom" : undefined}
       style={
         pushing && localOrigin
@@ -85,7 +89,7 @@ export function BoosterCells() {
             <Reveal key={s.href} delay={i * 0.09} className={left ? "self-start" : "self-end"}>
               <Link
                 href={s.href}
-                onClick={(e) => handleClick(e, s.href)}
+                onClick={(e) => handleClick(e, s)}
                 aria-label={`${s.title} — ${s.feeling}`}
                 className="group block w-[min(17rem,82vw)] rounded-xl px-3 py-3 transition-[background-color,scale] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
               >
