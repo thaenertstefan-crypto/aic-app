@@ -5,6 +5,13 @@
 // gerenderten Attribute (aria-label/title/placeholder/alt). Kommentare und
 // KI-Prompt-Strings sind absichtlich ausgenommen: dort ist die Glyphe egal, und
 // ein breites Gate würde >100 harmlose Stellen flaggen ohne einen echten Bug.
+//
+// ZUSÄTZLICH unter lib/content/: dort steht Copy in String-Literalen statt in
+// JSX, wird aber genauso gerendert — die JSX-Matcher greifen dort per
+// Konstruktion nicht. Das war eine echte Lücke, keine bewusste Verengung: in
+// onboarding-intro.ts standen dadurch 5 falsche Schließzeichen auf der ersten
+// Fläche, die ein neuer Nutzer überhaupt sieht. Der Content-Matcher gilt NUR
+// für diesen Ordner; die Kommentar-Ausnahme bleibt auch dort bestehen.
 // Exit 1 bei Verstößen. Vorbild: check-contrast.mjs.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -20,6 +27,12 @@ const JSX_TEXT = new RegExp(`>[^<>]*${BAD}[^<>]*<`);
 const RENDERED_ATTR = new RegExp(`(?:aria-label|title|placeholder|alt)=\\{?["\`][^"\`]*${BAD}`);
 const BAD_RE = new RegExp(BAD);
 
+// Nur für lib/content/: das BAD-Muster innerhalb eines String-Literals. Die
+// Copy dort ist mit ' delimitiert (sonst würde das " im Text das Literal
+// beenden), ` und " sind der Vollständigkeit halber mit drin.
+const CONTENT_DIR = "lib/content/";
+const CONTENT_STRING = new RegExp(`(?:'|\`|")[^'\`]*${BAD}`);
+
 function walk(dir) {
   const out = [];
   for (const name of readdirSync(dir)) {
@@ -34,14 +47,20 @@ const files = SCAN_DIRS.flatMap((d) => walk(join(ROOT, d)));
 const violations = [];
 
 for (const file of files) {
+  const rel = relative(ROOT, file).replace(/\\/g, "/");
+  const isContent = rel.startsWith(CONTENT_DIR);
   const lines = readFileSync(file, "utf8").split("\n");
   lines.forEach((line, i) => {
     if (/^\s*(\/\/|\*|\/\*)/.test(line)) return; // ganze Kommentarzeile überspringen
     if (!BAD_RE.test(line)) return;
-    if (JSX_TEXT.test(line) || RENDERED_ATTR.test(line)) {
+    if (
+      JSX_TEXT.test(line) ||
+      RENDERED_ATTR.test(line) ||
+      (isContent && CONTENT_STRING.test(line))
+    ) {
       const snippet = line.trim();
       violations.push({
-        rel: relative(ROOT, file).replace(/\\/g, "/"),
+        rel,
         line: i + 1,
         snippet: snippet.length > 70 ? `${snippet.slice(0, 67)}…` : snippet,
       });

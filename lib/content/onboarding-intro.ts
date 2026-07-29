@@ -38,7 +38,7 @@ export function confidenceReaction(score: number): OnboardingIntroCard {
     return {
       title: 'Das war mutig.',
       body: [
-        'Danke für deine Ehrlichkeit – zu mir und vor allem zu dir selbst. Es ist nicht immer leicht, sich die Wahrheit einzugestehen. Aber nur wer wirklich **ehrlich zu sich selbst** ist, wird es schaffen, das Gefühl von „gut genug" zurückzugewinnen.',
+        'Danke für deine Ehrlichkeit – zu mir und vor allem zu dir selbst. Es ist nicht immer leicht, sich die Wahrheit einzugestehen. Aber nur wer wirklich **ehrlich zu sich selbst** ist, wird es schaffen, das Gefühl von „gut genug“ zurückzugewinnen.',
       ],
     };
   }
@@ -67,7 +67,7 @@ export function confidenceReaction(score: number): OnboardingIntroCard {
 export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
   {
     // intro2 (Schritt 6) — „Me"-Überblick: Prämisse + die drei Anlaufpunkte
-    title: 'Was dich erwartet: „Me"',
+    title: 'Was dich erwartet: „Me“',
     body: [
       'Die AIC-App vertritt eine zentrale Prämisse, die mein Leben seit ihrer Entdeckung komplett verändert hat: Die Essenz eines gesunden Selbstbewusstseins ist das: *Sei dir bewusst, wer du bist.* – und zwar auf einer tieferen Ebene, als du sie bisher vielleicht betrachtet hast.',
       'Denn nur wenn du dich wirklich kennst, kannst du dein Leben so gestalten, dass du die Dinge tust, die dir wirklich Energie geben, statt sie dir zu nehmen.',
@@ -94,7 +94,7 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
     title: 'Deine Bill of Rights',
     body: [
       'Und dann gibt es noch deine **inneren Regeln**. Sie sind wie unbewusste Rechte, die wir uns selbst geben und die uns sagen, was wir dürfen und was nicht.',
-      'Leider sind sie nicht immer nützlich – vor allem, wenn sie „Ich darf niemanden enttäuschen" lauten und uns vom Weg abbringen, der uns an unseren Sternen vorbeiführt.',
+      'Leider sind sie nicht immer nützlich – vor allem, wenn sie „Ich darf niemanden enttäuschen“ lauten und uns vom Weg abbringen, der uns an unseren Sternen vorbeiführt.',
       'Diese App hilft dir, deine inneren Regeln neu zu schreiben und dir selbst die Rechte zu verleihen, nach denen du wirklich leben willst.',
       'Aber eins sei von Anfang an ganz klar gesagt:',
     ],
@@ -111,14 +111,14 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
     title: 'Was dich erwartet: Kopfwetter',
     body: [
       'Das Kopfwetter ist der zweite Teil dieser App und stellt dir eine Reihe von Schnellhilfen bereit, wenn es mal etwas stürmisch wird.',
-      'Sie helfen dir, Overthinking-Spiralen zu überwinden, eine schuldgefühlfreie „Nein"-Antwort zu formulieren oder dir selbst Rückenwind zu geben, bevor du in ein nervenaufreibendes Gespräch, Treffen oder eine Präsentation gehst. Sprich: *schnell abrufbare kleine Unterstützer für mittendrin im Alltag*.',
+      'Sie helfen dir, Overthinking-Spiralen zu überwinden, eine schuldgefühlfreie „Nein“-Antwort zu formulieren oder dir selbst Rückenwind zu geben, bevor du in ein nervenaufreibendes Gespräch, Treffen oder eine Präsentation gehst. Sprich: *schnell abrufbare kleine Unterstützer für mittendrin im Alltag*.',
     ],
   },
   {
     // intro8 (Schritt 12) — Abschluss
     title: 'Schön, dass du da bist.',
     body: [
-      '„Me", um dich Stück für Stück kennenzulernen. Das Kopfwetter, um dir im Alltag den Rücken zu stärken. Zusammen bringen sie dich zu dem Gefühl zurück, das eigentlich dein Normalzustand sein sollte: *ich bin gut genug*.',
+      '„Me“, um dich Stück für Stück kennenzulernen. Das Kopfwetter, um dir im Alltag den Rücken zu stärken. Zusammen bringen sie dich zu dem Gefühl zurück, das eigentlich dein Normalzustand sein sollte: *ich bin gut genug*.',
       'Bereit?',
     ],
   },
