@@ -46,6 +46,13 @@ const MASCOT_BOX = 63;
 const TOP_PAD = EDGE_PAD + Y_JITTER_RESERVE;
 const BOTTOM_PAD = EDGE_PAD + Y_JITTER_RESERVE + MASCOT_BOX;
 
+/** Mindesthöhe der Bühne. Ohne sie kollabiert die Karte bei ein bis zwei
+ *  Sternen zu einem Streifen und verliert ihre Tiefenwirkung — der Wert ist
+ *  rein visuell gesetzt, nicht aus den Abständen abgeleitet. Achtung bei der
+ *  Abnahme: bis 3 Sterne dominiert dieser Boden, Änderungen an der Formel
+ *  darunter sind dann unsichtbar. */
+const MIN_VIEW_H = 430;
+
 /** Fokus-Stern: Held-Größe (px) und vertikale Zielposition (Anteil der Höhe). */
 const FOCUS_STAR_SIZE = 64;
 const FOCUS_STAR_TOP = 0.26;
@@ -108,7 +115,13 @@ function layoutStars(wants: WantItem[]): { stars: PlacedStar[]; viewH: number } 
       side,
     };
   });
-  const viewH = Math.max(430, TOP_PAD + ordered.length * ROW_H + BOTTOM_PAD);
+  // Der LETZTE Stern sitzt bei TOP_PAD + (n-1) * ROW_H — nicht bei n * ROW_H.
+  // Mit n * ROW_H entstand darunter exakt eine leere Zeile, der Rand war also
+  // 40 + 80 = 120 statt der beabsichtigten EDGE_PAD = 40.
+  const viewH = Math.max(
+    MIN_VIEW_H,
+    TOP_PAD + Math.max(0, ordered.length - 1) * ROW_H + BOTTOM_PAD,
+  );
   return { stars, viewH };
 }
 

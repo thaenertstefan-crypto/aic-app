@@ -36,6 +36,11 @@ const Y_JITTER_RESERVE = 15;
 const TOP_PAD = EDGE_PAD + Y_JITTER_RESERVE;
 const BOTTOM_PAD = EDGE_PAD + Y_JITTER_RESERVE;
 
+/** Mindesthöhe der Bühne — Schwesterwert zu MIN_VIEW_H auf der Sternenkarte,
+ *  aber kleiner: hier hängt kein Maskottchen drunter. Rein visuell gesetzt.
+ *  Bis 2 Funken dominiert dieser Boden die Höhe. */
+const MIN_VIEW_H = 200;
+
 /** Stabiler Hash 0..1 aus einem String — gleiche Konstellation bei jedem Besuch. */
 function hash01(seed: string): number {
   let h = 0;
@@ -68,7 +73,11 @@ function layout(funken: BetItem[]): { placed: Placed[]; viewH: number } {
       side,
     };
   });
-  const viewH = Math.max(200, TOP_PAD + funken.length * ROW_H + BOTTOM_PAD);
+  // Wie auf der Sternenkarte: der letzte Funke sitzt bei TOP_PAD + (n-1)*ROW_H.
+  const viewH = Math.max(
+    MIN_VIEW_H,
+    TOP_PAD + Math.max(0, funken.length - 1) * ROW_H + BOTTOM_PAD,
+  );
   return { placed, viewH };
 }
 
