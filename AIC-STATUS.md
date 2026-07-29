@@ -5,6 +5,28 @@ _Maintained by the `/feierabend` skill at the end of each session. Read this at 
 _Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. vertagte Plan per `subagent-driven-development` umgesetzt: PressureField-Grund + Maeander-Flow + Nebenfix, Commits `62a8f99..f06499b`, nach `main` gepusht, Final Review (opus) Ready = Yes, tsc+gate+build gruen. iPhone-Final + Re-Critique offen. Zuvor am 23.07.: `/booster` kritisiert (27/40) + Redesign per brainstorming durchgeplant — Spec `89df50c` + Plan `c0d36a5`. Davor am selben Tag: `/me/bill-of-rights` in zwei Sessions ueberarbeitet — Runde 1 „Der gesteuerte Kurs"-Nachthimmel-Szene `e352d32..b03c706`, Runde 2 Nachbesserung nach iPhone-Feedback `0a5f947`: Maskottchen raus, Gold-Siegel als Kopf, dezente Sternbilder statt Kurslinie, /values-grosses weisses Intro, Wants-Stil-Buttons mit Gold-CTA. Alles gepusht, tsc+gate+build gruen, iPhone-Final offen. Davor: Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbeitet, `e2add09..98d1c2b`.)_
 
 ## Current State
+- **Plan 1 (Onboarding) komplett umgesetzt und gepusht `05c14e9..d75b947` (Nacht vom 28./29.07.,
+  vorgezogen in den 22-Uhr-Slot, fertiggestellt im 03:01-Slot).** Alle 5 Tasks: (1) winziger
+  `RichText`-Renderer (`**fett**` / `*kursiv*`, bewusst kein Markdown-Parser) plus Betonungen in
+  allen Kartentexten; (2) Kompass im Onboarding mit vier Beispiel-Emojis statt dauerhaft gedimmt
+  — aus der echten Emoji-Quelle abgeleitet, damit die Vorschau nicht abdriften kann, und die
+  Dämpfungsregel auf `/me` bleibt bewusst wie sie war; (3) Stern-Ornament mit kräftigerem
+  Grundschein plus Glitzer-Blitz auf 5 s gegen den 4-s-Grundrhythmus, damit das Funkeln
+  unregelmäßig wirkt; (4) Siegel-Einzug geglättet (Opacity-Knick raus, Glow wartet den Stempel
+  ab); (5) Abschluss → Dashboard als Sternenhimmel-Übergabe statt Spinner und Hard-Reload.
+  **Zwei echte Laufzeitfehler kamen erst im Review von Task 5 heraus, beide für alle drei Gates
+  unsichtbar:** (a) der Retraction-Effect hing an `[state.error]`, aber alle Fehlerpfade der
+  Server-Action liefern *konstante* Strings — beim zweiten identischen Fehler wäre der Effect nie
+  wieder gelaufen und der Nutzer hätte dauerhaft vor einem unsichtbaren Screen gesessen, ohne
+  Ausweg außer Reload. Läuft jetzt über die fallende Flanke von `pending`. (b) Die Navigation
+  feuerte bei 900 ms, während der letzte Zünd-Stern erst bei 1100 ms fertig ist — Timing
+  angeglichen. Dazu drei Kleinere: `transition-opacity` auf einem GSAP-getweenten Element,
+  klickbarer unsichtbarer Button (konnte eine zweite Server-Action auslösen), Ein-Frame-Blitz
+  der Zünd-Sterne bei reduced motion.
+  **Verifikations-Grenze, die zählt:** Plan 1 liegt größtenteils auf `/onboarding`, und dorthin
+  kommt der E2E-Account strukturell nicht — er hat `onboarding_completed = true`, das Onboarding
+  zeigt sich pro Nutzer einmal. Tasks 1, 2 und 5 sind per Browser-Check **gar nicht erreichbar**;
+  gesehen habe ich nur Tasks 3 und 4 über die geteilten Ornamente auf `/me`.
 - **Nacht-Slot 2/3 durchgelaufen (2026-07-28, 22:01) — Plan 4 (Wants + Sternschmiede), alle 5
   Tasks umgesetzt und gepusht `122e33d..4ba551b`.** (1) Ränder der Sternenkarte aus einem
   `EDGE_PAD` abgeleitet statt handgesetzt; (2) „Lust auf Neues?" aus dem Button-Stapel in einen
@@ -162,6 +184,36 @@ _Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. ve
 
 > **Durch die Roadmap-Session 2026-07-23 ERLEDIGT** (die einzeln weiter unten gelisteten Punkte sind damit geschlossen): Wants Gold-vs-Rose-Modulfarbe entschieden + gebaut (C1), `--celebrate` im Kontrast-Gate (C1), Stale-„Ersetzen-Toggle"-Label umbenannt (C1), funken-sky `aria-live` + Backdrop-a11y (C2), `savedCount`->`openCount` (C3), Leitsatz-Runde platziert (C4), Yang-Bonus-Toggle auf Grid-Ausklappen (C5), `/impeccable extract` Fokus-Ebene -> geteiltes `useDialogFocus`-Primitive (D1), Seitentitel-Konsistenz entschieden + Auswertung angeglichen (E1), flaechenuebergreifende Abschluss-Farbe entschieden = Gold bleibt (E2), FK-CASCADE auf Prod angewandt (A1). **Real noch offen: nur Stefans iPhone-Gate + die geschobenen Re-Critiques** (die iPhone-Check-Zeilen unten bleiben gueltig, plus die neu dazugekommenen Flaechen C4/E1/D1/Gold-Kachel).
 
+- **Onboarding (Plan 1) iPhone-Final offen — braucht einen FRISCHEN Account (2026-07-29, `d75b947`).**
+  Das Onboarding zeigt sich pro Nutzer genau einmal, der Browser-Check konnte es also überhaupt
+  nicht sehen. Durchklicken intro1–intro8: (a) Fett und Kursiv sitzen an den geplanten Stellen,
+  **kein übrig gebliebenes `*` im Text**; (b) intro3 und die Mini-Vorschau in intro2 — Kompass
+  leuchtet voll mit vier Emojis auf N/O/S/W; in der `size-9`-Vorschau sind sie winzig, wenn sie
+  dort matschen ist das ein Folge-Thema, kein Blocker; (c) intro4 und `/me` — Stern hat einen
+  kräftigeren Grundschein und blitzt unregelmäßig auf; die Sternenkarte auf `/me/wants` darf sich
+  NICHT verändert haben (dort läuft `want-star-twinkle`); (d) intro5 und `/me` — Siegel stempelt
+  sich in EINEM Zug ein, kein Zwei-Phasen-Eindruck, Glühen setzt erst danach ein.
+  **(e) Der große Punkt — „Ich bin bereit" tippen:** Karte, Fortschrittsbalken und Buttons faden,
+  dann löst sich das Maskottchen auf und im Himmel gehen nacheinander Sterne an. **Bleibt der
+  Himmel wirklich stehen?** Kein Weiß-Blitz, kein Neuaufbau zwischen Onboarding und Dashboard.
+  Danach staffelt das Dashboard seine Abschnitte von oben ein. Kein Spinner mehr.
+  **Bekannter Artefakt, den du sehen wirst und der bewusst offen ist:** Die sechs Zünd-Sterne
+  gehören der Onboarding-Route und verschwinden beim Routenwechsel — der Grund-Nachthimmel bleibt,
+  die sechs Extra-Lichter blinken beim Ankommen weg. Sie mitzunehmen hieße, sie in eine geteilte
+  Layout-Ebene zu heben (wie beim Wants→Schmiede-Warp). Das ist eine Architektur-Entscheidung, die
+  der Plan nicht vorsah und die nachts niemand visuell verifizieren kann — deshalb nur die
+  Timing-Hälfte gefixt. **Deine Entscheidung, ob es stört.**
+  Zusätzlich mit Absicht prüfen: Server-Fehler beim Abschluss (z.B. Flugmodus) → Karte muss mit
+  Fehlermeldung zurückkommen, auch beim ZWEITEN Versuch mit demselben Fehler.
+- **⚠️ Gerenderte ASCII-Anführungszeichen in `lib/content/onboarding-intro.ts` (vorbestehend,
+  2026-07-29 entdeckt).** Die Datei hat 10 öffnende `„` und **null** korrekte `"` — jede deutsche
+  Anführung in der Onboarding-Copy schließt mit einem ASCII-Zeichen. Betroffen sind GERENDERTE
+  Strings (u.a. „gut genug", der Kartentitel „Me", „Ich darf niemanden enttäuschen", „Nein"), nicht
+  nur Kommentare. `check-typography.mjs` matcht nur JSX-Textknoten (`>…<`), eine `.ts`-Content-Datei
+  fällt per Konstruktion durch — der Datei-Header deklariert die Regel sogar selbst und bricht sie
+  in derselben Zeile. **Nicht in Plan 1 gefixt**, weil die Runde ausdrücklich keinen Prosa-Drift
+  erlauben sollte. Eigene kleine Runde wert — und die Frage, ob das Typo-Gate Content-Dateien
+  mitnehmen soll (das wäre eine echte Lücke, keine Verbreiterung auf Kommentare).
 - **⚠️ PLANDEFEKT Plan 4: die Phantom-Zeile — das Goal „gleiche Ränder oben und unten" ist NICHT
   erreicht und mit den Konstanten des Plans auch nicht erreichbar (2026-07-28, `4ba551b`).**
   Beide Schwester-Dateien setzen die Sterne auf `y = TOP_PAD + i * ROW_H`, der letzte also bei
