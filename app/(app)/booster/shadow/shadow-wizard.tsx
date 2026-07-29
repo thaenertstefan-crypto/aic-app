@@ -448,17 +448,21 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
           Ziel melden, das das echte Icon danach noch verlässt (Versatz beim
           Übergeben). Fade allein hat keine Bewegung, also keine Diskrepanz. */}
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in duration-500">
-        {/* Draft restore prompt */}
-        {pendingDraft && (
-          <DraftRestoreBanner onRestore={restoreDraft} onDiscard={clearDraft} />
-        )}
-
+        {/* Signatur vor dem Entwurfs-Hinweis: der Zoom-Klon fliegt auf einen
+            vorausberechneten Landeplatz (booster-zoom.tsx → LANDING_Y). Stünde
+            der Banner darüber, säße das Icon bei vorhandenem Entwurf um
+            Bannerhöhe + gap-6 tiefer und die Landung ginge daneben. */}
         <div className="flex flex-col items-center gap-3 text-center">
           <ModuleIcon variant="shadow" />
           <p className="text-base leading-relaxed text-muted-foreground">
             Etwas staut sich an? Dann lass es raus — auf deine Art.
           </p>
         </div>
+
+        {/* Draft restore prompt */}
+        {pendingDraft && (
+          <DraftRestoreBanner onRestore={restoreDraft} onDiscard={clearDraft} />
+        )}
 
         <button
           type="button"

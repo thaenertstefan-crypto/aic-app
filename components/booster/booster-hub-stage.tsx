@@ -24,7 +24,12 @@ import {
  */
 export function BoosterHubStage({ children }: { children: ReactNode }) {
   const { phase, stageOrigin } = useBoosterZoom();
-  const pushing = phase === "pushing";
+  // Bewusst jede Phase außer „idle“, nicht nur „pushing“: die Phase wechselt am
+  // Push-Ende weiter, die Navigation kann zu diesem Zeitpunkt aber noch laufen —
+  // der Hub ist dann noch gemountet und würde beim Entfernen der Klasse
+  // schlagartig wieder voll sichtbar aufploppen. Der `both`-Fill der Animation
+  // hält den Endzustand (scale, Opacity 0), bis die Seite wirklich wechselt.
+  const pushing = phase !== "idle";
 
   return (
     <div className={pushing ? "booster-stage-clip" : undefined}>
