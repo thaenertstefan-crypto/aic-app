@@ -42,13 +42,20 @@ import { completeOnboardingAction } from "@/app/onboarding/onboarding.actions";
 const POST_LOGIN_MAX_AGE_MS = 10_000;
 
 /** Sternenhimmel-Übergabe aufs Dashboard: Karte/Fortschritt/Navigation faden
- *  (0–400 ms), Maskottchen löst sich auf und der Himmel zündet Sterne
- *  (400–900 ms), danach wird navigiert. */
+ *  (0–400 ms), danach löst sich das Maskottchen auf und der Himmel zündet
+ *  Sterne, bevor navigiert wird. */
 const HANDOVER_FADE_MS = 400;
-const HANDOVER_TOTAL_MS = 900;
+/** Kein freier Wert — an die Dauer der Zünd-Sequenz in `IgnitingSky`
+ *  gebunden: letzter Stern zündet bei 600 ms Delay und braucht 500 ms
+ *  Animationsdauer, ist also erst bei 1100 ms fertig. Muss mindestens so
+ *  groß bleiben, sonst navigiert `router.push` mitten in die laufende
+ *  Zünd-Animation hinein. */
+const HANDOVER_TOTAL_MS = 1100;
 /** Notbremse: greift die Client-Navigation nicht (Onboarding-Gate sieht das
- *  Profil-Flag noch nicht), holt der harte Redirect die Übergabe ein. */
-const HANDOVER_FALLBACK_MS = 1500;
+ *  Profil-Flag noch nicht), holt der harte Redirect die Übergabe ein. Sitzt
+ *  mit Abstand hinter HANDOVER_TOTAL_MS, damit router.push zuerst eine faire
+ *  Chance bekommt. */
+const HANDOVER_FALLBACK_MS = 1700;
 
 type Step =
   | "name"
@@ -199,15 +206,18 @@ export default function OnboardingPage() {
     };
   }, [state.success, reduced, router]);
 
-  // Fehlerfall: die Sequenz zieht sich zurück, die Karte kommt mit FormError
-  // zurück — wie bisher.
+  // Rücknahme der Übergabe-Sequenz, sobald die Server-Action abgeschlossen ist,
+  // ohne Erfolg — die Karte kommt mit FormError zurück. Trigger ist die
+  // fallende `pending`-Flanke, nicht der Fehlertext: zwei identische Fehler
+  // hintereinander (z. B. abgelaufene Session) liefern denselben String, und
+  // `Object.is` würde den Effect dann beim zweiten Versuch nicht erneut
+  // feuern — die Übergabe bliebe für immer ausgeblendet hängen.
   useEffect(() => {
-    if (state.error) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Rücknahme der Übergabe-Sequenz nach Server-Fehler
-      setHandover(false);
-      handoverStart.current = null;
-    }
-  }, [state.error]);
+    if (pending || state.success) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Rücknahme der Übergabe-Sequenz nach abgeschlossener, erfolgloser Server-Action
+    setHandover(false);
+    handoverStart.current = null;
+  }, [pending, state.success]);
 
   // Mascot-Entrance: entweder die Login→Onboarding-Sprungsequenz (nur beim
   // allerersten Eintritt nach Login) oder der normale Mount-Tween.
@@ -343,8 +353,11 @@ export default function OnboardingPage() {
     <div className="flex min-h-svh flex-col justify-center px-4 py-8">
       {/* Sternenhimmel-Übergabe: der Nachthimmel zündet gestaffelt Sterne,
           während Karte und Maskottchen faden. Kein Spinner — die Fläche selbst
-          trägt die Wartezeit. */}
-      {handover && <IgnitingSky />}
+          trägt die Wartezeit. `!reduced` hier am Call-Site geprüft (nicht nur
+          intern in IgnitingSky): der Hook dort startet frisch bei `false` und
+          flippt erst im eigenen Effect, sonst blitzen die Sterne bei Reduced
+          Motion einen Frame lang auf, bevor die Komponente `null` liefert. */}
+      {handover && !reduced && <IgnitingSky />}
 
       {/* Clean-Cover für den Login→Onboarding-Übergang: verdeckt Logo + Layout,
           sodass beim Sprung nur das Maskottchen sichtbar ist. Immer gerendert
@@ -385,16 +398,22 @@ export default function OnboardingPage() {
 
       {/* Inhalt (Fortschritt + Karte + Navigation) — während der Intro
           ausgeblendet, blendet danach unter dem Maskottchen ein. z-50 → über
-          dem Cover. */}
+          dem Cover. Keine `transition-opacity`-Klasse hier: GSAP tweent die
+          inline-Opacity dieses Elements während der Login→Onboarding-Intro
+          frameweise, eine zusätzliche CSS-Transition würde jeden Frame
+          nachziehen und die 0,9s-Intro verschmieren. Die Transition sitzt
+          deshalb nur inline im Handover-Zweig. `pointer-events-none` im
+          Handover, damit die unsichtbaren Buttons keine Taps mehr annehmen,
+          während sie noch (kurz) enabled sind. */}
       <div
         ref={contentRef}
-        className="relative z-50 flex flex-col transition-opacity ease-out"
+        className={cn("relative z-50 flex flex-col", handover && "pointer-events-none")}
         suppressHydrationWarning
         style={
           showLoginIntro
             ? { opacity: 0 }
             : handover
-              ? { opacity: 0, transitionDuration: `${HANDOVER_FADE_MS}ms` }
+              ? { opacity: 0, transition: `opacity ${HANDOVER_FADE_MS}ms ease-out` }
               : undefined
         }
       >
