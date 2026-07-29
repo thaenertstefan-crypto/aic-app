@@ -8,6 +8,7 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { Mascot } from "@/components/brand/mascot";
+import { ModuleIcon } from "@/components/booster/module-icon";
 import { markCleanserIntroSeenAction } from "@/app/(app)/cleansers/actions";
 import { getCleanserIntro } from "@/lib/utils/cleanser-intros";
 import { Card, CardContent } from "@/components/ui/card";
@@ -81,6 +82,8 @@ export function ConfidenceBooster({
         }
       />
       <div className="mx-auto w-full max-w-md space-y-10 px-4 py-6">
+        <ModuleIcon variant="confidence" />
+
         {/* Hero: der akute Moment-Flow */}
         <Link href="/booster/confidence/moment" className="block">
           <Card className="border-cleanser-confidence/40 bg-cleanser-confidence/10 transition-colors hover:bg-cleanser-confidence/15">

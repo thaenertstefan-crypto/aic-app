@@ -14,6 +14,7 @@ import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { ShadowIntroMascot } from "@/components/recipes/shadow-intro-mascot";
 import { Mascot } from "@/components/brand/mascot";
+import { ModuleIcon } from "@/components/booster/module-icon";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
@@ -444,7 +445,7 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
         )}
 
         <div className="flex flex-col items-center gap-3 text-center">
-          <Mascot expression="curious" size="md" />
+          <ModuleIcon variant="shadow" />
           <p className="text-base leading-relaxed text-muted-foreground">
             Etwas staut sich an? Dann lass es raus — auf deine Art.
           </p>

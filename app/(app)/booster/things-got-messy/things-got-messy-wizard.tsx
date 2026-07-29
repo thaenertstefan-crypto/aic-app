@@ -19,6 +19,7 @@ import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { ThingsGotMessyIntroMascot } from "@/components/recipes/things-got-messy-intro-mascot";
 import { Mascot } from "@/components/brand/mascot";
+import { ModuleIcon } from "@/components/booster/module-icon";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
@@ -482,7 +483,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
 
         {/* Begleiter + Einstieg */}
         <div className="flex flex-col items-center gap-3 text-center">
-          <Mascot expression="smile" size="md" />
+          <ModuleIcon variant="messy" />
           <p className="text-base leading-relaxed text-muted-foreground">
             Es ist messy geworden — das passiert. Erzähl einfach, was passiert
             ist — die Einordnung übernehmen wir danach gemeinsam.

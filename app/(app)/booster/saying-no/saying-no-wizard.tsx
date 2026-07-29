@@ -25,6 +25,7 @@ import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { SayingNoIntroMascot } from "@/components/recipes/saying-no-intro-mascot";
 import { Mascot } from "@/components/brand/mascot";
+import { ModuleIcon } from "@/components/booster/module-icon";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
@@ -1053,7 +1054,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
         )}
 
         <div className="flex flex-col items-center gap-3 text-center">
-          <Mascot expression="smile" size="md" />
+          <ModuleIcon variant="sayingNo" />
           <p className="text-base leading-relaxed text-muted-foreground">
             Schön, dass du da bist. Womit wollen wir üben?
           </p>

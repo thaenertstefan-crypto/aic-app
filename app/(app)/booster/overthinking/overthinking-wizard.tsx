@@ -21,6 +21,7 @@ import {
   OverthinkingPeekCompanion,
 } from "@/components/recipes/overthinking-companion";
 import { OverthinkingIntroMascot } from "@/components/recipes/overthinking-intro-mascot";
+import { ModuleIcon } from "@/components/booster/module-icon";
 import type { MascotExpression } from "@/components/brand/mascot";
 import { Reveal } from "@/components/ui/reveal";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
@@ -741,6 +742,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
       />
       <div className="flex flex-1 flex-col px-4 py-6">
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col">
+          <ModuleIcon variant="overthinking" />
           {/* Progress dots */}
         <ProgressDots current={step} completed={false} />
 
