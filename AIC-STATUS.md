@@ -2,9 +2,28 @@
 
 _Maintained by the `/feierabend` skill at the end of each session. Read this at session start to get oriented before diving into the code._
 
-_Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. vertagte Plan per `subagent-driven-development` umgesetzt: PressureField-Grund + Maeander-Flow + Nebenfix, Commits `62a8f99..f06499b`, nach `main` gepusht, Final Review (opus) Ready = Yes, tsc+gate+build gruen. iPhone-Final + Re-Critique offen. Zuvor am 23.07.: `/booster` kritisiert (27/40) + Redesign per brainstorming durchgeplant — Spec `89df50c` + Plan `c0d36a5`. Davor am selben Tag: `/me/bill-of-rights` in zwei Sessions ueberarbeitet — Runde 1 „Der gesteuerte Kurs"-Nachthimmel-Szene `e352d32..b03c706`, Runde 2 Nachbesserung nach iPhone-Feedback `0a5f947`: Maskottchen raus, Gold-Siegel als Kopf, dezente Sternbilder statt Kurslinie, /values-grosses weisses Intro, Wants-Stil-Buttons mit Gold-CTA. Alles gepusht, tsc+gate+build gruen, iPhone-Final offen. Davor: Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbeitet, `e2add09..98d1c2b`.)_
+_Last updated: 2026-07-29 (REIBUNGS-RUNDE `886d86d..8499b91`: lint gruen + als viertes Gate scharf mit `--max-warnings=0`; Typo-Gate deckt `lib/content/` ab; `npm run e2e` sichert pro Route den ZUSTAND zu statt nur „hat gerendert"; Phantom-Zeile in `star-map`/`funken-sky` gefixt, Boeden heissen `MIN_VIEW_H`. tsc+gate+build gruen, beide Gegenproben (Gate rot bei Verstoss, E2E rot bei falschem Marker) bestanden. iPhone-Abnahme der Phantom-Zeile offen. Zuvor am 26.07.: Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. vertagte Plan per `subagent-driven-development` umgesetzt: PressureField-Grund + Maeander-Flow + Nebenfix, Commits `62a8f99..f06499b`, nach `main` gepusht, Final Review (opus) Ready = Yes, tsc+gate+build gruen. iPhone-Final + Re-Critique offen. Zuvor am 23.07.: `/booster` kritisiert (27/40) + Redesign per brainstorming durchgeplant — Spec `89df50c` + Plan `c0d36a5`. Davor am selben Tag: `/me/bill-of-rights` in zwei Sessions ueberarbeitet — Runde 1 „Der gesteuerte Kurs"-Nachthimmel-Szene `e352d32..b03c706`, Runde 2 Nachbesserung nach iPhone-Feedback `0a5f947`: Maskottchen raus, Gold-Siegel als Kopf, dezente Sternbilder statt Kurslinie, /values-grosses weisses Intro, Wants-Stil-Buttons mit Gold-CTA. Alles gepusht, tsc+gate+build gruen, iPhone-Final offen. Davor: Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbeitet, `e2add09..98d1c2b`.)_
 
 ## Current State
+- **Reibungs-Runde umgesetzt und gepusht `886d86d..8499b91` (2026-07-29).** Die vier
+  wiederkehrenden Punkte aus der Daily Note vom 29.07., in dieser Reihenfolge, damit jedes
+  folgende Paket schon unter dem schaerferen Gate laeuft:
+  (1) **Lint gruen und als viertes Gate scharf** (`--max-warnings=0`). Es waren nicht die
+  angenommenen 3 Fehler, sondern 10 Errors + 2 Warnings in 5 Dateien — und alle liessen sich echt
+  fixen, ohne ein einziges neues `eslint-disable`: `evaluation-form` leitet die Phase jetzt aus den
+  beiden Action-States ab statt sie in zwei Effects nachzuziehen, `auth-reveal` setzt `heroGone` im
+  Cleanup zurueck, `booster-cells` und `funken-sky` halten den Tap-Origin als State (er wird im
+  selben Handler gesetzt wie die Phase, React batcht beide — kein Extra-Frame).
+  (2) **Typo-Gate deckt `lib/content/` ab**, 5 falsche Schliesszeichen in `onboarding-intro.ts`
+  geraeumt.
+  (3) **E2E mit Zustands-Zusicherung** statt blossem „hat gerendert".
+  (4) **Phantom-Zeile gefixt**, Hoehen-Boeden heissen jetzt `MIN_VIEW_H` und tragen ihre Begruendung.
+  **Zwei Befunde, die erst durch die neuen Werkzeuge sichtbar wurden:** die Gegenprobe zum
+  Lint-Gate war ohne `--max-warnings=0` gruen (eslint beendet bei reinen Warnings mit 0) — das Gate
+  haette weiter falsches Gruen gemeldet. Und der erste scharfe E2E-Lauf fand sofort, dass
+  `/me/values` und `/me/bill-of-rights` dem Test-Account die Intro-Sequenz zeigen, also seit jeher
+  gruen gemeldet wurden ohne etwas ueber Layout auszusagen. Siehe Open Items.
+  **Offen bleibt:** iPhone-Abnahme der Phantom-Zeile, `ffmpeg`, Plan 2 Task 4.
 - **Plan 2 Task 3 (Modul-Icon) umgesetzt und gepusht `e4cf71c..b395ca7` (2026-07-29).** Geteilte
   `BOOSTER_ART`-Map (`CellVariant → Wetter-Motiv`, per `keyof typeof CELLS` typgeprüft, also
   kann sie nicht auseinanderlaufen) plus `ModuleIcon`; verdrahtet an fünf Stellen. Der
@@ -231,17 +250,27 @@ _Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. ve
   Timing-Hälfte gefixt. **Deine Entscheidung, ob es stört.**
   Zusätzlich mit Absicht prüfen: Server-Fehler beim Abschluss (z.B. Flugmodus) → Karte muss mit
   Fehlermeldung zurückkommen, auch beim ZWEITEN Versuch mit demselben Fehler.
-- **⚠️ Gerenderte ASCII-Anführungszeichen in `lib/content/onboarding-intro.ts` (vorbestehend,
-  2026-07-29 entdeckt).** Die Datei hat 10 öffnende `„` und **null** korrekte `"` — jede deutsche
-  Anführung in der Onboarding-Copy schließt mit einem ASCII-Zeichen. Betroffen sind GERENDERTE
-  Strings (u.a. „gut genug", der Kartentitel „Me", „Ich darf niemanden enttäuschen", „Nein"), nicht
-  nur Kommentare. `check-typography.mjs` matcht nur JSX-Textknoten (`>…<`), eine `.ts`-Content-Datei
-  fällt per Konstruktion durch — der Datei-Header deklariert die Regel sogar selbst und bricht sie
-  in derselben Zeile. **Nicht in Plan 1 gefixt**, weil die Runde ausdrücklich keinen Prosa-Drift
-  erlauben sollte. Eigene kleine Runde wert — und die Frage, ob das Typo-Gate Content-Dateien
-  mitnehmen soll (das wäre eine echte Lücke, keine Verbreiterung auf Kommentare).
-- **⚠️ PLANDEFEKT Plan 4: die Phantom-Zeile — das Goal „gleiche Ränder oben und unten" ist NICHT
-  erreicht und mit den Konstanten des Plans auch nicht erreichbar (2026-07-28, `4ba551b`).**
+- **✅ ERLEDIGT 2026-07-29 (`f1d6b32`): ASCII-Anführungszeichen in `onboarding-intro.ts` +
+  Typo-Gate-Lücke.** Das Gate hat jetzt einen zweiten, eng gefassten Matcher **nur** für
+  `lib/content/`: das BAD-Muster innerhalb eines String-Literals. Die Kommentar-Ausnahme bleibt
+  auch dort. Damit kamen **5** echte Verstöße heraus (nicht 10 — von den 11 `„` standen 6 in
+  Kommentaren und sind bewusst außerhalb des Scopes): Zeilen 41, 70, 97, 114, 121, alle korrigiert.
+  Reihenfolge beim Verifizieren war Absicht: erst Matcher rot mit exakt diesen 5 Treffern, dann
+  Texte fixen, dann grün — ein Matcher, der nie rot war, beweist nichts.
+- **✅ ERLEDIGT 2026-07-29 (`8499b91`): Phantom-Zeile gefixt, Böden benannt.** `viewH` rechnet in
+  beiden Dateien jetzt mit `Math.max(0, n - 1) * ROW_H`; die Böden heißen `MIN_VIEW_H` (430 auf der
+  Karte, 200 im Funken-Himmel) und tragen ihre Begründung — sie bleiben bewusst, damit ein fast
+  leerer Himmel Raum behält. **Merksatz für jede künftige Abnahme, steht auch im Code:** bis
+  3 Sterne bzw. 2 Funken dominiert der Boden, Änderungen an der Formel darunter sind dann komplett
+  unsichtbar. Verifiziert per Ausmessen der E2E-Screenshots (5 Wants / 4 Funken), vorher→nachher:
+  `/me/wants` 2898→2667 px, `/me/wants/schmiede` 2856→2640 px — deckt sich mit den erwarteten
+  80 bzw. 76 viewBox-Einheiten. **iPhone-Abnahme steht noch aus:** unterer Rand muss jetzt dem
+  oberen entsprechen, und die kürzere Karte verlängert den `flex-1`-Spacer aus Task 2 — „Lust auf
+  Neues?" rutscht tiefer. Beides in EINEM Blick beurteilen.
+  **Punkte (b) und (c) aus der Analyse bleiben offen** (siehe unten): der `MASCOT_BOX`-Zuschlag bei
+  gerader Sternzahl und das doppelte `EDGE_PAD`.
+- **⚠️ Rest-Defekte aus der Phantom-Zeilen-Analyse, NICHT gefixt (2026-07-28, `4ba551b`).**
+  Historischer Kontext des Ursprungsbefunds:
   Beide Schwester-Dateien setzen die Sterne auf `y = TOP_PAD + i * ROW_H`, der letzte also bei
   `TOP_PAD + (n-1) * ROW_H`. Die Leinwandhöhe rechnet aber mit `TOP_PAD + n * ROW_H + BOTTOM_PAD`.
   Unter dem letzten Stern bleibt damit eine **komplette Phantom-Zeile** stehen, und `BOTTOM_PAD`
@@ -252,20 +281,7 @@ _Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. ve
   hat das Verhältnis immerhin von 2,95 auf 2,38 verbessert. Die Umsetzung ist korrekt — der Plan
   hat auf die falsche Größe gezielt (Plan-Zeile 35 behauptet, `BOTTOM_PAD` steuere den Abstand
   bis zum Maskottchen). Korrektur-Block steht auch oben im Plan-Dokument.
-  **Bewusst nicht unbeaufsichtigt gefixt.** Der Fix ist klein — in `star-map.tsx` und
-  `funken-sky.tsx` je die `viewH`-Zeile auf `Math.max(0, length - 1) * ROW_H` — aber er verändert
-  die Höhe beider Seiten und damit die Komposition, die du gerade tunst. Der Reviewer hat die
-  Kopplungen geprüft: GSAP-Zoom liest Live-Rects und ist nicht betroffen, Stern-Positionen und
-  `aspectRatio` skalieren mit, `key={wants.length}` ist unkritisch. Einzige echte Wechselwirkung:
-  eine kürzere Karte verlängert den `flex-1`-Spacer aus Task 2, „Lust auf Neues?" rutscht also
-  tiefer — beides in EINEM Blick beurteilen.
-  **Mit zu entscheiden, gehört in dieselbe Runde:**
-  (a) Die Böden `Math.max(430, …)` / `Math.max(200, …)` greifen nach dem Fix bei bis zu 4 Sternen
-  bzw. 2 Funken und lassen den unteren Rand dort weiterhin tief (n=1 → 309 Einheiten, n=2 → 229,
-  n=3 → 149, n=4 → 69, ab n=5 exakt 58). Echte Parität gibt es also erst ab 5 Sternen / 3 Funken.
-  Das kann gewollt sein — ein fast leerer Himmel darf Raum haben — ist aber unbenannt: `430` und
-  `200` sind kommentarlose Magic Numbers in Dateien, wo inzwischen jede andere Konstante ihre
-  Begründung trägt.
+  **Noch offen:**
   (b) `MASCOT_BOX` wird immer berechnet, das Maskottchen sitzt aber nur unten **links**. Bei
   gerader Sternzahl endet die Leiter rechts, der Zuschlag ist dann unnötig und der untere Rand
   liest ~103 statt 40 Einheiten. Mein Testfall mit 5 Sternen endet links, also im günstigen Fall.
@@ -393,24 +409,23 @@ _Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. ve
   Open Items (Auth/Signup, Booster-Intros, Wants/Schmiede, Onboarding). **Die Onboarding-Liste
   braucht einen frischen Account** — das Onboarding zeigt sich pro Nutzer einmal und war fuer den
   Browser-Check strukturell unerreichbar. Erst danach neue Flaechen aufmachen.
-- **Dann die zwei Plandefekte in EINER kleinen Runde:** Phantom-Zeile (`viewH` auf
-  `Math.max(0, length - 1) * ROW_H` in `star-map.tsx` und `funken-sky.tsx`) plus die Entscheidung
-  ueber die `Math.max(430, …)` / `Math.max(200, …)`-Boeden; und der fehlende `SkyBackdrop` hinter
-  der gegateten Signup-Karte. Der erste aendert die Hoehe derselben zwei Seiten, die du gerade
-  tunst — ein Geraete-Blick klaert beides, getrennt hiesse die Reise zweimal machen.
-- **`lib/content/*.ts` ins Typo-Gate aufnehmen** (eigener Matcher fuer String-Literale in
-  Content-Dateien, NICHT als Verbreiterung auf Kommentare), danach die 10 ASCII-Schliesszeichen in
-  `onboarding-intro.ts` raeumen. Schliesst eine echte Luecke bei gerendertem Text.
+- **~~Phantom-Zeile~~ ERLEDIGT `8499b91`, ~~Typo-Gate-Luecke~~ ERLEDIGT `f1d6b32`.** Beide oben in
+  den Open Items dokumentiert. **Noch offen aus demselben Bund: der fehlende `SkyBackdrop` hinter
+  der gegateten Signup-Karte** — das ist der letzte der zwei Plandefekte.
+- **⚠️ NEU 2026-07-29: der E2E-Account sieht auf `/me/values` und `/me/bill-of-rights` die
+  Intro-Sequenz.** Der erste scharfe Lauf mit Zustands-Zusicherung hat das sofort gefunden — beide
+  Routen galten bisher als gruen, sagten aber ueber Layout nichts aus, genau wie `/me/wants` vor dem
+  Bestuecken. Fix ist derselbe wie damals: `intro_seen` fuer die Slugs `values` und
+  `bill-of-rights` auf dem E2E-Account setzen (**nur** `thaenert.stefan+e2e@…`, nie Stefans echter
+  Account). Bewusst nicht ungefragt gemacht, weil es ein Schreibzugriff auf die Prod-DB ist.
 - **Plan 2 Task 4 (Zoom-Umbau) als beaufsichtigte Session ansetzen** — Task 3 ist die
   Voraussetzung und ist erledigt, der Plan traegt den vollstaendigen Code. Abnahme ist zu 100
   Prozent iPhone.
-- **Vorschlag aus der Nacht (du entscheidest): `scripts/e2e/verify.mjs` um eine Zustands-
-  Zusicherung erweitern.** Jede Route bekommt einen erwarteten Marker (Selektor oder
-  Textfragment); der Lauf schlaegt fehl, wenn die Route zwar rendert, aber nicht den Zustand
-  zeigt, der geprueft werden soll. Anlass: der erste Lauf meldete `/me/wants` und
-  `/me/wants/schmiede` als sauber, waehrend in Wirklichkeit die Intro-Sequenz und ein
-  Leer-Zustand auf dem Bild waren — die Flaechen, um die es in vier von fuenf Tasks ging, standen
-  gar nicht da. Macht aus „hat gerendert" ein „hat das Richtige gerendert".
+- **~~Zustands-Zusicherung in `verify.mjs`~~ ERLEDIGT `1f114e6`.** Routen tragen jetzt optionale
+  `expect`/`reject`-Marker (`data-e2e`-Attribute, bewusst keine Textfragmente — die Copy aendert
+  sich hier staendig). Bericht trennt „sauber gerendert" von „mit zugesichertem Zustand"; `·` heisst
+  Smoke-Test, `✓` heisst abgesichert. **Beim Weiterbauen:** neue Buehnen brauchen einen Marker,
+  sonst waechst die `·`-Zone stillschweigend wieder zu.
 - **Kopfwetter-Hub-Druckkarte umsetzen (bau-fertiger Wiedereinstieg, Stefans Wunsch fuer eine
   spaetere Session):** Plan `docs/superpowers/plans/2026-07-23-kopfwetter-hub-druckkarte.md`, 3
   Tasks, subagent-driven (empfohlen) oder inline. Verifikation je Task tsc + `npm run gate` + build;
@@ -418,7 +433,11 @@ _Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. ve
   27/40). Erledigt zugleich den `animate-bounce`-Detector-Fund und den alten Koordinaten-Offenpunkt.
 - **Der einzige verbleibende AIC-Block ist der iPhone-Verifikations-Stau — jetzt abarbeiten, bevor eine neue Flaeche aufgemacht wird.** Die komplette baubare Roadmap ist durch; alles Weitere haengt an Stefans Geraete-Gate. In Buendeln pro Reise am Live-Deploy abnehmen (ein Durchgang je Flaeche), dabei die **neu dazugekommenen** Aenderungen mitpruefen: (a) C4-Leitsatz an den drei Booster-Abschluessen (Overthinking/Schattenseite/Things-got-messy); (b) `/me`-Hub-Wants-Kachel jetzt gold; (c) E1-Auswertungs-Header (sticky Header + phasen-dynamischer Untertitel — die `SubPageHeader`-in-die-Form-Verschiebung testet die sticky-Klasse, die schon mal gezickt hat); (d) D1-Dialog-Verhalten (Escape/Schliessen/Fokus-Rueckkehr an Stern- und Funken-Fokus — verhaltens-identisch, aber die Fokus/Scroll-Klasse verdient einen Blick). **Danach die geschobenen Re-Critiques** der values/journey- und Wants-Flaechen (Erwartung: Scores steigen). Die detaillierten Check-Listen je Flaeche stehen unten unveraendert.
 - **`/me/bill-of-rights` am iPhone final abnehmen (Runde 2, `0a5f947`):** Siegel-Kopf sitzt sauber, Intro gross+weiss lesbar, die drei Sternbilder dezent (nicht zu hell), zwei Buttons einzeilig mit goldenem „Recht generieren". Ist die Sternbild-Dichte/-Position daneben, je Stern einen Tick in `constellations.tsx` (isolierte Koordinaten). Das ist die einzige frische Flaeche im iPhone-Stau.
-- **`npm run lint` gruen machen und ins `npm run gate` nehmen** (kleine, abgegrenzte Runde, Stefan entscheidet): die 3 vorbestehenden Sternschmiede-ESLint-Fehler raeumen, dann eslint an die Gate-Kette haengen — beendet das sessionweise „ist-vorbestehend"-Dazuschreiben und macht neue Lint-Regressionen zu harten Fehlern.
+- **~~`npm run lint` gruen machen und ins Gate nehmen~~ ERLEDIGT `886d86d`.** Es waren nicht 3,
+  sondern **10 Errors + 2 Warnings in 5 Dateien** — alle echt gefixt, kein einziges neues
+  `eslint-disable`. Gate laeuft mit `--max-warnings=0`: ohne das Flag blieb die Gegenprobe gruen,
+  weil eslint bei reinen Warnings mit 0 beendet. **Damit entfaellt der Zusatz „lint ist
+  vorbestehend rot, nicht debuggen" in Subagent-Dispatches** — er waere ab jetzt sogar falsch.
 - **Beim naechsten Wants-Anfassen Track F mitnehmen** (jetzt wo `useDialogFocus` die Dialog-Flaeche konsolidiert): generische Save-Error-Strings (`/impeccable clarify`), harter Karten-Remount bei Add/Delete (`/impeccable animate`), Vibe-Pillen als „(optional)" markieren, Fokus-Edit-Save-Erfolgssignal.
 - **Kuenftige Portal-Overlays auf `useDialogFocus` setzen** statt Focus/Scroll neu zu rollen (Memory `portal-focus-needs-preventscroll` aktualisiert).
 

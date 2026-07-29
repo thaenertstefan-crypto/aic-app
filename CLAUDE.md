@@ -31,6 +31,18 @@ A self-development companion app that turns workbook exercises into interactive 
 - Apply this convention to all new pages, layouts, and route handlers
 - **Nach Routen-Löschungen `.next` löschen** (`rm -rf .next`) — sonst schlägt `npx tsc --noEmit` mit Geister-Typen von den gelöschten Routen fehl
 
+## Verifikation
+- **Statische Gates:** `npx tsc --noEmit`, `npm run gate`, `npm run build`. `npm run gate` bündelt
+  Kontrast-, Typografie- und Motion-Check **und eslint** (`--max-warnings=0`). Alle drei sind auf
+  `main` grün — ein roter Lauf ist eine echte Regression, kein Altlast-Rauschen.
+- **Zustands-E2E:** `npm run dev` + `npm run e2e` fährt Routen bei 375px ab. Routen mit einem
+  `expect`/`reject`-Marker (`data-e2e`) sind mit `✓` markiert und sagen wirklich etwas aus; `·`
+  heißt „hat gerendert", mehr nicht. Neue Bühnen bekommen einen Marker, sonst wächst die
+  Smoke-Test-Zone.
+- **Das eigentliche Gate ist das iPhone.** Die statischen Gates sind blind für ganze Defektklassen
+  (GSAP nullt inline `translate`, gestapelte Opacity-Ebenen, backdrop-filter-Compositing, fehlende
+  View-Transitions in der iOS-PWA). Grün heißt „nicht offensichtlich kaputt", nicht „fertig".
+
 ## Session Routine
 - **At session start:** read `AIC-STATUS.md` (current state, open items, next steps) to get oriented instead of re-exploring the codebase.
 - **At session end:** run `/feierabend` (summarizes the session into the Obsidian vault as a Daily Note and refreshes `AIC-STATUS.md`).
