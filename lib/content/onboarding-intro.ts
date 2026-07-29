@@ -69,8 +69,8 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
     // intro2 (Schritt 6) — „Me"-Überblick: Prämisse + die drei Anlaufpunkte
     title: 'Was dich erwartet: „Me“',
     body: [
-      'Die AIC-App vertritt eine zentrale Prämisse, die mein Leben seit ihrer Entdeckung komplett verändert hat: Die Essenz eines gesunden Selbstbewusstseins ist das: *Sei dir bewusst, wer du bist.* – und zwar auf einer tieferen Ebene, als du sie bisher vielleicht betrachtet hast.',
-      'Denn nur wenn du dich wirklich kennst, kannst du dein Leben so gestalten, dass du die Dinge tust, die dir wirklich Energie geben, statt sie dir zu nehmen.',
+      'Die AIC-App vertritt eine zentrale Prämisse, die mein Leben seit ihrer Entdeckung komplett verändert hat: Die Essenz eines gesunden Selbstbewusstseins ist das: ***Sei dir bewusst, wer du bist.*** – und zwar auf einer tieferen Ebene, als du sie bisher vielleicht betrachtet hast.',
+      'Denn nur wenn du dich *wirklich* kennst, kannst du dein Leben so gestalten, dass du die Dinge tust, die dir wirklich Energie geben, statt sie dir zu nehmen.',
       'Wir müssen nur herausfinden, was diese Dinge sind! Dabei helfen dir vor allem **drei innere Anlaufpunkte**:',
     ],
   },
@@ -78,15 +78,15 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
     // intro3 (Schritt 7) — Anlaufpunkt 1: Werte (Kompass)
     title: 'Deine Werte',
     body: [
-      'Die fundamentale Grundlage für dein persönliches Wohlbefinden sind dabei deine **Werte**. Sie sind wie dein *innerer Kompass*, der dir den Weg weist und darauf zeigt, was dir wirklich wichtig ist, sei es Abenteuerlust oder Gelassenheit.',
+      'Die fundamentale Grundlage für dein persönliches Wohlbefinden sind dabei deine **Werte**. Sie sind wie dein innerer Kompass, der dir den Weg weist und darauf zeigt, was dir *wirklich* wichtig ist, sei es Abenteuerlust oder Gelassenheit.',
     ],
   },
   {
     // intro4 (Schritt 8) — Anlaufpunkt 2: Wants (Sterne)
     title: 'Deine Wants',
     body: [
-      'Deine **Wants** hingegen sind wie Sterne, nach denen du entlang dieses von deinem Kompass vorgegebenen Weges greifst. Sie sind Dinge, die echte Freudenquellen für dich sind, wie z.B. Wanderurlaube oder ein chilliger Spieleabend mit Freunden, aber auch deine Ziele, die dich tagträumen lassen und dich antreiben.',
-      'Mit anderen Worten: Deine Wants sind die Dinge, die dich so richtig zum Leuchten bringen. *Wie einen Stern.*',
+      'Deine **Wants** hingegen sind wie Sterne, nach denen du entlang dieses von deinem Kompass vorgegebenen Weges greifst. Sie sind Dinge, die *echte Freudenquellen* für dich sind, wie z.B. Wanderurlaube oder ein chilliger Spieleabend mit Freunden, aber auch deine Ziele, die dich tagträumen lassen und dich antreiben.',
+      'Mit anderen Worten: Deine Wants sind die Dinge, die dich so richtig zum Leuchten bringen. Wie einen Stern.',
     ],
   },
   {
@@ -96,14 +96,14 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
       'Und dann gibt es noch deine **inneren Regeln**. Sie sind wie unbewusste Rechte, die wir uns selbst geben und die uns sagen, was wir dürfen und was nicht.',
       'Leider sind sie nicht immer nützlich – vor allem, wenn sie „Ich darf niemanden enttäuschen“ lauten und uns vom Weg abbringen, der uns an unseren Sternen vorbeiführt.',
       'Diese App hilft dir, deine inneren Regeln neu zu schreiben und dir selbst die Rechte zu verleihen, nach denen du wirklich leben willst.',
-      'Aber eins sei von Anfang an ganz klar gesagt:',
+      '**Aber eins sei von Anfang an ganz klar gesagt:**',
     ],
   },
   {
     // intro6 (Schritt 10) — Caveat (titellos, Fortführung der Bridge)
     body: [
-      'Immer den Weg einzuschlagen, den unser Kompass vorgibt, wird nicht leicht sein. Manchmal zieht in unserem Kopf ein Unwetter auf, das unsere Sterne verdeckt – als Overthinking oder als Schuldgefühl, etwa wenn wir nach unseren Regeln leben und dabei andere enttäuschen müssen.',
-      'Das ist normal: *Wetter kommt und vergeht, doch die eigenen Sterne leuchten weiter.* Wir müssen bloß einen Weg finden, mit dem Wetter umzugehen. Genau dabei hilft dir der Teil **Kopfwetter**:',
+      'Immer den Weg einzuschlagen, den unser Kompass vorgibt, wird nicht immer leicht sein. Manchmal zieht in unserem Kopf ein Unwetter auf, das unsere Sterne verdeckt – sei es in Form von Overthinking oder als Schuldgefühl, etwa wenn wir nach unseren Regeln leben und dabei andere enttäuschen müssen.',
+      '**Das ist normal:** Wetter kommt und vergeht, doch die eigenen Sterne leuchten weiter. Wir müssen bloß einen Weg finden, mit dem Wetter umzugehen. Genau dabei hilft dir der Teil **Kopfwetter**:',
     ],
   },
   {
@@ -111,14 +111,14 @@ export const ONBOARDING_INTRO: OnboardingIntroCard[] = [
     title: 'Was dich erwartet: Kopfwetter',
     body: [
       'Das Kopfwetter ist der zweite Teil dieser App und stellt dir eine Reihe von Schnellhilfen bereit, wenn es mal etwas stürmisch wird.',
-      'Sie helfen dir, Overthinking-Spiralen zu überwinden, eine schuldgefühlfreie „Nein“-Antwort zu formulieren oder dir selbst Rückenwind zu geben, bevor du in ein nervenaufreibendes Gespräch, Treffen oder eine Präsentation gehst. Sprich: *schnell abrufbare kleine Unterstützer für mittendrin im Alltag*.',
+      'Sie helfen dir, Overthinking-Spiralen zu überwinden, eine schuldgefühlfreie „Nein“-Antwort zu formulieren oder dir selbst Rückenwind zu geben, bevor du in ein nervenaufreibendes Gespräch, Treffen oder eine Präsentation gehst. Sprich: schnell abrufbare kleine Unterstützer für mittendrin im Alltag.',
     ],
   },
   {
     // intro8 (Schritt 12) — Abschluss
     title: 'Schön, dass du da bist.',
     body: [
-      '„Me“, um dich Stück für Stück kennenzulernen. Das Kopfwetter, um dir im Alltag den Rücken zu stärken. Zusammen bringen sie dich zu dem Gefühl zurück, das eigentlich dein Normalzustand sein sollte: *ich bin gut genug*.',
+      '„Me“, um dich Stück für Stück kennenzulernen. Das Kopfwetter, um dir im Alltag den Rücken zu stärken. Zusammen bringen sie dich zu dem Gefühl zurück, das eigentlich dein Normalzustand sein sollte: ***Ich bin gut genug***.',
       'Bereit?',
     ],
   },
