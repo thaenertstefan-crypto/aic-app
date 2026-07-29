@@ -11,11 +11,23 @@
  *   npm run e2e -- --routes=/me/wants,/me/wants/schmiede
  *   npm run e2e -- --base=https://<deploy>.vercel.app
  *
+ * ZUSTANDS-ZUSICHERUNG: Eine Route, die erfolgreich den FALSCHEN Zustand
+ * rendert, war früher „ok". Genau daran ist am 29.07. ein grüner Lauf
+ * vorbeigelaufen — /me/wants und /me/wants/schmiede meldeten „ok", auf dem Bild
+ * standen aber die Intro-Sequenz und ein Leer-Zustand; die Sternenkarte, um die
+ * es ging, war gar nicht zu sehen. Deshalb trägt jede Route optional einen
+ * `expect`-Marker (muss sichtbar sein) und einen `reject`-Marker (darf NICHT
+ * sichtbar sein), beide als `data-e2e`-Attribut im Markup. Bewusst Attribute
+ * statt Textfragmente: die deutsche Copy ändert sich in diesem Projekt
+ * ständig, Text-Marker würden bei jeder Copy-Runde brechen.
+ *
  * WICHTIG — was dieser Test NICHT abdeckt: WebKit auf Windows ist nicht
  * iOS Safari. backdrop-filter-Compositing, lvh/svh im Standalone-PWA-Modus
  * und das Fehlen der View-Transitions-API in der iOS-PWA lassen sich hier
  * nicht reproduzieren. Der Test fängt Layout, Abstände, Scroll-Position und
  * harte Render-Fehler — nicht die iOS-spezifischen Compositing-Bugs.
+ * Und Routen OHNE `expect` bleiben weiterhin reiner Smoke-Test: dass sie grün
+ * sind, sagt nur, dass sie überhaupt gerendert haben.
  */
 
 import { mkdir, rm, readFile } from "node:fs/promises";
@@ -27,27 +39,40 @@ import { webkit, devices } from "playwright";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..", "..");
 
-/** Routen, die ohne Vorbedingungen erreichbar sind. */
+/**
+ * Routen, die ohne Vorbedingungen erreichbar sind.
+ *
+ * `expect` — `data-e2e`-Marker, der sichtbar sein MUSS. Fehlt er, ist die Route
+ *   rot, auch wenn sie sauber gerendert hat.
+ * `reject` — Marker, der NICHT sichtbar sein darf (typisch: die Erst-Intro-
+ *   Sequenz, die den eigentlichen Inhalt verdeckt).
+ * Ohne `expect` bleibt es beim reinen Smoke-Test (Status + Console-Fehler).
+ *
+ * Die Marker setzen einen bestückten Account voraus: `/me/wants` zeigt die
+ * Sternenkarte nur mit Wants, `/me/wants/schmiede` den Funken-Himmel nur mit
+ * offenen Funken. Genau das ist der Punkt — ohne Daten sagt der Lauf nichts
+ * über Layout, und dann soll er das auch melden statt grün zu sein.
+ */
 const DEFAULT_ROUTES = [
-  "/dashboard",
-  "/me",
-  "/me/values",
-  "/me/wants",
-  "/me/wants/schmiede",
-  "/me/bill-of-rights",
-  "/booster",
-  "/booster/confidence",
-  "/booster/overthinking",
-  "/booster/saying-no",
-  "/booster/shadow",
-  "/booster/things-got-messy",
-  "/journal",
-  "/profile",
-  "/settings",
+  { path: "/dashboard", expect: "dashboard-focus" },
+  { path: "/me" },
+  { path: "/me/values", reject: "recipe-intro" },
+  { path: "/me/wants", expect: "star-map", reject: "recipe-intro" },
+  { path: "/me/wants/schmiede", expect: "funken-sky" },
+  { path: "/me/bill-of-rights", reject: "recipe-intro" },
+  { path: "/booster", expect: "booster-cells" },
+  { path: "/booster/confidence" },
+  { path: "/booster/overthinking" },
+  { path: "/booster/saying-no" },
+  { path: "/booster/shadow" },
+  { path: "/booster/things-got-messy" },
+  { path: "/journal" },
+  { path: "/profile" },
+  { path: "/settings" },
 ];
 
 /** Routen ohne Login — werden vor dem Anmelden abgefahren. */
-const PUBLIC_ROUTES = ["/login", "/signup"];
+const PUBLIC_ROUTES = [{ path: "/login" }, { path: "/signup" }];
 
 /** Zeit nach dem Laden, damit Einblend-Animationen durchlaufen sind. */
 const SETTLE_MS = 1200;
@@ -80,8 +105,15 @@ async function main() {
     const cleaned = r.replace(/^.*[/\\]Git[/\\]/i, "").trim();
     return cleaned.startsWith("/") ? cleaned : `/${cleaned}`;
   };
+  // Per --routes übergebene Pfade erben die Marker aus DEFAULT_ROUTES, sofern
+  // dort einer hinterlegt ist — sonst würde ein gezielter Einzel-Lauf die
+  // Zusicherung stillschweigend verlieren.
   const routes = arg("routes", "")
-    ? arg("routes", "").split(",").map(normalize).filter((r) => r !== "/")
+    ? arg("routes", "")
+        .split(",")
+        .map(normalize)
+        .filter((r) => r !== "/")
+        .map((p) => DEFAULT_ROUTES.find((r) => r.path === p) ?? { path: p })
     : DEFAULT_ROUTES;
 
   const email = process.env.E2E_EMAIL;
@@ -115,10 +147,17 @@ async function main() {
 
   const results = [];
 
-  async function visit(route, label) {
+  /** Sichtbarkeit eines data-e2e-Markers, ohne auf ihn zu warten. */
+  async function markerVisible(marker) {
+    return page.locator(`[data-e2e="${marker}"]`).first().isVisible();
+  }
+
+  async function visit({ path: route, expect, reject }) {
     errors = [];
-    const name = (label ?? route).replace(/^\//, "").replace(/\//g, "_") || "root";
+    const name = route.replace(/^\//, "").replace(/\//g, "_") || "root";
     let status = "ok";
+    // null = Route trägt keine Zusicherung, zählt also nicht als abgesichert.
+    let asserted = expect || reject ? true : null;
     try {
       const res = await page.goto(`${base}${route}`, {
         waitUntil: "networkidle",
@@ -126,6 +165,17 @@ async function main() {
       });
       if (res && res.status() >= 400) status = `HTTP ${res.status()}`;
       await page.waitForTimeout(SETTLE_MS);
+
+      // Zustands-Zusicherung VOR den Screenshots: schlägt sie fehl, zeigen die
+      // Bilder trotzdem, was stattdessen zu sehen war — das ist die Diagnose.
+      if (status === "ok" && reject && (await markerVisible(reject))) {
+        status = `ZUSTAND: „${reject}" sichtbar — Route zeigt nicht ihren Inhalt`;
+        asserted = false;
+      }
+      if (status === "ok" && expect && !(await markerVisible(expect))) {
+        status = `ZUSTAND: „${expect}" fehlt`;
+        asserted = false;
+      }
       // Zwei Aufnahmen pro Route. Der Viewport-Shot zeigt, was auf dem Gerät
       // wirklich zu sehen ist — bei fullPage wandert die fixe Bottom-Nav ans
       // Seitenende und überdeckt dort Inhalt, was Abschneiden vortäuscht.
@@ -136,10 +186,11 @@ async function main() {
       });
     } catch (err) {
       status = `FEHLER: ${err.message.split("\n")[0]}`;
+      if (asserted !== null) asserted = false;
     }
     // Redirect erkennen: wer nicht eingeloggt ist, landet auf /login.
     const landed = new URL(page.url()).pathname;
-    results.push({ route, landed, status, errors: [...errors] });
+    results.push({ route, landed, status, asserted, errors: [...errors] });
   }
 
   for (const route of PUBLIC_ROUTES) await visit(route);
@@ -166,11 +217,22 @@ async function main() {
     const redirected = r.landed !== r.route ? `  → ${r.landed}` : "";
     const bad = r.status !== "ok" || r.errors.length > 0;
     if (bad) failed++;
-    console.log(`${bad ? "✗" : "✓"} ${r.route}${redirected}   ${r.status}`);
+    // „·" statt „✓": gerendert, aber ohne Zusicherung — reiner Smoke-Test.
+    const glyph = bad ? "✗" : r.asserted ? "✓" : "·";
+    console.log(`${glyph} ${r.route}${redirected}   ${r.status}`);
     for (const e of r.errors.slice(0, 5)) console.log(`      ${e}`);
   }
+
+  // Zwei getrennte Zahlen. Nur die zweite sagt etwas darüber aus, ob die Seiten
+  // das Richtige gezeigt haben — die erste sagt bloß, dass sie gerendert haben.
+  const assertedOk = results.filter((r) => r.asserted === true).length;
+  const assertedTotal = results.filter((r) => r.asserted !== null).length;
   console.log(
     `\n${results.length - failed}/${results.length} Routen sauber gerendert.`,
+  );
+  console.log(
+    `${assertedOk}/${assertedTotal} Routen mit zugesichertem Zustand ` +
+      `(${results.length - assertedTotal} nur Smoke-Test, mit „·" markiert).`,
   );
   process.exit(failed > 0 ? 1 : 0);
 }

@@ -64,7 +64,11 @@ export function RecipeIntroGate({
           : undefined;
 
     return (
-      <div className="flex min-h-svh flex-col justify-center">
+      // data-e2e: der E2E-Lauf muss unterscheiden können, ob eine Route ihren
+      // eigentlichen Inhalt zeigt oder (noch) die Erst-Intro-Sequenz — genau
+      // daran ist am 29.07. ein grüner Lauf vorbeigelaufen. Siehe
+      // scripts/e2e/verify.mjs. Ohne Laufzeit-Wirkung.
+      <div className="flex min-h-svh flex-col justify-center" data-e2e="recipe-intro">
         <RecipeIntro
           cards={cards}
           onComplete={handleSeen}

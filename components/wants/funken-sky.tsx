@@ -154,7 +154,11 @@ export function FunkenSky({
   }
 
   return (
-    <div className="relative w-full" style={{ aspectRatio: `${VIEW_W} / ${viewH}` }}>
+    <div
+      className="relative w-full"
+      style={{ aspectRatio: `${VIEW_W} / ${viewH}` }}
+      data-e2e="funken-sky"
+    >
       {/* Die Konstellation (inert, solange ein Funke fokussiert ist: die
           Hintergrund-Punkte dürfen weder Tastatur-Fokus noch Screenreader). */}
       <div className="absolute inset-0" inert={focusedId !== null}>

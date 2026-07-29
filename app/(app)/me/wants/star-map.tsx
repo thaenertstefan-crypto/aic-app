@@ -332,7 +332,11 @@ export function StarMap({
   }
 
   return (
-    <div className="relative w-full" style={{ aspectRatio: `${VIEW_W} / ${viewH}` }}>
+    <div
+      className="relative w-full"
+      style={{ aspectRatio: `${VIEW_W} / ${viewH}` }}
+      data-e2e="star-map"
+    >
       {/* Die Sternenkarte (fadet beim Fokus komplett aus). `inert`, solange ein
           Stern fokussiert ist: die unsichtbare Karte darf weder Tastatur-Fokus
           noch Screenreader bekommen. */}

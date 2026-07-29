@@ -78,7 +78,7 @@ export function BoosterCells() {
           : undefined
       }
     >
-      <div className="relative z-10 flex flex-col gap-16 px-4 py-4">
+      <div className="relative z-10 flex flex-col gap-16 px-4 py-4" data-e2e="booster-cells">
         {SYSTEMS.map((s, i) => {
           const left = i % 2 === 0;
           return (
