@@ -37,9 +37,27 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
     initialData;
 
   // ── Phase management ────────────────────────────────────────────
-  const [currentPhase, setCurrentPhase] = useState<
-    "reflection" | "adjust" | "complete"
-  >(phase);
+  // Die beiden Server-Action-States stehen hier oben, weil die Phase aus ihnen
+  // ABGELEITET wird statt in einem Effect nachgezogen zu werden: reflection →
+  // adjust → complete ist eine Einbahn-Leiter, die ausschließlich durch einen
+  // erfolgreichen Speichervorgang weiterrückt, und die Formulare der bereits
+  // verlassenen Phasen werden nicht mehr gerendert. Als abgeleiteter Wert kann
+  // die Phase weder einen Frame hinterherhinken noch einen Zwischenstand zeigen.
+  const [reflectionState, reflectionAction, reflectionPending] = useActionState(
+    saveEvalReflectionAction,
+    { error: null, success: false },
+  );
+  const [adjustState, adjustAction, adjustPending] = useActionState(
+    saveAdjustedHypothesisAction,
+    { error: null, success: false },
+  );
+
+  const currentPhase: EvaluationPageData["phase"] = adjustState.success
+    ? "complete"
+    : reflectionState.success
+      ? "adjust"
+      : phase;
+
   useScrollTopOnChange(currentPhase);
 
   // ── AI insights ─────────────────────────────────────────────────
@@ -81,19 +99,6 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
   }, [currentPhase]);
 
   // ── Phase 1: Reflection form ────────────────────────────────────
-  const [reflectionState, reflectionAction, reflectionPending] = useActionState(
-    saveEvalReflectionAction,
-    { error: null, success: false },
-  );
-
-  // Advance to the adjust phase once the reflection save succeeds — in an effect
-  // (not the render body) so we never schedule a state update mid-render.
-  useEffect(() => {
-    if (reflectionState.success && currentPhase === "reflection") {
-      setCurrentPhase("adjust");
-    }
-  }, [reflectionState.success, currentPhase]);
-
   // Pre-fill reflection textareas if user already saved
   const existingPositive = valueEvalEntry?.content?.positive_reflection ?? "";
   const existingNegative = valueEvalEntry?.content?.negative_reflection ?? "";
@@ -111,18 +116,6 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
 
   // Track which value slot is currently in "picking" mode
   const [pickingIndex, setPickingIndex] = useState<number | null>(null);
-
-  const [adjustState, adjustAction, adjustPending] = useActionState(
-    saveAdjustedHypothesisAction,
-    { error: null, success: false },
-  );
-
-  // Advance to the complete phase once the adjustment save succeeds.
-  useEffect(() => {
-    if (adjustState.success && currentPhase === "adjust") {
-      setCurrentPhase("complete");
-    }
-  }, [adjustState.success, currentPhase]);
 
   const toggleKeep = (index: number) => {
     setIsKept((prev) => {

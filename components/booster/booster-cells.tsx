@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, type CSSProperties, type MouseEvent } from "react";
+import { useRef, useState, type CSSProperties, type MouseEvent } from "react";
 
 import { Reveal } from "@/components/ui/reveal";
 import { PAGE_TITLES } from "@/lib/content/labels";
@@ -44,7 +44,11 @@ export function BoosterCells() {
   const { phase, zoomInto } = useBoosterZoom();
   const containerRef = useRef<HTMLDivElement>(null);
   // Tap-Punkt relativ zum Zellen-Container → transform-origin für den Push.
-  const localOrigin = useRef<{ x: number; y: number } | null>(null);
+  // Als State, nicht als Ref: er wird im selben Click-Handler gesetzt, der über
+  // zoomInto() auch die Phase auf „zooming" schaltet. React batcht beide
+  // Updates zu einem Render — der Origin ist also im selben Frame da wie die
+  // Zoom-Klasse, ohne dass der Render-Pfad eine Ref lesen muss.
+  const [localOrigin, setLocalOrigin] = useState<{ x: number; y: number } | null>(null);
 
   function handleClick(e: MouseEvent<HTMLAnchorElement>, href: string) {
     // Modifier/Mittelklick → normaler Link (neuer Tab etc.).
@@ -58,7 +62,7 @@ export function BoosterCells() {
     const vx = r.left + r.width / 2;
     const vy = r.top + r.height / 2;
     const c = containerRef.current?.getBoundingClientRect();
-    localOrigin.current = c ? { x: vx - c.left, y: vy - c.top } : null;
+    setLocalOrigin(c ? { x: vx - c.left, y: vy - c.top } : null);
     zoomInto({ x: vx, y: vy }, () => router.push(href));
   }
 
@@ -69,8 +73,8 @@ export function BoosterCells() {
       ref={containerRef}
       className={pushing ? "booster-cells-zoom" : undefined}
       style={
-        pushing && localOrigin.current
-          ? ({ transformOrigin: `${localOrigin.current.x}px ${localOrigin.current.y}px` } as CSSProperties)
+        pushing && localOrigin
+          ? ({ transformOrigin: `${localOrigin.x}px ${localOrigin.y}px` } as CSSProperties)
           : undefined
       }
     >

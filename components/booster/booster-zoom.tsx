@@ -70,8 +70,12 @@ export function BoosterZoomProvider({ children }: { children: ReactNode }) {
   // Booster-Layout, überlebt normalerweise die ganze Session — dies fängt
   // z.B. Fast-Refresh/StrictMode-Remounts ab).
   useEffect(() => {
+    // Die Array-Instanz beim Mount festhalten: sie wird nur befüllt (push),
+    // nie ersetzt — der Cleanup sieht deshalb garantiert alle Timer, ohne beim
+    // Unmount auf einen dann evtl. anderen ref.current zugreifen zu müssen.
+    const pending = timers.current;
     return () => {
-      timers.current.forEach((t) => window.clearTimeout(t));
+      pending.forEach((t) => window.clearTimeout(t));
     };
   }, []);
 

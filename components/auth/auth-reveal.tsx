@@ -46,14 +46,17 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
 
   // Der Karten-Peek erscheint erst, nachdem der Hero (inkl. Hero-Maskottchen)
   // weggeslidet ist — sonst blitzen beim Aufwischen kurz zwei Maskottchen.
+  // Das Zurücksetzen passiert im Cleanup, nicht im Effect-Rumpf: der läuft
+  // genau dann, wenn `revealed` zurückspringt (Abwärts-Swipe, s. handleTouchEnd)
+  // — und nur dann muss ein erneutes Aufdecken die Sekunde wieder abwarten.
   const [heroGone, setHeroGone] = useState(false);
   useEffect(() => {
-    if (!revealed) {
-      setHeroGone(false);
-      return;
-    }
+    if (!revealed) return;
     const t = window.setTimeout(() => setHeroGone(true), 1000);
-    return () => window.clearTimeout(t);
+    return () => {
+      window.clearTimeout(t);
+      setHeroGone(false);
+    };
   }, [revealed]);
 
   function handleTouchStart(e: React.TouchEvent) {

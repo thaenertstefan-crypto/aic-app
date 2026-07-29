@@ -84,13 +84,22 @@ export function FunkenSky({
   const reduced = useReducedMotion();
   const [mounted, setMounted] = useState(false);
   const [focusedId, setFocusedId] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
+  const [rafReady, setRafReady] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Der Auf-Zoom ist „fertig", sobald ein Funke fokussiert ist UND entweder
+  // Bewegung reduziert wird (dann sofort) oder der rAF-Tick durch ist. Als
+  // abgeleiteter Wert braucht der reduced-Pfad kein setState im Effect, und das
+  // Zurücksetzen beim Schließen passiert automatisch über focusedId.
+  const ready = focusedId !== null && (reduced || rafReady);
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   // Tap-Punkt (viewport-relativ) → transform-origin für den Auf-Zoom der Ebene.
-  const originRef = useRef<{ x: number; y: number } | null>(null);
+  // Als State, nicht als Ref: er wird in open() im selben Handler gesetzt wie
+  // focusedId, React batcht beide zu einem Render — der Origin steht also im
+  // selben Frame wie die Ebene, ohne dass der Render eine Ref lesen muss.
+  const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null);
 
   // Portal erst nach Mount (kein document auf dem Server).
   // eslint-disable-next-line react-hooks/set-state-in-effect -- einmaliger Client-Mount-Flag
@@ -110,29 +119,27 @@ export function FunkenSky({
   function open(bet: BetItem, el: HTMLElement) {
     if (focusedId) return;
     const r = el.getBoundingClientRect();
-    originRef.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    setOrigin({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
     triggerRef.current = el;
     setConfirmDelete(false);
-    setReady(false);
     setFocusedId(bet.id);
   }
 
   function close() {
     setFocusedId(null);
     setConfirmDelete(false);
-    setReady(false);
   }
 
-  // Auf-Zoom: transform-origin am Tap-Punkt setzen, dann per rAF „ready" → CSS
-  // transitioniert von scale(0.92)/opacity 0 auf 1. Reduced motion: sofort da.
+  // Auf-Zoom: transform-origin steht am Tap-Punkt, ein rAF-Tick später schaltet
+  // „ready" → CSS transitioniert von scale(0.92)/opacity 0 auf 1. Bei reduzierter
+  // Bewegung übernimmt die Ableitung oben, der Effect läuft dann gar nicht.
   useEffect(() => {
-    if (!focusedId) return;
-    if (reduced) {
-      setReady(true);
-      return;
-    }
-    const raf = requestAnimationFrame(() => setReady(true));
-    return () => cancelAnimationFrame(raf);
+    if (!focusedId || reduced) return;
+    const raf = requestAnimationFrame(() => setRafReady(true));
+    return () => {
+      cancelAnimationFrame(raf);
+      setRafReady(false);
+    };
   }, [focusedId, reduced]);
 
   function handleDelete() {
@@ -145,8 +152,6 @@ export function FunkenSky({
     close();
     onDelete(id);
   }
-
-  const origin = originRef.current;
 
   return (
     <div className="relative w-full" style={{ aspectRatio: `${VIEW_W} / ${viewH}` }}>

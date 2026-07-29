@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "gate": "node scripts/check-contrast.mjs && node scripts/check-typography.mjs && node scripts/check-transitions.mjs",
+    "gate": "node scripts/check-contrast.mjs && node scripts/check-typography.mjs && node scripts/check-transitions.mjs && eslint --max-warnings=0",
     "gen:icon": "node scripts/generate-app-icon.mjs",
     "e2e": "node scripts/e2e/verify.mjs"
   },
