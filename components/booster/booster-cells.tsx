@@ -45,7 +45,7 @@ export function BoosterCells() {
   const containerRef = useRef<HTMLDivElement>(null);
   // Tap-Punkt relativ zum Zellen-Container → transform-origin für den Push.
   // Als State, nicht als Ref: er wird im selben Click-Handler gesetzt, der über
-  // zoomInto() auch die Phase auf „zooming" schaltet. React batcht beide
+  // zoomInto() auch die Phase auf „zooming“ schaltet. React batcht beide
   // Updates zu einem Render — der Origin ist also im selben Frame da wie die
   // Zoom-Klasse, ohne dass der Render-Pfad eine Ref lesen muss.
   const [localOrigin, setLocalOrigin] = useState<{ x: number; y: number } | null>(null);

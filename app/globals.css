@@ -1079,27 +1079,33 @@ body[data-zone="schmiede"] {
 /* Bogenbahn: x läuft ease-out, y ease-in — geschachtelt ergibt das eine Kurve.
    `translate` MUSS namentlich in transition-property stehen: Tailwind v4 (und
    dieser Code) bewegen die eigenständige CSS-Property `translate`, nicht
-   `transform` — sonst springt die Position, statt zu gleiten. */
+   `transform` — sonst springt die Position, statt zu gleiten.
+   Die Dauer steht in --zoom-flight-ms mit Fallback 620ms (= TRAVEL_MS in
+   booster-zoom.tsx): arrive() setzt die Property inline auf die verbleibende
+   Restzeit, wenn es die Reststrecke auf ein echtes Icon-Rect umlenkt — sonst
+   liefe die Retarget-Transition erneut volle 620ms statt nur bis zum
+   nominellen Flugende. Ohne Retarget bleibt der Fallback aktiv. */
 .booster-zoom-arc-x {
   will-change: translate;
-  transition: translate 620ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition: translate var(--zoom-flight-ms, 620ms) cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .booster-zoom-arc-y {
   will-change: translate;
-  transition: translate 620ms cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  transition: translate var(--zoom-flight-ms, 620ms) cubic-bezier(0.55, 0.06, 0.68, 0.19);
 }
 /* Der Klon zentriert sich selbst auf dem Mittelpunkt, den left/top des äußeren
    Wrappers setzen. Die Zentrierung läuft über ein KONSTANTES `translate`
    (-50% -50%, bezogen auf die eigene Box) und nicht über Prozent-Margins oder
    left/top — die bezögen sich auf den Container, der hier keine eigene Breite
    hat. `scale` ist eine eigenständige Property und kollidiert deshalb nicht mit
-   diesem translate. */
+   diesem translate. Die Opacity-Dauer bleibt fest bei 260ms (SETTLE_MS) —
+   unabhängig vom Retarget, das nur scale/translate betrifft. */
 .booster-zoom-clone {
   translate: -50% -50%;
   transform-origin: center;
   will-change: scale, opacity;
   transition:
-    scale 620ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    scale var(--zoom-flight-ms, 620ms) cubic-bezier(0.22, 0.61, 0.36, 1),
     opacity 260ms ease-out;
 }
 
