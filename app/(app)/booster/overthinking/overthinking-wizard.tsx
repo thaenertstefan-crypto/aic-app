@@ -742,7 +742,13 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
       />
       <div className="flex flex-1 flex-col px-4 py-6">
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col">
-          <ModuleIcon variant="overthinking" />
+          {/* ModuleIcon nur auf Schritt 1: das ist die Einstiegs-Signatur der
+              Übung. Ab Schritt 2 hat der Wizard schon seinen eigenen
+              Begleiter (OverthinkingPeekCompanion, ab Schritt 6
+              OverthinkingCompanion) — ungegatet würde das Icon mit dem
+              Begleiter stapeln, genau die „zwei Signaturen"-Dopplung, die
+              auf der Intro-Seite bewusst vermieden wird. */}
+          {step === 1 && <ModuleIcon variant="overthinking" />}
           {/* Progress dots */}
         <ProgressDots current={step} completed={false} />
 

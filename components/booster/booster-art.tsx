@@ -8,10 +8,11 @@ import {
 import type { CellVariant } from "@/app/(app)/booster/pressure-cell";
 
 /**
- * Wetter-Motiv je Kopfwetter-System — EINE Quelle für die Hub-Zelle, den
- * fliegenden Zoom-Klon und das Modul-Icon auf der Sub-Page. Ohne diese Map
- * müsste der Zoom-Klon die Variante erneut auf ein Motiv mappen und könnte von
- * der Hub-Zelle abdriften.
+ * Wetter-Motiv je Kopfwetter-System — gedacht als EINE Quelle für die
+ * Hub-Zelle, den fliegenden Zoom-Klon und das Modul-Icon auf der Sub-Page.
+ * Heute nur vom Modul-Icon konsumiert; Hub-Zelle und Zoom-Klon sollen in
+ * einer Folge-Task darauf umgestellt werden, statt die Variante erneut auf
+ * ein Motiv zu mappen und so von der Hub-Zelle abzudriften.
  */
 export const BOOSTER_ART: Record<
   CellVariant,
