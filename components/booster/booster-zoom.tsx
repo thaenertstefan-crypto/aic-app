@@ -9,6 +9,7 @@ import {
   useState,
   type CSSProperties,
   type ReactNode,
+  type RefObject,
 } from "react";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
@@ -49,6 +50,15 @@ const ACCEL_MS = 300;
 const TRAVEL_MS = 620;
 // Übergabe auf das echte Icon, danach verschwindet das Overlay.
 const SETTLE_MS = 260;
+// Untergrenze für die von arrive() verkürzte Retarget-Transition. Ohne diese
+// Grenze würde `TRAVEL_MS - elapsed` bei einer späten Ankunftsmeldung (kalte,
+// nicht geprefetchte Route — gerade beim Erstbesuch nicht exotisch: navigate()
+// liegt schon bei ACCEL_MS, es bleiben nur noch TRAVEL_MS - ACCEL_MS = 320ms
+// für Mount + Paint) auf 0 fallen: `translate 0ms`/`scale 0ms` lässt den Klon
+// hart springen statt zu gleiten, und der Phasen-Timer feuert sofort. Mit der
+// Untergrenze gleitet der Klon immer, nur etwas über das nominelle Flugende
+// hinaus.
+const MIN_RETARGET_MS = 180;
 // Notbremse: falls arrive() nie feuert (Navigation hängt/schlägt fehl, z.B. auf
 // wackliger Verbindung — PWA mit OfflineBanner, offline ist ein erwarteter
 // Zustand), zwingt dieser Deckel "zooming" zurück auf "idle", statt den User
@@ -146,7 +156,11 @@ export function BoosterZoomProvider({ children }: { children: ReactNode }) {
         return;
       }
       setFlight({ from: o.rect, to: defaultTarget(), variant: o.variant });
-      launchedAt.current = performance.now();
+      // launchedAt wird NICHT hier gestempelt, sondern im rAF von
+      // BoosterZoomOverlay, im selben Frame wie setLaunched(true) — das ist
+      // der Moment, in dem die CSS-Transition tatsächlich zu laufen beginnt.
+      // Ein Stempel hier wäre 1-2 Frames zu früh und würde arrive()s
+      // Restzeit-Rechnung systematisch verkürzen.
       arrivedRef.current = false;
       set("zooming");
       const t = window.setTimeout(() => navigate(), ACCEL_MS);
@@ -183,9 +197,13 @@ export function BoosterZoomProvider({ children }: { children: ReactNode }) {
       // und nominelles Flugende fallen so zusammen. Ohne Rect (Intro-Sequenz)
       // bleibt das Fallback-Ziel unverändert; auch dort wird aber erst nach der
       // Restzeit auf "arriving" geschaltet, damit die laufende Flugbahn nicht
-      // vorzeitig durch das Ausblenden abgeschnitten wird.
+      // vorzeitig durch das Ausblenden abgeschnitten wird. MIN_RETARGET_MS
+      // verhindert, dass eine späte Ankunftsmeldung `remaining` auf 0 drückt
+      // und damit aus dem Gleiten einen harten Sprung macht — derselbe Wert
+      // speist gleich sowohl `retargetMs` (Transition-Dauer) als auch den
+      // Phasen-Timer, die beiden bleiben also automatisch synchron.
       const elapsed = launchedAt.current != null ? performance.now() - launchedAt.current : TRAVEL_MS;
-      const remaining = Math.max(0, TRAVEL_MS - elapsed);
+      const remaining = Math.max(MIN_RETARGET_MS, TRAVEL_MS - elapsed);
       if (target) {
         setFlight((f) => (f ? { ...f, to: target, retargetMs: remaining } : f));
       }
@@ -203,26 +221,49 @@ export function BoosterZoomProvider({ children }: { children: ReactNode }) {
       value={{ phase, flying: phase === "zooming", zoomInto, arrive }}
     >
       {children}
-      <BoosterZoomOverlay phase={phase} flight={flight} />
+      <BoosterZoomOverlay phase={phase} flight={flight} launchedAtRef={launchedAt} />
     </ZoomContext.Provider>
   );
 }
 
-function BoosterZoomOverlay({ phase, flight }: { phase: Phase; flight: Flight | null }) {
+function BoosterZoomOverlay({
+  phase,
+  flight,
+  launchedAtRef,
+}: {
+  phase: Phase;
+  flight: Flight | null;
+  /** Wird im selben rAF wie setLaunched(true) gestempelt (siehe Effect unten) —
+   *  arrive() im Provider liest daraus die verstrichene Flugzeit. */
+  launchedAtRef: RefObject<number | null>;
+}) {
   // Der Klon startet exakt auf dem Tap-Punkt und bekommt seine Zielwerte erst
   // im Frame danach — sonst gäbe es nichts zu transitionieren.
   const [launched, setLaunched] = useState(false);
   useEffect(() => {
-    // Beide Zweige planen die Zustandsänderung über rAF statt sie synchron im
+    // Alle Zweige planen die Zustandsänderung über rAF statt sie synchron im
     // Effect-Körper auszulösen (kaskadierende Renders). Der Reset beim Zurück-
     // fallen auf "idle" ist unsichtbar, weil die Overlay-Komponente in diesem
     // Fall ohnehin null rendert — ein Frame Verzögerung macht keinen Unterschied.
-    const raf =
-      phase === "idle"
-        ? requestAnimationFrame(() => setLaunched(false))
-        : requestAnimationFrame(() => setLaunched(true));
-    return () => cancelAnimationFrame(raf);
-  }, [phase]);
+    if (phase === "idle") {
+      const raf = requestAnimationFrame(() => setLaunched(false));
+      return () => cancelAnimationFrame(raf);
+    }
+    if (phase === "zooming") {
+      // launchedAt wird genau hier gestempelt, nicht schon in zoomInto: das
+      // ist der Frame, in dem `translate`/`scale` tatsächlich von 0 auf ihren
+      // Zielwert zu transitionieren beginnen. Ein früherer Stempel wäre 1-2
+      // Frames zu früh und würde arrive()s Restzeit-Rechnung verkürzen.
+      const raf = requestAnimationFrame(() => {
+        launchedAtRef.current = performance.now();
+        setLaunched(true);
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+    // "arriving": launched bleibt true, launchedAt bleibt stehen — hier ist
+    // nichts zu planen, der Flug läuft einfach weiter bzw. löst sich auf.
+    return undefined;
+  }, [phase, launchedAtRef]);
 
   if (phase === "idle" || !flight) return null;
 

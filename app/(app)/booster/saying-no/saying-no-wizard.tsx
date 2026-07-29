@@ -1047,7 +1047,12 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
   return (
     <div className="flex min-h-svh flex-col">
       {header}
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Kein slide-in-from-bottom-4 auf diesem Wrapper: ModuleIcon misst seinen
+          Rect beim Mount, also am ANFANG einer eventuellen Slide-Animation —
+          die 16px-Start-Offset + 500ms-Bewegung würden dem Zoom-Klon ein
+          Ziel melden, das das echte Icon danach noch verlässt (Versatz beim
+          Übergeben). Fade allein hat keine Bewegung, also keine Diskrepanz. */}
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in duration-500">
         {/* Draft restore prompt */}
         {pendingDraft && (
           <DraftRestoreBanner onRestore={restoreDraft} onDiscard={clearDraft} />

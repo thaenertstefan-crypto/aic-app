@@ -1073,8 +1073,16 @@ body[data-zone="schmiede"] {
    Die Zellen skalieren vom Tap-Punkt weg (Umgebung streamt nach außen), ein
    fixer Klon des Wetter-Icons reist auf einer weichen Bogenbahn nach oben in
    die Bildmitte und deckt dabei die Navigation ab. Der frühere Lilac-Bloom ist
-   entfallen — diese Aufgabe trägt jetzt der Klon. */
-.booster-zoom-overlay { pointer-events: auto; }
+   entfallen — diese Aufgabe trägt jetzt der Klon.
+   pointer-events: none, bewusst NICHT auto: der Lilac-Bloom deckte den Screen
+   früher komplett ab, das rechtfertigte ein Blocken der Eingaben darunter.
+   Der Klon ist dagegen nur eine kleine fliegende Signatur — der Rest des
+   Screens (inkl. Sub-Page) ist die ganze Flugzeit über sichtbar, und ohne
+   `none` verschluckt das transparente Overlay ~600-900ms lang jeden Tap auf
+   die Sub-Page, ohne jedes Feedback. Der Doppel-Tap-Schutz sitzt ohnehin
+   schon in zoomInto() (phaseRef.current !== "idle" → normal navigieren) und
+   braucht diese Sperre nicht. */
+.booster-zoom-overlay { pointer-events: none; }
 
 /* Bogenbahn: x läuft ease-out, y ease-in — geschachtelt ergibt das eine Kurve.
    `translate` MUSS namentlich in transition-property stehen: Tailwind v4 (und
