@@ -389,6 +389,28 @@ _Last updated: 2026-07-26 (Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. ve
 
 ## Next Steps
 
+- **ZUERST: die Nacht vom 28./29.07. am iPhone abnehmen.** Vier Prueflisten stehen oben in den
+  Open Items (Auth/Signup, Booster-Intros, Wants/Schmiede, Onboarding). **Die Onboarding-Liste
+  braucht einen frischen Account** — das Onboarding zeigt sich pro Nutzer einmal und war fuer den
+  Browser-Check strukturell unerreichbar. Erst danach neue Flaechen aufmachen.
+- **Dann die zwei Plandefekte in EINER kleinen Runde:** Phantom-Zeile (`viewH` auf
+  `Math.max(0, length - 1) * ROW_H` in `star-map.tsx` und `funken-sky.tsx`) plus die Entscheidung
+  ueber die `Math.max(430, …)` / `Math.max(200, …)`-Boeden; und der fehlende `SkyBackdrop` hinter
+  der gegateten Signup-Karte. Der erste aendert die Hoehe derselben zwei Seiten, die du gerade
+  tunst — ein Geraete-Blick klaert beides, getrennt hiesse die Reise zweimal machen.
+- **`lib/content/*.ts` ins Typo-Gate aufnehmen** (eigener Matcher fuer String-Literale in
+  Content-Dateien, NICHT als Verbreiterung auf Kommentare), danach die 10 ASCII-Schliesszeichen in
+  `onboarding-intro.ts` raeumen. Schliesst eine echte Luecke bei gerendertem Text.
+- **Plan 2 Task 4 (Zoom-Umbau) als beaufsichtigte Session ansetzen** — Task 3 ist die
+  Voraussetzung und ist erledigt, der Plan traegt den vollstaendigen Code. Abnahme ist zu 100
+  Prozent iPhone.
+- **Vorschlag aus der Nacht (du entscheidest): `scripts/e2e/verify.mjs` um eine Zustands-
+  Zusicherung erweitern.** Jede Route bekommt einen erwarteten Marker (Selektor oder
+  Textfragment); der Lauf schlaegt fehl, wenn die Route zwar rendert, aber nicht den Zustand
+  zeigt, der geprueft werden soll. Anlass: der erste Lauf meldete `/me/wants` und
+  `/me/wants/schmiede` als sauber, waehrend in Wirklichkeit die Intro-Sequenz und ein
+  Leer-Zustand auf dem Bild waren — die Flaechen, um die es in vier von fuenf Tasks ging, standen
+  gar nicht da. Macht aus „hat gerendert" ein „hat das Richtige gerendert".
 - **Kopfwetter-Hub-Druckkarte umsetzen (bau-fertiger Wiedereinstieg, Stefans Wunsch fuer eine
   spaetere Session):** Plan `docs/superpowers/plans/2026-07-23-kopfwetter-hub-druckkarte.md`, 3
   Tasks, subagent-driven (empfohlen) oder inline. Verifikation je Task tsc + `npm run gate` + build;
