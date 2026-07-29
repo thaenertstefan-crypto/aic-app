@@ -185,7 +185,13 @@ export function FunkenSky({
               className={cn("size-3 rounded-full bg-celebrate", !reduced && "funke-drift")}
               style={{
                 boxShadow: "0 0 10px 2px color-mix(in srgb, var(--celebrate) 70%, transparent)",
-                animationDelay: `${(i % 5) * 0.7}s`,
+                // NEGATIVER Versatz: die Funken starten alle im ersten Frame,
+                // nur an fünf verschiedenen Stellen der 6-s-Periode. Ein
+                // positiver Delay ließ sie (mangels animation-fill-mode) bis zu
+                // ihrem Startzeitpunkt im statischen Zustand stehen und dann auf
+                // den 0-%-Keyframe springen — ein sichtbares Nacheinander-
+                // Anspringen über die ersten Sekunden nach dem Laden.
+                animationDelay: `-${(i % 5) * 1.2}s`,
               }}
             />
             <span

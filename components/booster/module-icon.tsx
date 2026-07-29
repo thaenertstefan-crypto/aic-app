@@ -40,7 +40,9 @@ export function ModuleIcon({ variant }: { variant: CellVariant }) {
         className="transition-opacity duration-200 ease-out"
         style={{ opacity: flying ? 0 : 1 }}
       >
-        <Art className="size-20" />
+        {/* Größe hängt an booster-zoom.tsx (TARGET_SIZE + LANDING_Y) — beim
+            Ändern dort mitziehen, sonst verfehlt der fliegende Klon die Landung. */}
+        <Art className="size-24" />
       </div>
     </div>
   );

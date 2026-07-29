@@ -80,8 +80,7 @@ Single-Title-Rule; Emoji auf der Kompass-Rose bleiben._
   Leiter rechts und der Zuschlag ist unnötig (unterer Rand liest ~103 statt 40 Einheiten);
   (b) `EDGE_PAD = 40` steht doppelt in zwei Dateien, zusammengehalten nur von einem Kommentar. Ein
   geteiltes `sky-metrics.ts` wäre der ehrliche Weg.
-- **Aus dem Nacht-Slot-1-Review, vorbestehend:** `BrandPanel` malt weiter einen eigenen Blur-Blob
-  (dieselbe „zweite atmosphärische Ebene", die bei `AmbientBlobs` entfernt wurde); das Hero-Panel
+- **Aus dem Nacht-Slot-1-Review, vorbestehend:** das Hero-Panel
   ist bei `revealed` nicht `inert`, der unsichtbare Wisch-Button bleibt fokussierbar
   (`inert={revealed || undefined}`); `saying-no` hat 5 Intro-Karten, aber nur 4
   Maskottchen-Varianten (Karten 4 und 5 teilen sich einen Begleiter).

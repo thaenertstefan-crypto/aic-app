@@ -54,12 +54,22 @@ export function CompassArt({
   );
 }
 
-/** Goldenes Wachssiegel mit §-Prägung — 12 Bogenkreise (r=4) auf Radius 21 (Bill of Rights). */
+/** Goldenes Wachssiegel mit §-Prägung — 12 Bogenkreise (r=4) auf Radius 21 (Bill of Rights).
+ *
+ * `stamp` steuert den einmaligen Einzug (`me-seal-stamp`, 0,5 s) getrennt vom
+ * Dauer-Glühen. Im /me-Hub trägt `Reveal` (0,6 s) die Ankunft, Stempel und Glow
+ * sind exakt darauf getuned — dort bleibt er an. In der Onboarding-Karte ist der
+ * `Crossfade` (0,25 s) die Ankunft; ein 0,5-s-Stempel obendrauf lief dort hinter
+ * der Karte her und las sich als zweiter, das anschließende Glühen als dritter
+ * Takt. Mit `stamp={false}` kommt das Siegel MIT der Karte und glüht danach —
+ * eine Bewegung statt drei. */
 export function SealArt({
   animate,
+  stamp = true,
   className,
 }: {
   animate: boolean;
+  stamp?: boolean;
   className?: string;
 }) {
   const scallops = Array.from({ length: 12 }, (_, k) => {
@@ -70,7 +80,7 @@ export function SealArt({
     };
   });
   return (
-    <span className={cn("inline-block", animate && "me-seal-stamp")}>
+    <span className={cn("inline-block", animate && stamp && "me-seal-stamp")}>
       <svg
         viewBox="0 0 56 56"
         className={cn("size-12", animate && "me-seal-glow", className)}

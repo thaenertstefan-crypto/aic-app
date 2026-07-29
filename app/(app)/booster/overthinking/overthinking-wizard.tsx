@@ -437,16 +437,12 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   const renderStepContent = () => {
     switch (step) {
       case 1:
-        // Kompakt zentriert: Intro-Text, Anweisung und Countdown rücken als
-        // eine Gruppe zusammen, statt sich über die volle Spaltenhöhe zu
-        // verteilen.
+        // Kompakt zentriert: Anweisung und Countdown rücken als eine Gruppe
+        // zusammen, statt sich über die volle Spaltenhöhe zu verteilen. Der
+        // Begrüßungs-Absatz steht oben beim ModuleIcon (s. Wizard-Shell) —
+        // dasselbe Icon-Text-Paar wie in den anderen vier Boostern.
         return (
           <div className="flex w-full flex-1 flex-col items-center justify-center gap-6 self-stretch text-center">
-            <p className="text-base leading-relaxed text-muted-foreground">
-              Dein Kopf dreht gerade Runden? Man kennt&apos;s – lass uns
-              gemeinsam aus dem Gedankenkarussell aussteigen!
-            </p>
-
             <p className="text-xl font-medium leading-relaxed text-foreground sm:text-2xl">
               Zähle von 5 runter und sage dann laut{" "}
               <span className="font-bold text-primary">Stopp</span>.
@@ -751,7 +747,20 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
               OverthinkingCompanion) — ungegatet würde das Icon mit dem
               Begleiter stapeln, genau die „zwei Signaturen"-Dopplung, die
               auf der Intro-Seite bewusst vermieden wird. */}
-          {step === 1 && <ModuleIcon variant="overthinking" />}
+          {step === 1 && (
+            // Icon + Begrüßung als ein zentriertes Paar — dieselbe Einstiegs-
+            // Grammatik wie saying-no, things-got-messy und shadow. Der Wrapper
+            // trägt bewusst kein Padding nach oben: der Landeplatz des
+            // Kopfwetter-Zooms (LANDING_Y in booster-zoom.tsx) rechnet damit,
+            // dass das ModuleIcon direkt unter dem Header sitzt.
+            <div className="flex flex-col items-center gap-1 text-center">
+              <ModuleIcon variant="overthinking" />
+              <p className="text-base leading-relaxed text-muted-foreground">
+                Dein Kopf dreht gerade Runden? Man kennt&apos;s – lass uns
+                gemeinsam aus dem Gedankenkarussell aussteigen!
+              </p>
+            </div>
+          )}
           {/* Progress dots */}
         <ProgressDots current={step} completed={false} />
 

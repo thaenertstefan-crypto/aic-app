@@ -13,7 +13,9 @@ import { ONBOARDING_COMPASS_EMOJIS } from "@/lib/content/onboarding-intro";
  * Mini-Vorschauen der App-Bereiche für die Onboarding-Intro-Karten. Bewusst
  * rein präsentativ und mit denselben Ornamenten wie die echten Seiten gerendert
  * ([me-hub.tsx] / [booster/page.tsx]) — die Vorschau kann so nicht mehr von der
- * Realität abdriften. Ornamente ruhig (animate={false}), klein skaliert.
+ * Realität abdriften. Ornamente leben (animate={true}), nur klein skaliert; der
+ * einmalige Siegel-Stempel bleibt aus, weil der Crossfade der Karte die Ankunft
+ * trägt.
  */
 
 /** Vorschau auf den „Me"-Bereich — die drei Szenen wie im Hub. */
@@ -30,7 +32,11 @@ export function MePreview() {
       label: "Meine Werte",
     },
     { art: <StarArt animate={true} className="size-9" />, label: "Meine Wants" },
-    { art: <SealArt animate={true} className="size-9" />, label: "Meine Bill of Rights" },
+    {
+      // Stempel aus: die Vorschau sitzt in derselben Crossfade-Karte wie intro5.
+      art: <SealArt animate={true} stamp={false} className="size-9" />,
+      label: "Meine Bill of Rights",
+    },
   ];
   return (
     <div aria-hidden="true" className="divide-y divide-border/70">

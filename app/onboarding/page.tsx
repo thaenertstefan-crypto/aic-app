@@ -509,7 +509,8 @@ export default function OnboardingPage() {
           )}
           {step === "intro5" && (
             <div className="flex justify-center py-2">
-              <SealArt animate={true} className="size-16" />
+              {/* Ohne Stempel: der Crossfade der Karte ist hier die Ankunft. */}
+              <SealArt animate={true} stamp={false} className="size-16" />
             </div>
           )}
           {step === "intro7" && <BoosterPreview />}

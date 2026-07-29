@@ -17,8 +17,14 @@ type BrandPanelProps = {
 
 /**
  * Emotionale Brand-Seite für die Auth-Seiten: selbstbewusste Headline, warme
- * Subline und das animierte Reframe als Hero-Element. Layout-unabhängig —
- * wird in Teil 2 ins Split-Layout gesetzt.
+ * Subline und das animierte Reframe als Hero-Element. Layout-unabhängig.
+ *
+ * Bewusst ohne eigenen Hintergrund und ohne Deko-Blob: Die Tiefe kommt vom
+ * `SkyBackdrop`, der im Signup-Hero darunter liegt. Der frühere `blur-3xl`-Blob
+ * war die zweite atmosphärische Ebene (dieselbe, die bei `AmbientBlobs` schon
+ * entfernt wurde) — und weil ihn `overflow-hidden` an der Panel-Oberkante
+ * abschnitt, zog ein 64-px-Blur dort eine harte waagerechte Kante quer über den
+ * Hero, direkt unter dem Logo.
  */
 export function BrandPanel({
   headline = DEFAULT_HEADLINE,
@@ -27,18 +33,7 @@ export function BrandPanel({
   className,
 }: BrandPanelProps) {
   return (
-    <div
-      className={cn(
-        "relative isolate overflow-hidden bg-linear-to-br from-secondary via-accent/60 to-background",
-        className,
-      )}
-    >
-      {/* Weiche Blob-Form für etwas Tiefe — rein dekorativ. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-16 -top-16 -z-10 size-64 rounded-full bg-primary/10 blur-3xl"
-      />
-
+    <div className={cn("relative", className)}>
       <div className="flex flex-col gap-6 p-8 sm:p-10">
         <h1 className="font-heading text-4xl font-semibold leading-tight text-balance text-foreground md:text-5xl">
           {headline}

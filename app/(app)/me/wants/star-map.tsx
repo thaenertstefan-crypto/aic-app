@@ -363,7 +363,11 @@ export function StarMap({
               r={s.r}
               fill="var(--foreground)"
               className={reduced ? undefined : "star-twinkle"}
-              style={reduced ? { opacity: 0.3 } : { animationDelay: `${(i % 5) * 0.7}s` }}
+              // Negativer Versatz: alle Mikro-Sterne funkeln ab dem ersten
+              // Frame, nur phasenverschoben. Positiv ließ sie bis zum Start
+              // deckend stehen und dann auf den 0-%-Keyframe (opacity 0.15)
+              // springen — dasselbe Nacheinander-Anspringen wie bei den Funken.
+              style={reduced ? { opacity: 0.3 } : { animationDelay: `-${(i % 5) * 0.7}s` }}
             />
           ))}
         </svg>

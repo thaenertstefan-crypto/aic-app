@@ -21,7 +21,7 @@ export default function AuthLayout({
 
           {/* Headline / Subline / Reframe mittig im Hero */}
           <div className="flex flex-1 items-center">
-            <BrandPanel className="bg-none" />
+            <BrandPanel />
           </div>
         </>
       }

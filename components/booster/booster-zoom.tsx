@@ -103,8 +103,8 @@ const SETTLE_MS = 260;
  *  statt den User vor einem schwebenden Icon sitzen zu lassen. */
 const HOLD_MAX_MS = 4000;
 
-/** Zielgröße des Klons = size-20 (80 px) des Modul-Icons. */
-const TARGET_SIZE = 80;
+/** Zielgröße des Klons = size-24 (96 px) des Modul-Icons. */
+const TARGET_SIZE = 96;
 
 /**
  * Abstand vom oberen Viewport-Rand (unterhalb der Safe Area) zum Mittelpunkt des
@@ -116,13 +116,13 @@ const TARGET_SIZE = 80;
  *       (text-lg → 28) bleibt also unter der des Zurück-Pfeils
  * + 24  Content-Wrapper py-6
  * +  4  ModuleIcon-Wrapper pt-1
- * + 40  halbe Icon-Höhe (size-20)
+ * + 48  halbe Icon-Höhe (size-24)
  *
  * Der Wert ist nur der Startwert: ab der zweiten Reise einer Session gewinnt der
  * gemessene Rect aus arrive() (lastTargetRef), die Vorhersage heilt sich also
  * selbst, falls das Layout wandert.
  */
-const LANDING_Y = 129;
+const LANDING_Y = 137;
 
 /** `env(safe-area-inset-top)` einmalig ausmessen. Bewusst über eine Wegwerf-Probe
  *  und nicht über den Layout-Wrapper: der Hub kann gescrollt sein, dessen

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronUp } from "lucide-react";
 
-import { Logo } from "@/components/brand/logo";
 import { MascotPeek } from "@/components/brand/mascot-peek";
 import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
@@ -82,18 +81,14 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
   }
 
   // Nicht-gegateter Pfad: reduced-motion UND alle Nicht-Signup-Routen (Login,
-  // Reset). Kompakter Kopf (nur Logo) + Karte auf dem Nachthimmel —
-  // KEIN großer Hero (der brächte ein zweites Maskottchen). Genau ein Peek.
+  // Reset). Nur die Karte auf dem Nachthimmel — KEIN großer Hero (der brächte
+  // ein zweites Maskottchen) und bewusst auch keine Wortmarke: Rückkehrer
+  // wissen, wo sie sind, die verkürzte „AIC"-Marke oben links war reine
+  // Ablenkung neben dem Maskottchen. Genau ein Peek.
   if (!gated) {
     return (
       <div className="relative flex min-h-lvh flex-col overflow-hidden">
         <SkyBackdrop />
-        <div
-          className="relative z-10 px-6 pt-6 md:px-10 md:pt-8"
-          style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top, 0px))" }}
-        >
-          <Logo size="default" />
-        </div>
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-8">
           <div className="w-full max-w-sm">{children}</div>
         </div>
