@@ -75,6 +75,9 @@ export function ConfidenceBooster({
       <SubPageHeader
         backHref="/booster"
         title={PAGE_TITLES.confidence}
+        // Dieser Screen steht am Ende des Kopfwetter-Zooms — er blendet ein
+        // statt hart zu erscheinen.
+        enterFade
         action={
           INTRO_CARDS.length > 0 ? (
             <IntroInfoButton cards={INTRO_CARDS} />

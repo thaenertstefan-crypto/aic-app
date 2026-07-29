@@ -1069,11 +1069,12 @@ body[data-zone="schmiede"] {
   }
 }
 
-/* Kopfwetter-Hub → Sub-Page: Kamera-Push aus dem getippten Icon.
-   Die Zellen skalieren vom Tap-Punkt weg (Umgebung streamt nach außen), ein
-   fixer Klon des Wetter-Icons reist auf einer weichen Bogenbahn nach oben in
-   die Bildmitte und deckt dabei die Navigation ab. Der frühere Lilac-Bloom ist
-   entfallen — diese Aufgabe trägt jetzt der Klon.
+/* Kopfwetter-Hub → Sub-Page: Kamera-Push aus dem getippten Icon, in zwei Takten
+   (die Ablaufbeschreibung steht im Kopf von booster-zoom.tsx).
+   Takt 1: die Bühne skaliert vom Tap-Punkt weg (Umgebung streamt nach außen),
+   der Klon des Wetter-Icons wächst verklebt mit. Takt 2: der Klon reist direkt
+   auf das gemeldete Modul-Icon der Sub-Page und deckt dabei die Navigation ab.
+   Der frühere Lilac-Bloom ist entfallen — diese Aufgabe trägt jetzt der Klon.
    pointer-events: none, bewusst NICHT auto: der Lilac-Bloom deckte den Screen
    früher komplett ab, das rechtfertigte ein Blocken der Eingaben darunter.
    Der Klon ist dagegen nur eine kleine fliegende Signatur — der Rest des
@@ -1084,48 +1085,80 @@ body[data-zone="schmiede"] {
    braucht diese Sperre nicht. */
 .booster-zoom-overlay { pointer-events: none; }
 
-/* Bogenbahn: x läuft ease-out, y ease-in — geschachtelt ergibt das eine Kurve.
+/* Takt 2 (Reise): EINE gerade, ausklingende Bahn vom Tap-Punkt auf das gemeldete
+   Modul-Icon. Bewusst keine geschachtelte Bogenbahn mehr — zwei Achsen mit
+   verschiedenen Kurven (x ease-out, y ease-in) lassen den Klon erst seitwärts
+   zur Mitte laufen, dort stehen wirken und am Ende hochschießen.
    `translate` MUSS namentlich in transition-property stehen: Tailwind v4 (und
    dieser Code) bewegen die eigenständige CSS-Property `translate`, nicht
    `transform` — sonst springt die Position, statt zu gleiten.
-   Die Dauer steht in --zoom-flight-ms mit Fallback 620ms (= TRAVEL_MS in
-   booster-zoom.tsx): arrive() setzt die Property inline auf die verbleibende
-   Restzeit, wenn es die Reststrecke auf ein echtes Icon-Rect umlenkt — sonst
-   liefe die Retarget-Transition erneut volle 620ms statt nur bis zum
-   nominellen Flugende. Ohne Retarget bleibt der Fallback aktiv. */
-.booster-zoom-arc-x {
+   Alle Dauern kommen aus booster-zoom.tsx (Custom Properties), damit die Zahlen
+   nur an einer Stelle stehen; die Fallbacks hier sind nur Notnägel. */
+.booster-zoom-travel {
   will-change: translate;
-  transition: translate var(--zoom-flight-ms, 620ms) cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-.booster-zoom-arc-y {
-  will-change: translate;
-  transition: translate var(--zoom-flight-ms, 620ms) cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  transition: translate var(--zoom-travel-ms, 520ms) cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 /* Der Klon zentriert sich selbst auf dem Mittelpunkt, den left/top des äußeren
    Wrappers setzen. Die Zentrierung läuft über ein KONSTANTES `translate`
    (-50% -50%, bezogen auf die eigene Box) und nicht über Prozent-Margins oder
    left/top — die bezögen sich auf den Container, der hier keine eigene Breite
    hat. `scale` ist eine eigenständige Property und kollidiert deshalb nicht mit
-   diesem translate. Die Opacity-Dauer bleibt fest bei 260ms (SETTLE_MS) —
-   unabhängig vom Retarget, das nur scale/translate betrifft. */
+   diesem translate.
+   Takt 1 („push“) teilt Dauer und beschleunigende Kurve mit der Bühne, damit der
+   Klon in der Szene verklebt wirkt; Takt 2 („travel“) klingt mit der Reise aus. */
 .booster-zoom-clone {
   translate: -50% -50%;
   transform-origin: center;
   will-change: scale, opacity;
   transition:
-    scale var(--zoom-flight-ms, 620ms) cubic-bezier(0.22, 0.61, 0.36, 1),
-    opacity 260ms ease-out;
+    scale var(--zoom-push-ms, 420ms) cubic-bezier(0.55, 0.06, 0.68, 0.19),
+    opacity var(--zoom-settle-ms, 260ms) ease-out;
+}
+.booster-zoom-clone[data-beat="travel"] {
+  transition:
+    scale var(--zoom-travel-ms, 520ms) cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity var(--zoom-settle-ms, 260ms) ease-out;
 }
 
+/* Takt 1 (Kamera-Push): die ganze Hub-Bühne — Titel, Untertitel UND Zellen —
+   skaliert am Tap-Punkt verankert nach außen und fadet dabei aus. Die Opacity
+   ist schon bei 65 % durch, damit die Navigation kurz vor Animationsende
+   (NAVIGATE_AT) unsichtbar bleibt. Dauer und Ziel-Scale kommen aus
+   booster-zoom.tsx (PUSH_MS/PUSH_SCALE, gesetzt von BoosterHubStage). */
 .booster-cells-zoom {
-  animation: booster-cells-push 300ms ease-in both;
+  animation: booster-cells-push var(--zoom-push-ms, 420ms) ease-in both;
 }
 @keyframes booster-cells-push {
-  from { transform: scale(1);   opacity: 1; }
-  to   { transform: scale(1.6); opacity: 0; }
+  from { transform: scale(1); opacity: 1; }
+  65%  { opacity: 0; }
+  to   { transform: scale(var(--zoom-push-scale, 2.4)); opacity: 0; }
+}
+
+/* Ohne diesen Clip auf dem ELTERN-Element der skalierenden Bühne vergrößert der
+   Push den Scroll-Overflow des Dokuments — die Seite bekäme für die Dauer der
+   Animation eine Scrollhöhe. Auf die skalierende Box selbst gehört er nicht:
+   deren eigene Clip-Box skaliert mit und clippt damit nichts.
+   `lvh` statt `svh`/`dvh` wegen der Standalone-PWA (sonst streift der Body-Grund
+   am unteren Rand durch). */
+.booster-stage-clip {
+  overflow: clip;
+  min-height: 100lvh;
+}
+
+/* Einblenden des Sub-Page-Headers (opt-in über SubPageHeader `enterFade`).
+   Bewusst reine Opacity: `animate-in` würde über seine enter-Keyframes immer
+   auch `transform` anfassen, und ein Wrapper käme gar nicht in Frage — er würde
+   zum Containing Block des `sticky top-0` und den Header an seine Höhe fesseln. */
+.booster-header-enter {
+  animation: booster-header-fade 500ms ease-out both;
+}
+@keyframes booster-header-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .booster-cells-zoom { animation: none; }
-  .booster-zoom-arc-x, .booster-zoom-arc-y, .booster-zoom-clone { transition: none; }
+  .booster-header-enter { animation: none; }
+  .booster-zoom-travel, .booster-zoom-clone { transition: none; }
 }

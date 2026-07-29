@@ -469,6 +469,10 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
       <SubPageHeader
         backHref="/booster"
         title={PAGE_TITLES.thingsGotMessy}
+        // Nur der Einstiegs-Screen blendet ein — er steht am Ende des
+        // Kopfwetter-Zooms. An die Phase gehängt, damit die Animation bei einem
+        // späteren Branch-Wechsel nicht erneut anläuft.
+        enterFade={phase === "reflect"}
         action={
           INTRO_CARDS.length > 0 ? (
             <IntroInfoButton cards={INTRO_CARDS} />

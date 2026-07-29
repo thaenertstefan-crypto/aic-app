@@ -734,6 +734,9 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
       <SubPageHeader
         backHref="/booster"
         title="Overthinking"
+        // Nur Schritt 1 blendet ein — dort steht auch das ModuleIcon, dort
+        // endet der Kopfwetter-Zoom.
+        enterFade={step === 1}
         action={
           INTRO_CARDS.length > 0 ? (
             <IntroInfoButton cards={INTRO_CARDS} />

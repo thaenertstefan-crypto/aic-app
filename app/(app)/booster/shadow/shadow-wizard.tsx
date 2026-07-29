@@ -193,6 +193,10 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
     <SubPageHeader
       backHref="/booster"
       title={PAGE_TITLES.shadow}
+      // Nur der Einstiegs-Screen blendet ein — er steht am Ende des
+      // Kopfwetter-Zooms. An die Phase gehängt, damit die Animation bei einem
+      // späteren Branch-Wechsel nicht erneut anläuft.
+      enterFade={phase === "mode"}
       action={
         INTRO_CARDS.length > 0 ? <IntroInfoButton cards={INTRO_CARDS} /> : undefined
       }

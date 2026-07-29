@@ -9,7 +9,6 @@ import {
   useState,
   type CSSProperties,
   type ReactNode,
-  type RefObject,
 } from "react";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
@@ -22,54 +21,76 @@ import type { CellVariant } from "@/app/(app)/booster/pressure-cell";
  * Routenwechsel überlebt (Layouts bleiben bei Navigation zwischen Kind-Routen
  * erhalten).
  *
- * Ablauf: zoomInto() → phase "zooming" (der Hub skaliert am Tap-Punkt verankert
- * vorbei und fadet, ein fixer Klon des Wetter-Icons löst sich vom Tap-Punkt und
- * reist auf einer weichen Kurve nach oben in die Bildmitte), nach ACCEL_MS
- * navigieren — der Klon liegt über allem, der Wechsel ist nicht sichtbar. Die
- * Sub-Page meldet beim Mount arrive(rect | null): mit Rect setzt sich der Klon
- * exakt auf das echte Modul-Icon und blendet über, ohne Rect löst er sich an
- * seiner Zielposition auf (Intro-Sequenz beim Erstbesuch). Reduced motion:
- * sofort navigieren, kein Klon.
+ * Zwei Takte, jeder mit genau EINEM Ziel — deshalb gibt es unterwegs nichts zu
+ * korrigieren und keinen Knick in der Bahn:
+ *
+ * Takt 1 „pushing“ (PUSH_MS): die ganze Hub-Bühne skaliert am Tap-Punkt verankert
+ * auf PUSH_SCALE und fadet dabei aus (BoosterHubStage). Der Klon liegt auf dem
+ * Tap-Punkt und wächst im selben Takt mit derselben Kurve mit — er wirkt in der
+ * Szene verklebt, alles andere strömt an ihm vorbei. Bei NAVIGATE_AT (kurz vor
+ * Push-Ende, die Bühne ist da schon unsichtbar) wird navigiert.
+ *
+ * Takt 2 „traveling“ (TRAVEL_MS): erst wenn die Sub-Page ihr Icon-Rect gemeldet
+ * hat (arrive()), reist der Klon auf EINER geraden, ausklingenden Bahn direkt
+ * dorthin und schrumpft auf TARGET_SIZE.
+ *
+ * „arriving“ (SETTLE_MS): der Klon blendet aus, das echte Icon blendet ein.
+ * Reduced motion: sofort navigieren, kein Klon.
  */
 
-type Phase = "idle" | "zooming" | "arriving";
+type Phase = "idle" | "pushing" | "traveling" | "arriving";
 
 /** Mittelpunkt in Viewport-Koordinaten + gerenderte Kantenlänge (px). */
 export type ZoomRect = { x: number; y: number; size: number };
 
-/** `retargetMs` ist nur gesetzt, wenn arrive() die Reststrecke auf ein echtes
- *  Icon-Rect umgelenkt hat — siehe arrive() weiter unten. */
-type Flight = { from: ZoomRect; to: ZoomRect; variant: CellVariant; retargetMs?: number };
+type Flight = {
+  from: ZoomRect;
+  to: ZoomRect | null;
+  variant: CellVariant;
+  /** Tap-Punkt in den Koordinaten der Hub-Bühne = deren transform-origin. */
+  stageOrigin: { x: number; y: number } | null;
+};
 
-// Navigation am Ende des Kamera-Push.
-const ACCEL_MS = 300;
-// Nominelle Reisedauer des Klons vom Tap-Punkt zur Zielposition — MUSS mit den
-// `transition`-Deklarationen von .booster-zoom-arc-x/-y/.booster-zoom-clone in
-// globals.css übereinstimmen (620ms dort). arrive() rechnet damit die Restzeit
-// bis zum nominellen Flugende aus, siehe dort.
-const TRAVEL_MS = 620;
-// Übergabe auf das echte Icon, danach verschwindet das Overlay.
+/** Markiert die skalierende Box der Hub-Bühne (BoosterHubStage). */
+export const STAGE_ATTR = "data-booster-stage";
+
+/** Rechnet den Tap-Punkt in Bühnen-Koordinaten um. Bewusst hier und per
+ *  Attribut-Lookup statt über einen Layout-Effect in der Bühne: so steht der
+ *  Ursprung schon im selben Render, in dem die Push-Klasse gesetzt wird, und
+ *  der erste Frame skaliert garantiert um den richtigen Punkt. Ohne Bühne
+ *  (Zoom von woanders) bleibt es beim CSS-Default `center`. */
+function stageOriginFor(rect: ZoomRect): { x: number; y: number } | null {
+  const stage = document.querySelector(`[${STAGE_ATTR}]`);
+  if (!stage) return null;
+  const s = stage.getBoundingClientRect();
+  return { x: rect.x - s.left, y: rect.y - s.top };
+}
+
+/** Takt 1: Dauer und Ziel-Scale des Kamera-Push. Beides speist über
+ *  Custom Properties auch die CSS-Animation der Bühne (BoosterHubStage →
+ *  .booster-cells-zoom in globals.css), damit die Zahlen nur hier stehen. */
+export const PUSH_MS = 420;
+export const PUSH_SCALE = 2.4;
+/** Navigation kurz VOR dem Ende von Takt 1: die Bühne ist zu diesem Zeitpunkt
+ *  schon auf Opacity 0 (die Keyframes ziehen die Opacity bis 65 % durch), der
+ *  Wechsel ist also unsichtbar — und die Sub-Page bekommt einen Vorsprung beim
+ *  Mounten, damit Takt 2 möglichst nahtlos an Takt 1 anschließt. */
+const NAVIGATE_AT = 340;
+/** Takt 2: Reisedauer des Klons vom Tap-Punkt auf das gemeldete Icon. */
+const TRAVEL_MS = 520;
+/** Übergabe auf das echte Icon, danach verschwindet das Overlay. */
 const SETTLE_MS = 260;
-// Untergrenze für die von arrive() verkürzte Retarget-Transition. Ohne diese
-// Grenze würde `TRAVEL_MS - elapsed` bei einer späten Ankunftsmeldung (kalte,
-// nicht geprefetchte Route — gerade beim Erstbesuch nicht exotisch: navigate()
-// liegt schon bei ACCEL_MS, es bleiben nur noch TRAVEL_MS - ACCEL_MS = 320ms
-// für Mount + Paint) auf 0 fallen: `translate 0ms`/`scale 0ms` lässt den Klon
-// hart springen statt zu gleiten, und der Phasen-Timer feuert sofort. Mit der
-// Untergrenze gleitet der Klon immer, nur etwas über das nominelle Flugende
-// hinaus.
-const MIN_RETARGET_MS = 180;
-// Notbremse: falls arrive() nie feuert (Navigation hängt/schlägt fehl, z.B. auf
-// wackliger Verbindung — PWA mit OfflineBanner, offline ist ein erwarteter
-// Zustand), zwingt dieser Deckel "zooming" zurück auf "idle", statt den User
-// hinter dem input-schluckenden Overlay stecken zu lassen.
-const WATCHDOG_MS = ACCEL_MS + 4000;
+/** Notbremse: falls arrive() nie feuert (Navigation hängt/schlägt fehl, z.B. auf
+ *  wackliger Verbindung — PWA mit OfflineBanner, offline ist ein erwarteter
+ *  Zustand), zwingt dieser Deckel „pushing“ zurück auf „idle“, statt den User
+ *  hinter einem Overlay stecken zu lassen. */
+const WATCHDOG_MS = NAVIGATE_AT + 4000;
 
 /** Zielgröße des Klons = size-20 (80 px) des Modul-Icons. */
 const TARGET_SIZE = 80;
-/** Fallback-Ziel, solange die Sub-Page ihr Icon noch nicht gemeldet hat:
- *  horizontal zentriert, im oberen Drittel — dort sitzt das Modul-Icon. */
-function defaultTarget(): ZoomRect {
+/** Nur für arrive(null) — Seiten ohne Modul-Icon (Intro-Sequenz beim
+ *  Erstbesuch). Der Klon reist zu dieser Stelle und löst sich dort auf. */
+function dissolveTarget(): ZoomRect {
   return {
     x: window.innerWidth / 2,
     y: window.innerHeight * 0.28,
@@ -79,11 +100,13 @@ function defaultTarget(): ZoomRect {
 
 type ZoomValue = {
   phase: Phase;
-  /** true, nur während der Klon tatsächlich fliegt — das echte Icon hält sich
-   *  zurück. Endet mit dem Flug selbst (Phase "zooming"), nicht erst mit dem
-   *  Verschwinden des Overlays: so überlappen der 260-ms-Fade-out des Klons und
-   *  der 200-ms-Fade-in des echten Icons, statt sequenziell hintereinander zu
-   *  laufen (sonst ein sichtbares Loch ohne jedes Icon dazwischen). */
+  /** transform-origin der laufenden Reise, in Bühnen-Koordinaten. */
+  stageOrigin: { x: number; y: number } | null;
+  /** true, solange der Klon die Signatur trägt (Takt 1 + 2) — das echte Icon
+   *  hält sich so lange zurück. Endet mit dem Flug, nicht erst mit dem
+   *  Verschwinden des Overlays: so überlappen der Fade-out des Klons und der
+   *  Fade-in des echten Icons, statt sequenziell hintereinander zu laufen
+   *  (sonst ein sichtbares Loch ohne jedes Icon dazwischen). */
   flying: boolean;
   zoomInto: (
     o: { rect: ZoomRect; variant: CellVariant },
@@ -108,13 +131,9 @@ export function BoosterZoomProvider({ children }: { children: ReactNode }) {
   const [flight, setFlight] = useState<Flight | null>(null);
   const phaseRef = useRef<Phase>("idle");
   const timers = useRef<number[]>([]);
-  // Startzeitpunkt der laufenden Reise (performance.now()) — arrive() braucht
-  // ihn, um die Restzeit bis zum nominellen Flugende (TRAVEL_MS) auszurechnen.
-  const launchedAt = useRef<number | null>(null);
-  // Erste Ankunfts-Meldung gewinnt: arrive() plant seine Wirkung jetzt über
-  // einen Timer statt sofort die Phase zu wechseln (siehe arrive()), darum
-  // reicht der Phase-Check allein nicht mehr, um einen zweiten Aufruf (Modul-
-  // Icon UND BoosterArrive im selben Zyklus) abzuweisen.
+  // Erste Ankunfts-Meldung gewinnt: Modul-Icon UND BoosterArrive melden im
+  // selben Mount-Zyklus, der Phase-Check allein würde den zweiten Aufruf im
+  // gleichen Frame nicht sicher abweisen.
   const arrivedRef = useRef(false);
 
   const set = useCallback((p: Phase) => {
@@ -155,20 +174,20 @@ export function BoosterZoomProvider({ children }: { children: ReactNode }) {
         navigate();
         return;
       }
-      setFlight({ from: o.rect, to: defaultTarget(), variant: o.variant });
-      // launchedAt wird NICHT hier gestempelt, sondern im rAF von
-      // BoosterZoomOverlay, im selben Frame wie setLaunched(true) — das ist
-      // der Moment, in dem die CSS-Transition tatsächlich zu laufen beginnt.
-      // Ein Stempel hier wäre 1-2 Frames zu früh und würde arrive()s
-      // Restzeit-Rechnung systematisch verkürzen.
+      setFlight({
+        from: o.rect,
+        to: null,
+        variant: o.variant,
+        stageOrigin: stageOriginFor(o.rect),
+      });
       arrivedRef.current = false;
-      set("zooming");
-      const t = window.setTimeout(() => navigate(), ACCEL_MS);
+      set("pushing");
+      const t = window.setTimeout(() => navigate(), NAVIGATE_AT);
       timers.current.push(t);
       // Notbremse: löst nur aus, wenn arrive() bis dahin nicht schon
-      // "zooming" verlassen hat.
+      // „pushing“ verlassen hat.
       const watchdog = window.setTimeout(() => {
-        if (phaseRef.current === "zooming") {
+        if (phaseRef.current === "pushing") {
           set("arriving");
           finish();
         }
@@ -180,37 +199,17 @@ export function BoosterZoomProvider({ children }: { children: ReactNode }) {
 
   const arrive = useCallback(
     (target: ZoomRect | null) => {
-      if (phaseRef.current !== "zooming" || arrivedRef.current) return;
+      if (phaseRef.current !== "pushing" || arrivedRef.current) return;
       arrivedRef.current = true;
-      // arrive() feuert oft deutlich vor dem nominellen Flugende: router.push()
-      // liegt bei ACCEL_MS, eine geprefetchte Sub-Page mountet oft nur wenige
-      // zehn Millisekunden danach — der Klon hat da erst einen Bruchteil seiner
-      // TRAVEL_MS-Reise geflogen. Ohne Korrektur würde ein Retarget auf das
-      // echte Icon-Rect eine KOMPLETT NEUE 620-ms-Transition ab der aktuellen
-      // (Zwischen-)Position starten, während die Opacity parallel schon in
-      // SETTLE_MS ausblendet — der Klon löst sich dann in der Luft auf, statt
-      // exakt auf dem Icon zu landen.
-      //
-      // Fix: Restzeit bis zum nominellen Flugende ausrechnen. Mit gemeldetem
-      // Rect bekommt die Reststrecke genau diese Restzeit als Transition-Dauer
-      // (`retargetMs`, siehe globals.css .booster-zoom-arc-x/-y/-clone) — Landung
-      // und nominelles Flugende fallen so zusammen. Ohne Rect (Intro-Sequenz)
-      // bleibt das Fallback-Ziel unverändert; auch dort wird aber erst nach der
-      // Restzeit auf "arriving" geschaltet, damit die laufende Flugbahn nicht
-      // vorzeitig durch das Ausblenden abgeschnitten wird. MIN_RETARGET_MS
-      // verhindert, dass eine späte Ankunftsmeldung `remaining` auf 0 drückt
-      // und damit aus dem Gleiten einen harten Sprung macht — derselbe Wert
-      // speist gleich sowohl `retargetMs` (Transition-Dauer) als auch den
-      // Phasen-Timer, die beiden bleiben also automatisch synchron.
-      const elapsed = launchedAt.current != null ? performance.now() - launchedAt.current : TRAVEL_MS;
-      const remaining = Math.max(MIN_RETARGET_MS, TRAVEL_MS - elapsed);
-      if (target) {
-        setFlight((f) => (f ? { ...f, to: target, retargetMs: remaining } : f));
-      }
+      // Ab hier steht das Ziel fest — Takt 2 fliegt es in einer Bewegung an.
+      // Ohne gemeldetes Rect (Seite ohne Modul-Icon) reist der Klon zur
+      // Auflöse-Position und verschwindet dort.
+      setFlight((f) => (f ? { ...f, to: target ?? dissolveTarget() } : f));
+      set("traveling");
       const t = window.setTimeout(() => {
         set("arriving");
         finish();
-      }, remaining);
+      }, TRAVEL_MS);
       timers.current.push(t);
     },
     [set, finish],
@@ -218,105 +217,90 @@ export function BoosterZoomProvider({ children }: { children: ReactNode }) {
 
   return (
     <ZoomContext.Provider
-      value={{ phase, flying: phase === "zooming", zoomInto, arrive }}
+      value={{
+        phase,
+        stageOrigin: flight?.stageOrigin ?? null,
+        flying: phase === "pushing" || phase === "traveling",
+        zoomInto,
+        arrive,
+      }}
     >
       {children}
-      <BoosterZoomOverlay phase={phase} flight={flight} launchedAtRef={launchedAt} />
+      <BoosterZoomOverlay phase={phase} flight={flight} />
     </ZoomContext.Provider>
   );
 }
 
-function BoosterZoomOverlay({
-  phase,
-  flight,
-  launchedAtRef,
-}: {
-  phase: Phase;
-  flight: Flight | null;
-  /** Wird im selben rAF wie setLaunched(true) gestempelt (siehe Effect unten) —
-   *  arrive() im Provider liest daraus die verstrichene Flugzeit. */
-  launchedAtRef: RefObject<number | null>;
-}) {
-  // Der Klon startet exakt auf dem Tap-Punkt und bekommt seine Zielwerte erst
-  // im Frame danach — sonst gäbe es nichts zu transitionieren.
+function BoosterZoomOverlay({ phase, flight }: { phase: Phase; flight: Flight | null }) {
+  // Der Klon startet exakt auf dem Tap-Punkt in Originalgröße und bekommt seine
+  // Takt-1-Zielwerte erst im Frame danach — sonst gäbe es nichts zu
+  // transitionieren.
   const [launched, setLaunched] = useState(false);
   useEffect(() => {
-    // Alle Zweige planen die Zustandsänderung über rAF statt sie synchron im
+    // Beide Zweige planen die Zustandsänderung über rAF statt sie synchron im
     // Effect-Körper auszulösen (kaskadierende Renders). Der Reset beim Zurück-
-    // fallen auf "idle" ist unsichtbar, weil die Overlay-Komponente in diesem
-    // Fall ohnehin null rendert — ein Frame Verzögerung macht keinen Unterschied.
+    // fallen auf „idle“ ist unsichtbar, weil die Overlay-Komponente in diesem
+    // Fall ohnehin null rendert.
     if (phase === "idle") {
       const raf = requestAnimationFrame(() => setLaunched(false));
       return () => cancelAnimationFrame(raf);
     }
-    if (phase === "zooming") {
-      // launchedAt wird genau hier gestempelt, nicht schon in zoomInto: das
-      // ist der Frame, in dem `translate`/`scale` tatsächlich von 0 auf ihren
-      // Zielwert zu transitionieren beginnen. Ein früherer Stempel wäre 1-2
-      // Frames zu früh und würde arrive()s Restzeit-Rechnung verkürzen.
-      const raf = requestAnimationFrame(() => {
-        launchedAtRef.current = performance.now();
-        setLaunched(true);
-      });
+    if (phase === "pushing") {
+      const raf = requestAnimationFrame(() => setLaunched(true));
       return () => cancelAnimationFrame(raf);
     }
-    // "arriving": launched bleibt true, launchedAt bleibt stehen — hier ist
-    // nichts zu planen, der Flug läuft einfach weiter bzw. löst sich auf.
+    // „traveling“/„arriving“: launched bleibt true, der Flug läuft weiter.
     return undefined;
-  }, [phase, launchedAtRef]);
+  }, [phase]);
 
   if (phase === "idle" || !flight) return null;
 
   const Art = BOOSTER_ART[flight.variant];
-  const dx = flight.to.x - flight.from.x;
-  const dy = flight.to.y - flight.from.y;
-  const scale = flight.to.size / flight.from.size;
+  const traveling = phase === "traveling" || phase === "arriving";
+  const dx = flight.to ? flight.to.x - flight.from.x : 0;
+  const dy = flight.to ? flight.to.y - flight.from.y : 0;
+  // Takt 1 wächst mit der Bühne mit, Takt 2 schrumpft auf die Größe des echten
+  // Modul-Icons. Vor dem ersten Frame (launched === false) sitzt der Klon in
+  // Originalgröße auf dem Tap-Punkt. Ohne Ziel (Watchdog-Pfad: arrive() kam
+  // nie) bleibt er auf Push-Größe stehen und blendet dort aus.
+  const scale =
+    traveling && flight.to
+      ? flight.to.size / flight.from.size
+      : launched
+        ? PUSH_SCALE
+        : 1;
 
   return (
     <div aria-hidden data-phase={phase} className="booster-zoom-overlay fixed inset-0 z-[80]">
-      {/* Zwei geschachtelte Ebenen mit unterschiedlichen Kurven: x läuft
-          ease-out, y ease-in → zusammen ergibt das eine weiche Bogenbahn statt
-          einer geraden Linie. */}
       <div
-        className="booster-zoom-arc-x absolute"
+        className="booster-zoom-travel absolute"
         style={
           {
             left: `${flight.from.x}px`,
             top: `${flight.from.y}px`,
-            translate: launched ? `${dx}px 0` : "0 0",
-            // Nur bei einem Retarget (arrive() mit echtem Rect) gesetzt — kürzt
-            // die laufende Transition auf die von arrive() berechnete Restzeit,
-            // statt neu bei voller TRAVEL_MS zu starten. Vererbt sich über die
-            // Custom Property an .booster-zoom-arc-y/-clone weiter unten (beide
-            // setzen den Wert nicht selbst). Ohne Retarget bleibt der CSS-
-            // Fallback (620ms) aktiv.
-            ...(flight.retargetMs != null
-              ? ({ "--zoom-flight-ms": `${flight.retargetMs}ms` } as CSSProperties)
-              : {}),
+            translate: traveling ? `${dx}px ${dy}px` : "0 0",
+            // Alle Dauern stehen nur hier (TS ist die Quelle) und vererben sich
+            // an den Klon weiter — siehe die transition-Deklarationen in
+            // globals.css.
+            "--zoom-push-ms": `${PUSH_MS}ms`,
+            "--zoom-travel-ms": `${TRAVEL_MS}ms`,
+            "--zoom-settle-ms": `${SETTLE_MS}ms`,
           } as CSSProperties
         }
       >
         <div
-          className="booster-zoom-arc-y"
+          className="booster-zoom-clone"
+          data-beat={traveling ? "travel" : "push"}
           style={
             {
-              translate: launched ? `0 ${dy}px` : "0 0",
+              width: `${flight.from.size}px`,
+              height: `${flight.from.size}px`,
+              scale: `${scale}`,
+              opacity: phase === "arriving" ? 0 : 1,
             } as CSSProperties
           }
         >
-          <div
-            className="booster-zoom-clone"
-            style={
-              {
-                width: `${flight.from.size}px`,
-                height: `${flight.from.size}px`,
-                scale: launched ? `${scale}` : "1",
-                opacity: phase === "arriving" ? 0 : 1,
-              } as CSSProperties
-            }
-          >
-            <Art className="size-full" />
-          </div>
+          <Art className="size-full" />
         </div>
       </div>
     </div>

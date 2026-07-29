@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type CSSProperties, type MouseEvent } from "react";
+import { type MouseEvent } from "react";
 
 import { Reveal } from "@/components/ui/reveal";
 import { PAGE_TITLES } from "@/lib/content/labels";
@@ -41,14 +41,7 @@ const SYSTEMS: WeatherSystem[] = [
 
 export function BoosterCells() {
   const router = useRouter();
-  const { phase, zoomInto } = useBoosterZoom();
-  const containerRef = useRef<HTMLDivElement>(null);
-  // Tap-Punkt relativ zum Zellen-Container → transform-origin für den Push.
-  // Als State, nicht als Ref: er wird im selben Click-Handler gesetzt, der über
-  // zoomInto() auch die Phase auf „zooming“ schaltet. React batcht beide
-  // Updates zu einem Render — der Origin ist also im selben Frame da wie die
-  // Zoom-Klasse, ohne dass der Render-Pfad eine Ref lesen muss.
-  const [localOrigin, setLocalOrigin] = useState<{ x: number; y: number } | null>(null);
+  const { zoomInto } = useBoosterZoom();
 
   function handleClick(e: MouseEvent<HTMLAnchorElement>, system: WeatherSystem) {
     // Modifier/Mittelklick → normaler Link (neuer Tab etc.).
@@ -59,29 +52,20 @@ export function BoosterCells() {
     const link = e.currentTarget;
     const iconEl = (link.querySelector("[data-cell-icon]") as HTMLElement | null) ?? link;
     const r = iconEl.getBoundingClientRect();
-    const vx = r.left + r.width / 2;
-    const vy = r.top + r.height / 2;
-    const c = containerRef.current?.getBoundingClientRect();
-    setLocalOrigin(c ? { x: vx - c.left, y: vy - c.top } : null);
     zoomInto(
-      { rect: { x: vx, y: vy, size: r.width }, variant: system.variant },
+      {
+        rect: { x: r.left + r.width / 2, y: r.top + r.height / 2, size: r.width },
+        variant: system.variant,
+      },
       () => router.push(system.href),
     );
   }
 
-  const pushing = phase === "zooming";
-
+  // Der Kamera-Push sitzt nicht mehr hier, sondern eine Ebene höher auf der
+  // ganzen Hub-Bühne (BoosterHubStage) — sonst bliebe der Seitenkopf während
+  // des Übergangs stehen. Hier bleibt nur der Tap-Punkt-Melder.
   return (
-    <div
-      ref={containerRef}
-      data-nav-spinner="off"
-      className={pushing ? "booster-cells-zoom" : undefined}
-      style={
-        pushing && localOrigin
-          ? ({ transformOrigin: `${localOrigin.x}px ${localOrigin.y}px` } as CSSProperties)
-          : undefined
-      }
-    >
+    <div data-nav-spinner="off">
       <div className="relative z-10 flex flex-col gap-16 px-4 py-4" data-e2e="booster-cells">
         {SYSTEMS.map((s, i) => {
           const left = i % 2 === 0;

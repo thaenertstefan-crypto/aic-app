@@ -17,6 +17,14 @@ interface SubPageHeaderProps {
    * rendert. Ohne onBack bleibt das Link-Verhalten unverändert.
    */
   onBack?: () => void;
+  /**
+   * Blendet den Header beim Mount ein (500 ms, reine Opacity). Für Screens, die
+   * am Ende einer eigenen Übergangs-Animation erscheinen und sonst hart
+   * reinploppen — z. B. der Einstiegs-Screen jeder Booster-Übung am Ende des
+   * Kopfwetter-Zooms. Bewusst opt-in: alle anderen Sub-Pages sollen sofort
+   * stehen.
+   */
+  enterFade?: boolean;
 }
 
 export function SubPageHeader({
@@ -26,6 +34,7 @@ export function SubPageHeader({
   action,
   backTransitionTypes,
   onBack,
+  enterFade,
 }: SubPageHeaderProps) {
   return (
     // Header animiert nur beim Sternschmiede-Übergang und teilt dieselben
@@ -38,7 +47,12 @@ export function SubPageHeader({
       default="none"
     >
       <header
-        className="sticky top-0 z-40 border-b backdrop-blur-xl"
+        // Der Fade sitzt auf dem <header> selbst, nicht auf einem Wrapper: ein
+        // Wrapper-div würde zum Containing Block des `sticky top-0` und den
+        // Header an seine eigene Höhe fesseln.
+        className={`sticky top-0 z-40 border-b backdrop-blur-xl${
+          enterFade ? " booster-header-enter" : ""
+        }`}
         // Bridge the safe-area top inset: the negative margin cancels the layout's
         // safe-area padding so the glass bar fills up to the very top edge (under
         // the notch, ambient blobs showing through), while the matching padding
