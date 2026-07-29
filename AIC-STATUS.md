@@ -1,468 +1,111 @@
 # AIC-App — Status
 
-_Maintained by the `/feierabend` skill at the end of each session. Read this at session start to get oriented before diving into the code._
+_Gepflegt von `/feierabend`. Am Session-Start lesen, um sich zu orientieren._
+_Chronik gehört hier **nicht** rein — die steht in `git log` und in den Obsidian Daily Notes._
 
-_Last updated: 2026-07-29 (REIBUNGS-RUNDE `886d86d..8499b91`: lint gruen + als viertes Gate scharf mit `--max-warnings=0`; Typo-Gate deckt `lib/content/` ab; `npm run e2e` sichert pro Route den ZUSTAND zu statt nur „hat gerendert"; Phantom-Zeile in `star-map`/`funken-sky` gefixt, Boeden heissen `MIN_VIEW_H`. tsc+gate+build gruen, beide Gegenproben (Gate rot bei Verstoss, E2E rot bei falschem Marker) bestanden. iPhone-Abnahme der Phantom-Zeile offen. Zuvor am 26.07.: Kopfwetter-Hub-Druckkarte GEBAUT — der am 23.07. vertagte Plan per `subagent-driven-development` umgesetzt: PressureField-Grund + Maeander-Flow + Nebenfix, Commits `62a8f99..f06499b`, nach `main` gepusht, Final Review (opus) Ready = Yes, tsc+gate+build gruen. iPhone-Final + Re-Critique offen. Zuvor am 23.07.: `/booster` kritisiert (27/40) + Redesign per brainstorming durchgeplant — Spec `89df50c` + Plan `c0d36a5`. Davor am selben Tag: `/me/bill-of-rights` in zwei Sessions ueberarbeitet — Runde 1 „Der gesteuerte Kurs"-Nachthimmel-Szene `e352d32..b03c706`, Runde 2 Nachbesserung nach iPhone-Feedback `0a5f947`: Maskottchen raus, Gold-Siegel als Kopf, dezente Sternbilder statt Kurslinie, /values-grosses weisses Intro, Wants-Stil-Buttons mit Gold-CTA. Alles gepusht, tsc+gate+build gruen, iPhone-Final offen. Davor: Backlog-Roadmap 13.-22.07. komplett gebaut + abgearbeitet, `e2add09..98d1c2b`.)_
+_Letzter Stand: 2026-07-29 (`8499b91`)_
 
-## Current State
-- **Reibungs-Runde umgesetzt und gepusht `886d86d..8499b91` (2026-07-29).** Die vier
-  wiederkehrenden Punkte aus der Daily Note vom 29.07., in dieser Reihenfolge, damit jedes
-  folgende Paket schon unter dem schaerferen Gate laeuft:
-  (1) **Lint gruen und als viertes Gate scharf** (`--max-warnings=0`). Es waren nicht die
-  angenommenen 3 Fehler, sondern 10 Errors + 2 Warnings in 5 Dateien — und alle liessen sich echt
-  fixen, ohne ein einziges neues `eslint-disable`: `evaluation-form` leitet die Phase jetzt aus den
-  beiden Action-States ab statt sie in zwei Effects nachzuziehen, `auth-reveal` setzt `heroGone` im
-  Cleanup zurueck, `booster-cells` und `funken-sky` halten den Tap-Origin als State (er wird im
-  selben Handler gesetzt wie die Phase, React batcht beide — kein Extra-Frame).
-  (2) **Typo-Gate deckt `lib/content/` ab**, 5 falsche Schliesszeichen in `onboarding-intro.ts`
-  geraeumt.
-  (3) **E2E mit Zustands-Zusicherung** statt blossem „hat gerendert".
-  (4) **Phantom-Zeile gefixt**, Hoehen-Boeden heissen jetzt `MIN_VIEW_H` und tragen ihre Begruendung.
-  **Zwei Befunde, die erst durch die neuen Werkzeuge sichtbar wurden:** die Gegenprobe zum
-  Lint-Gate war ohne `--max-warnings=0` gruen (eslint beendet bei reinen Warnings mit 0) — das Gate
-  haette weiter falsches Gruen gemeldet. Und der erste scharfe E2E-Lauf fand sofort, dass
-  `/me/values` und `/me/bill-of-rights` dem Test-Account die Intro-Sequenz zeigen, also seit jeher
-  gruen gemeldet wurden ohne etwas ueber Layout auszusagen. Siehe Open Items.
-  **Offen bleibt:** iPhone-Abnahme der Phantom-Zeile, `ffmpeg`, Plan 2 Task 4.
-- **Plan 2 Task 3 (Modul-Icon) umgesetzt und gepusht `e4cf71c..b395ca7` (2026-07-29).** Geteilte
-  `BOOSTER_ART`-Map (`CellVariant → Wetter-Motiv`, per `keyof typeof CELLS` typgeprüft, also
-  kann sie nicht auseinanderlaufen) plus `ModuleIcon`; verdrahtet an fünf Stellen. Der
-  `SubPageHeader` bleibt unverändert, und keine Intro-Sequenz bekommt ein Icon — beides einzeln
-  pro Call-Site verifiziert. Der Review fand einen echten Fehler: Das Overthinking-Icon saß über
-  den `ProgressDots` und rendert damit auf **allen acht** Wizard-Schritten, ab Schritt 2 gestapelt
-  mit dem jeweiligen Begleiter-Maskottchen — genau die „zwei Signaturen auf einer Seite"-Dopplung,
-  die der Plan ausschließt. Der Brief-Schnipsel gab das so vor, die Brief-Prosa sagt das Gegenteil
-  („sitzt auf der ERSTEN Seite der Übung"); jetzt auf `step === 1` gegatet.
-  **Plan 2 Task 4 (Zoom-Umbau) ist NICHT umgesetzt** — siehe Open Items.
-- **Plan 1 (Onboarding) komplett umgesetzt und gepusht `05c14e9..d75b947` (Nacht vom 28./29.07.,
-  vorgezogen in den 22-Uhr-Slot, fertiggestellt im 03:01-Slot).** Alle 5 Tasks: (1) winziger
-  `RichText`-Renderer (`**fett**` / `*kursiv*`, bewusst kein Markdown-Parser) plus Betonungen in
-  allen Kartentexten; (2) Kompass im Onboarding mit vier Beispiel-Emojis statt dauerhaft gedimmt
-  — aus der echten Emoji-Quelle abgeleitet, damit die Vorschau nicht abdriften kann, und die
-  Dämpfungsregel auf `/me` bleibt bewusst wie sie war; (3) Stern-Ornament mit kräftigerem
-  Grundschein plus Glitzer-Blitz auf 5 s gegen den 4-s-Grundrhythmus, damit das Funkeln
-  unregelmäßig wirkt; (4) Siegel-Einzug geglättet (Opacity-Knick raus, Glow wartet den Stempel
-  ab); (5) Abschluss → Dashboard als Sternenhimmel-Übergabe statt Spinner und Hard-Reload.
-  **Zwei echte Laufzeitfehler kamen erst im Review von Task 5 heraus, beide für alle drei Gates
-  unsichtbar:** (a) der Retraction-Effect hing an `[state.error]`, aber alle Fehlerpfade der
-  Server-Action liefern *konstante* Strings — beim zweiten identischen Fehler wäre der Effect nie
-  wieder gelaufen und der Nutzer hätte dauerhaft vor einem unsichtbaren Screen gesessen, ohne
-  Ausweg außer Reload. Läuft jetzt über die fallende Flanke von `pending`. (b) Die Navigation
-  feuerte bei 900 ms, während der letzte Zünd-Stern erst bei 1100 ms fertig ist — Timing
-  angeglichen. Dazu drei Kleinere: `transition-opacity` auf einem GSAP-getweenten Element,
-  klickbarer unsichtbarer Button (konnte eine zweite Server-Action auslösen), Ein-Frame-Blitz
-  der Zünd-Sterne bei reduced motion.
-  **Verifikations-Grenze, die zählt:** Plan 1 liegt größtenteils auf `/onboarding`, und dorthin
-  kommt der E2E-Account strukturell nicht — er hat `onboarding_completed = true`, das Onboarding
-  zeigt sich pro Nutzer einmal. Tasks 1, 2 und 5 sind per Browser-Check **gar nicht erreichbar**;
-  gesehen habe ich nur Tasks 3 und 4 über die geteilten Ornamente auf `/me`.
-- **Nacht-Slot 2/3 durchgelaufen (2026-07-28, 22:01) — Plan 4 (Wants + Sternschmiede), alle 5
-  Tasks umgesetzt und gepusht `122e33d..4ba551b`.** (1) Ränder der Sternenkarte aus einem
-  `EDGE_PAD` abgeleitet statt handgesetzt; (2) „Lust auf Neues?" aus dem Button-Stapel in einen
-  `flex-1`-Spacer gezogen; (3) Wants-Einleitetext auf Schmiede-Größe (`text-base max-w-sm`);
-  (4) Funken driften halb so weit (±3 px), übernehmen die Spalten-Streuung der Sternenkarte
-  (78/282, ±28) und dieselbe Rand-Ableitung; (5) Schmiede-„Zurück zu meinen Sternen" mittig,
-  harter `h-8`-Spacer der Landing raus. Pro Task tsc + Gate + Build grün, Review sauber.
-  **ABER — das Goal des Plans ist NICHT erreicht, siehe Open Items.** Tasks 2–5 liefern was sie
-  sollen; die Rand-Angleichung (Tasks 1 und 4) zielt auf die falsche Größe.
-  **Neu: der E2E-Account hat jetzt Testdaten** (5 Wants, 4 offene Funken, `intro_seen` für
-  `wants`) — vorher zeigte `/me/wants` im Browser-Check nur die Intro-Sequenz und die Schmiede
-  den Leer-Zustand, der Playwright-Lauf konnte also über Layout gar nichts sagen. Nur der
-  E2E-Account (`thaenert.stefan+e2e@…`) wurde angefasst.
-- **Nacht-Slot 1/3 der Feinjustierungs-Runde autonom durchgelaufen (2026-07-28, 17:01 — Stefan nicht
-  anwesend).** Zwei Pläne per `subagent-driven-development` umgesetzt, beide nach `main` gepusht:
-  **Plan 3 (Auth)** `3411bae..5d61938` — (1) Brand-Zeile aus dem kompakten Login-Kopf entfernt
-  (Signup-Hero-Headline bleibt); (2) Signup-Hero auf den geteilten `SkyBackdrop` statt eigenem
-  Verlauf, `AmbientBlobs` raus; (3) Hero-Maskottchen aus `(auth)/layout.tsx` nach `AuthReveal`
-  gezogen und wischt beim Aufdecken nach rechts von der Bühne statt mit nach oben zu fahren.
-  **Plan 2 (Booster), NUR Task 1+2** `5d61938..ed1165c` — Hub-Einleitungstext gekürzt; die vier in
-  `dbde5b0`/`aac85c9` verlorenen Intro-Maskottchen byte-identisch aus `dbde5b0^` restauriert und
-  alle fünf Wizards zurückverdrahtet. **Task 3 (Modul-Icon) und Task 4 (Zoom-Umbau) bewusst NICHT
-  angefasst** — sie warten auf eine beaufsichtigte Session.
-  **Zwei Funde, die kein statisches Gate sehen konnte:** (a) Der Plan-Code für das wischende
-  Maskottchen war tot — GSAP schreibt in `CSSPlugin.js:865` beim Mount inline `translate: none`
-  (und `opacity`) auf den `MascotPeek`-Root und überschreibt damit die Tailwind-Klassen; tsc, Gate
-  und Build waren grün, während die Animation schlicht nicht stattfand. Fix: Positionierung und
-  Exit-Klassen auf einen Wrapper-`div`, den GSAP nie anfasst. (b) Der Wrapper trug zunächst eine
-  eigene Opacity, die sich mit der des Hero-Panels multiplizierte (~0,10 bei t=500 ms) — das
-  Maskottchen wäre weggefadet statt seitlich rauszugleiten; jetzt trägt nur noch das Panel die
-  Blende, was zugleich die dokumentierte iOS-`backdrop-filter`-Ghosting-Falle entschärft.
-  Verifikation: `tsc` + `npm run gate` + `npm run build` pro Task grün, Final Whole-Branch-Review
-  (opus) je Plan (Plan 3 „With fixes" → eine Fix-Welle → sauber; Plan 2 **Ready = Yes**),
-  Playwright 17/17 Routen sauber, Screenshots gesichtet: `/login` ohne Brand-Zeile, `/signup` auf
-  dem Nachthimmel, und alle vier Booster-Intros zeigen wieder ihr eigenes Maskottchen
-  (Gewitterwolke, Spiral-Augen, entwischendes „JA", Knäuel) statt des Wetter-Icons.
-  **iPhone-Final offen** (siehe Open Items).
-- **`/booster` (Kopfwetter-Hub) als synoptische Druckkarte GEBAUT + gepusht (2026-07-26).** Der am
-  23.07. geplante und bewusst vertagte Umbau ist umgesetzt — per `subagent-driven-development`
-  (aufgerufen als `/impeccable subagent-driven-development @spec`), 3 Tasks, je frischer Implementer
-  (haiku, Code komplett im Plan = Transkription), Spec+Quality-Review (sonnet) pro Task, Final
-  Whole-Branch-Review (opus) **Ready = Yes**. Commits `62a8f99..f06499b`, nach `main` gepusht.
-  Umgesetzt: (1) **`app/(app)/booster/pressure-field.tsx`** (neu) — dekorative (`aria-hidden`,
-  `pointer-events-none`) SVG-Schicht: gluehende Gold-Isobaren (`.iso-glow` Drop-Shadow, `vector-effect`
-  per-Pfad — non-inherited-Fix aus dem Task-Review) + driftende Lilac-Front (`bs-sway`) +
-  wertungsfreier Aubergine-Tiefenverlauf; zwei neue statische CSS-Utilities `.iso-glow`/`.kw-cell-glow`
-  in `globals.css`. (2) **`booster/page.tsx`** Voll-Rewrite — `WeatherSystem` ohne `x/y`,
-  **Maeander-Flow** (5 gleichrangige Zellen, Alternierung via `i % 2` → `self-start`/`self-end`,
-  rechte Zellen `flex-row-reverse`/`text-right`), volle warme Ich-Saetze immer sichtbar in Fraunces
-  `text-foreground` (Kontrast **12,42:1**), `.kw-cell-glow` Lilac-Kern hinter jedem `size-14`-Symbol,
-  neuer Subheader, Kopf-Silhouette raus, `Reveal`-Stagger (0,6 s, reduced-motion → instant). Copy:
-  "du" klein, "Things Got Messy" bleibt; `things-got-messy`-Ich-Satz auf "Ich fuehl mich schuldig,
-  obwohl ich es nicht sollte" (Schuld-Coach). (3) **Nebenfix** `saying-no-wizard.tsx` — drei
-  Lade-Punkte `animate-bounce` → `animate-pulse` (impeccable-Detector danach clean `[]`). Jeder Task
-  tsc + `npm run gate` + build gruen, autoritative End-Verifikation bei HEAD gruen, kein
-  Wegwerf-Account, kein Browser-Subagent. **iPhone-Final + `/impeccable critique app/(app)/booster`
-  Re-Critique (Baseline 27/40) offen.** Spec `89df50c` / Plan `c0d36a5`; Ledger
-  `.superpowers/sdd/progress.md`.
-- **`/me/bill-of-rights` in die Nachthimmel-Bildwelt geholt + nach iPhone-Feedback nachgebessert (2026-07-23, zwei Sessions).** **Runde 1** (`e352d32..b03c706`, gepusht): „Der gesteuerte Kurs" — gepunktete Kurslinie + pulsende Wegpunkte als Szene, Richter-Maskottchen zum Navigator-mit-Sextant umgebaut, Sparkles->Waypoints-Icon, zwei differenzierte Aktions-Kacheln, Zwei-Tap-Delete. **Runde 2** (`0a5f947`, gepusht, diese Session): Stefans iPhone-Blick verwarf den Ansatz teils — der Sextant war unlesbar, daraus wurde eine groessere Nachbesserung. Umgesetzt: **Maskottchen komplett entfernt** (`components/brand/mascot-navigator.tsx` geloescht), **Gold-Siegel (`GoldSeal`, bereits in `bill-of-rights-me.tsx`) wandert als Seitenkopf-Crest nach oben** (das doppelte „verdiente" Siegel am Urkundenfuss entfernt); **Einfuehrungstext auf /values-Groesse** (`text-base`) + weiss (`text-foreground`), neuer Leitsatz („Diese Regeln hast du dir selbst gegeben – sie helfen dir beim Navigieren durch deinen Alltag und beim Treffen von Entscheidungen. …", zweiter Satz behalten); **Hintergrund neu**: `course-line.tsx` geloescht + `course-waypoint`-CSS entfernt (Wegpunkte zu hell), neue **`app/(app)/me/bill-of-rights/constellations.tsx`** — drei stilisierte Sternbilder, Sterne gestrichelt verbunden (Sage `--success` sehr gedaempft, Sterne gedaempftes Foreground, **komplett statisch**, sehr dezent); **Aktions-Kacheln -> zwei echte Buttons im Wants-Stil** (`flex gap-3`, je `flex-1`), „Recht generieren" = **goldene Default-CTA**, „Selbst schreiben" = `variant="outline"` (Labels gekuerzt, damit einzeilig nebeneinander wie bei Wants; per AskUserQuestion mit Stefan bestaetigt). tsc + `npm run gate` (Kontrast/Typo/Motion) + build gruen; kein Wegwerf-Account, iPhone bleibt das Gate. **iPhone-Final offen** (u. a. Sternbild-Dichte/-Position sind Startwerte, in `constellations.tsx` je Stern einzeilig justierbar).
-- **Backlog-Roadmap 13.-22.07. komplett abgearbeitet (2026-07-23).** Per `brainstorming` einen
-  Roadmap-Plan ueber alle offenen Punkte gebaut (Spec `2026-07-23-backlog-roadmap-design.md`,
-  `e2add09`) und Runde fuer Runde durchgezogen — **die gesamte baubare Roadmap ist durch**, offen
-  bleibt nur Stefans iPhone-Gate + die bewusst geschobenen Re-Critiques. Umgesetzt: **A1** FK-CASCADE
-  via Supabase-MCP `execute_sql` auf Prod angewandt (CLI fehlt auf Stefans Maschine; Migration
-  idempotent -> kein Drift; `delete_rule = CASCADE` verifiziert, DSGVO-Loeschung ist ein Einzeiler).
-  **C1** Gold-vs-Rose-Zonierung (`f801f17`, Entscheid **Wants=Gold, Schmiede-Subpage=Rose**):
-  DESIGN.md-Modultabelle gesplittet, `/me`-Hub-Wants-Kachel entgoldet-Leckage gefixt, Reflektieren-CTA
-  auf Gold, `--celebrate` (5,79:1) ins Kontrast-Gate, Stale-Label umbenannt. **C2** funken-sky a11y
-  (`aria-live` Verwerfen-Swap, Backdrop `aria-hidden`+`tabIndex -1`, Focus-Trap-Query). **C3**
-  `savedCount`->`openCount`. **C4** Leitsatz (`a0dccf7`) an den drei wetter-staerksten Kopfwetter-
-  Abschluessen (Overthinking, Schattenseite, Things-got-messy) — bewusst NICHT an Wants (Sterne werden
-  dort erst erzeugt). **C5** Yang-Bonus-Toggle (`b294d9d`) auf Grid-`0fr->1fr`-Ausklappen. **D1**
-  (`9da298b`) `lib/hooks/use-dialog-focus.ts` extrahiert: `star-map` + `funken-sky` teilen jetzt
-  Scroll-Lock + `preventScroll`-Fokus + Tab-Falle + Fokus-Rueckkehr — **Wurzel-Fix der wiederkehrenden
-  device-only-Portal-Regressions-Klasse** (netto -10 Zeilen). **E1** (`98d1c2b`) values-Auswertung auf
-  ein Titel-System: kein zweiter grosser In-Body-`text-4xl`, der Phasen-Moment lebt als sticky-Header-
-  Untertitel (`SubPageHeader` in die Client-Form gezogen). **E2** (doc-only): Completion-Headline bleibt
-  Gold, Semantik traegt das geteilte Sage+Rose-Icon; zwei neue Named Rules in DESIGN.md (Single-Title
-  Rule, Completion Beat). **D2** entfaellt (kein Grid-Jank). Jede Runde tsc + `npm run gate` (11/11) +
-  build gruen, plus ESLint bei D1; kein Wegwerf-Account, kein Browser-Subagent. **iPhone-Final +
-  Re-Critiques stehen aus.**
-- **Sternschmiede-Redesign „Schwester der Sternensuche" (2026-07-22, Session 3).** Die
-  Sternschmiede (`/me/wants/schmiede`, `sternschmiede.tsx` 4-Phasen-State-Machine) auf dieselbe
-  Nachthimmel-/Esse-Grammatik wie die Sternensuche gezogen — subagent-driven, 9 Tasks, **nach
-  einem VS-Code-Crash (grauer Bildschirm) aus dem Ledger + `git log` wiederaufgenommen** (Task 1
-  war committed + geledgert → sauber bei Task 2 aufgesetzt, kein Task doppelt dispatcht). Spec:
-  `docs/superpowers/specs/2026-07-22-sternschmiede-schwester-design.md`, Plan:
-  `docs/superpowers/plans/2026-07-22-sternschmiede-schwester.md`, Ledger:
-  `.superpowers/sdd/progress.md`. Umgesetzt: (1) **`ForgeBackdrop` entgoldet auf `--celebrate`**
-  (Rose) + optionales `intensity?: "calm"|"hot"`-Prop (hot = hellerer Glow + leiser Gold-Hint am
-  Boden). (2) **Warp gezaehmt** (`warp-transition.tsx` + `globals.css`): ~750 ms statt ~980, 24
-  kuehl-weisse Streifen (`--foreground`) statt 48 goldenen, entgoldeter Wash — kein goldener Blitz
-  mehr. (3) **`SubPageHeader` `onBack?`-Escape-Hatch**: rendert `<button onClick>` statt `<Link
-  transitionTypes>`, damit iOS-PWA-Screens mit eigener Uebergangs-Animation (Schmiede-Warp) den
-  echten Rueckflug fliegen statt hart zu springen. (4) **Neue `FunkenSky`-Komponente**
-  (`components/wants/funken-sky.tsx`): offene Funken als schwebende Rose-Konstellation ueber der
-  Esse (Slot-Leiter + ID-Hash = stabile Positionen) + hand-gerollte Portal-Fokus-Ebene (Antippen
-  → Reflektieren/Verwerfen-mit-Rueckfrage/Schliessen; Scroll-Lock, Focus-Trap, Escape,
-  Focus-Restore, `preventScroll` auf allen `focus()`, `inert` am Hintergrund, reduced-motion). (5)
-  **Vier Phasen umgebaut** (`sternschmiede.tsx`): intro = Funken-Konstellation (Amboss/H2 raus,
-  Header `onBack=goBackToStars`); forging = Esse-Funkenflug (`intensity="hot"` + `.funke-spray`,
-  Skeletons+Amboss raus); funken = Rose-Held-Funke + `Card variant="glass"`-Einschaetzung +
-  „antippen"-Hinweis + Auswahl-Karten auf `--celebrate` statt Gold; done = aufsteigender
-  Funken-Schwarm (`.funke-rise` + N/1-Titel-Fallback, goldener Stern bewusst ausgespart). (6)
-  **Cleanup:** `forge-art.tsx` (AnvilArt) geloescht + totes `.forge-hammer`-CSS gestrichen.
-  Drei neue Keyframes (`.funke-drift`/`-spray`/`-rise`) je mit reduced-motion-Fallback. Jeder Task
-  tsc + `npm run gate` gruen, Task 9 zusaetzlich `npm run build` (40 Seiten). **Final
-  Whole-Branch-Review (Fable) Ready = Yes, keine Critical/Important** — verifizierte
-  State-Machine-Kohaerenz, CSS/reduced-motion-Integritaet, alle Producer/Consumer-Vertraege
-  (`ForgeBackdrop.intensity`, `FunkenSky`-Props, `SubPageHeader.onBack`), One-Candle-Rule
-  end-to-end, T9-Cleanup schonte die geteilten `.me-star-glow`/`.bs-ember`. Commits
-  `af6d4af..881a564` (inkl. Task-2-Fix `d3b0e5b`), gepusht (`fb22c74..881a564`). **iPhone-Final
-  steht aus.**
-- **Sternensuche-Nachthimmel-Redesign + drei Folge-Fixes (2026-07-22).** Redesign der
-  Sternensuche-Reise (`/me/wants/journey`) von Formular-Wizard auf Nachthimmel-Szenen-Grammatik
-  per subagent-driven (6 Tasks, `40a8fd4..17b5779`, Final Review Ready = Yes): geteilte
-  `StarGlyph`, persistente `JourneyStage` (Himmel + Eck-Maskottchen bleiben stehen), Warte-
-  Screen als auffunkelnder Himmel, Ergebnis als Tap-to-Edit-Konstellationsliste, Abschluss als
-  gezeichnetes Sternbild (1-Stern-Fallback). Copy-Entscheid "Abschluss-Zahl bei 6+ so lassen".
-  **Danach drei iPhone-Regressions gefixt** (`1048c48`, Stefan meldete sie per Screen-Recording
-  + Screenshot; tsc + `npm run gate` + build gruen): (1) **Header wieder sticky** —
-  `overflow-hidden` von der `JourneyStage`-Wurzel entfernt; es band den `sticky top-0`-Header an
-  den Clipping-Container statt an den Viewport, sodass er mitscrollte und Inhalt verdeckte
-  (`journey-stage.tsx`; Footgun als Memory `overflow-hidden-breaks-sticky-header`). (2)
-  **Himmel-Popping weg** — `FocusSky` Wash + prozentual positionierte Sterne in eine
-  hoehenstabile `top-0 h-lvh`-Ebene gekapselt, statt an die wachsende Inhaltshoehe (`inset-0`)
-  zu koppeln; beim Auf-/Zuklappen springen die Sterne nicht mehr (`focus-sky.tsx`). (3)
-  **Sanfte Ausklapp-Animation** — die Sterne-Liste (Ergebnis-Screen) klappt per Grid-`0fr→1fr`
-  weich aus statt hartem `{open && …}`-Mount, mit `motion-reduce`-Fallback (`wants-journey.tsx`).
-  (4) **Completion-Luecke zu** — Safe-Area-Bruecke auf die header-lose `done`-Wurzel, damit
-  `FocusSky` bis an die obere Bildschirmkante reicht. **Bewusst offen:** der identische
-  Yang-"Bonus"-Toggle nutzt noch den harten Mount (Konsistenz-Kandidat). **iPhone-Final der
-  Fixes + des ganzen Redesigns steht aus.**
-- **`/me/wants` per impeccable Critique -> Harden -> Batch -> Re-Critique durchgearbeitet und gepusht** (`a197597`, `6dc6e31`, `fc572da`, `9ec26ef`, `70df381`; Single-Context/DEGRADED settled, Detector am Ende sauber `[]`, iPhone bleibt das Gate; tsc + `npm run gate` + build durchgehend gruen, kein Wegwerf-Account). Erst-Critique **31/40 (Good)**, Re-Critique **35/40 (Good, oberes Ende)**, Trend **28 -> 31 -> 35**. **P1 gehaertet** (`a197597`): die Signatur-Interaktion (Stern-Fokus) war ein Modal ohne Modal-a11y-Vertrag -> jetzt `role="dialog"` + `aria-modal` + benennendes `aria-label`, Fokus rein auf Mount, echte Tab-Falle, Escape (edit -> view -> Himmel), `inert` auf der ausgefadeten Karte, Fokus-Rueckgabe an den Ausloeser-Stern. **Scroll-Regression gefixt** (`6dc6e31`): die neuen `focus()`-Calls scrollten die Seite ans Portal (Dokument-Ende) -> `{ preventScroll: true }` auf allen vier Calls; Stefan "Funktioniert!". **Restliche vier Critique-Punkte + Stefan-Ergaenzung als 3 thematische Commits:** (1) **nah/fern editierbar** — 2-Pillen-Toggle im Fokus-Edit (Vibe-Muster) schreibt `distance` durch den vorhandenen `onSaveEdit`-Patch; nah/fern ist damit vom User gestaltbar statt nur KI-Urteil; (2) **`min-h-svh` -> `min-h-lvh`** auf allen Wants-Buehnen (Hub/Journey/Schmiede/Reflect + die zwei Fokus-`vh`) gegen den iOS-PWA-Body-Streifen; (3) **Reflect entschlackt** — experience + Vibe sichtbar, drei optionale Felder hinter eine "(optional)"-Disclosure (gemountet-versteckt, kein Datenverlust), warmer Abschluss via `CompletionCelebration` statt Server-Redirect (`saveBetReflectionAction` gibt `success` zurueck statt `redirect`); (4) **Polish** — Wash als `--focus-sky-wash`-Token (Detector-Advisory erledigt), Empty-State-Hero auf `text-2xl` angeglichen; (5) **Sternen-Verteilung** getunt (`baseX` 78/282 statt 96/264 = weiter aussen, `ROW_H` 96 -> 80 = vertikal enger). **Stefan-Entscheid: 35/40, kein P0/P1 mehr — als fertig abgelegt**, Rest-P2/P3 bleiben Backlog. Dateien: `star-map.tsx`, `wants-me.tsx`, `focus-sky.tsx`, `globals.css`, `reflect/[betId]/reflect-form.tsx`, `actions.ts`, plus `min-h-lvh`-Sweep in `wants-journey.tsx`/`sternschmiede.tsx`/`reflect/[betId]/page.tsx`. **Alle Runden nur statisch verifiziert — iPhone-Final steht aus.**
-- **`/me/wants` Sternenhimmel-Fokus: „Kamera-Push in den Stern" gebaut, getunt und gepusht** (Brainstorm -> Spec `85a3e8e` -> Plan `7a29d07` -> subagent-driven `bf26f0c`/`d038bb8`/`b4b267e`, dann Tuning `dd59a45`/`f2e3775`; tsc + `npm run gate` + build durchgehend gruen, kein Wegwerf-Account). Statt dass der getippte Stern in die Bildmitte fliegt, taucht die Kamera per Parallaxe in genau die Stelle: reale Karte (`mapRef`, skaliert vom Stern aus auf **2.6** ueber 0.45s, kartenlokaler Transform-Ursprung), Fokus-Himmel (`layerRef`, Start-Scale **1.9** -> settle 1, Ursprung P in Viewport-Koordinaten) und der eine Stern wachsen vom Tap-Punkt nach aussen -> Nachbarsterne streamen sichtbar an den Raendern vorbei. `zoomOut` kehrt alles um, Karten-Transform-Reset auf scale 1. **Occlusion-Invariante:** Himmel-Scale nie < 1 (Hin 1.9->1, Rueck 1->1.9). Reduced motion = harter Schnitt ohne Scale. **Neuer Baustein `focus-sky.tsx` (`FocusSky`):** solide `bg-background`-Basis + gemalter Abdunkel-Wash + gedimmte, sanft funkelnde `sky-light`-Sterne (SkyBackdrop-Sprache), **kein `backdrop-filter`** (loest den Aubergine-Milchglas-Look ab). Nach iPhone-Feedback zwei Mal entdimmt: Wash-Alphas 0.45 -> 0.18 (oben), Sterne-Opacity 0.55 -> 0.9. **Kern-Einsicht:** die "Kamera-zu-Stern"-Lesart kommt vom Umgebungs-Sog (Karten-Dive), nicht von der Stern-Translation. Subagent-driven lief ohne Fix-Runde durch, Final Review (fable) Ready = Yes, keine Critical/Important. Dateien: `app/(app)/me/wants/star-map.tsx`, `app/(app)/me/wants/focus-sky.tsx`. **Stefan: "mega ... dann ist es perfekt" - iPhone-Final auf `f2e3775` steht aus.**
-- **`/me/values/journey/journal` (Tag-N-Reflexionsformular) per impeccable Critique durchgearbeitet und gepusht** (`d1dac57`; Single-Context/DEGRADED = settled, Detector sauber `[]`, iPhone bleibt das Gate; tsc + `npm run gate` + build gruen). Critique **31/40 (Good)**, Erst-Lauf fuer den Slug (kein Trend). Kernbefund: der **7/7-Abschluss-Screen** war die am wenigsten on-brand Flaeche der Reise - handgebaute Gold-Karte statt der geteilten `CompletionCelebration`, plus dreifach dieselbe "geschafft"-Botschaft (Header + Karten-Ueberschrift + Body) vor dem CTA. Full-Realign + alle drei Rest-Befunde in EINEM Commit: (1) **Abschluss vereinheitlicht** - die Gold-Karte auf das kanonische Haus-Muster des Auswertungs-Finales gezogen (`Card border-primary/30` + `<CompletionCelebration />` + Gold-Serif-Headline + Gold-CTA), redundante `<header>`-Zeile raus, dreifache Botschaft auf eine warme Zeile gekuerzt; (2) **typeset** - Ermunterungs-Zeile von `text-muted-foreground` Geist auf `.font-affirmation` (Fraunces Italic, `text-foreground/90`); (3) **layout** - der gespeicherte Eintrag in der Read-only-Ansicht stand in zwei flachen `bg-muted/50`-Grau-Kaesten (Beleg-Anmutung, streift die klinische Anti-Referenz) -> jetzt Foreground-Prosa mit leiser Caption-Frage; (4) **audit** - Placeholder-Kontrast VERIFIZIERT, kein Code noetig (`#A89FBE` auf der Input-Flaeche ~7,3:1). **Bewusste Abweichung, transparent geflaggt:** in der AskUserQuestion "Gold raus, CTA einzige Kerze" beschrieben, dann beim Blick aufs Geschwister `evaluation-form.tsx` (frisch poliert, `466ca49`) gesehen, dass Gold-Karte+Headline das kanonische Abschluss-Muster IST - gematcht statt divergiert. Datei: `journal-form.tsx`. **iPhone-Check + Re-Critique stehen aus.**
-- **`/me/values/journey` Finale-P2-Runde + Polish per impeccable durchgearbeitet und gepusht** (`1042966`, `972e0a0`, `466ca49`; Single-Context/DEGRADED settled, Detector sauber, tsc + `npm run gate` + build gruen). Re-Critique **31/40 (Good)**, Trend 25 -> 34 -> 31 - die Konstellations-Karte punktet, die Punkte gehen im Finale (Auswertungs-Anpassphase) verloren. Umgesetzt: (1) **colorize** - "Ersetzen"-Toggle von Destructive-Rot auf neutrales `bg-secondary text-secondary-foreground` (Wertewechsel ist Wachstum, kein Fehler; einziger Toggle ausserhalb des Primary/Muted-Musters behoben); (2) **distill** - die ~76-Chip-"Weitere Werte"-Bank hinter ein natives `<details>` (Anmutung vom Wochen-Rueckblick) geklappt, Anpassphase oeffnet mit EINER Entscheidung; (3) **onboard** - Erst-Besuch-Cue "Tipp den leuchtenden Stern an" (`!allDone && currentStep === 0`) unter der Karte, nicht im Header. **Polish:** die doppelten Party-Popper-Emoji waren Drift - Zyklus-Ende nutzt jetzt die geteilte `CompletionCelebration` (Rose-Gluehen), Journal-Meilenstein leiser ("7 Tage voll ✨"); Eskalation taeglich-✨ -> 7-Tage-✨ -> Zyklus-Gluehen. **Bewusst offen gelassen:** greyed-out-Erst-Eindruck (korrekte One-Candle-Hierarchie, besteht AA) und die Seitentitel-Konsistenz (Design-System-Frage, nicht geraten). Dateien: `evaluation-form.tsx`, `journal-form.tsx`, `values-journey-client.tsx`. **iPhone-Check + Re-Critique stehen aus.**
-- **`/me/values/journey` (Werteentdeckung-Reise) per impeccable Critique durchgearbeitet + gepusht** (`2ba0e53`, `b3846a1`; Single-Context/DEGRADED = settled, Detector sauber, iPhone bleibt das Gate; tsc + `npm run gate` + build gruen). Critique **25/40 (Acceptable)** - Kernbefund: die Konstellations-Karte war fuers Finale gebaut, nicht fuer den taeglich zurueckkehrenden Nutzer. Alle 7 Kritikpunkte (P1-P3) als eine kohaerente Runde: (1) **Tages-Gate spricht** - Header-Untertitel + der erledigte Tag bleibt als Ruhepunkt angezuendet (`isAnchor`; `gated` clientseitig aus `!allDone && done.has(currentStep)` abgeleitet, keine Server-Aenderung), Spiegelung im Journal; (2) **Kamerafahrt** zentriert den aktuellen Stern statt ans Seitenende zu springen, nur beim ersten Besuch pro Session (sessionStorage); (3) **Fortschritt lesbar** - "Tag X von 7"/Phase im `SubPageHeader.subtitle`, "Schritt N von 3" auf Hypothese/Auswertung; (4) **Karten-a11y** - `aria-current="step"` + `sr-only`-Zustaende (erledigt/aktuell/gesperrt), nicht mehr nur Farbe; (5) Auswertungs-H1 auf `text-4xl`. **Folge-Trim nach Stefan-Feedback** (`b3846a1`): der "geschafft"-Hinweis stand doppelt (Header + Bottom-Banner) -> Banner raus, sticky Header-Untertitel ist der einzige Hinweis; "Schritt 2 von 3" ueber der Reflexion raus (redundant mit dem Titel "Tag N - Reflexion"). Dateien: `values-journey-client.tsx`, `journal-form.tsx`, `hypothesis-form.tsx`, `evaluation-form.tsx`. **iPhone-Check + Re-Critique stehen aus.**
-- **Drei systemische Fixes umgesetzt und gepusht** (`8018627`, `27f73f1`, `0618f50`; `npm run gate` + tsc + build grün). (1) **Motion:** die 4 latenten Tailwind-v4-`transition-[…transform…]`-Footguns waren echte Snap-Bugs — gefixt in `auth-reveal.tsx` (Login-Karten-Zoom `scale`, Hero-Wisch `translate`), `mood-checkin.tsx` (Chip `scale`), `booster/page.tsx` (`active:scale`); Transition nennt jetzt die real bewegte Property. (2) **Gates:** `scripts/check-transitions.mjs` (flaggt `transition-[…transform…]` neben `translate-`/`scale-`/`rotate-`-Utility) + `scripts/check-typography.mjs` — Letzteres **bewusst verengt auf gerenderten Text** (JSX-Textknoten + `aria-label`/`title`/`placeholder`/`alt`), weil ein breites Gate 123 harmlose ASCII-Schließer in Kommentaren/KI-Prompts geflaggt hätte bei **0** echten gerenderten Bugs; beide in `npm run gate` gebündelt (mit dem bestehenden Kontrast-Gate). (3) **DB:** Migration `20260720120000_cleanser_checkins_cascade.sql` schreibt den FK auf `ON DELETE CASCADE` — **Datei committet, `supabase db push` steht noch aus** (CLI in der Arbeitsumgebung nicht verfügbar; nicht via MCP angewandt, um History-Drift zu vermeiden).
-- **`/me/values` Feinschliff nach Stefan-Feedback gepusht** (`678c411`; tsc + build grün). Zwei Details geglättet: (1) die Hinweiszeile „Tippe einen Wert an, um ihm nachzuspüren." von `font-heading text-foreground` auf `text-sm text-muted-foreground` (`page.tsx`) — der Font-Wechsel bei gleicher Farbe wirkte unruhig; sie ist ein Affordanz-Hinweis (Caption), kein Heading, und `font-heading` gehört jetzt allein dem Wertenamen an der Rose. (2) `min-h-28` der Detailkarte entfernt (`values-compass.tsx:288`) — bei 2-zeiligen Beschreibungen dumpte die Min-Höhe Leerraum unten (Padding symmetrisch, Inhalt top-aligned); die Karte umschließt jetzt den Inhalt, der CTA per `mt-auto` am Screen-Boden fängt die Höhenänderung ab. **Löst den offenen „min-h-28-Karte zu leer/hoch"-Punkt.** Richtung vorab per AskUserQuestion mit Stefan bestätigt.
-- **`/me/values` per impeccable Critique durchgearbeitet und gepusht** (`1bc84ea`, `74ebee7`; Single-Context, iPhone bleibt das Gate). Critique **29/40 Good**, Detector sauber. Umgesetzt in `values-compass.tsx` + `page.tsx`: die Werte-Liste unter der Kompassrose ist **weg** — die **Rose ist das einzige Auswahl-Steuerelement**, der gewählte Wertename sitzt jetzt direkt an der Rose in einer `role="status" aria-live`-Region, die Detailkarte trägt nur noch die Beschreibung (behebt 16→8 Screenreader-Tabstops + stumme Auswahl). Intro-Absatz von `muted-foreground` auf `text-foreground` gehoben (12,42:1) + die Frage „Welcher Wert ist dir heute besonders wichtig?" als eigener Prompt an die Rose gehängt. Kartentitel von Gold auf Moonlight — Gold bleibt CTA + Auswahl-Ring (One-Candle auf der gold-identischen Werte-Szene wiederhergestellt). **Emoji auf der Rose bewusst behalten** (Stefan-Entscheid trotz meiner Empfehlung, sie durch weiche Punkte/Icons zu ersetzen). Gates grün (tsc, build, Kontrast 7/7).
-- **Dashboard per `/impeccable` durchgearbeitet und gepusht** (Critique → Distill/Clarify/Colorize/Polish → Audit; letzte Commits `102b3b1`, `da42688`). Kein Subagent, iPhone bleibt das Gate. Änderungen: Alternativen hinter eine leise Disclosure geklappt (`components/dashboard/alternatives-disclosure.tsx`, neu) → die goldene Fokus-Empfehlung ist die einzige offene Handlung; Glass-Kontrast auf `text-foreground/80` (≥4.5:1 nachgerechnet); Shuffle-Trigger als beschrifteter Pill „Zeig mir was anderes" (h-11); Daily-Reminder-Dismiss-Hinweis; einheitlicher 52px-Paket-Rhythmus (`space-y-13`). **Audit 17/20 (Good), 0 P0/P1**, Anti-Patterns bestanden. Zwei Findings umgesetzt: Mood-Pills auf **h-9** (an den Gold-CTA angeglichen) + Fokus-Ring; zwei `<h2>` für die statischen Prompts; Reminder-Glow auf `color-mix(var(--primary))`; `DashboardReveal`-Timer strippt die Animations-Steuerung nach Ablauf (kein Opacity-0-Einfrieren bei backgroundetem Post-Login-Tab). Design-Entscheidung „Dashboard = ruhiger Moment (Scroll ok)" als Memory abgelegt.
-- **Dashboard-Mood-Atmosphäre-Politur + Fly-Bugfix gemerged und iPhone-verifiziert** (`bf62cb4..1314bd1`). Folge-Runde nach Nachthimmel II. Spec: `docs/superpowers/specs/2026-07-19-dashboard-mood-atmosphaere-design.md`, Plan: `docs/superpowers/plans/2026-07-19-dashboard-mood-atmosphaere.md`. Änderungen: alle Header-H1 eine Stufe größer (DESIGN.md §3 nachgezogen); `MascotWeather`-Wolken in Lavendel-Grau (`--muted-foreground`) statt Gold, größer und weiter vom Maskottchen weg, mit zweiter Regenwolke rechts bei stürmisch; `SkyBackdrop` bekam eine treibende **Nebel/Dunst-Ebene** (`sky-mist-drift`) als Wetter-Stimmung statt reinem Abdunkeln, dazu zahmerer Schleier + langsamere 1200ms-Fades + **durchgehendes Sternfunkeln** (die `--twinkle-dur`-Umschaltung, die den Loop bei jedem Mood-Wechsel neu startete, ist raus).
-- **Gelöster Fly-Bug (Tailwind v4):** die Wolken flogen anfangs nicht seitlich raus/rein und die Seite scrollte in alle Richtungen. Zwei Ursachen: (1) die `-translate-x-[60vw]`-Dekorwolken vergrößerten die Dokumentbreite → jetzt fängt `overflow-x-clip` am `<main>` (`app/(app)/layout.tsx`) sie am Viewport-Rand ab; (2) **Tailwind v4 kompiliert `translate-x-*` zur eigenständigen CSS-Property `translate`, nicht `transform`** — `flyClass` animierte `transition-[opacity,transform]` und ließ die Position springen; Fix: `transition-[opacity,translate]` in `components/dashboard/mascot-weather.tsx`. Gates grün (tsc, build, contrast).
+## Wo das Projekt steht
 
-- **Nachthimmel II redesign round merged to main** (`4bc0e34..4aaa5a3`, 15 commits, pushed). Spec: `docs/superpowers/specs/2026-07-18-nachthimmel-2-redesign-design.md`, plan: `docs/superpowers/plans/2026-07-18-nachthimmel-2-redesign.md`, ledger: `.superpowers/sdd/progress.md`. Built on the Bildsprache round from 2026-07-17; carries the image system further into four screens.
-- **Dashboard is now a weather scene:** `SkyBackdrop` lost its horizon glow, stars are bigger/denser (base 3px/0.38, two 4px "large" stars, +3 new), and it takes an optional `score` prop — the sky dims + veils stars at score 1, brightens/twinkle-speeds at 5; **without a score (Wants page) it stays neutral**. New `MascotWeather` component renders clouds/rain/soft sheet-lightning around the mascot per score (CSS transition on the outer wrapper, `dash-*` keyframes inner, reduced-motion covered). A slim `MoodScoreProvider` context wires the optimistically tapped check-in score to the fixed backdrop (needed because `position:fixed` can't live inside the transforming `DashboardReveal`). Check-in question is now **"Wie ist heute das Wetter in deinem Kopf?"**.
-- **Values journey reskinned to a compass path:** curved dashed trail instead of a polyline, `WaymarkGlyph` (filled gold dot / pulsing compass rose / thin ring) instead of the star glyph, MICRO_STARS dimmed, finale text **"Dein Kompass ist kalibriert. ✨"**. Pure reskin — geometry, GSAP camera scroll, click targets, `?day=N` logic, mascot gaze all byte-identical (`values-journey-client.tsx`).
-- **Kopfwetter hub is now one weather map** (`app/(app)/booster/page.tsx`): isobars, a head-silhouette island (gold line), a lilac front line, and the 5 `weather-art.tsx` motifs as absolutely positioned `<Link>`s at hand-set 200×340 coordinates (Ich-Satz primary, module name meta line, aria-label with real em-dash). The wandering candle (`me-candle-bg`) is gone here. Header copy unchanged, single `<Reveal>` (no stagger). `weather-art.tsx` itself untouched.
-- **Wants — data + distiller:** `WantItem` gained `title?: string|null` + `distance?: "nah"|"fern"` (JSONB, **no migration**, backwards compatible: old rows fall back to clipped `text` + distance nah), `YinYangContent` gained `tagtraum`. Distiller prompt/route now suggest star names (2–3 words) and form "ferne Sterne" (`distance:"fern"`) from a new skippable **"Wovon tagträumst du?"** journey phase — verified with a live API test (all titles ≤4 words, 2 fern stars, traceable to the Tagtraum input). Journey (`wants-journey.tsx`) has the new `tagtraum` phase between yang and analyzing, editable title fields + "Ferner Stern" badge in the sterne phase. `AnswerBoxes` got an `optional` prop (first box not required for the skippable step).
-- **Wants — the star map** (`app/(app)/me/wants/star-map.tsx`, new): the card list is replaced by a walkable star map. Slot-ladder layout (nah/fern alternating top-to-bottom, left/right offset, ID-hash for stable positions), depth only via rendering (nah full, fern ~60%/dimmed/haze, erloschen grey/small). Tap a star → GSAP camera zoom → detail view (title via `starName` untruncated, value chip, description; **no Schmiede action = Variante B**); edit / release ("Stern loslassen") / re-ignite ("Wieder anzünden"); "Eigener Stern" dialog. `starName()` = full name, `starLabel()` = 26-char-clipped for the tight map slots. Fernglas icon = lucide `Binoculars` (no Telescope fallback needed). Bridge card renamed to **"Lust, was Neues zu entdecken?"**. `key={wants.length}` remounts the map on add/delete to reset zoom. `SkyBackdrop` (no score), warp layout, Reveal hero all preserved.
-- Final whole-branch review (Sonnet — Fable 5 hit the session limit mid-round): Ready = with fixes; one Important fixed (`4aaa5a3`: detail heading was truncating the title, now uses `starName`). Gates green: `tsc`, `npm run build`, contrast 7/7.
+Die komplette baubare Roadmap ist durch. Alle Flächen (`/dashboard`, `/booster`, `/me/values`,
+`/me/wants`, `/me/wants/schmiede`, `/me/bill-of-rights`, `/onboarding`, Auth) sind in der
+Nachthimmel-Bildwelt umgesetzt und auf `main` gepusht. `tsc`, `npm run gate` (Kontrast · Typo ·
+Motion · eslint `--max-warnings=0`) und `npm run build` sind grün — ein roter Lauf ist eine echte
+Regression.
 
-## Open Items
+**Der einzige große Block ist der iPhone-Abnahme-Stau.** Er hat sich über ~10 Runden aufgebaut,
+weil alle Runden nur statisch verifiziert wurden. Bevor eine neue Fläche aufgemacht wird: abarbeiten.
 
-> **Durch die Roadmap-Session 2026-07-23 ERLEDIGT** (die einzeln weiter unten gelisteten Punkte sind damit geschlossen): Wants Gold-vs-Rose-Modulfarbe entschieden + gebaut (C1), `--celebrate` im Kontrast-Gate (C1), Stale-„Ersetzen-Toggle"-Label umbenannt (C1), funken-sky `aria-live` + Backdrop-a11y (C2), `savedCount`->`openCount` (C3), Leitsatz-Runde platziert (C4), Yang-Bonus-Toggle auf Grid-Ausklappen (C5), `/impeccable extract` Fokus-Ebene -> geteiltes `useDialogFocus`-Primitive (D1), Seitentitel-Konsistenz entschieden + Auswertung angeglichen (E1), flaechenuebergreifende Abschluss-Farbe entschieden = Gold bleibt (E2), FK-CASCADE auf Prod angewandt (A1). **Real noch offen: nur Stefans iPhone-Gate + die geschobenen Re-Critiques** (die iPhone-Check-Zeilen unten bleiben gueltig, plus die neu dazugekommenen Flaechen C4/E1/D1/Gold-Kachel).
+## Jetzt dran
 
-- **⚠️ Plan 2 Task 4 (Zoom-Umbau) steht als EINZIGES Stück der Feinjustierungs-Runde noch offen
-  (2026-07-29).** Nicht begonnen. Grund ist Budget, nicht Zweifel: der Task ist ein
-  Komplett-Rewrite von `booster-zoom.tsx`, dazu CSS, `booster-cells.tsx`, `booster-arrive.tsx`,
-  `module-icon.tsx` und `navigation-spinner.tsx`, plus eine **breaking** Änderung an `arrive()`
-  (nimmt jetzt ein Argument). Nach Plan 1 plus Task 3 reichte der Kontext nicht mehr für
-  Umsetzung + Review + wahrscheinliche Fix-Runde **und** die Nacht-Zusammenfassung — und die
-  Anweisung für genau diesen Fall lautete, sauber zu stoppen und die Zusammenfassung zu
-  priorisieren. Damit liegt der Task wieder da, wo er ursprünglich eingeplant war: in einer
-  beaufsichtigten Session. **Task 3 ist seine Voraussetzung und ist erledigt**, der Einstieg ist
-  also frei. Der Plan enthält den vollständigen Code für alle Schritte.
-  **Warum das für diesen Task die bessere Reihenfolge ist:** Der Zoom läuft über einen echten
-  Routenwechsel und übergibt einen fliegenden Klon an das echte Icon. Playwright kann davon
-  prinzipiell nichts sehen — kein Landen des Klons, kein Spinner-Aufblitzen, kein
-  iOS-Compositing. Die Abnahme ist zu 100 % iPhone: landet der Klon ohne Sprung auf dem Icon,
-  blitzt kein Spinner auf, löst er sich beim Erstbesuch sauber an der Zielposition auf, hält der
-  Doppel-Tap-Schutz, und fadet er im Flugmodus nach ~4,3 s weg statt hängenzubleiben.
-- **Onboarding (Plan 1) iPhone-Final offen — braucht einen FRISCHEN Account (2026-07-29, `d75b947`).**
-  Das Onboarding zeigt sich pro Nutzer genau einmal, der Browser-Check konnte es also überhaupt
-  nicht sehen. Durchklicken intro1–intro8: (a) Fett und Kursiv sitzen an den geplanten Stellen,
-  **kein übrig gebliebenes `*` im Text**; (b) intro3 und die Mini-Vorschau in intro2 — Kompass
-  leuchtet voll mit vier Emojis auf N/O/S/W; in der `size-9`-Vorschau sind sie winzig, wenn sie
-  dort matschen ist das ein Folge-Thema, kein Blocker; (c) intro4 und `/me` — Stern hat einen
-  kräftigeren Grundschein und blitzt unregelmäßig auf; die Sternenkarte auf `/me/wants` darf sich
-  NICHT verändert haben (dort läuft `want-star-twinkle`); (d) intro5 und `/me` — Siegel stempelt
-  sich in EINEM Zug ein, kein Zwei-Phasen-Eindruck, Glühen setzt erst danach ein.
-  **(e) Der große Punkt — „Ich bin bereit" tippen:** Karte, Fortschrittsbalken und Buttons faden,
-  dann löst sich das Maskottchen auf und im Himmel gehen nacheinander Sterne an. **Bleibt der
-  Himmel wirklich stehen?** Kein Weiß-Blitz, kein Neuaufbau zwischen Onboarding und Dashboard.
-  Danach staffelt das Dashboard seine Abschnitte von oben ein. Kein Spinner mehr.
-  **Bekannter Artefakt, den du sehen wirst und der bewusst offen ist:** Die sechs Zünd-Sterne
-  gehören der Onboarding-Route und verschwinden beim Routenwechsel — der Grund-Nachthimmel bleibt,
-  die sechs Extra-Lichter blinken beim Ankommen weg. Sie mitzunehmen hieße, sie in eine geteilte
-  Layout-Ebene zu heben (wie beim Wants→Schmiede-Warp). Das ist eine Architektur-Entscheidung, die
-  der Plan nicht vorsah und die nachts niemand visuell verifizieren kann — deshalb nur die
-  Timing-Hälfte gefixt. **Deine Entscheidung, ob es stört.**
-  Zusätzlich mit Absicht prüfen: Server-Fehler beim Abschluss (z.B. Flugmodus) → Karte muss mit
-  Fehlermeldung zurückkommen, auch beim ZWEITEN Versuch mit demselben Fehler.
-- **✅ ERLEDIGT 2026-07-29 (`f1d6b32`): ASCII-Anführungszeichen in `onboarding-intro.ts` +
-  Typo-Gate-Lücke.** Das Gate hat jetzt einen zweiten, eng gefassten Matcher **nur** für
-  `lib/content/`: das BAD-Muster innerhalb eines String-Literals. Die Kommentar-Ausnahme bleibt
-  auch dort. Damit kamen **5** echte Verstöße heraus (nicht 10 — von den 11 `„` standen 6 in
-  Kommentaren und sind bewusst außerhalb des Scopes): Zeilen 41, 70, 97, 114, 121, alle korrigiert.
-  Reihenfolge beim Verifizieren war Absicht: erst Matcher rot mit exakt diesen 5 Treffern, dann
-  Texte fixen, dann grün — ein Matcher, der nie rot war, beweist nichts.
-- **✅ ERLEDIGT 2026-07-29 (`8499b91`): Phantom-Zeile gefixt, Böden benannt.** `viewH` rechnet in
-  beiden Dateien jetzt mit `Math.max(0, n - 1) * ROW_H`; die Böden heißen `MIN_VIEW_H` (430 auf der
-  Karte, 200 im Funken-Himmel) und tragen ihre Begründung — sie bleiben bewusst, damit ein fast
-  leerer Himmel Raum behält. **Merksatz für jede künftige Abnahme, steht auch im Code:** bis
-  3 Sterne bzw. 2 Funken dominiert der Boden, Änderungen an der Formel darunter sind dann komplett
-  unsichtbar. Verifiziert per Ausmessen der E2E-Screenshots (5 Wants / 4 Funken), vorher→nachher:
-  `/me/wants` 2898→2667 px, `/me/wants/schmiede` 2856→2640 px — deckt sich mit den erwarteten
-  80 bzw. 76 viewBox-Einheiten. **iPhone-Abnahme steht noch aus:** unterer Rand muss jetzt dem
-  oberen entsprechen, und die kürzere Karte verlängert den `flex-1`-Spacer aus Task 2 — „Lust auf
-  Neues?" rutscht tiefer. Beides in EINEM Blick beurteilen.
-  **Punkte (b) und (c) aus der Analyse bleiben offen** (siehe unten): der `MASCOT_BOX`-Zuschlag bei
-  gerader Sternzahl und das doppelte `EDGE_PAD`.
-- **⚠️ Rest-Defekte aus der Phantom-Zeilen-Analyse, NICHT gefixt (2026-07-28, `4ba551b`).**
-  Historischer Kontext des Ursprungsbefunds:
-  Beide Schwester-Dateien setzen die Sterne auf `y = TOP_PAD + i * ROW_H`, der letzte also bei
-  `TOP_PAD + (n-1) * ROW_H`. Die Leinwandhöhe rechnet aber mit `TOP_PAD + n * ROW_H + BOTTOM_PAD`.
-  Unter dem letzten Stern bleibt damit eine **komplette Phantom-Zeile** stehen, und `BOTTOM_PAD`
-  kommt erst darunter — der sichtbare untere Rand ist `ROW_H + BOTTOM_PAD`. An Playwright-
-  Screenshots bei 375 px mit 5 Sternen gemessen: oben ~58 Einheiten, unten ~138 bis zum
-  Maskottchen, Faktor 2,4. In `funken-sky` dasselbe Verhältnis (131 gegen 55). **Task 1 war
-  dadurch faktisch ein visueller No-op** (−9 Einheiten auf einen 138-Einheiten-Abstand); Task 4
-  hat das Verhältnis immerhin von 2,95 auf 2,38 verbessert. Die Umsetzung ist korrekt — der Plan
-  hat auf die falsche Größe gezielt (Plan-Zeile 35 behauptet, `BOTTOM_PAD` steuere den Abstand
-  bis zum Maskottchen). Korrektur-Block steht auch oben im Plan-Dokument.
-  **Noch offen:**
-  (b) `MASCOT_BOX` wird immer berechnet, das Maskottchen sitzt aber nur unten **links**. Bei
-  gerader Sternzahl endet die Leiter rechts, der Zuschlag ist dann unnötig und der untere Rand
-  liest ~103 statt 40 Einheiten. Mein Testfall mit 5 Sternen endet links, also im günstigen Fall.
-  (c) `EDGE_PAD = 40` steht doppelt in zwei Dateien, zusammengehalten nur von einem Kommentar —
-  die Plan-Architektur („aus EINEM Abstandswert") ist auf Dateiebene nicht durchgesetzt. Ein
+1. **iPhone-Stau abarbeiten** (Tabelle unten), in Bündeln pro Reise, ein Durchgang je Fläche.
+   Vorrang hat die Nacht vom 28./29.07.: Onboarding, Wants/Schmiede, Auth/Signup, Booster.
+2. **Onboarding braucht einen FRISCHEN Account** — es zeigt sich pro Nutzer genau einmal und war
+   für den Browser-Check strukturell unerreichbar. Nicht mit dem Stamm-Account starten.
+3. **Plan 2 Task 4 (Zoom-Umbau) als beaufsichtigte Session ansetzen.** Task 3 ist die Voraussetzung
+   und ist erledigt, der Plan trägt den vollständigen Code. Kompletter Rewrite von
+   `booster-zoom.tsx` plus CSS, `booster-cells.tsx`, `booster-arrive.tsx`, `module-icon.tsx`,
+   `navigation-spinner.tsx` und eine **breaking** Änderung an `arrive()` (nimmt ein Argument).
+   Abnahme ist zu 100 % iPhone — Playwright kann von einem Klon, der über einen echten
+   Routenwechsel fliegt, prinzipiell nichts sehen.
+4. **E2E-Account: `intro_seen` für `values` und `bill-of-rights` setzen.** Der erste scharfe
+   E2E-Lauf hat gefunden, dass beide Routen dem Test-Account die Intro-Sequenz zeigen — sie galten
+   als grün, sagten über Layout aber nichts. Fix wie damals bei `/me/wants`. Ist ein Schreibzugriff
+   auf die Prod-DB, deshalb nicht ungefragt gemacht. **Nur** `thaenert.stefan+e2e@…`.
+5. **`ffmpeg`** — steht seit der Reibungs-Runde als offener Punkt drin, ohne Kontext im Status.
+   Kontext steht in der Daily Note vom 29.07.; beim nächsten Aufgreifen hier ausformulieren
+   oder streichen.
+
+## iPhone-Abnahme-Stau
+
+| Fläche | Commit | Worauf achten |
+|---|---|---|
+| Onboarding (Plan 1) | `d75b947` | **Frischer Account.** intro1–8 durchklicken: kein übrig gebliebenes `*` im Text; Kompass mit 4 Emojis; Stern blitzt unregelmäßig (Sternenkarte auf `/me/wants` darf sich NICHT verändert haben); Siegel stempelt in EINEM Zug. **Der große Punkt:** „Ich bin bereit" → bleibt der Himmel beim Übergang zum Dashboard wirklich stehen (kein Weiß-Blitz, kein Neuaufbau)? Zusätzlich: Server-Fehler beim Abschluss (Flugmodus) muss die Karte auch beim ZWEITEN identischen Fehler zurückbringen. |
+| Wants + Schmiede | `4ba551b`, `8499b91` | Phantom-Zeile: unterer Rand muss dem oberen entsprechen, „Lust auf Neues?" rutscht dadurch tiefer — beides in EINEM Blick. Einleitetext bricht sauber; Funken-Labels laufen nicht über den Rand. Sekundär-CTA sitzt rechnerisch ~36 px unter der optischen Mitte (app-weites Muster, kein Fehler dieser Runde). |
+| Auth / Signup | `ed1165c` | `/login` ohne Brand-Zeile — sitzt das Logo zu dicht an der Karte? (dann `pb-2` an den Kopf-`div` in `auth-reveal.tsx`, **nicht** das `py-8`). `/signup`: Kante am oberen Rand weg? Aufwischen — Maskottchen gleitet nach **rechts** raus, springt nicht, endet mit dem Hero gleichzeitig (1000 ms), nie zwei Maskottchen. Reduced motion: Gate entfällt, nichts fehlt. |
+| Booster-Intros | `ed1165c` | Die vier Maskottchen sind per Screenshot bestätigt — **bewegen sie sich auch?** Sie koppeln über global definierte `@keyframes` per inline-`style` (statisch geprüft, nicht gesehen). Mit Reduce Motion gegenprüfen: entscheiden sie in JS (`useReducedMotion`). |
+| Booster-Modul-Icon | `b395ca7` | Icon nur auf Schritt 1 der Wizards, nie gestapelt mit dem Begleiter-Maskottchen; `SubPageHeader` unverändert; keine Intro-Sequenz mit Icon. |
+| Kopfwetter-Hub | `f06499b` | Isobaren/Front deutlich sichtbar (keine Geisterlinien); alle 5 Ich-Sätze voll lesbar, auch der 6-Zeiler; ganze Zeile = Tap-Ziel, Gold-Fokusring; Lilac-Kern-Glow erkennbar, Reveal ruhig. Danach **Re-Critique** `/impeccable critique app/(app)/booster` (Baseline 27/40). |
+| `/me/bill-of-rights` | `0a5f947` | Siegel als Kopf ohne Überlappung, kein zweites am Fuß; Intro groß + weiß; die drei Sternbilder dezent (nicht zu hell) — Position/Dichte sind Startwerte, je Stern in `constellations.tsx` nachziehbar; zwei Buttons einzeilig, „Recht generieren" als einzige Gold-Kerze. |
+| Sternschmiede | `881a564` | Warp dezent-kühl (~0,75 s, keine goldene Blitz), reduced-motion = harter Schnitt; die vier Phasen; Funken-Fokus-Ebene ploppt nicht, Escape/Fokus-Rückgabe/zweistufiges Verwerfen; Header-Zurück fliegt den echten Warp. |
+| Sternensuche | `1048c48` | Header klebt und verdeckt nichts; Sterne-Liste klappt weich, Chevron synchron; Hintergrund-Sterne bleiben ruhig; Completion ohne Lücke oben. **Rest-Risiko:** die `grid-template-rows`-Transition kann auf älterem iOS-Safari ruckeln — bei fühlbarem Jank auf ein Collapse-Primitive (Radix Collapsible / gemessene Höhe) ausweichen. |
+| `/me/wants` (Kamera-Push) | `f2e3775`, `70df381` | Reinflug liest als Kamera-Flug ZUM Stern, Himmel hell genug, Rückflug kehrt sauber um; nah/fern-Toggle → Speichern → Stern in neuer Tiefe; kein `lvh`-Body-Streifen; Reflect kurz + Feier-Screen. Zu schwacher Dive: Karten-Scale `2.6` hoch. Verteilung: `baseX`/`ROW_H` einen Tick. **Ansonsten design-abgeschlossen (35/40).** |
+| `/me/values/journey/journal` | `d1dac57` | 7/7-Glühen landet als Peak; Ermunterung in Fraunces Italic; gespeicherter Eintrag liest als Prosa statt Grau-Kasten. Danach Re-Critique (31/40). |
+| `/me/values/journey` | `466ca49`, `b3846a1` | „Ersetzen" neutral statt rot, „Weitere Werte" eingeklappt, Zyklus-Glühen als Peak, Erst-Besuch-Cue bei `currentStep 0`; ein „geschafft"-Hinweis nur im Header, kein „Schritt 2 von 3"; Kamera landet auf dem aktuellen Stern. Danach Re-Critique (31/40). |
+| `/me/values` | `678c411` | Rose benennt ihre Auswahl, kein Legende-Loch, Detailkarte bündig bei kurzen **und** langen Werten, Hinweiszeile als ruhige Caption. Danach Re-Critique (29/40). |
+| Motion-Fixes | `8018627` | Login-Reveal (Karte zoomt, Hero wischt), Mood-Chip skaliert, Booster-Kachel drückt sich — jeweils animiert statt Sprung. |
+| Dashboard | `da42688` | Wetter-Block ist **verifiziert** („perfekt"). Offen nur der Re-Audit: `/impeccable audit das dashboard` erneut, um A11y/Theming-Anstieg zu bestätigen. |
+
+## Offene Entscheidungen (Stefan)
+
+- **Zünd-Sterne beim Onboarding-Abschluss.** Die sechs Extra-Lichter gehören der Onboarding-Route
+  und blinken beim Routenwechsel weg; der Grund-Nachthimmel bleibt. Sie mitzunehmen hieße, sie in
+  eine geteilte Layout-Ebene zu heben (wie beim Wants→Schmiede-Warp) — eine Architektur-Entscheidung,
+  die der Plan nicht vorsah. Bewusst nur die Timing-Hälfte gefixt. **Stört es?**
+- **`SkyBackdrop` hinter der gegateten Signup-Karte fehlt** — nach dem Aufwischen endet `/signup`
+  auf flachem `bg-background`. Vorschlag: `<SkyBackdrop />` als erstes Kind des gegateten Roots
+  (Hero-Panel ist opak, der zweite Himmel bliebe bis zur Bewegung verdeckt). Braucht einen
+  Geräte-Check auf Schimmern während der ~1 s Überlappung. Letzter der zwei Plandefekte.
+- **Journey-Produktfragen:** die 5 getesteten Werte während der Reflexionswoche im Journal als
+  Anker zeigen; und ob die „exakt 5 Werte"-Pflicht in der Hypothese so bleibt (aktuell hart gegatet).
+
+_Bereits entschieden und gebaut (nicht neu aufmachen): Wants = **Gold**, Schmiede-Subpage = **Rosé**;
+Abschluss-Screens bleiben **Gold**, Semantik trägt das Sage+Rose-Icon; Seitentitel folgen der
+Single-Title-Rule; Emoji auf der Kompass-Rose bleiben._
+
+## Bekannte Rest-Defekte
+
+- **Sternenkarten-Metriken, zwei Punkte offen** (`4ba551b`): (a) `MASCOT_BOX` wird immer
+  eingerechnet, das Maskottchen sitzt aber nur unten **links** — bei gerader Sternzahl endet die
+  Leiter rechts und der Zuschlag ist unnötig (unterer Rand liest ~103 statt 40 Einheiten);
+  (b) `EDGE_PAD = 40` steht doppelt in zwei Dateien, zusammengehalten nur von einem Kommentar. Ein
   geteiltes `sky-metrics.ts` wäre der ehrliche Weg.
-- **Nacht-Slot-2 iPhone-Final offen (2026-07-28, `4ba551b`):** am Live-Deploy: (a) `/me/wants` —
-  Einleitetext jetzt so groß wie in der Schmiede, bricht er sauber? (b) `/me/wants/schmiede` —
-  Funken schweben ruhiger und stehen breiter verteilt; läuft kein Label über den Rand?
-  (c) beide Seiten — sitzt der Sekundär-CTL wirklich mittig? **Rechne mit „sitzt etwas zu tief":**
-  der Spacer zentriert innerhalb des Containers, der `py-6` hat, während die Bottom-Nav
-  `sticky bottom-0 h-16` ist — rechnerisch landet der Link ~36 px unter der optischen Mitte.
-  Vorbestehendes app-weites Muster, kein Fehler dieser Runde, aber gut zu wissen, was man sieht.
-- **Nacht-Slot-1 iPhone-Final offen (2026-07-28, `ed1165c`):** am Live-Deploy in EINEM Durchgang:
-  (a) **`/login`** — nur Logo über der Karte, keine Brand-Zeile; sitzt das Logo jetzt zu dicht an
-  der Karte? Falls ja, `pb-2` an den Kopf-`div` in `auth-reveal.tsx` (NICHT das `py-8` des
-  Karten-Containers ändern, das trägt auch den Reset-Pfad). (b) **`/signup`** — Hero zeigt den
-  Nachthimmel mit funkelnden Lichtern; **ist die Kante am oberen Rand weg?** Wenn nicht, ist es
-  kein Verlaufs-Übergang, sondern ein safe-area/`lvh`-Thema und wird separat verfolgt.
-  (c) **Aufwischen auf `/signup`** — das Maskottchen gleitet **nach rechts** aus dem Bild, während
-  der Hero nach oben geht; es darf nicht springen und nicht mit nach oben fahren, beide Bewegungen
-  enden gleichzeitig (1000 ms). Zu keinem Zeitpunkt zwei Maskottchen sichtbar. Sitzt es in Ruhe
-  noch auf der gewohnten Peek-Tiefe? (d) **Reduced motion an** — Gate entfällt komplett, Hero und
-  Karte untereinander, nichts fehlt oder doppelt sich. (e) **Die vier Booster-Intros** — die
-  Maskottchen sind da (per Screenshot bestätigt), aber **bewegen sie sich auch?** Die Komponenten
-  animieren über global definierte `@keyframes`, die per inline-`style` referenziert werden; alle
-  18 Namen sind in `globals.css` vorhanden, aber das ist statisch geprüft, nicht gesehen. Mit
-  aktiviertem Reduce Motion gegenprüfen: diese Maskottchen entscheiden das in JS
-  (`useReducedMotion`), nicht über den CSS-Block.
-- **Aus dem Nacht-Slot-1-Review geparkt, Stefans Entscheidung (2026-07-28):**
-  (1) **Plandefekt in Plan 3 Task 2:** Der gegatete Zweig rendert hinter der Karte KEINEN
-  `SkyBackdrop` — nach dem Aufwischen endet `/signup` auf flachem `bg-background`. Die
-  Abnahme-Zeile des Plans („darunter liegt der Nachthimmel des ungegateten Zweigs") beschreibt
-  einen Zustand, den es nicht gibt: der ungegatete Zweig wird bei `gated = true` nie gerendert.
-  Kein Regress, aber Task 2s Ziel ist nur halb erreicht — `/login` behält seinen Himmel dauerhaft,
-  `/signup` zeigt einen und wirft ihn weg. Reviewer-Vorschlag: `<SkyBackdrop />` als erstes Kind
-  des gegateten Roots; das Hero-Panel ist opak, der zweite Himmel bliebe bis zur Bewegung
-  verdeckt. Braucht einen Geräte-Check auf Schimmern während der ~1 s Überlappung.
-  (2) **`BrandPanel` malt weiter einen eigenen Blur-Blob** — dieselbe Kategorie „zweite
-  atmosphärische Ebene", die Task 2 bei `AmbientBlobs` entfernt hat. Auf dem Screenshot
-  unauffällig, aber eine bewusste Geräte-Entscheidung wert.
-  (3) **Hero-Panel ist bei `revealed` nicht `inert`** — der „Nach oben wischen"-Button bleibt
-  unsichtbar fokussierbar. Vorbestehend, echter a11y-Punkt; symmetrischer Fix wäre
-  `inert={revealed || undefined}` (das Karten-Panel macht es bereits richtig).
-  (4) **`saying-no` hat 5 Intro-Karten, aber nur 4 Maskottchen-Varianten** — Karten 4 und 5 teilen
-  sich denselben Begleiter. Vorbestehend, originalgetreu restauriert, kein Defekt dieser Runde.
-  (5) **Lehre für künftige Restores:** Der Plan prüfte per grep auf gelöschte CSS-*Klassen*. Die
-  Komponenten koppeln aber über `@keyframes`-Namen im inline-`style`, nie über Klassen — der
-  Check zielte auf die falsche Kopplung und konnte nicht fehlschlagen. Bei Restores von
-  Komponenten, die per inline-`style` animieren: **Keyframe-Namen prüfen, nicht Klassennamen.**
-- **Kopfwetter-Hub-Druckkarte iPhone-Final + Re-Critique offen (2026-07-26, `f06499b`):** am
-  Live-Deploy (~375px) pruefen: (a) Isobaren-/Front-Grund **deutlich sichtbar** (kein
-  Geisterlinien-Effekt), verbindet die Systeme zu einer Wetterlage; (b) alle 5 Ich-Saetze voll +
-  lesbar, keiner kollidiert — auch der Confidence-6-Zeiler nicht; (c) Lesefluss top→bottom, alle
-  Ziele im Daumenbereich, ganze Zeile = Tap-Ziel, Gold-Fokusring; (d) Lilac-Kern-Glow hinter jedem
-  Symbol erkennbar, Reveal ruhig (kein abgehacktes Stagger), reduced-motion = alles statisch
-  sichtbar, keine Drift. Danach **`/impeccable critique app/(app)/booster` erneut** (Baseline 27/40,
-  Snapshot `.impeccable/critique/2026-07-23T15-24-49Z__app-app-booster.md`). **Deferred Minor (Final
-  Review, bewusst offen):** der eine hartkodierte `#0f0c1a` im Tiefenverlauf von `pressure-field.tsx`
-  — plan-sanktioniert, dekorativ/aria-hidden, Single-Theme → Risiko 0; optional spaeter `color-mix`.
-- **`/me/bill-of-rights` iPhone-Final offen (2026-07-23, Runde 2, `0a5f947`):** am Live-Deploy in
-  EINEM Durchgang: (a) **Siegel** sitzt sauber als Kopf ueber der Urkunde, ohne sie zu ueberlappen,
-  kein zweites Siegel mehr am Fuss; (b) **Intro** gross + weiss (`text-base`/`text-foreground`,
-  wie /values), Kontrast klar; (c) **Hintergrund** zeigt die drei dezenten, gestrichelt verbundenen
-  Sternbilder — **nicht zu hell**, keine Kurslinie/Wegpunkte mehr; **Position/Dichte sind
-  Startwerte, ggf. je Stern in `constellations.tsx` einen Tick nachziehen** (isolierte Koordinaten);
-  (d) **Buttons** einzeilig nebeneinander, „Recht generieren" liest als die eine Gold-Kerze,
-  „Selbst schreiben" outline. Beide Zielrouten (`/generate`, `/add`) oeffnen korrekt. **Minor
-  (Runde-1-Erbe, nicht angefasst):** Kommentar-ASCII-Schliesszeichen in den neuen Dateien
-  (gate-exempt, unsichtbar).
-- **`npm run lint` ist auf `main` vorbestehend ROT (wiederkehrend, 2. Session geflaggt):** 3 ESLint-
-  Fehler aus dem Sternschmiede-Projekt — `funken-sky.tsx` (`react-hooks/refs`, Render-`origin`),
-  `evaluation-form.tsx`, `wants-journey.tsx`. tsc + `npm run gate` + build sind gruen; nur eslint
-  ist rot, und jede Session muss „ist vorbestehend, nicht meins" dazuschreiben. **Vorschlag (Stefan
-  entscheidet): eine kleine dedizierte Runde, die die 3 Fehler raeumt, dann `npm run lint` an
-  `npm run gate` haengen** — beendet das Dazuschreiben und faengt neue Lint-Regressionen hart.
-- **Sternschmiede-Redesign iPhone-Final offen (2026-07-22, S3):** am Live-Deploy in EINEM
-  Durchgang: (a) Warp `/me/wants` ↔ Schmiede liest dezent-kuehl (~0,75 s, kuehl-weisse duenne
-  Streifen, kein goldener Blitz), reduced-motion = harter Schnitt; (b) die vier Phasen —
-  Landing-Funken-Konstellation, Warte-Esse-Funkenflug (heisserer Rose-Glow + spruehende Funken),
-  Funken-Auswahl (Held-Funke, Glass-Card, Rose-Auswahl-Ring, gedimmt „aus"), Success-Schwarm; (c)
-  **Funken-Fokus-Ebene** (Antippen eines Funkens): Ebene ploppt NICHT (Portal-`preventScroll`),
-  Focus-Trap/Escape/Fokus-Rueckgabe funktionieren, Verwerfen fragt zweistufig nach; (d)
-  Header-Zurueck fliegt den echten Warp (nicht harter Sprung). **Deferred (alle vom Final Review
-  als acceptable-to-ship, im Ledger):** Reflektieren-CTA `outline` vs. Gold (Design-System, an die
-  Gold-vs-Rose-Frage gekoppelt), VoiceOver-Backdrop-Button + `aria-live` beim Verwerfen-Swap
-  (a11y-Einzeiler in `funken-sky.tsx`), `--celebrate` fehlt im Kontrast-Gate, `savedCount`→
-  `openCount` (Verhalten korrekt, Name irrefuehrend), JS/CSS-reduced-motion-Duplikat im
-  Warte-Screen, `.warp-streak-*-settle` 340 statt 350 ms.
-- **Sternensuche-Redesign + drei Fixes iPhone-Final offen (2026-07-22):** am Live-Deploy in
-  EINEM Durchgang gegenchecken: (a) Wizard-Header klebt beim Scrollen oben, verdeckt keinen
-  Inhalt, kein Leerraum oben; (b) Sterne antippen → Detail klappt **weich** auf/zu, Chevron
-  dreht synchron; (c) Hintergrund-Sterne bleiben beim Auf-/Zuklappen **ruhig**; (d)
-  Completion-Seite reicht bis an die obere Kante, keine Luecke; (e) das ganze Redesign:
-  Warte-Auffunkeln, Ergebnis-Konstellationsliste, Abschluss-Sternbild + 1-Stern-Fallback.
-  **Rest-Risiko:** `grid-template-rows`-Transition kann auf aelterem iOS-Safari ruckeln — bei
-  fuehlbarem Jank auf ein getestetes Collapse-Primitive (Radix Collapsible / gemessene Hoehe)
-  ausweichen und beide Stellen (Sterne-Liste + Yang-Bonus) darauf ziehen (verwandt mit dem
-  offenen `/impeccable extract`-Backlog). **Konsistenz-Kandidat:** Yang-"Bonus: Willst du
-  tiefer graben?"-Toggle (`wants-journey.tsx`) auf dieselbe Grid-Ausklapp-Animation ziehen.
-- **`/me/wants` Kamera-Push iPhone-Final offen:** `f2e3775` am Live-Deploy gegenchecken - liest der Reinflug jetzt als Kamera-Flug ZUM Stern (Umgebung streamt nach aussen), ist der Himmel gut hell (Titel/Text weiter klar lesbar), kehrt der Rueckflug sauber um? Falls der Dive noch staerker soll: `star-map.tsx` Karten-Scale `2.6` weiter hochziehen; **Reserve-Stufe** = Eigen-Translation des Portal-Sterns verkuerzen (Stern waechst mehr „an Ort", Framing settelt um ihn - spuerbarerer Choreografie-Eingriff, im Plan `docs/superpowers/plans/2026-07-21-wants-sternenhimmel-kamera-zoom.md` dokumentiert).
-- ~~**`/impeccable critique /me/wants` steht aus**~~ — **ERLEDIGT** (31/40 -> 35/40, als fertig abgelegt). **iPhone-Final der Wants-Runde offen:** am Live-Deploy gegenchecken: (a) nah/fern-Toggle — umschalten -> Speichern -> beim Zoom-Out sitzt der Stern in neuer Tiefe; (b) `lvh` — kein Body-Streifen unten auf Hub/Journey/Schmiede/Reflect beim Toolbar-Einklappen; (c) Reflect — erste Ansicht kurz, Disclosure zeigt die drei Felder (Werte ueberleben Zu-/Aufklappen), Absenden -> Feier-Screen; (d) Sternen-Verteilung — weiter aussen, oben/unten enger; ggf. `baseX`/`ROW_H` einen Tick nachziehen (isolierte Konstanten in `star-map.tsx`).
-- **Wants-Backlog aus dem 35/40-Snapshot (bewusst abgelegt, nicht aktiv):** (1) **zwei koexistierende Dialog-Implementierungen** — die Fokus-Ebene rollt den Dialog-Vertrag von Hand nach statt das echte `Dialog`-Primitive zu nutzen; `/impeccable extract` beim naechsten Anfassen (zugleich Wurzel-Fix fuer die Portal-Scroll-Regressions-Klasse, siehe Memory `portal-focus-needs-preventscroll`); (2) generische "Speichern fehlgeschlagen"-Strings (`/impeccable clarify`); (3) harter Karten-Remount bei Add/Delete statt Per-Stern Enter/Exit (`/impeccable animate`); (4) Vibe-Pillen im Reflect nicht als "(optional)" markiert; (5) Fokus-Edit-Save ohne explizites Erfolgssignal. Snapshot: `.impeccable/critique/2026-07-21T16-09-07Z__app-app-me-wants.md`.
-- **Deferred Minor Kamera-Push (bewusst offen):** kein GSAP-Tween/Timeout-Teardown beim Fokus-Unmount (durch `key={wants.length}`-Remount harmlos).
-- **`/me/values/journey/journal` iPhone-Check + Re-Critique offen:** am Live-Deploy pruefen: (a) 7/7-Abschluss - landet das `CompletionCelebration`-Gluehen als Peak, liest der Text ohne die dreifache Doppelung rund? (b) taeglicher Eintrag - die Ermunterungs-Zeile in Fraunces Italic als warmer Beat ueber dem Formular; (c) fertiger Eintrag (Read-only) - liest der gespeicherte Text als eigene Prosa statt als Grau-Kasten? Dann `/impeccable critique /me/values/journey/journal` erneut (Erst-Score 31/40). **Flaechenuebergreifende Design-System-Frage neu aufgetaucht:** ob die Abschluss-Screens gold bleiben oder ganz auf Sage/Rose (die semantische Completion-Farbe) wechseln - haengt mit der offenen Seitentitel-Konsistenz zusammen; diese Runde bewusst beim Haus-Gold geblieben. **Minor (nicht angefasst):** die zwei gestapelten muted-Zeilen bei erledigtem Tag, kein Datums-Anker im Schreib-Formular, kein Maskottchen auf der Reflexions-Flaeche.
-- **`/me/values/journey` Finale-Runde iPhone-Check + Re-Critique offen:** am Live-Deploy pruefen: (a) Auswertungs-Anpassphase - "Ersetzen" neutral (nicht rot), "Weitere Werte" eingeklappt, oeffnet mit einer Entscheidung; (b) Zyklus-Ende - das `CompletionCelebration`-Gluehen landet als Peak; (c) Karte beim allerersten Aufruf - "Tipp den leuchtenden Stern an"-Cue sichtbar. Dann `/impeccable critique /me/values/journey` erneut (Erwartung: Finale-Punkte zurueck, 31 -> Mitte 30er). **Zwei kleine Folge-Entscheidungen:** Seitentitel-Muster vereinheitlichen (Hypothese/Journal In-Body-Wizard-Heading ODER Auswertungs-H2 raus, sticky Header traegt) + Stale-Label "Ersetzen-Toggle" in `check-contrast.mjs` umbenennen (Toggle nutzt kein Destructive-Text mehr).
-- **`/me/values/journey` iPhone-Check + Re-Critique offen (Vorrunde):** am Live-Deploy konkret pruefen: (a) fertige Reflexion -> "geschafft"-Hinweis **nur** im Header (nicht doppelt); (b) naechster Tag -> **kein** "Schritt 2 von 3" ueber der Reflexion, Kamera zentriert den aktuellen pulsierenden Stern (nicht das Seitenende); (c) Untertitel "Heute geschafft - morgen geht's weiter ✨" nicht abgeschnitten (`truncate`) - falls doch, auf "Heute geschafft ✨ · morgen weiter" kuerzen; (d) bei aktiver Tagessperre bleibt der erledigte Stern angezuendet (Karte nie steplos). Danach `/impeccable critique /me/values/journey` erneut (Erwartung: Status/Konsistenz/Recognition steigen vom 25er-Wert).
-- **Journey-Critique Out-of-Scope (Kandidaten fuer eine kleine Folge-Runde):** (1) die **5 getesteten Werte waehrend der Reflexionswoche** als sanften Anker zeigen (Memory-Bridge-Befund: aktuell sind die Werte, die man testet, im Journal nicht sichtbar); (2) die **"exakt 5 Werte"-Pflicht** in der Hypothese hinterfragen (Produktfrage, kein Defekt - aktuell hart auf genau 5 gegatet).
-- **`/me/values` iPhone-Check + Re-Critique offen:** benennt die Rose ihre Auswahl gut, ist der Screen ohne Legende rund, sitzt der CTA gut? Die Detailkarten-Min-Höhe und die unruhige Hinweiszeile sind mit `678c411` erledigt — beim iPhone-Check konkret prüfen: sitzt die Karte bei kurzen **und** langen Werten bündig, liest die Hinweiszeile als ruhige Caption (Kontrast der gemuteten Zeile ok)? Danach `/impeccable critique /me/values` erneut (Erwartung: Heuristik 4/6/8 steigen vom 29er-Wert).
-- **Emoji-Alternative auf der Wertekompass-Rose zurückgestellt:** Stefan behält die Emoji. Falls sie später stören, ist „weiche Punkte + das schon gebaute Name-on-Select" der risikoarme, on-brand Weg (kein neues Glyph-Design); eigene Monoline-Icons wären die schwerere Option (30 Werte, semantisch für Abstrakta weiter ambig).
-- ~~**Latenter Tailwind-v4-Motion-Footgun in ≥4 Stellen**~~ — **ERLEDIGT** (`8018627`): alle 4 gefixt (`mood-checkin`, `auth-reveal` 2×, `booster/page`), waren echte Snap-Bugs. Das neue Motion-Gate bewacht die Klasse künftig.
-- **Re-Audit des Dashboards offen:** nach den zwei umgesetzten Findings `/impeccable audit das dashboard` erneut laufen lassen, um zu bestätigen, dass A11y- und Theming-Dimension steigen. Ein Audit-P3 bleibt bewusst offen: dauerhafte `drop-shadow`-Filter-Loops im Gewitter-Wetter (Score 1) — nur bei fühlbarem iPhone-Jank via `/impeccable optimize` angehen.
-- ~~**Proposed systemic fix: `check-transitions.mjs`**~~ — **ERLEDIGT** (`27f73f1`), in `npm run gate` gebündelt.
-- **Stefan's iPhone check** — Dashboard-Wetter-Block ist nach der Politur-Runde **verifiziert** ("perfekt": Wolken fliegen rein/raus, größer, kein Seiten-Scroll). Weiterhin offen aus Nachthimmel II: compass path, Kopfwetter map (feinjustieren the 5 system coordinates if they crowd at 375px), star map + zoom + a full journey run with the Tagtraum step.
-- **Measure-6 checkpoint is now RESOLVED by this round:** the mood-reactive weather scene replaces the horizon glow — the "glow vs. mood-reactive ambience" question from 2026-07-17 is answered in favor of ambience. (No longer an open checkpoint.)
-- **Module-color consistency (Wants: Gold vs. Rosé) is now more pressing:** the star map is deliberately gold this round, but it's now the main Wants surface, so the Gold-vs-Rosé conflict (Schmiede AnvilArt, hero StarArt) deserves its own small round — either commit Wants to gold (update the DESIGN.md mapping) or pull the ornaments + star map to rosé.
-- **Leitsatz round (deferred):** now that the compass + star imagery is fully built, place "Auch wenn das Wetter sie manchmal versteckt: Deine Sterne leuchten weiter." in `.font-affirmation` at 1–2 exercise-completion moments. Text + utility exist, only placement missing.
-- **Deferred Minors (Nachthimmel II ledger, all "leave open"):** stale star/constellation terminology in `values-journey-client` identifiers (internal only); distiller prompt prose "3 bis 6 Wants" (empirically de-risked by the live test); tagtraum render-block position (functionally inert — wontfix); "Ferner Stern"/"Erloschen" badge color pair (`bg-foreground/10` + `text-muted-foreground`) not covered by the contrast gate; no GSAP tween cleanup on StarMap unmount (low-probability edge case).
-- ~~**Proposed systemic fix: `check-typography.mjs`**~~ — **ERLEDIGT** (`27f73f1`), aber bewusst **auf gerenderten Text verengt** (JSX-Text + `aria-label`/`title`/`placeholder`/`alt`). Befund beim Bau: der breite Ansatz hätte 123 ASCII-Schließer geflaggt (79 in Kommentaren, ~44 in Prompts/Labels) bei **0** echten gerenderten Bugs — die User-facing Fläche ist bereits sauber. Das verengte Gate ist heute grün und guard't künftige gerenderte Defekte.
-- **FK-CASCADE-Migration geschrieben, Apply offen:** `supabase/migrations/20260720120000_cleanser_checkins_cascade.sql` committet (`0618f50`). **`supabase db push` muss noch laufen** — die CLI ist in der Claude-Arbeitsumgebung nicht installiert; bewusst **nicht** via Supabase-MCP angewandt (MCP-`apply_migration` erzeugt eine eigene History-Version → Drift zur Datei, späterer `db push` würde das nicht-idempotente `add constraint` erneut laufen lassen). Stefan pusht per CLI. Danach Kaskade prüfen. Deferred palette change ("für später", candidates documented, verifiable via the contrast gate) bleibt offen.
+- **Aus dem Nacht-Slot-1-Review, vorbestehend:** `BrandPanel` malt weiter einen eigenen Blur-Blob
+  (dieselbe „zweite atmosphärische Ebene", die bei `AmbientBlobs` entfernt wurde); das Hero-Panel
+  ist bei `revealed` nicht `inert`, der unsichtbare Wisch-Button bleibt fokussierbar
+  (`inert={revealed || undefined}`); `saying-no` hat 5 Intro-Karten, aber nur 4
+  Maskottchen-Varianten (Karten 4 und 5 teilen sich einen Begleiter).
+- **Wants Track F, beim nächsten Anfassen mitnehmen:** generische „Speichern fehlgeschlagen"-Strings
+  (`/impeccable clarify`), harter Karten-Remount bei Add/Delete statt Per-Stern Enter/Exit
+  (`/impeccable animate`), Vibe-Pillen im Reflect nicht als „(optional)" markiert, Fokus-Edit-Save
+  ohne Erfolgssignal, und die hand-gerollte Fokus-Ebene auf das echte `Dialog`-Primitive ziehen
+  (`/impeccable extract`).
+- **Deferred Minors (bewusst offen, Risiko ~0):** hartkodiertes `#0f0c1a` in `pressure-field.tsx`;
+  kein GSAP-Tween-Teardown beim Fokus-Unmount (durch `key={wants.length}`-Remount harmlos);
+  „Ferner Stern"/„Erloschen"-Badge-Farbpaar nicht vom Kontrast-Gate abgedeckt; stale
+  Stern-/Konstellations-Begriffe in `values-journey-client`-Bezeichnern; Dashboard-Audit-P3
+  (dauerhafte `drop-shadow`-Loops im Gewitter-Wetter — nur bei fühlbarem Jank via
+  `/impeccable optimize`).
 
-## Next Steps
+## Merkregeln aus schmerzhaften Runden
 
-- **ZUERST: die Nacht vom 28./29.07. am iPhone abnehmen.** Vier Prueflisten stehen oben in den
-  Open Items (Auth/Signup, Booster-Intros, Wants/Schmiede, Onboarding). **Die Onboarding-Liste
-  braucht einen frischen Account** — das Onboarding zeigt sich pro Nutzer einmal und war fuer den
-  Browser-Check strukturell unerreichbar. Erst danach neue Flaechen aufmachen.
-- **~~Phantom-Zeile~~ ERLEDIGT `8499b91`, ~~Typo-Gate-Luecke~~ ERLEDIGT `f1d6b32`.** Beide oben in
-  den Open Items dokumentiert. **Noch offen aus demselben Bund: der fehlende `SkyBackdrop` hinter
-  der gegateten Signup-Karte** — das ist der letzte der zwei Plandefekte.
-- **⚠️ NEU 2026-07-29: der E2E-Account sieht auf `/me/values` und `/me/bill-of-rights` die
-  Intro-Sequenz.** Der erste scharfe Lauf mit Zustands-Zusicherung hat das sofort gefunden — beide
-  Routen galten bisher als gruen, sagten aber ueber Layout nichts aus, genau wie `/me/wants` vor dem
-  Bestuecken. Fix ist derselbe wie damals: `intro_seen` fuer die Slugs `values` und
-  `bill-of-rights` auf dem E2E-Account setzen (**nur** `thaenert.stefan+e2e@…`, nie Stefans echter
-  Account). Bewusst nicht ungefragt gemacht, weil es ein Schreibzugriff auf die Prod-DB ist.
-- **Plan 2 Task 4 (Zoom-Umbau) als beaufsichtigte Session ansetzen** — Task 3 ist die
-  Voraussetzung und ist erledigt, der Plan traegt den vollstaendigen Code. Abnahme ist zu 100
-  Prozent iPhone.
-- **~~Zustands-Zusicherung in `verify.mjs`~~ ERLEDIGT `1f114e6`.** Routen tragen jetzt optionale
-  `expect`/`reject`-Marker (`data-e2e`-Attribute, bewusst keine Textfragmente — die Copy aendert
-  sich hier staendig). Bericht trennt „sauber gerendert" von „mit zugesichertem Zustand"; `·` heisst
-  Smoke-Test, `✓` heisst abgesichert. **Beim Weiterbauen:** neue Buehnen brauchen einen Marker,
-  sonst waechst die `·`-Zone stillschweigend wieder zu.
-- **Kopfwetter-Hub-Druckkarte umsetzen (bau-fertiger Wiedereinstieg, Stefans Wunsch fuer eine
-  spaetere Session):** Plan `docs/superpowers/plans/2026-07-23-kopfwetter-hub-druckkarte.md`, 3
-  Tasks, subagent-driven (empfohlen) oder inline. Verifikation je Task tsc + `npm run gate` + build;
-  danach push + iPhone-Gate, optional `/impeccable critique app/(app)/booster` re-run (Baseline
-  27/40). Erledigt zugleich den `animate-bounce`-Detector-Fund und den alten Koordinaten-Offenpunkt.
-- **Der einzige verbleibende AIC-Block ist der iPhone-Verifikations-Stau — jetzt abarbeiten, bevor eine neue Flaeche aufgemacht wird.** Die komplette baubare Roadmap ist durch; alles Weitere haengt an Stefans Geraete-Gate. In Buendeln pro Reise am Live-Deploy abnehmen (ein Durchgang je Flaeche), dabei die **neu dazugekommenen** Aenderungen mitpruefen: (a) C4-Leitsatz an den drei Booster-Abschluessen (Overthinking/Schattenseite/Things-got-messy); (b) `/me`-Hub-Wants-Kachel jetzt gold; (c) E1-Auswertungs-Header (sticky Header + phasen-dynamischer Untertitel — die `SubPageHeader`-in-die-Form-Verschiebung testet die sticky-Klasse, die schon mal gezickt hat); (d) D1-Dialog-Verhalten (Escape/Schliessen/Fokus-Rueckkehr an Stern- und Funken-Fokus — verhaltens-identisch, aber die Fokus/Scroll-Klasse verdient einen Blick). **Danach die geschobenen Re-Critiques** der values/journey- und Wants-Flaechen (Erwartung: Scores steigen). Die detaillierten Check-Listen je Flaeche stehen unten unveraendert.
-- **`/me/bill-of-rights` am iPhone final abnehmen (Runde 2, `0a5f947`):** Siegel-Kopf sitzt sauber, Intro gross+weiss lesbar, die drei Sternbilder dezent (nicht zu hell), zwei Buttons einzeilig mit goldenem „Recht generieren". Ist die Sternbild-Dichte/-Position daneben, je Stern einen Tick in `constellations.tsx` (isolierte Koordinaten). Das ist die einzige frische Flaeche im iPhone-Stau.
-- **~~`npm run lint` gruen machen und ins Gate nehmen~~ ERLEDIGT `886d86d`.** Es waren nicht 3,
-  sondern **10 Errors + 2 Warnings in 5 Dateien** — alle echt gefixt, kein einziges neues
-  `eslint-disable`. Gate laeuft mit `--max-warnings=0`: ohne das Flag blieb die Gegenprobe gruen,
-  weil eslint bei reinen Warnings mit 0 beendet. **Damit entfaellt der Zusatz „lint ist
-  vorbestehend rot, nicht debuggen" in Subagent-Dispatches** — er waere ab jetzt sogar falsch.
-- **Beim naechsten Wants-Anfassen Track F mitnehmen** (jetzt wo `useDialogFocus` die Dialog-Flaeche konsolidiert): generische Save-Error-Strings (`/impeccable clarify`), harter Karten-Remount bei Add/Delete (`/impeccable animate`), Vibe-Pillen als „(optional)" markieren, Fokus-Edit-Save-Erfolgssignal.
-- **Kuenftige Portal-Overlays auf `useDialogFocus` setzen** statt Focus/Scroll neu zu rollen (Memory `portal-focus-needs-preventscroll` aktualisiert).
-
-- **Sternschmiede-Redesign am iPhone final abnehmen (S3):** Warp entgoldet/gezaehmt, die vier
-  Phasen, die Funken-Fokus-Ebene (kein Ploppen, Escape/Fokus-Rueckgabe, zweistufiges Verwerfen),
-  Header-Rueckflug. Die Sternschmiede ist damit die zweite Wants-Reise auf Nachthimmel-Grammatik
-  (Geschwister zur Sternensuche). Danach loest sich die **Gold-vs-Rose-Modulfarbe** von einer
-  offenen Frage zu einer faelligen Runde: die Schmiede ist bewusst auf Rose (`--celebrate`), die
-  Sternenkarte (Wants-Hauptflaeche) noch Gold — beide dasselbe Modul. Entweder Wants auf Gold
-  festschreiben (DESIGN.md-Mapping) oder Karte + Ornamente auf Rose; danach `--celebrate` ins
-  `check-contrast.mjs` aufnehmen (Rose ist jetzt breite Ornament-/Auswahl-Farbe).
-- **Sternensuche am iPhone final abnehmen (Redesign + die drei Fixes in EINEM Durchgang):**
-  Header sticky & verdeckt nichts, Sterne-Liste klappt weich, Himmel ruhig, Completion ohne
-  Luecke oben, plus die Redesign-Screens (Warte/Ergebnis/Abschluss). Bei fuehlbarem
-  Grid-Transition-Jank auf iOS → Collapse-Primitive einfuehren. Danach den Yang-"Bonus"-Toggle
-  auf dieselbe Ausklapp-Animation ziehen (kleine, isolierte Runde). Erst dann eine neue Flaeche.
-- **`/me/wants` am iPhone final gegenchecken (Kamera-Push S1 + Batch S2 in einem Durchgang):** (a) Reinflug liest als Kamera-zu-Stern, Himmel hell genug, Rueckflug sauber (`f2e3775`); (b) nah/fern-Toggle -> Speichern -> Stern in neuer Tiefe; (c) kein `lvh`-Body-Streifen unten auf allen Wants-Buehnen; (d) Reflect kurz + Feier-Screen; (e) Verteilung weiter aussen/enger. Falls der Dive noch zu schwach: Karten-Scale `2.6` hoch. Falls Verteilung: `baseX`/`ROW_H` einen Tick. **`/me/wants` ist ansonsten design-abgeschlossen (35/40).**
-- **Wants Gold-vs-Rose-Modulfarbe entscheiden** (jetzt ohne Vorbedingung, `/me/wants` ist durchgearbeitet) - die goldene Sternenkarte ist endgueltig die Haupt-Wants-Flaeche; entweder Wants auf Gold festschreiben (DESIGN.md-Mapping) oder Ornamente + Karte auf Rose. Kleine, abgegrenzte Runde. Danach die **Leitsatz-Runde** (jetzt reif, Stern-Bildsprache vollstaendig): „Auch wenn das Wetter sie manchmal versteckt: Deine Sterne leuchten weiter." in `.font-affirmation` an 1-2 Abschlussmomente.
-- **`/me/values/journey/journal` am iPhone gegenchecken** (7/7-Gluehen als Peak, Ermunterung in Serif, gespeicherter Eintrag als Prosa), dann `/impeccable critique /me/values/journey/journal` re-run fuer den Score. Danach die flaechenuebergreifende Abschluss-Farb-Frage (Gold vs. Sage/Rose) zusammen mit der Seitentitel-Konsistenz entscheiden.
-- **`/me/values/journey` Finale am iPhone gegenchecken** (Ersetzen neutral, "Weitere Werte" eingeklappt, Zyklus-Gluehen als Peak, Erst-Besuch-Cue bei currentStep 0), dann `/impeccable critique /me/values/journey` re-run fuer den Score. Danach die Seitentitel-Design-System-Frage entscheiden + das Stale-Gate-Label umbenennen.
-- **`/me/values/journey` (Vorrunde) am iPhone gegenchecken** (ein „geschafft"-Hinweis nur im Header, kein „Schritt 2 von 3" auf der Reflexion, Kamera landet auf dem aktuellen Stern, Untertitel nicht abgeschnitten), dann `/impeccable critique /me/values/journey` re-run fuer den Score. Danach ggf. die kleine Folge-Runde (5 Werte im Journal anzeigen / „exakt 5"-Pflicht).
-- **`/me/values` am iPhone gegenchecken** (Rose benennt Auswahl, kein Legende-Loch, Detailkarte bündig bei kurz/lang, Hinweiszeile als ruhige Caption), dann `/impeccable critique /me/values` re-run für den Score. Emoji-Ersatz nur, falls Stefan es später anstößt.
-- Await Stefan's iPhone verdict on the remaining three Nachthimmel-II blocks (compass, Kopfwetter map, star map + journey), then: (a) decide the Wants Gold-vs-Rosé module-color round, (b) decide the Leitsatz round, (c) if the Kopfwetter systems crowd at 375px, feinjustieren their coordinates.
-- **FK-Migration anwenden:** `supabase db push` auf Stefans Maschine (CLI hier nicht verfügbar), dann Kaskade in `information_schema.referential_constraints` prüfen. Beide Gates (`check-transitions`, `check-typography`) und die 4 Motion-Fixes sind erledigt und in `npm run gate` gebündelt.
-- **iPhone-Check der 4 Motion-Fixes:** Login-Reveal (Karte zoomt sanft, Hero wischt weg), Mood-Chip skaliert beim Tippen, Booster-Kachel drückt sich — jeweils animiert statt Sprung.
+- **Neue Bühnen brauchen einen `data-e2e`-Marker**, sonst wächst die `·`-Smoke-Test-Zone
+  stillschweigend wieder zu.
+- **Sternenkarte/Funken-Himmel:** bis 3 Sterne bzw. 2 Funken dominiert `MIN_VIEW_H` — Änderungen an
+  der Höhenformel sind darunter komplett unsichtbar. Steht auch im Code.
+- **Restores von Komponenten, die per inline-`style` animieren: Keyframe-Namen prüfen, nicht
+  Klassennamen.** Ein grep auf CSS-Klassen zielt auf die falsche Kopplung und kann nicht fehlschlagen.
+- **Künftige Portal-Overlays auf `useDialogFocus`** setzen statt Focus/Scroll neu zu rollen.
 
 ## Links
 - Vault project note: `Stefan's Vault/02 Projekte/AIC-App.md`
