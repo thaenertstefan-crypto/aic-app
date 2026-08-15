@@ -31,6 +31,9 @@ A self-development companion app that turns workbook exercises into interactive 
 - Apply this convention to all new pages, layouts, and route handlers
 - **Nach Routen-Löschungen `.next` löschen** (`rm -rf .next`) — sonst schlägt `npx tsc --noEmit` mit Geister-Typen von den gelöschten Routen fehl
 
+## Coding Standards
+- [CODING_STANDARDS.md](CODING_STANDARDS.md) bündelt die am Code festmachbaren Konventionen (Sprache/Copy, Next.js 16, Datenzugriff, Struktur, Styling/Motion) als Prüfliste. `/code-review` liest sie als Standards-Quelle; bei UI-Fragen bleiben `PRODUCT.md` und `DESIGN.md` verbindlich.
+
 ## Verifikation
 - **Statische Gates:** `npx tsc --noEmit`, `npm run gate`, `npm run build`. `npm run gate` bündelt
   Kontrast-, Typografie- und Motion-Check **und eslint** (`--max-warnings=0`). Alle drei sind auf

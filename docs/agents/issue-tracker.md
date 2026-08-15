@@ -46,14 +46,27 @@ Ist der Connector nicht autorisiert (nicht-interaktive Session), sag das und hal
 - **Issues listen / suchen** — `searchJiraIssuesUsingJql`, z. B.
   `jql: "project = KAN AND labels = needs-triage AND statusCategory != Done ORDER BY created DESC"`.
   `searchResultMode` auf `"issues"` lassen, außer eine Zählung wird wirklich gebraucht.
+  **In JQL immer `statusCategory` statt `status` filtern.** Diese Site läuft auf Deutsch, die
+  Statusnamen heißen „Zu erledigen" / „In Arbeit" / „Wird überprüft" / „Fertig"; die Kategorien
+  (`new`, `indeterminate`, `Done`) sind sprachunabhängig und überleben ein Umbenennen der Spalten.
 - **Kommentieren** — `addCommentToJiraIssue`.
 - **Labels setzen / entfernen** — `editJiraIssue` mit `fields: { "labels": [...] }`. Achtung:
   das Feld wird **ersetzt, nicht gemerged**. Erst die aktuellen Labels lesen, dann die
   vollständige neue Liste schreiben, sonst gehen Labels verloren.
-- **Status ändern** — **niemals raten.** Erst `getTransitionsForJiraIssue` aufrufen, dann
-  `transitionJiraIssue` mit der zurückgegebenen `transition.id`. Die Spalten dieses Boards sind
-  hier bewusst nicht dokumentiert: Beim Einrichten war das Board leer, die Statusnamen sind also
-  ungeprüft. Nachschlagen statt annehmen.
+- **Status ändern** — `transitionJiraIssue` mit einer Transition-ID. Der Workflow dieses Boards,
+  am 15.08.2026 gegen KAN-1 verifiziert:
+
+  | Transition-ID | Transition heißt | Zielstatus | Kategorie |
+  | --- | --- | --- | --- |
+  | `11` | Zu erledigen | Zu erledigen | `new` |
+  | `21` | In Arbeit | In Arbeit | `indeterminate` |
+  | `31` | In Review | **Wird überprüft** | `indeterminate` |
+  | `41` | Fertig | Fertig | `done` |
+
+  **Falle:** Bei `31` weichen Transition-Name und Statusname voneinander ab. Wer den Status aus
+  dem Transition-Namen ableitet, liegt falsch. Bei Zweifeln `getTransitionsForJiraIssue`
+  aufrufen — die Tabelle oben ist eine Abkürzung, keine Quelle der Wahrheit, und ein
+  Board-Umbau macht sie still ungültig.
 - **Blockierungen** — `createIssueLink` mit Link-Typ `Blocks` (id `10000`). Merkregel:
   `inwardIssue` ist der **Blocker**, `outwardIssue` das blockierte Issue („A is blocked by B" →
   `inwardIssue: B`, `outwardIssue: A`).
