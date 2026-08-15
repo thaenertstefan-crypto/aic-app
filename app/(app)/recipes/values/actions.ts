@@ -657,9 +657,15 @@ export async function saveAdjustedHypothesisAction(
     return { error: "Ungültiges Format der Werte.", success: false };
   }
   // Der Kompass trägt genau fünf Werte — die Tausch-Mechanik in Bühne B hält
-  // die Anzahl clientseitig konstant, hier steht das Gegenstück dazu.
-  if (values.length !== 5) {
-    return { error: "Bitte genau 5 Werte auswählen.", success: false };
+  // die Anzahl clientseitig konstant, hier steht das Gegenstück dazu. Zusätzlich
+  // auf fünf UNTERSCHIEDLICHE Werte prüfen: die Tausch-Kette (Wert raus, ein
+  // anderer rein für ihn, der erste per "Rückgängig" zurück) kann clientseitig
+  // ein Duplikat erzeugen, das die Längenprüfung allein nicht fängt.
+  if (values.length !== 5 || new Set(values).size !== 5) {
+    return {
+      error: "Bitte genau 5 unterschiedliche Werte auswählen.",
+      success: false,
+    };
   }
 
   const originalVersionRaw = formData.get("original_version");

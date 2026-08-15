@@ -150,14 +150,25 @@ export function ErkenntnisseStage({
     () => hypothesis.map((v) => trades.find((t) => t.out === v)?.in ?? v),
     [hypothesis, trades],
   );
+  // Absicherung gegen die Tausch-Kette (A raus, B rein für A, A per
+  // "Rückgängig" zurück) — statt nur der Länge wird auf fünf UNTERSCHIEDLICHE
+  // Werte geprüft, sonst kann ein Duplikat den CTA scharf schalten.
+  const hasDuplicate =
+    liveValues.length !== 5 || new Set(liveValues).size !== 5;
 
   // Ein bereits weggetauschter Wert steht in keiner weiteren Auswahl.
   const swappable = hypothesis.filter((v) => !trades.some((t) => t.out === v));
   const openSuggestions = suggested.filter((s) => !liveValues.includes(s.id));
   // Ein Wert, der inzwischen weggetauscht wurde, gilt nicht mehr als bestätigt.
   const confirmedShown = confirmed.filter((v) => liveValues.includes(v));
+  // Ein Originalwert kommt nur über "Rückgängig" zurück, nicht über die Bank —
+  // sonst lässt er sich doppelt hineintauschen (er steht ja nicht mehr in
+  // liveValues, sobald er einmal weggetauscht wurde).
   const bankChips = VALUES_BANK.filter(
-    (v) => !liveValues.includes(v.id) && !suggested.some((s) => s.id === v.id),
+    (v) =>
+      !liveValues.includes(v.id) &&
+      !hypothesis.includes(v.id) &&
+      !suggested.some((s) => s.id === v.id),
   );
 
   const startSwap = (id: string, source: "suggestion" | "bank") => {
@@ -354,10 +365,16 @@ export function ErkenntnisseStage({
       </div>
 
       {/* 7 · Der einzige Gold-CTA dieses Screens */}
+      {hasDuplicate && (
+        <p className="text-sm text-muted-foreground">
+          Zwei deiner fünf Werte sind gerade gleich — tausch einen davon
+          zurück, bevor du speicherst.
+        </p>
+      )}
       <Button
         className="w-full"
         size="lg"
-        disabled={pending || liveValues.length !== 5}
+        disabled={pending || hasDuplicate}
         onClick={() => onSubmit(liveValues)}
       >
         {pending ? "Wird gespeichert …" : "Werte speichern"}
