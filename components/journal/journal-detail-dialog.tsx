@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { SectionLabel } from "@/components/ui/section-label";
+import { RichText } from "@/components/ui/rich-text";
 import { getJournalEntryDetail } from "@/app/(app)/journal/actions";
 import {
   getJournalConfig,
@@ -119,7 +120,7 @@ export function JournalDetailDialog({ entry, open, onOpenChange }: Props) {
                 <div className="rounded-lg bg-primary/5 p-3">
                   <SectionLabel className="mb-1">KI-Einsicht</SectionLabel>
                   <p className="whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
-                    {detail.ai_insights}
+                    <RichText text={detail.ai_insights} />
                   </p>
                 </div>
               </>

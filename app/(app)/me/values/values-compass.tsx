@@ -35,7 +35,7 @@ export function ValuesCompass({ values }: { values: CompassValue[] }) {
   if (n === 0) {
     return (
       <div className="flex flex-col items-center gap-4">
-        <div className="opacity-40">
+        <div className="w-full max-w-[380px] opacity-40">
           <CompassRose values={[]} />
         </div>
         <p className="text-center text-base text-muted-foreground">
