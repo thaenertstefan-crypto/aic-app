@@ -9,6 +9,23 @@ export const VALUE_EMOJIS: Record<string, string> = {
   service: "🤲", gratitude: "🙏", forgiveness: "🕊️", balance: "⚖️",
   rest: "😴", "physical-health": "💪", joy: "✨", humor: "😄",
   purpose: "🌟", adventurousness: "🧗", "letting-go": "🍃",
+  // ── Die restlichen 50 Bank-Werte (Vorschläge dürfen aus der ganzen Bank
+  //    kommen, nicht nur aus den kuratierten 30). ─────────────────────────
+  "quality-relationships": "🫂", "time-management": "⏳", optimism: "🌤️",
+  patience: "🐢", intention: "🕯️", appreciation: "💐", diligence: "🪡",
+  harmony: "☯️", celebration: "🎉", "open-mindedness": "🚪", passion: "🔥",
+  enthusiasm: "🎈", learning: "📚", positivity: "🌞", community: "🏘️",
+  advocacy: "📣", accountability: "📋", excellence: "🏅", innovation: "💡",
+  benevolence: "🌼", simplicity: "🫧", "real-connection": "💬",
+  solitude: "🌙", fitness: "🏃", "growth-mindset": "📈", quality: "💠",
+  environmentalism: "🌍", "hard-work": "🛠️", bravery: "🦅",
+  "mindful-speech": "🗣️", commitment: "🪢", education: "🎓",
+  philanthropy: "💝", boldness: "🚀", altruism: "🫶", minimalism: "📦",
+  inclusivity: "🌈", courteousness: "🎩", adaptability: "🌊",
+  experiences: "🎪", "work-life-balance": "🏡", beauty: "🌺",
+  "open-expression": "🎤", graciousness: "🌻", constructiveness: "🧱",
+  pragmatism: "🔧", diversity: "🌐", humility: "🌾", spirituality: "🪷",
+  resourcefulness: "🧰",
 };
 
 export const DEFAULT_VALUE_EMOJI = "🌿";
