@@ -271,7 +271,10 @@ export function ErkenntnisseStage({
       <details className="group rounded-lg border border-border bg-card transition-colors open:border-primary/30">
         <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-foreground">
           <span className="font-heading">Eigenen Wert wählen</span>
-          <span className="ml-auto text-xs text-muted-foreground transition-transform group-open:rotate-45 motion-reduce:transition-none">
+          <span
+            aria-hidden="true"
+            className="ml-auto text-xs text-muted-foreground transition-transform group-open:rotate-45 motion-reduce:transition-none"
+          >
             +
           </span>
         </summary>
