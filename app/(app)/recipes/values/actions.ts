@@ -559,15 +559,14 @@ export async function saveEvalReflectionAction(
     return { error: "Du musst angemeldet sein.", success: false };
   }
 
-  const positiveReflection = formData.get("positive_reflection");
-  const negativeReflection = formData.get("negative_reflection");
+  // Beide Felder sind FREIWILLIG (Bühne A sagt das auch so). Die Zeile wird
+  // trotzdem angelegt: sie trägt die Phase der Auswertung UND ist der
+  // Speicherort für das KI-Ergebnis.
+  const positiveRaw = formData.get("positive_reflection");
+  const negativeRaw = formData.get("negative_reflection");
+  const positiveReflection = typeof positiveRaw === "string" ? positiveRaw : "";
+  const negativeReflection = typeof negativeRaw === "string" ? negativeRaw : "";
 
-  if (!positiveReflection || typeof positiveReflection !== "string") {
-    return { error: "Bitte beantworte die erste Frage.", success: false };
-  }
-  if (!negativeReflection || typeof negativeReflection !== "string") {
-    return { error: "Bitte beantworte die zweite Frage.", success: false };
-  }
   const lengthError =
     tooLong(positiveReflection, TEXT_MAX_LONG) ??
     tooLong(negativeReflection, TEXT_MAX_LONG);
@@ -575,24 +574,27 @@ export async function saveEvalReflectionAction(
     return { error: lengthError, success: false };
   }
 
-  const content = {
-    positive_reflection: positiveReflection,
-    negative_reflection: negativeReflection,
-  };
-
   // Check if value_eval entry already exists
   const { data: existing } = await supabase
     .from("journal_entries")
-    .select("id")
+    .select("id, content")
     .eq("user_id", user.id)
     .eq("recipe_slug", "values")
     .eq("template_type", "value_eval")
     .maybeSingle();
 
   if (existing) {
+    // Merge statt Überschreiben: im content können bereits ai_confirmed /
+    // ai_suggested stehen, die hier sonst verloren gingen.
     const { error: updateError } = await supabase
       .from("journal_entries")
-      .update({ content })
+      .update({
+        content: {
+          ...((existing.content as Record<string, unknown>) ?? {}),
+          positive_reflection: positiveReflection,
+          negative_reflection: negativeReflection,
+        },
+      })
       .eq("id", existing.id);
 
     if (updateError) {
@@ -604,7 +606,10 @@ export async function saveEvalReflectionAction(
         user_id: user.id,
         recipe_slug: "values",
         template_type: "value_eval",
-        content,
+        content: {
+          positive_reflection: positiveReflection,
+          negative_reflection: negativeReflection,
+        },
       },
     );
 
@@ -651,8 +656,10 @@ export async function saveAdjustedHypothesisAction(
   if (!isValueList(values)) {
     return { error: "Ungültiges Format der Werte.", success: false };
   }
-  if (values.length === 0) {
-    return { error: "Bitte mindestens einen Wert angeben.", success: false };
+  // Der Kompass trägt genau fünf Werte — die Tausch-Mechanik in Bühne B hält
+  // die Anzahl clientseitig konstant, hier steht das Gegenstück dazu.
+  if (values.length !== 5) {
+    return { error: "Bitte genau 5 Werte auswählen.", success: false };
   }
 
   const originalVersionRaw = formData.get("original_version");
