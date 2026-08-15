@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -8,21 +8,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/ui/form-error";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
-import { Skeleton } from "@/components/ui/skeleton";
+import { RichText } from "@/components/ui/rich-text";
+import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
+import { ValueChip } from "@/components/recipes/value-chip";
 
-import { VALUES_BANK, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
+import { getValueLabel } from "@/lib/utils/values-bank";
+import { getValueEmoji } from "@/lib/utils/values-emojis";
+import { getValueDescription } from "@/lib/utils/values-descriptions";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { formatDateDE } from "@/lib/utils/date";
 
+import { CompassRose, type CompassValue } from "@/app/(app)/me/values/compass-rose";
 import {
   saveEvalReflectionAction,
   saveAdjustedHypothesisAction,
   type EvaluationPageData,
 } from "@/app/(app)/recipes/values/actions";
+
+import { ErkenntnisseStage } from "./erkenntnisse-stage";
 
 // ─── Props ──────────────────────────────────────────────────────────
 
@@ -30,19 +36,43 @@ interface EvaluationFormProps {
   initialData: EvaluationPageData;
 }
 
+/**
+ * Vier Bühnen statt drei Phasen:
+ *   rueckblick   — die Woche nachlesen, optional ergänzen
+ *   erkenntnisse — KI-Einschätzung + Tausch-Entscheidung
+ *   feier        — TRANSIENT, nur direkt nach dem Speichern
+ *   rueckblick-erkenntnisse — Wiederbesuch, nur lesen
+ *
+ * Die Feier erscheint ausschließlich aus `adjustState.success` in derselben
+ * Session. Wer später über den Stern zurückkommt, landet auf dem
+ * Erkenntnis-Rückblick — vorher rendete `complete` die Feier, und genau
+ * deshalb ging die KI-Einschätzung verloren.
+ */
+type Stage =
+  | "rueckblick"
+  | "erkenntnisse"
+  | "feier"
+  | "rueckblick-erkenntnisse";
+
+const STAGE_SUBTITLE: Record<Stage, string> = {
+  rueckblick: "Zeit zurückzublicken",
+  erkenntnisse: "Deine Werte verfeinern",
+  feier: "Zyklus abgeschlossen!",
+  "rueckblick-erkenntnisse": "Deine Erkenntnisse",
+};
+
 // ─── Component ──────────────────────────────────────────────────────
 
 export function EvaluationForm({ initialData }: EvaluationFormProps) {
   const { hypothesis, hypothesisVersion, entries, valueEvalEntry, phase } =
     initialData;
 
-  // ── Phase management ────────────────────────────────────────────
-  // Die beiden Server-Action-States stehen hier oben, weil die Phase aus ihnen
-  // ABGELEITET wird statt in einem Effect nachgezogen zu werden: reflection →
-  // adjust → complete ist eine Einbahn-Leiter, die ausschließlich durch einen
-  // erfolgreichen Speichervorgang weiterrückt, und die Formulare der bereits
-  // verlassenen Phasen werden nicht mehr gerendert. Als abgeleiteter Wert kann
-  // die Phase weder einen Frame hinterherhinken noch einen Zwischenstand zeigen.
+  // Die beiden Server-Action-States stehen hier oben, weil die Bühne aus ihnen
+  // ABGELEITET wird statt in einem Effect nachgezogen zu werden: die Leiter
+  // rückt ausschließlich durch einen erfolgreichen Speichervorgang weiter, und
+  // die verlassenen Bühnen werden nicht mehr gerendert. Als abgeleiteter Wert
+  // kann die Bühne weder einen Frame hinterherhinken noch einen Zwischenstand
+  // zeigen.
   const [reflectionState, reflectionAction, reflectionPending] = useActionState(
     saveEvalReflectionAction,
     { error: null, success: false },
@@ -52,646 +82,251 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
     { error: null, success: false },
   );
 
-  const currentPhase: EvaluationPageData["phase"] = adjustState.success
-    ? "complete"
+  const stage: Stage = adjustState.success
+    ? "feier"
     : reflectionState.success
-      ? "adjust"
-      : phase;
+      ? "erkenntnisse"
+      : phase === "complete"
+        ? "rueckblick-erkenntnisse"
+        : phase === "adjust"
+          ? "erkenntnisse"
+          : "rueckblick";
 
-  useScrollTopOnChange(currentPhase);
+  useScrollTopOnChange(stage);
 
-  // ── AI insights ─────────────────────────────────────────────────
-  // Seed from previously generated insights so a reload doesn't re-call.
-  // While `insights` is null in the adjust phase, the card shows a loading state.
-  const [insights, setInsights] = useState<string | null>(
-    valueEvalEntry?.aiInsights ?? null,
-  );
-  const insightsRequested = useRef(insights !== null);
+  // Was zuletzt gespeichert wurde — die Feier-Bühne zeigt genau diese fünf.
+  // Vorbelegt mit der Hypothese, damit ein Direkteinstieg nichts Leeres zeigt.
+  const [submittedValues, setSubmittedValues] = useState<string[]>(hypothesis);
 
-  // When the user reaches the adjust phase, fetch the AI observations once
-  // (unless we already have them from a previous visit).
-  useEffect(() => {
-    if (currentPhase !== "adjust" || insightsRequested.current) return;
-    insightsRequested.current = true;
-
-    const fallback =
-      "Wir konnten diesmal leider keine Beobachtungen für dich erstellen. Schau einfach selbst noch einmal auf deine Woche zurück.";
-
-    let cancelled = false;
-    fetch("/api/journal-analysis", { method: "POST" })
-      .then(async (res) => {
-        const data = (await res.json()) as { insights?: string; error?: string };
-        // On a rate-limit (or other error), surface the server's message in the
-        // insights card instead of silently showing the generic fallback.
-        if (!res.ok) return data.error ?? fallback;
-        return data.insights ?? fallback;
-      })
-      .then((text) => {
-        if (!cancelled) setInsights(text);
-      })
-      .catch(() => {
-        if (!cancelled) setInsights(fallback);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentPhase]);
-
-  // ── Phase 1: Reflection form ────────────────────────────────────
-  // Pre-fill reflection textareas if user already saved
-  const existingPositive = valueEvalEntry?.content?.positive_reflection ?? "";
-  const existingNegative = valueEvalEntry?.content?.negative_reflection ?? "";
-
-  // ── Phase 2: Value adjustment ───────────────────────────────────
-  const [isKept, setIsKept] = useState<boolean[]>(
-    hypothesis.map(() => true),
-  );
-  const [replacements, setReplacements] = useState<(string | null)[]>(
-    hypothesis.map(() => null),
-  );
-  const [additionalValues, setAdditionalValues] = useState<string[]>([]);
-  const [customReplacement, setCustomReplacement] = useState<string>("");
-  const [customAdditional, setCustomAdditional] = useState<string>("");
-
-  // Track which value slot is currently in "picking" mode
-  const [pickingIndex, setPickingIndex] = useState<number | null>(null);
-
-  const toggleKeep = (index: number) => {
-    setIsKept((prev) => {
-      const next = [...prev];
-      next[index] = !next[index];
-      // If switching back to "Keep", clear the replacement
-      if (next[index]) {
-        setReplacements((r) => {
-          const r2 = [...r];
-          r2[index] = null;
-          return r2;
-        });
-        setPickingIndex(null);
-      } else {
-        // If switching to "Replace", enter picking mode
-        setPickingIndex(index);
-      }
-      return next;
-    });
-  };
-
-  const pickReplacement = (index: number, value: string) => {
-    setReplacements((prev) => {
-      const next = [...prev];
-      next[index] = value;
-      return next;
-    });
-    setPickingIndex(null);
-  };
-
-  const addCustomReplacement = () => {
-    const trimmed = customReplacement.trim();
-    if (!trimmed) return;
-    if (pickingIndex !== null) {
-      pickReplacement(pickingIndex, `${CUSTOM_PREFIX}${trimmed}`);
-    }
-    setCustomReplacement("");
-  };
-
-  const addAdditionalValue = (value: string) => {
-    setAdditionalValues((prev) => [...prev, value]);
-  };
-
-  const addCustomAdditional = () => {
-    const trimmed = customAdditional.trim();
-    if (!trimmed) return;
-    const customId = `${CUSTOM_PREFIX}${trimmed}`;
-    if (additionalValues.includes(customId)) return;
-    addAdditionalValue(customId);
-    setCustomAdditional("");
-  };
-
-  const removeAdditionalValue = (value: string) => {
-    setAdditionalValues((prev) => prev.filter((v) => v !== value));
-  };
-
-  // Collect all currently selected values (for filtering bank chips)
-  const allSelectedValues = useMemo(() => {
-    const kept = hypothesis.filter((_, i) => isKept[i]);
-    const replaced = replacements.filter((r): r is string => r !== null);
-    return [...kept, ...replaced, ...additionalValues];
-  }, [hypothesis, isKept, replacements, additionalValues]);
-
-  // Compute final values array for submit
-  const finalValues = allSelectedValues;
-
-  const handleAdjustSubmit = () => {
-    if (finalValues.length === 0) return;
+  const submitValues = (values: string[]) => {
+    setSubmittedValues(values);
     const fd = new FormData();
-    fd.set("values", JSON.stringify(finalValues));
+    fd.set("values", JSON.stringify(values));
     fd.set("original_version", String(hypothesisVersion));
     adjustAction(fd);
   };
 
-  // ── Render ──────────────────────────────────────────────────────
+  const existingPositive = valueEvalEntry?.content?.positive_reflection ?? "";
+  const existingNegative = valueEvalEntry?.content?.negative_reflection ?? "";
 
-  // Der phasen-spezifische Moment lebt als Header-Untertitel (ein Titel-System:
-  // der sticky SubPageHeader trägt Titel + Moment), statt als zweiter großer
-  // In-Body-Screen-Titel neben dem Header.
-  const phaseSubtitle =
-    currentPhase === "reflection"
-      ? "Zeit zurückzublicken"
-      : currentPhase === "adjust"
-        ? "Deine Werte verfeinern"
-        : "Zyklus abgeschlossen!";
+  const compassValues: CompassValue[] = submittedValues.map((id) => ({
+    id,
+    label: getValueLabel(id),
+    emoji: getValueEmoji(id),
+    description: getValueDescription(id),
+  }));
 
   return (
     <>
       <SubPageHeader
         backHref="/me/values/journey"
         title="Auswertung"
-        subtitle={phaseSubtitle}
+        subtitle={STAGE_SUBTITLE[stage]}
       />
-      <div className="flex flex-1 flex-col px-4 py-6">
-      {/* ── Shared error banner ── */}
-      <FormError
-        message={reflectionState.error || adjustState.error}
-        className="mb-6"
-      />
+      <div data-e2e="evaluation" className="flex flex-1 flex-col px-4 py-6">
+        <FormError
+          message={reflectionState.error || adjustState.error}
+          className="mb-6"
+        />
 
-      {/* ── ── ── PHASE 1: Reflection ── ── ── */}
-      {currentPhase === "reflection" && (
-        <>
-          <p className="mb-6 max-w-prose text-base text-muted-foreground">
-            Bevor du deine Werte anpasst, wirf einen Blick zurück auf die
-            letzte Woche. Was hat sich gezeigt?
-          </p>
-
-          {/* 7-day entry summary (collapsible) */}
-          <div className="mb-6 space-y-2">
-            <h3 className="font-heading text-base font-semibold">
-              Deine Woche im Rückblick
-            </h3>
-            {entries.map((entry, i) => (
-              <details
-                key={entry.id}
-                className="group rounded-lg border border-border bg-card transition-colors open:border-primary/30"
-              >
-                <summary className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm font-medium text-foreground">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
-                    {i + 1}
-                  </span>
-                  <span>{formatDateDE(entry.entry_date)}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {entry.content.happenings.slice(0, 40)}
-                    {entry.content.happenings.length > 40 ? "…" : ""}
-                  </span>
-                </summary>
-                <div className="space-y-3 border-t border-border px-3 py-3">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Was ist passiert?
-                    </p>
-                    <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                      {entry.content.happenings}
-                    </p>
-                  </div>
-                  {entry.content.response && (
+        {/* ── ── ── BÜHNE A: Rückblick ── ── ── */}
+        {stage === "rueckblick" && (
+          <div data-e2e="evaluation-rueckblick">
+            {/* 7-Tage-Rückblick, eingeklappt pro Tag */}
+            <div className="mb-6 space-y-2">
+              <h3 className="font-heading text-base font-semibold">
+                Deine Woche im Rückblick
+              </h3>
+              {entries.map((entry, i) => (
+                <details
+                  key={entry.id}
+                  className="group rounded-lg border border-border bg-card transition-colors open:border-primary/30"
+                >
+                  <summary className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm font-medium text-foreground">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                      {i + 1}
+                    </span>
+                    <span>{formatDateDE(entry.entry_date)}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {entry.content.happenings.slice(0, 40)}
+                      {entry.content.happenings.length > 40 ? "…" : ""}
+                    </span>
+                  </summary>
+                  <div className="space-y-3 border-t border-border px-3 py-3">
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">
-                        Gedanken & Gefühle
+                        Was ist passiert?
                       </p>
                       <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                        {entry.content.response}
+                        {entry.content.happenings}
                       </p>
                     </div>
-                  )}
-                </div>
-              </details>
-            ))}
-          </div>
-
-          <Separator className="mb-6" />
-
-          {/* Reflection form */}
-          <form action={reflectionAction} className="space-y-6">
-            <div className="space-y-2">
-              <Label
-                htmlFor="positive_reflection"
-                className="text-base leading-relaxed font-medium"
-              >
-                Welche Momente haben dich diese Woche positiv gestimmt — und
-                warum? Was war dir in diesen Momenten wichtig?
-              </Label>
-              <Textarea
-                id="positive_reflection"
-                name="positive_reflection"
-                placeholder="Zum Beispiel: 'Als ich mit Kollegin X Mittag gegessen habe – weil wir echt reden konnten. Mir war Verbindung wichtig.'"
-                defaultValue={existingPositive}
-                rows={4}
-                required
-                disabled={reflectionPending}
-                className="min-h-[100px] resize-y"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label
-                htmlFor="negative_reflection"
-                className="text-base leading-relaxed font-medium"
-              >
-                Welche Momente haben dich gestresst oder genervt — und warum?
-                Was wurde dabei verletzt oder vernachlässigt?
-              </Label>
-              <Textarea
-                id="negative_reflection"
-                name="negative_reflection"
-                placeholder="Zum Beispiel: 'Als das Meeting wieder ausuferte – weil meine Zeit nicht respektiert wurde. Mir wurde Autonomie verletzt.'"
-                defaultValue={existingNegative}
-                rows={4}
-                required
-                disabled={reflectionPending}
-                className="min-h-[100px] resize-y"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              disabled={reflectionPending}
-            >
-              {reflectionPending
-                ? "Wird gespeichert …"
-                : "Reflexion speichern"}
-            </Button>
-          </form>
-        </>
-      )}
-
-      {/* ── ── ── PHASE 2: Value Adjustment ── ── ── */}
-      {currentPhase === "adjust" && (
-        <>
-          {/* AI insights card — gentle observations before adjusting values */}
-          <Card className="mb-8 border-primary/30">
-            <CardContent className="space-y-3 pt-(--card-spacing)">
-              <h3 className="font-heading text-base font-semibold text-primary">
-                Was uns aufgefallen ist …
-              </h3>
-              <div aria-live="polite" aria-busy={insights === null}>
-                {insights === null ? (
-                  <div className="space-y-2" aria-hidden="true">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-[92%]" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                ) : (
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                    {insights}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <p className="mb-6 max-w-prose text-base text-muted-foreground">
-            Schau dir deine ursprünglichen Werte an. Welche fühlen sich
-            immer noch richtig an? Welche möchtest du anpassen? Du kannst
-            jetzt auch weitere Werte hinzufügen.
-          </p>
-
-          {/* Original values with Keep/Replace toggles */}
-          <div className="mb-8 space-y-3">
-            <h3 className="font-heading text-base font-semibold">
-              Deine ursprünglichen Werte
-            </h3>
-            {hypothesis.map((value, index) => (
-              <Card key={index} size="sm">
-                <CardContent className="space-y-3 pt-(--card-spacing)">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-medium text-foreground">
-                      {getValueLabel(value)}
-                    </span>
-                    <div className="flex shrink-0 gap-1">
-                      <button
-                        type="button"
-                        aria-pressed={isKept[index]}
-                        onClick={() => {
-                          if (!isKept[index]) toggleKeep(index);
-                        }}
-                        className={`inline-flex h-9 items-center rounded-full px-3 text-xs font-medium transition-all ${
-                          isKept[index]
-                            ? "bg-primary/15 text-primary shadow-sm"
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
-                        }`}
-                      >
-                        Behalten
-                      </button>
-                      <button
-                        type="button"
-                        aria-pressed={!isKept[index]}
-                        onClick={() => {
-                          if (isKept[index]) toggleKeep(index);
-                        }}
-                        className={`inline-flex h-9 items-center rounded-full px-3 text-xs font-medium transition-all ${
-                          !isKept[index]
-                            ? "bg-secondary text-secondary-foreground shadow-sm"
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
-                        }`}
-                      >
-                        Ersetzen
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Replacement picker (shown when "Ersetzen" is active) */}
-                  {!isKept[index] && pickingIndex === index && (
-                    <div className="space-y-3 rounded-lg bg-muted/30 p-3">
-                      <p className="text-sm text-muted-foreground">
-                        Wähle einen Ersatz aus oder gib einen eigenen Wert ein:
-                      </p>
-
-                      {/* Value bank chips (filtered) */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {VALUES_BANK.filter(
-                          (v) =>
-                            !allSelectedValues.includes(v.id) ||
-                            v.id === replacements[index],
-                        ).map((v) => (
-                          <button
-                            key={v.id}
-                            type="button"
-                            aria-pressed={replacements[index] === v.id}
-                            onClick={() => pickReplacement(index, v.id)}
-                            className={`inline-flex min-h-8 items-center rounded-full border px-3 text-xs transition-all active:scale-95 motion-reduce:active:scale-100 ${
-                              replacements[index] === v.id
-                                ? "border-primary bg-primary/15 font-medium text-primary"
-                                : "border-border bg-card text-foreground hover:border-muted-foreground/40 hover:bg-muted"
-                            }`}
-                          >
-                            {v.de}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Custom replacement input */}
-                      <div className="flex items-end gap-2">
-                        <div className="flex-1">
-                          <Label
-                            htmlFor={`custom-replace-${index}`}
-                            className="mb-1 block text-sm text-muted-foreground"
-                          >
-                            Eigenen Wert eingeben
-                          </Label>
-                          <Input
-                            id={`custom-replace-${index}`}
-                            type="text"
-                            placeholder="z. B. Gelassenheit"
-                            value={customReplacement}
-                            onChange={(e) =>
-                              setCustomReplacement(e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                addCustomReplacement();
-                              }
-                            }}
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={addCustomReplacement}
-                          disabled={!customReplacement.trim()}
-                        >
-                          Hinzufügen
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Show selected replacement value (after picking) */}
-                  {!isKept[index] &&
-                    pickingIndex !== index &&
-                    replacements[index] && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          Ersatz:
-                        </span>
-                        <span className="inline-flex rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
-                          {getValueLabel(replacements[index]!)}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setPickingIndex(index)}
-                          className="ml-auto text-sm text-muted-foreground underline hover:text-foreground"
-                        >
-                          Ändern
-                        </button>
+                    {entry.content.response && (
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Gedanken & Gefühle
+                        </p>
+                        <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                          {entry.content.response}
+                        </p>
                       </div>
                     )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </div>
+                </details>
+              ))}
+            </div>
 
-          {/* Additional values — die lange Werte-Bank (~76 Chips) liegt hinter
-              einem Reveal, damit die Anpass-Phase mit EINER Entscheidung öffnet
-              (Behalten/Ersetzen); Weitere-Werte ist ein Opt-in. Gleiche
-              <details>-Anmutung wie „Deine Woche im Rückblick". */}
-          <details className="group mb-8 rounded-lg border border-border bg-card transition-colors open:border-primary/30">
-            <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-foreground">
-              <span className="font-heading">Weiteren Wert hinzufügen</span>
-              <span className="ml-auto text-xs text-muted-foreground transition-transform group-open:rotate-45 motion-reduce:transition-none">
-                +
-              </span>
-            </summary>
+            <Separator className="mb-6" />
 
-            <div className="space-y-3 border-t border-border px-3 py-3">
-              <p className="text-sm text-muted-foreground">
-                Dir fällt noch ein Wert ein, der dir wichtig ist? Füg ihn
-                einfach hinzu. Es gibt kein Limit.
-              </p>
+            <p className="mb-6 max-w-prose text-base leading-relaxed text-muted-foreground">
+              <strong className="font-semibold text-foreground">
+                Bevor wir gemeinsam auf deine Woche schauen:
+              </strong>{" "}
+              Gibt es noch etwas, das du ergänzen möchtest? Beide Felder sind
+              freiwillig — du kannst auch direkt weitergehen.
+            </p>
 
-              {/* Value bank chips for additional values (filtered) */}
-              <div className="flex flex-wrap gap-1.5">
-                {VALUES_BANK.filter(
-                  (v) => !allSelectedValues.includes(v.id),
-                ).map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => addAdditionalValue(v.id)}
-                    className="inline-flex min-h-8 items-center rounded-full border border-border bg-card px-3 text-xs text-foreground transition-all hover:border-primary hover:bg-primary/15 active:scale-95 motion-reduce:active:scale-100"
-                  >
-                    + {v.de}
-                  </button>
-                ))}
-              </div>
-
-              {/* Custom additional value input */}
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <Label
-                    htmlFor="custom-additional"
-                    className="mb-1 block text-sm text-muted-foreground"
-                  >
-                    Eigenen Wert hinzufügen
-                  </Label>
-                  <Input
-                    id="custom-additional"
-                    type="text"
-                    placeholder="z. B. Gelassenheit"
-                    value={customAdditional}
-                    onChange={(e) => setCustomAdditional(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addCustomAdditional();
-                      }
-                    }}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addCustomAdditional}
-                  disabled={!customAdditional.trim()}
+            <form action={reflectionAction} className="space-y-6">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="positive_reflection"
+                  className="text-base leading-relaxed font-medium"
                 >
-                  Hinzufügen
-                </Button>
-              </div>
-            </div>
-          </details>
-
-          {/* Summary of all selected values */}
-          {finalValues.length > 0 && (
-            <div className="mb-8">
-              <div className="mb-2 flex items-center gap-2">
-                <span className="text-sm font-medium text-foreground">
-                  Deine Werte ({finalValues.length})
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {hypothesis.map(
-                  (v, i) =>
-                    isKept[i] && (
-                      <span
-                        key={`kept-${v}`}
-                        className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary"
-                      >
-                        {getValueLabel(v)}
-                        <button
-                          type="button"
-                          onClick={() => toggleKeep(i)}
-                          className="-mr-1 ml-0.5 inline-flex size-7 items-center justify-center leading-none hover:text-primary"
-                          aria-label={`${getValueLabel(v)} entfernen`}
-                        >
-                          &times;
-                        </button>
-                      </span>
-                    ),
-                )}
-                {replacements.filter(Boolean).map((v) => (
-                  <span
-                    key={`replacement-${v}`}
-                    className="inline-flex rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary"
-                  >
-                    {getValueLabel(v!)}
+                  Welche Momente haben dich diese Woche positiv gestimmt — und
+                  warum? Was war dir in diesen Momenten wichtig?{" "}
+                  <span className="font-normal text-muted-foreground">
+                    (optional)
                   </span>
-                ))}
-                {additionalValues.map((v) => (
-                  <span
-                    key={`additional-${v}`}
-                    className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground"
-                  >
-                    {getValueLabel(v)}
-                    <button
-                      type="button"
-                      onClick={() => removeAdditionalValue(v)}
-                      className="-mr-1 ml-0.5 inline-flex size-7 items-center justify-center leading-none hover:text-foreground"
-                      aria-label={`${getValueLabel(v)} entfernen`}
-                    >
-                      &times;
-                    </button>
-                  </span>
-                ))}
+                </Label>
+                <Textarea
+                  id="positive_reflection"
+                  name="positive_reflection"
+                  placeholder="Zum Beispiel: „Als ich mit Kollegin X Mittag gegessen habe – weil wir echt reden konnten. Mir war Verbindung wichtig.“"
+                  defaultValue={existingPositive}
+                  rows={4}
+                  disabled={reflectionPending}
+                  className="min-h-[100px] resize-y"
+                />
               </div>
-            </div>
-          )}
 
-          {/* Submit */}
-          <Button
-            className="w-full"
-            size="lg"
-            disabled={finalValues.length === 0 || adjustPending}
-            onClick={handleAdjustSubmit}
-          >
-            {adjustPending
-              ? "Wird gespeichert …"
-              : "Werte speichern & abschließen"}
-          </Button>
-        </>
-      )}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="negative_reflection"
+                  className="text-base leading-relaxed font-medium"
+                >
+                  Welche Momente haben dich gestresst oder genervt — und warum?
+                  Was wurde dabei verletzt oder vernachlässigt?{" "}
+                  <span className="font-normal text-muted-foreground">
+                    (optional)
+                  </span>
+                </Label>
+                <Textarea
+                  id="negative_reflection"
+                  name="negative_reflection"
+                  placeholder="Zum Beispiel: „Als das Meeting wieder ausuferte – weil meine Zeit nicht respektiert wurde. Mir wurde Autonomie verletzt.“"
+                  defaultValue={existingNegative}
+                  rows={4}
+                  disabled={reflectionPending}
+                  className="min-h-[100px] resize-y"
+                />
+              </div>
 
-      {/* ── ── ── PHASE 3: Complete ── ── ── */}
-      {currentPhase === "complete" && (
-        <>
-          <Card className="mb-8 border-primary/30">
-            <CardContent className="space-y-4 pt-(--card-spacing)">
-              <CompletionCelebration className="mt-1" />
-              <p className="text-center font-heading text-lg font-semibold text-primary">
-                Erster Zyklus geschafft!
-              </p>
-              <p className="text-center text-base text-muted-foreground">
-                Du hast eine ganze Woche reflektiert, deine Werte hinterfragt
-                und ein klareres Bild von dem bekommen, was dir wirklich wichtig
-                ist. Das ist ein großer Schritt.
-              </p>
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={reflectionPending}
+              >
+                {reflectionPending
+                  ? "Wird gespeichert …"
+                  : "Weiter zur Auswertung"}
+              </Button>
+            </form>
+          </div>
+        )}
 
-              <Separator />
+        {/* ── ── ── BÜHNE B: Erkenntnisse ── ── ── */}
+        {stage === "erkenntnisse" && (
+          <ErkenntnisseStage
+            hypothesis={hypothesis}
+            seedInsights={valueEvalEntry?.aiInsights ?? null}
+            seedConfirmed={valueEvalEntry?.content?.ai_confirmed ?? []}
+            seedSuggested={valueEvalEntry?.content?.ai_suggested ?? []}
+            pending={adjustPending}
+            onSubmit={submitValues}
+          />
+        )}
 
-              <div>
-                <p className="mb-2 text-center text-xs font-medium text-muted-foreground">
-                  Deine Werte
+        {/* ── ── ── BÜHNE C: Kompass kalibriert (transient) ── ── ── */}
+        {stage === "feier" && (
+          <div data-e2e="evaluation-feier" className="space-y-6">
+            <Card variant="glass">
+              <CardContent className="space-y-4">
+                <CompletionCelebration className="mt-1" />
+                <p className="text-center font-heading text-lg font-semibold text-primary">
+                  Erster Zyklus geschafft!
                 </p>
-                <div className="flex flex-wrap justify-center gap-1.5">
-                  {finalValues.map((v) => (
-                    <span
-                      key={v}
-                      className="inline-flex rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary"
-                    >
-                      {getValueLabel(v)}
-                    </span>
-                  ))}
-                  {/* Fallback: show DB values on re-entry if local state is empty */}
-                  {finalValues.length === 0 &&
-                    hypothesis.map((v) => (
-                      <span
-                        key={v}
-                        className="inline-flex rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-medium text-primary"
-                      >
-                        {getValueLabel(v)}
-                      </span>
-                    ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                <p className="text-center text-base leading-relaxed text-muted-foreground">
+                  Du hast eine ganze Woche reflektiert, deine Werte hinterfragt
+                  und ein klareres Bild von dem bekommen, was dir wirklich
+                  wichtig ist. Das ist ein großer Schritt.
+                </p>
+              </CardContent>
+            </Card>
 
-          {/* CTA — der „Neuer Zyklus"-Button ist vorerst deaktiviert (Phase 13.12),
-              bis die Zyklus-Logik sauber pro Zyklus abgegrenzt ist. */}
-          <div className="mt-auto space-y-3">
-            <Button
-              className="w-full"
-              size="lg"
-              render={<Link href="/me/values" />}
-            >
-              Fertig für jetzt
+            {/* Die Rose ist hier ein Bild, kein Bedienelement. */}
+            <Reveal delay={0.2}>
+              <CompassRose values={compassValues} />
+            </Reveal>
+
+            {/* CTA direkt unter dem Inhalt — kein mt-auto, sonst steht er beim
+                Ankommen unter der Falz. */}
+            <Button className="w-full" size="lg" render={<Link href="/me/values" />}>
+              Zu meinem Kompass
             </Button>
           </div>
-        </>
-      )}
+        )}
+
+        {/* ── ── ── BÜHNE B′: Erkenntnis-Rückblick ── ── ── */}
+        {stage === "rueckblick-erkenntnisse" && (
+          <div data-e2e="evaluation-erkenntnis-rueckblick" className="space-y-6">
+            <Card variant="glass">
+              <CardContent className="space-y-3">
+                <h3 className="font-heading text-base font-semibold text-primary">
+                  Was dir wichtig ist
+                </h3>
+                {valueEvalEntry?.aiInsights ? (
+                  <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                    <RichText
+                      text={valueEvalEntry.aiInsights}
+                      strongClassName="font-semibold italic text-foreground"
+                    />
+                  </p>
+                ) : (
+                  <p className="text-base leading-relaxed text-muted-foreground">
+                    Für diesen Zyklus liegt keine Einschätzung vor. Deine fünf
+                    Werte stehen trotzdem — sie tragen auch ohne unsere Worte.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="space-y-2">
+              <h3 className="font-heading text-base font-semibold">
+                Deine fünf Werte
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {hypothesis.map((v) => (
+                  <ValueChip key={v} valueId={v} />
+                ))}
+              </div>
+            </div>
+
+            <Button className="w-full" size="lg" render={<Link href="/me/values" />}>
+              Zu meinem Kompass
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );
