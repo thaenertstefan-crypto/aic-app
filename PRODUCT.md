@@ -14,7 +14,7 @@ Menschen, die sich trotz sichtbarer Erfolge nicht „gut genug" fühlen — Selb
 
 Anti Imposter Club verwandelt die Übungen des Anti-Imposter-Workbooks in interaktive, geführte Module: **Rezepte** (mehrstufige Kern-Übungen wie Werteentdeckung, Bill of Rights, Was-du-wirklich-willst), **Kopfwetter** (kurze Akut-Hilfen wie Confidence-Boost, Overthinking-Stopper, Nein-Trainer, Schattenseite) und ein **Journal**. Ein Dashboard bündelt Wetterbericht (Stimmungs-Check-in) und einen stimmungsbasierten „heutigen Fokus".
 
-Erzählerisch hält die Bildwelt „Dein Nachthimmel“ alles zusammen: Werte = Kompass, Wants = Sterne, innere Regeln = Navigationsregeln — und schwere Momente sind Kopfwetter, das vorbeizieht, ohne den Himmel zu ändern (Details: `docs/superpowers/specs/2026-07-17-bildsprache-nachthimmel-design.md`).
+Erzählerisch hält die Bildwelt „Dein Nachthimmel“ alles zusammen: Werte = Kompass, Wants = Sterne, innere Regeln = Navigationsregeln — und schwere Momente sind Kopfwetter, das vorbeizieht, ohne den Himmel zu ändern (Details: `docs/bildsprache-nachthimmel.md`).
 
 Erfolg heißt: Nutzer:innen greifen im richtigen Moment zur App, schließen einen kleinen Schritt ab und gehen etwas gestärkter (nicht abgehakt-erledigt) heraus — und kommen wieder, weil es sich gut angefühlt hat, nicht weil eine Streak sie drängt.
 
