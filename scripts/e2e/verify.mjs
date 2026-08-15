@@ -57,6 +57,13 @@ const DEFAULT_ROUTES = [
   { path: "/dashboard", expect: "dashboard-focus" },
   { path: "/me" },
   { path: "/me/values", reject: "recipe-intro" },
+  // Der Marker sitzt auf dem Bühnen-Container: er sagt zu, dass die Auswertung
+  // wirklich eine ihrer vier Bühnen zeigt statt still auf /journal zu
+  // redirecten (das passiert bei weniger als 7 Einträgen). Die einzelnen
+  // Bühnen tragen zusätzlich `evaluation-rueckblick`,
+  // `evaluation-erkenntnisse`, `evaluation-feier` und
+  // `evaluation-erkenntnis-rueckblick`.
+  { path: "/me/values/journey/evaluation", expect: "evaluation" },
   { path: "/me/wants", expect: "star-map", reject: "recipe-intro" },
   { path: "/me/wants/schmiede", expect: "funken-sky" },
   { path: "/me/bill-of-rights", reject: "recipe-intro" },
