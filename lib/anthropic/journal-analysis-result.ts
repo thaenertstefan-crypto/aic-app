@@ -33,6 +33,34 @@ function stripFences(raw: string): string {
     .trim();
 }
 
+/** Löst \n, \" und \\ aus einem per Regex herausgeschnittenen JSON-String-Wert. */
+function unescapeJsonString(value: string): string {
+  return value
+    .replace(/\\n/g, "\n")
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, "\\")
+    .trim();
+}
+
+/** Der Prompt fordert strikt `{"insights": "…", "confirmed": […], …}` — bei
+ *  ungeescapten geraden Anführungszeichen INNERHALB von insights bricht
+ *  JSON.parse, aber die Feldreihenfolge bleibt fix. Der nachfolgende Key
+ *  ("confirmed") dient als Anker, um den Wert trotzdem herauszuschneiden
+ *  (gleiches Muster wie messy-guilt-coach/saying-no-coach). */
+function recoverBrokenInsights(text: string): string | null {
+  const match = text.match(/"insights"\s*:\s*"([\s\S]*?)"\s*,\s*"confirmed"/);
+  if (!match) return null;
+  const value = unescapeJsonString(match[1]);
+  return value || null;
+}
+
+/** War der Text erkennbar als JSON gemeint (auch wenn kaputt/abgeschnitten)?
+ *  Nur dann gilt der Fallback-Text statt des rohen Blobs — echte Prosa (der
+ *  alte Antwortstil) soll weiterhin unverändert durchgereicht werden. */
+function looksLikeJsonAttempt(text: string): boolean {
+  return text.startsWith("{") || /"insights"\s*:/.test(text);
+}
+
 export function parseAnalysisResult(
   raw: string,
   options: {
@@ -48,12 +76,27 @@ export function parseAnalysisResult(
   try {
     parsed = JSON.parse(text);
   } catch {
-    // Kippt das Parsing, gilt der alte Weg: Prosa allein, keine Blöcke.
+    // Kippt das Parsing: kaputtes/abgeschnittenes JSON zuerst strukturell
+    // retten (insights allein reicht, confirmed/suggested bleiben leer).
+    const recovered = recoverBrokenInsights(text);
+    if (recovered) {
+      return { insights: recovered, confirmed: [], suggested: [] };
+    }
+    // Erkennbar als JSON gemeint, aber nicht mal der insights-Wert zu retten
+    // (z. B. Truncation VOR dem "confirmed"-Anker) → Fallback-Text statt des
+    // rohen `{"insights": "…` -Blobs in der Karte.
+    if (looksLikeJsonAttempt(text)) {
+      return { insights: fallbackInsights, confirmed: [], suggested: [] };
+    }
+    // Kein JSON-Versuch erkennbar → echte Prosa (Rückwärtskompatibilität mit
+    // dem alten Antwortstil): unverändert durchreichen.
     return { insights: text || fallbackInsights, confirmed: [], suggested: [] };
   }
 
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    return { insights: text || fallbackInsights, confirmed: [], suggested: [] };
+    // Valides JSON, aber nicht die erwartete Form (z. B. ein nackter String) —
+    // war dennoch als JSON gemeint, also kein roher Blob in der Karte.
+    return { insights: fallbackInsights, confirmed: [], suggested: [] };
   }
 
   const obj = parsed as Record<string, unknown>;

@@ -127,9 +127,11 @@ Belastende Momente: ${clampEntryText(reflection.negative_reflection) || "(keine 
 
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5",
-      // Generous headroom so a ~200–250 word German reply always finishes its
-      // final sentence instead of being cut off mid-thought.
-      max_tokens: 900,
+      // Generous headroom: die ~200–250-Wörter-Prosa TEILT sich das Budget mit
+      // dem JSON-Umschlag, confirmed und bis zu 3 Vorschlägen samt Begründung —
+      // 900 reichte dafür nicht zuverlässig (Schwesterrouten mit JSON-Antwort
+      // fahren 1200/1600).
+      max_tokens: 1400,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });
