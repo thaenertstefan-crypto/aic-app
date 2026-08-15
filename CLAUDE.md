@@ -43,9 +43,8 @@ A self-development companion app that turns workbook exercises into interactive 
   (GSAP nullt inline `translate`, gestapelte Opacity-Ebenen, backdrop-filter-Compositing, fehlende
   View-Transitions in der iOS-PWA). Grün heißt „nicht offensichtlich kaputt", nicht „fertig".
 
-## Session Routine
-- **At session start:** read `AIC-STATUS.md` (current state, open items, next steps) to get oriented instead of re-exploring the codebase.
-- **At session end:** run `/feierabend` (summarizes the session into the Obsidian vault as a Daily Note and refreshes `AIC-STATUS.md`).
+## Offene Punkte
+- `docs/offene-punkte.md` hält den Abnahme-Stau, bekannte Rest-Defekte und offene Entscheidungen. **Nicht ungefragt lesen** — nur wenn die Aufgabe danach verlangt oder Stefan darauf verweist. Stand 2026-07-29, wird nicht mehr automatisch fortgeschrieben.
 
 ## Git Workflow
 - Solo project, no external users yet: `main` is the working branch and it is safe to deploy directly to it.

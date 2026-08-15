@@ -1,9 +1,10 @@
-# AIC-App — Status
+# AIC-App — Offene Punkte
 
-_Gepflegt von `/feierabend`. Am Session-Start lesen, um sich zu orientieren._
-_Chronik gehört hier **nicht** rein — die steht in `git log` und in den Obsidian Daily Notes._
+_Backlog, nicht Chronik. **Wird nicht automatisch gelesen** — bei Bedarf gezielt aufrufen
+(„schau in die offenen Punkte"), sonst kostet er in jeder Session Kontext, ohne benutzt zu werden._
+_Kein Automatismus pflegt diese Datei mehr; abgearbeitete Zeilen von Hand streichen._
 
-_Letzter Stand: 2026-07-29 (`8499b91`)_
+_Stand: 2026-07-29 (`8499b91`) — seither nicht fortgeschrieben._
 
 ## Wo das Projekt steht
 
