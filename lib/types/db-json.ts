@@ -78,10 +78,17 @@ export type DailyValueContent = {
   response?: string;
 };
 
-/** `journal_entries.content` bei template_type "value_eval" (Werte-Auswertung). */
+/** `journal_entries.content` bei template_type "value_eval" (Werte-Auswertung).
+ *  Die beiden `ai_*`-Felder trägt /api/journal-analysis nach dem KI-Call nach —
+ *  das Update MERGED mit dem bestehenden content, sonst gingen die beiden
+ *  Reflexions-Felder verloren. Optional, weil Alt-Einträge sie nicht haben. */
 export type ValueEvalContent = {
   positive_reflection: string;
   negative_reflection: string;
+  /** Werte aus der aktuellen Hypothese, die die KI in der Woche wiedergefunden hat. */
+  ai_confirmed?: string[];
+  /** Bis zu 3 neue Werte-Vorschläge mit je einem Satz Begründung. */
+  ai_suggested?: { id: string; reason: string }[];
 };
 
 /** `journal_entries.content` bei template_type "bill_of_rights" (Vorschlag

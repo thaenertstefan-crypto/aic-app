@@ -12,21 +12,44 @@ import { Fragment } from "react";
  */
 const TOKEN = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
 
-export function RichText({ text }: { text: string }) {
+/** Segmente eines Rich-Text-Strings — reine Funktion, ohne React, damit die
+ *  Tokenisierung ohne Renderer prüfbar bleibt. */
+export type RichTextPart = string | { strong: string } | { em: string };
+
+export function splitRichText(text: string): RichTextPart[] {
+  return text.split(TOKEN).map((part) => {
+    if (part.length > 4 && part.startsWith("**") && part.endsWith("**")) {
+      return { strong: part.slice(2, -2) };
+    }
+    if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) {
+      return { em: part.slice(1, -1) };
+    }
+    return part;
+  });
+}
+
+export function RichText({
+  text,
+  /** Auszeichnung für `**fett**`. Der Default trägt das Onboarding; die
+   *  Werte-Auswertung setzt zusätzlich `italic`, damit die Werte-Themen in der
+   *  KI-Prosa als solche lesbar sind. */
+  strongClassName = "font-semibold text-foreground",
+}: {
+  text: string;
+  strongClassName?: string;
+}) {
   return (
     <>
-      {text.split(TOKEN).map((part, i) => {
-        if (part.length > 4 && part.startsWith("**") && part.endsWith("**")) {
+      {splitRichText(text).map((part, i) => {
+        if (typeof part === "string") return <Fragment key={i}>{part}</Fragment>;
+        if ("strong" in part) {
           return (
-            <strong key={i} className="font-semibold text-foreground">
-              {part.slice(2, -2)}
+            <strong key={i} className={strongClassName}>
+              {part.strong}
             </strong>
           );
         }
-        if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) {
-          return <em key={i}>{part.slice(1, -1)}</em>;
-        }
-        return <Fragment key={i}>{part}</Fragment>;
+        return <em key={i}>{part.em}</em>;
       })}
     </>
   );
