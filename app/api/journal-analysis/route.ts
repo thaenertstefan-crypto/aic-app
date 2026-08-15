@@ -1,4 +1,5 @@
 import { anthropic } from "@/lib/anthropic/client";
+import { parseAnalysisResult } from "@/lib/anthropic/journal-analysis-result";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/journal-analysis";
 import {
   JOURNAL_ANALYSIS_LIMIT,
@@ -8,7 +9,7 @@ import {
 } from "@/lib/anthropic/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import type { DailyValueContent, ValueEvalContent } from "@/lib/types/db-json";
-import { getValueLabel } from "@/lib/utils/values-bank";
+import { VALUES_BANK, getValueLabel } from "@/lib/utils/values-bank";
 
 // Warm German fallback shown when the AI call fails for any reason.
 const FALLBACK_INSIGHTS =
@@ -24,8 +25,9 @@ function clampEntryText(value: string): string {
 
 /**
  * Analyse the user's last 7 daily journal entries (Recipe #1) and surface a few
- * gentle value-theme observations. The generated text is persisted onto the
- * value_eval entry's ai_insights column and returned as { insights }.
+ * gentle value-theme observations. The result is persisted onto the
+ * value_eval entry (ai_insights + content.ai_confirmed/ai_suggested) and
+ * returned as { insights, confirmed, suggested }.
  */
 export async function POST() {
   const supabase = await createClient();
@@ -135,25 +137,42 @@ Belastende Momente: ${clampEntryText(reflection.negative_reflection) || "(keine 
     // Only count genuinely successful generations against the quota.
     await logUsage(supabase, user.id, "journal-analysis");
 
-    const insights = message.content
+    const raw = message.content
       .filter((block) => block.type === "text")
       .map((block) => block.text)
       .join("")
       .trim();
 
-    const finalInsights = insights || FALLBACK_INSIGHTS;
+    const result = parseAnalysisResult(raw, {
+      currentValues: values,
+      bankIds: VALUES_BANK.map((v) => v.id),
+      fallbackInsights: FALLBACK_INSIGHTS,
+    });
 
-    // Persist onto the value_eval entry so it survives reloads.
+    // Persist onto the value_eval entry so it survives reloads and the later
+    // read-only revisit. Das content-Update MERGED — sonst gingen die beiden
+    // Reflexions-Felder der Person verloren.
     if (evalRow) {
       await supabase
         .from("journal_entries")
-        .update({ ai_insights: finalInsights })
+        .update({
+          ai_insights: result.insights,
+          content: {
+            ...((evalRow.content as Record<string, unknown>) ?? {}),
+            ai_confirmed: result.confirmed,
+            ai_suggested: result.suggested,
+          },
+        })
         .eq("id", evalRow.id);
     }
 
-    return Response.json({ insights: finalInsights });
+    return Response.json(result);
   } catch (error) {
     console.error("journal-analysis: AI call failed", error);
-    return Response.json({ insights: FALLBACK_INSIGHTS });
+    return Response.json({
+      insights: FALLBACK_INSIGHTS,
+      confirmed: [],
+      suggested: [],
+    });
   }
 }
