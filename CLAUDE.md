@@ -51,4 +51,15 @@ A self-development companion app that turns workbook exercises into interactive 
 - **After a feature or fix is complete and working, commit and push to `main` right away — no need to ask first.** Stefan tests immediately on his phone against the live deploy. Use a concise, descriptive commit message.
 - Revisit this once the app has real users: switch to feature branches and pull requests instead of pushing straight to `main`.
 
+## Agent skills
+
+### Issue tracker
+Jira Cloud, Projekt `KAN` (AIC-APP) auf `thaenertstefan.atlassian.net`, erreichbar nur über den Atlassian-Rovo-MCP-Connector — **nicht** über GitHub Issues. Siehe `docs/agents/issue-tracker.md`.
+
+### Triage labels
+Die fünf kanonischen Rollen unverändert als Jira-Labels. Siehe `docs/agents/triage-labels.md`.
+
+### Domain docs
+Single-context — `CONTEXT.md` + `docs/adr/` im Root, beide werden lazy angelegt. Siehe `docs/agents/domain.md`.
+
 @AGENTS.md
