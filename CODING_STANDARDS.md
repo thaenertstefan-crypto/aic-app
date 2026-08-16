@@ -48,10 +48,21 @@ verbindlichen Quellen; hier stehen nur die Regeln, die sich am Code festmachen l
 - Server-Actions und Backend-Logik der Übungen liegen in `lib/recipes/**/actions.ts` — nicht im
   Routenbaum; geteilte Bausteine in `components/recipes/`, Journal-Formatierung in
   `lib/utils/journal.ts`.
-- Eine **neue** Server-Action beginnt mit `withUser` aus `lib/actions/` und gibt ein `ActionResult<T>`
-  zurück (`ok`/`failed`/`dbFailed`). Eine neu geschriebene `auth.getUser()`-Präambel oder eine eigene
-  Rückgabeform ist ein Befund; die 41 Altbestände sind es noch nicht, die migrieren eigene Tickets.
+- Eine Server-Action beginnt mit `withUser` aus `lib/actions/` und gibt ein `ActionResult<T>`
+  zurück (`ok`/`failed`/`dbFailed`). Eine handgeschriebene `auth.getUser()`-Präambel oder eine eigene
+  Rückgabeform ist ein Befund — der Altbestand ist migriert, es gibt keine Ausnahme mehr zu erben.
+  Die eine begründete Ausnahme steht in `app/(auth)/auth.actions.ts`: Login, Signup und Reset laufen
+  **vor** der Anmeldung, dort gibt es keinen User zu holen. Die Ergebnisform gilt auch dort.
   Der Fehlerzustand „nicht angemeldet" ist `SESSION_EXPIRED` — nie ein neu getippter Satz.
+- **Bei `useActionState` trägt die Nutzlast das „ist gelaufen", nicht `error`.** Der Anfangszustand
+  eines Formulars hat ebenfalls `error === null`; wer allein darauf prüft, schaltet die Bühne schon
+  beim Mount weiter. Solche Actions geben `ActionResult<boolean>` zurück, starten auf `ok(false)` und
+  melden Erfolg mit `ok(true)`; der Aufrufer prüft `state.error === null && state.data`. Actions,
+  aus deren Ergebnis nur ein `<FormError>` gespeist wird, brauchen das nicht — dort genügt `ok()`.
+- Eine Action, die kein Formular über `useActionState` bedient, hat **kein** `_prevState`-Argument.
+- In **API-Routen** gilt der Wortlaut (`SESSION_EXPIRED`), nicht aber `withUser`/`getCachedUser`:
+  eine Route läuft in ihrem eigenen Request-Kontext und fragt einmal ab, dort dedupliziert
+  `getCachedUser` nichts und baut nur einen zweiten Client (siehe `lib/supabase/get-user.ts`).
 - **Neue reine Module unter `lib/` bekommen eine `*.test.ts`** — co-located, ausgeführt von
   `node --test` als Teil von `npm run gate`. „Rein" heißt: keine Netzwerk-, DB- oder
   React-Abhängigkeit. Für Komponenten und Server-Actions gilt die Regel bewusst **nicht**.
