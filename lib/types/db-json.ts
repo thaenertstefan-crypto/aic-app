@@ -181,15 +181,23 @@ export type ShadowContent = {
   mode?: "journal" | "walk";
 };
 
-/** `journal_entries.content` bei template_type "overthinking" (Grübelspirale).
- *  Alt-Einträge können zusätzlich `what_it_would_mean`, `current_problem` und
- *  `new_problem` enthalten (nur noch lesend in formatOverthinking). */
+/** `journal_entries.content` bei template_type "overthinking" (Grübelspirale). */
 export type OverthinkingContent = {
   problem: string;
   why_levels: string[];
-  /** Die in Schritt 6 angezeigte KI-Frage; leer, wenn die KI nicht antwortete. */
-  challenger_question: string;
+  /** Die in Schritt 6 angezeigte KI-Frage; leer, wenn die KI nicht antwortete.
+   *  Optional, weil Alt-Einträge sie gar nicht haben — formatOverthinking
+   *  rendert sie schon immer nur, wenn sie da ist. */
+  challenger_question?: string;
   what_if_wrong: string;
   reframed_problem: string;
   decision: string;
+  /** Nur Alt-Einträge: der frühere Vergleichsblock, nur noch lesend in
+   *  formatOverthinking. Standen bisher nur als Kommentar hier — ohne
+   *  Deklaration überlebt ein Feld die geprüfte Verengung nicht. */
+  what_it_would_mean?: string;
+  /** Nur Alt-Einträge. */
+  current_problem?: string;
+  /** Nur Alt-Einträge. */
+  new_problem?: string;
 };
