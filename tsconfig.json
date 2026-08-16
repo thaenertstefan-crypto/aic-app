@@ -11,6 +11,10 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    // Die reinen Parser-Module (lib/anthropic/*-result.ts, model-json.ts) laufen
+    // unter `npm test` direkt in Node per Type-Stripping. Node löst in ESM keine
+    // Endungen auf, deshalb importieren sie einander mit explizitem ".ts".
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [

@@ -1,4 +1,5 @@
 import { anthropic } from "@/lib/anthropic/client";
+import { readModelJson, readText } from "@/lib/anthropic/model-json";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/rights-formulator";
 import {
   RATE_LIMIT_MESSAGE,
@@ -6,6 +7,7 @@ import {
   checkRateLimit,
   logUsage,
 } from "@/lib/anthropic/rate-limit";
+import { findRightSentence } from "@/lib/anthropic/right-match";
 import { createClient } from "@/lib/supabase/server";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
 
@@ -24,51 +26,35 @@ type FormulatorResult = {
   newRight: string;
 };
 
+/** Die Feldreihenfolge, die der System-Prompt vorschreibt — zugleich die
+ *  Anker-Kette, über die sich Werte aus kaputtem JSON retten lassen. */
+const FIELD_ORDER = ["analysis", "old_rule", "new_right"] as const;
+
 /**
- * Parse the model output. Preferred path: strict JSON per system prompt
- * ({"analysis": …, "old_rule": …, "new_right": …}). Fallback keeps the UI
- * functional: an "Ich habe das Recht …" sentence in free text becomes the new
- * right; analysis and old rule stay null (the duel view then shows the right
- * without intro text and opponent).
+ * Parse the model output. Das neue Recht ist die Nutzlast — ohne es gibt es
+ * keine Duell-Ansicht, also 502. Analyse und alte Regel dürfen fehlen (die
+ * Ansicht zeigt das Recht dann ohne Vortext und ohne Gegner). Antwortet das
+ * Modell in Prosa statt in JSON, trägt ein "Ich habe das Recht …"-Satz die
+ * Bühne auch allein.
  */
 function parseModelOutput(raw: string): FormulatorResult | null {
-  const stripped = raw
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/```\s*$/, "")
-    .trim();
+  const output = readModelJson(raw, { fieldOrder: FIELD_ORDER });
+  if (!output) return null;
 
-  try {
-    const parsed: unknown = JSON.parse(stripped);
-    if (parsed && typeof parsed === "object") {
-      const rawAnalysis = (parsed as { analysis?: unknown }).analysis;
-      const rawOld = (parsed as { old_rule?: unknown }).old_rule;
-      const rawNew = (parsed as { new_right?: unknown }).new_right;
-      const newRight =
-        typeof rawNew === "string" && rawNew.trim()
-          ? rawNew.trim().slice(0, TEXT_MAX_SHORT)
-          : null;
-      if (newRight) {
-        return {
-          analysis:
-            typeof rawAnalysis === "string" && rawAnalysis.trim()
-              ? rawAnalysis.trim()
-              : null,
-          oldRule:
-            typeof rawOld === "string" && rawOld.trim()
-              ? rawOld.trim().slice(0, TEXT_MAX_SHORT)
-              : null,
-          newRight,
-        };
-      }
-    }
-  } catch {
-    // JSON kaputt → Freitext-Fallback unten.
+  const newRight = readText(output.fields, "new_right", TEXT_MAX_SHORT);
+  if (newRight) {
+    return {
+      analysis: readText(output.fields, "analysis"),
+      oldRule: readText(output.fields, "old_rule", TEXT_MAX_SHORT),
+      newRight,
+    };
   }
 
-  const sentence = stripped.match(/Ich habe das Recht[^.!\n]*[.!]?/)?.[0]?.trim();
-  if (sentence) {
-    return { analysis: null, oldRule: null, newRight: sentence.slice(0, TEXT_MAX_SHORT) };
+  if (output.source === "prose") {
+    const sentence = findRightSentence(output.text, TEXT_MAX_SHORT);
+    if (sentence) {
+      return { analysis: null, oldRule: null, newRight: sentence };
+    }
   }
 
   return null;

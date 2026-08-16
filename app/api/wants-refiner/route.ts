@@ -1,4 +1,5 @@
 import { anthropic } from "@/lib/anthropic/client";
+import { readModelJson, readText } from "@/lib/anthropic/model-json";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/wants-refiner";
 import {
   RATE_LIMIT_MESSAGE,
@@ -20,23 +21,12 @@ function clamp(value: string, max: number): string {
   return value.slice(0, max);
 }
 
-/** Parst { "text": "…" } — tolerant gegen Code-Fences. */
+/** Parst `{"text": "…"}`. Das einzige Feld ist zugleich die Nutzlast: fehlt es,
+ *  gibt es nichts zu zeigen, und die Route antwortet mit 502. */
 function parseRefined(raw: string): string | null {
-  const stripped = raw
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/```\s*$/, "")
-    .trim();
-  try {
-    const parsed: unknown = JSON.parse(stripped);
-    if (parsed && typeof parsed === "object") {
-      const t = (parsed as { text?: unknown }).text;
-      if (typeof t === "string" && t.trim()) return t.trim().slice(0, TEXT_MAX_SHORT);
-    }
-  } catch {
-    // fällt unten auf null
-  }
-  return null;
+  const output = readModelJson(raw, { fieldOrder: ["text"] });
+  if (!output) return null;
+  return readText(output.fields, "text", TEXT_MAX_SHORT);
 }
 
 export async function POST(request: Request) {

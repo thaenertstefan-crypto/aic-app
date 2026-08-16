@@ -6,6 +6,7 @@ import {
   checkRateLimit,
   logUsage,
 } from "@/lib/anthropic/rate-limit";
+import { parseForgeOutput } from "@/lib/anthropic/sternschmiede-result";
 import { createClient } from "@/lib/supabase/server";
 import type { WantItem } from "@/lib/types/db-json";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
@@ -14,7 +15,6 @@ import { getValueLabel } from "@/lib/utils/values-bank";
 const MAX_VALUES_IN_PROMPT = 20;
 const MAX_WANTS_IN_PROMPT = 20;
 const MAX_CHILD_LEN = 800;
-const MAX_FUNKEN_OUT = 5;
 
 const AI_ERROR_MESSAGE =
   "Das Funkenschlagen hat gerade nicht geklappt. Versuch es gleich noch einmal.";
@@ -61,64 +61,6 @@ function buildForgeSlots(
   }
   if (hasChildAnswer) slots.push({ kind: "kind" });
   return slots;
-}
-
-type FunkeSuggestion = {
-  text: string;
-  reason: string | null;
-};
-
-function parseFunken(raw: unknown): FunkeSuggestion[] {
-  if (!Array.isArray(raw)) return [];
-  const out: FunkeSuggestion[] = [];
-  for (const item of raw.slice(0, MAX_FUNKEN_OUT)) {
-    if (!item || typeof item !== "object") continue;
-    const v = item as { text?: unknown; reason?: unknown };
-    if (typeof v.text !== "string" || !v.text.trim()) continue;
-    out.push({
-      text: v.text.trim().slice(0, TEXT_MAX_SHORT),
-      reason:
-        typeof v.reason === "string" && v.reason.trim()
-          ? v.reason.trim().slice(0, TEXT_MAX_SHORT)
-          : null,
-    });
-  }
-  return out;
-}
-
-function parseModelOutput(raw: string): {
-  comment: string;
-  funken: FunkeSuggestion[];
-} {
-  const stripped = raw
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/```\s*$/, "")
-    .trim();
-  try {
-    const parsed: unknown = JSON.parse(stripped);
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      typeof (parsed as { comment?: unknown }).comment === "string"
-    ) {
-      const comment = (parsed as { comment: string }).comment.trim();
-      const funken = parseFunken((parsed as { funken?: unknown }).funken);
-      if (comment || funken.length > 0) return { comment, funken };
-    }
-  } catch {
-    // fällt unten in den comment-Fallback
-  }
-  const commentMatch = stripped.match(/"comment"\s*:\s*"([\s\S]*?)"\s*,\s*"funken"/);
-  if (commentMatch) {
-    const comment = commentMatch[1]
-      .replace(/\\n/g, "\n")
-      .replace(/\\"/g, '"')
-      .replace(/\\\\/g, "\\")
-      .trim();
-    if (comment) return { comment, funken: [] };
-  }
-  return { comment: "", funken: [] };
 }
 
 export async function POST(request: Request) {
@@ -218,12 +160,14 @@ ${auftragText}
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
 
-    const { comment, funken } = parseModelOutput(rawText);
-    if (!comment && funken.length === 0) {
+    // Ohne Funken hat die Bühne nichts zu zeigen — dann lieber ein ehrliches
+    // 502, damit der Client einen neuen Versuch anbietet.
+    const result = parseForgeOutput(rawText, { maxTextLen: TEXT_MAX_SHORT });
+    if (!result) {
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
 
-    return Response.json({ comment, funken });
+    return Response.json(result);
   } catch (error) {
     console.error("sternschmiede: call failed", error);
     return Response.json({ error: AI_ERROR_MESSAGE }, { status: 500 });

@@ -1,4 +1,9 @@
 import { anthropic } from "@/lib/anthropic/client";
+import {
+  readModelJson,
+  readText,
+  unescapeJsonString,
+} from "@/lib/anthropic/model-json";
 import { SYSTEM_PROMPT as COACH_PROMPT } from "@/lib/anthropic/prompts/saying-no-coach";
 import { SYSTEM_PROMPT as SCENARIO_PROMPT } from "@/lib/anthropic/prompts/saying-no-scenario";
 import {
@@ -7,6 +12,11 @@ import {
   checkRateLimit,
   logUsage,
 } from "@/lib/anthropic/rate-limit";
+import {
+  type RightResult,
+  rescueMatch,
+  resolveMatch,
+} from "@/lib/anthropic/right-match";
 import { createClient } from "@/lib/supabase/server";
 import type {
   RightItem,
@@ -27,12 +37,6 @@ const AI_ERROR_MESSAGE =
   "Das Feedback hat gerade nicht geklappt. Dein Nein ist gespeichert — versuch es gleich noch einmal.";
 const SCENARIO_ERROR_MESSAGE =
   "Wir konnten gerade kein Szenario erfinden. Versuch es noch einmal.";
-
-/** Ergebnis-Shape für match: bestehendes Recht, neuer Vorschlag oder nichts. */
-type RightResult =
-  | { type: "existing"; id: string; text: string }
-  | { type: "new"; text: string }
-  | null;
 
 /** Eine bewertete Blueprint-Schicht (pass + kurze Begründung). */
 type ChecklistItem = { pass: boolean; note: string };
@@ -85,132 +89,62 @@ function parseChecklist(raw: unknown): CoachResult["checklist"] {
   return validCount === CHECKLIST_KEYS.length ? result : null;
 }
 
-/** Löst ein match-Objekt gegen die DB-Rechte auf — Text IMMER aus der DB,
- *  nie vom Modell; unauflösbare ids werden zu null (= none). */
-function resolveMatch(raw: unknown, activeRights: RightItem[]): RightResult {
-  if (!raw || typeof raw !== "object") return null;
-  const match = raw as { type?: unknown; id?: unknown; right?: unknown };
-
-  if (match.type === "existing" && typeof match.id === "string") {
-    const hit = activeRights.find((r) => r.id === match.id);
-    if (hit) return { type: "existing", id: hit.id, text: hit.text };
-    return null;
-  }
-  if (match.type === "new" && typeof match.right === "string" && match.right.trim()) {
-    return { type: "new", text: match.right.trim().slice(0, TEXT_MAX_SHORT) };
-  }
-  return null;
-}
-
-/**
- * Parse the feedback-mode model output. Preferred path: strict JSON per system
- * prompt. Fallbacks keep the UI functional: broken JSON is recovered via the
- * fixed field order; total failure degrades to comment-only (checklist and
- * improved dann null — die UI zeigt dann nur den Kommentar).
- */
-function parseModelOutput(raw: string, activeRights: RightItem[]): CoachResult {
-  const stripped = raw
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/```\s*$/, "")
-    .trim();
-
-  try {
-    const parsed: unknown = JSON.parse(stripped);
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      typeof (parsed as { comment?: unknown }).comment === "string"
-    ) {
-      const comment = ((parsed as { comment: string }).comment).trim();
-      const checklist = parseChecklist((parsed as { checklist?: unknown }).checklist);
-
-      const rawImproved = (parsed as { improved?: unknown }).improved;
-      const improved =
-        typeof rawImproved === "string" && rawImproved.trim()
-          ? rawImproved.trim().slice(0, TEXT_MAX_LONG)
-          : null;
-
-      const right = resolveMatch((parsed as { match?: unknown }).match, activeRights);
-
-      if (comment) {
-        return { comment, checklist, improved, right };
-      }
-    }
-  } catch {
-    // JSON kaputt → struktureller Fallback unten.
-  }
-
-  // Struktureller Fallback: JSON.parse scheitert z.B. an ungeescapten geraden
-  // Anführungszeichen INNERHALB eines String-Werts. Die Feld-Reihenfolge
-  // (comment → checklist → improved → match) ist per Prompt fixiert, deshalb
-  // lassen sich die Werte über die nachfolgenden Keys als Anker heraustrennen.
-  const structural = recoverFromBrokenJson(stripped, activeRights);
-  if (structural) return structural;
-
-  return { comment: stripped, checklist: null, improved: null, right: null };
-}
-
-/** Entschärft JSON-String-Escapes in per Regex extrahierten Werten. */
-function unescapeJsonString(value: string): string {
-  return value.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\").trim();
-}
-
-function recoverFromBrokenJson(
-  stripped: string,
-  activeRights: RightItem[],
-): CoachResult | null {
-  if (!stripped.startsWith("{")) return null;
-
-  const commentMatch = stripped.match(/"comment"\s*:\s*"([\s\S]*?)"\s*,\s*"checklist"/);
-  if (!commentMatch) return null;
-  const comment = unescapeJsonString(commentMatch[1]);
-  if (!comment) return null;
-
-  // Checklist: pass-Booleans sind robust extrahierbar (kein String-Quoting),
-  // die notes hängen zwischen "note": "…" und dem schließenden "}".
+/** Holt die Checklist aus kaputtem JSON. Die pass-Booleans sind robust
+ *  extrahierbar (kein String-Quoting), die notes hängen zwischen
+ *  `"note": "…"` und der schließenden Klammer. */
+function rescueChecklist(text: string): CoachResult["checklist"] {
   const checklist = {} as Record<keyof SayingNoChecklist, ChecklistItem>;
-  let checklistComplete = true;
   for (const key of CHECKLIST_KEYS) {
-    const itemMatch = stripped.match(
+    const item = text.match(
       new RegExp(
         `"${key}"\\s*:\\s*\\{\\s*"pass"\\s*:\\s*(true|false)\\s*,\\s*"note"\\s*:\\s*"([\\s\\S]*?)"\\s*\\}`,
       ),
     );
-    if (!itemMatch) {
-      checklistComplete = false;
-      break;
-    }
+    if (!item) return null; // Die UI zeigt die Checklist nur komplett.
     checklist[key] = {
-      pass: itemMatch[1] === "true",
-      note: unescapeJsonString(itemMatch[2]).slice(0, TEXT_MAX_SHORT),
+      pass: item[1] === "true",
+      note: unescapeJsonString(item[2]).slice(0, TEXT_MAX_SHORT),
     };
   }
+  return checklist;
+}
 
-  const improvedMatch = stripped.match(/"improved"\s*:\s*"([\s\S]*?)"\s*,\s*"match"/);
-  const improvedRaw = improvedMatch ? unescapeJsonString(improvedMatch[1]) : "";
-  const improved = improvedRaw ? improvedRaw.slice(0, TEXT_MAX_LONG) : null;
+/** Die Feldreihenfolge, die der Coach-Prompt vorschreibt — zugleich die
+ *  Anker-Kette, über die sich Werte aus kaputtem JSON retten lassen. */
+const FIELD_ORDER = ["comment", "checklist", "improved", "match"] as const;
 
-  let right: RightResult = null;
-  const existingMatch = stripped.match(
-    /"type"\s*:\s*"existing"\s*,\s*"id"\s*:\s*"([^"]+)"/,
-  );
-  if (existingMatch) {
-    const hit = activeRights.find((r) => r.id === existingMatch[1]);
-    if (hit) right = { type: "existing", id: hit.id, text: hit.text };
-  } else {
-    const newMatch = stripped.match(/"right"\s*:\s*"(Ich habe das Recht[\s\S]*?)"\s*\}/);
-    if (newMatch) {
-      const text = unescapeJsonString(newMatch[1]).slice(0, TEXT_MAX_SHORT);
-      if (text) right = { type: "new", text };
-    }
+/**
+ * Parse the feedback-mode model output. Der Kommentar ist die Nutzlast — ohne
+ * ihn gibt es nichts zu zeigen, also 502. Checklist, verbesserte Fassung und
+ * Recht dürfen fehlen; die UI zeigt dann nur den Kommentar.
+ */
+function parseModelOutput(
+  raw: string,
+  activeRights: RightItem[],
+): CoachResult | null {
+  const output = readModelJson(raw, { fieldOrder: FIELD_ORDER });
+  if (!output) return null;
+
+  // Prosa statt JSON: der Text ist der Kommentar, mehr ist nicht darin.
+  if (output.source === "prose") {
+    return { comment: output.text, checklist: null, improved: null, right: null };
   }
 
+  const comment = readText(output.fields, "comment");
+  if (!comment) return null;
+
+  // Checklist und match sind verschachtelt und überleben die Anker-Rettung
+  // nicht — aus geretteter Antwort müssen sie aus dem Rohtext kommen.
+  const fromJson = output.source === "json";
   return {
     comment,
-    checklist: checklistComplete ? checklist : null,
-    improved,
-    right,
+    checklist: fromJson
+      ? parseChecklist(output.fields.checklist)
+      : rescueChecklist(output.text),
+    improved: readText(output.fields, "improved", TEXT_MAX_LONG),
+    right: fromJson
+      ? resolveMatch(output.fields.match, activeRights, TEXT_MAX_SHORT)
+      : rescueMatch(output.text, activeRights, TEXT_MAX_SHORT),
   };
 }
 
@@ -433,7 +367,11 @@ ${rightsText}
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
 
-    const { comment, checklist, improved, right } = parseModelOutput(raw, activeRights);
+    const result = parseModelOutput(raw, activeRights);
+    if (!result) {
+      return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
+    }
+    const { comment, checklist, improved, right } = result;
 
     // Persist onto the entry: die maschinenlesbaren Verdicts wandern ins
     // content-JSONB (fürs Journal-Rendering), der Lesetext in ai_insights.

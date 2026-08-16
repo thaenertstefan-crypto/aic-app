@@ -1,4 +1,5 @@
 import { anthropic } from "@/lib/anthropic/client";
+import { readModelJson, readText } from "@/lib/anthropic/model-json";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/messy-guilt-coach";
 import {
   MESSY_GUILT_LIMIT,
@@ -6,6 +7,12 @@ import {
   checkRateLimit,
   logUsage,
 } from "@/lib/anthropic/rate-limit";
+import {
+  type RightResult,
+  findRightSentence,
+  rescueMatch,
+  resolveMatch,
+} from "@/lib/anthropic/right-match";
 import { createClient } from "@/lib/supabase/server";
 import type { MessyMomentContent, RightItem } from "@/lib/types/db-json";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
@@ -17,13 +24,6 @@ const MAX_RIGHTS_IN_PROMPT = 100;
 
 const AI_ERROR_MESSAGE =
   "Die Auswertung hat gerade nicht geklappt. Dein Eintrag ist gespeichert — versuch es gleich noch einmal.";
-
-/** Ergebnis-Shape der Route: passendes bestehendes Recht, neuer Vorschlag
- *  oder null (nur Analyse). */
-type RightResult =
-  | { type: "existing"; id: string; text: string }
-  | { type: "new"; text: string }
-  | null;
 
 /** Geparste Modell-Antwort inkl. Schuld-Vermutung und Regel-Benennung. */
 type CoachResult = {
@@ -37,134 +37,61 @@ function clampText(value: string): string {
   return value.slice(0, MAX_ENTRY_LEN);
 }
 
+/** Die Feldreihenfolge, die der System-Prompt vorschreibt — zugleich die
+ *  Anker-Kette, über die sich Werte aus kaputtem JSON retten lassen. */
+const FIELD_ORDER = ["analysis", "guilt", "rules", "match"] as const;
+
 /**
- * Parse the model output. Preferred path: strict JSON per system prompt.
- * Fallbacks keep the UI functional: an "Ich habe das Recht …" sentence in
- * free text becomes a new-right proposal; otherwise the raw text is treated
- * as analysis-only (guilt/rules dann null → kein Badge, keine Regeln-Zeile).
- * For "existing" matches the returned text always comes from the DB list,
- * never from the model.
+ * Parse the model output. Die Analyse ist die Nutzlast — ohne sie gibt es
+ * nichts zu zeigen, also 502. Einordnung, Regeln-Satz und Recht dürfen fehlen
+ * (kein Badge, keine Regeln-Zeile, kein Rechts-Vorschlag). Für "existing"
+ * kommt der Text immer aus der DB-Liste, nie aus der Modellantwort.
  */
-function parseModelOutput(raw: string, activeRights: RightItem[]): CoachResult {
-  const stripped = raw
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/```\s*$/, "")
-    .trim();
-
-  try {
-    const parsed: unknown = JSON.parse(stripped);
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      typeof (parsed as { analysis?: unknown }).analysis === "string"
-    ) {
-      const analysis = ((parsed as { analysis: string }).analysis).trim();
-
-      const rawGuilt = (parsed as { guilt?: unknown }).guilt;
-      const guilt =
-        rawGuilt === "healthy" || rawGuilt === "unhealthy" ? rawGuilt : null;
-
-      const rawRules = (parsed as { rules?: unknown }).rules;
-      const rules =
-        typeof rawRules === "string" && rawRules.trim()
-          ? rawRules.trim().slice(0, TEXT_MAX_SHORT)
-          : null;
-
-      const match = (parsed as { match?: unknown }).match as
-        | { type?: unknown; id?: unknown; right?: unknown }
-        | undefined;
-
-      if (match?.type === "existing" && typeof match.id === "string") {
-        const hit = activeRights.find((r) => r.id === match.id);
-        if (hit) {
-          return {
-            analysis,
-            guilt,
-            rules,
-            right: { type: "existing", id: hit.id, text: hit.text },
-          };
-        }
-      }
-
-      if (match?.type === "new" && typeof match.right === "string" && match.right.trim()) {
-        return {
-          analysis,
-          guilt,
-          rules,
-          right: { type: "new", text: match.right.trim().slice(0, TEXT_MAX_SHORT) },
-        };
-      }
-
-      if (analysis) {
-        return { analysis, guilt, rules, right: null };
-      }
-    }
-  } catch {
-    // JSON kaputt → Freitext-Fallback unten.
-  }
-
-  // Struktureller Fallback: JSON.parse scheitert z.B. an ungeescapten geraden
-  // Anführungszeichen INNERHALB eines String-Werts. Die Feld-Reihenfolge
-  // (analysis → guilt → rules → match) ist per Prompt fixiert, deshalb lassen
-  // sich die Werte über die nachfolgenden Keys als Anker heraustrennen —
-  // tolerant gegenüber inneren Quotes.
-  const structural = recoverFromBrokenJson(stripped, activeRights);
-  if (structural) return structural;
-
-  const sentence = stripped.match(/Ich habe das Recht[^.!\n]*[.!]?/)?.[0]?.trim();
-  if (sentence) {
-    const analysis = stripped.replace(sentence, "").trim();
-    return {
-      analysis: analysis || stripped,
-      guilt: null,
-      rules: null,
-      right: { type: "new", text: sentence.slice(0, TEXT_MAX_SHORT) },
-    };
-  }
-
-  return { analysis: stripped, guilt: null, rules: null, right: null };
-}
-
-/** Entschärft JSON-String-Escapes in per Regex extrahierten Werten. */
-function unescapeJsonString(value: string): string {
-  return value.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\").trim();
-}
-
-function recoverFromBrokenJson(
-  stripped: string,
+function parseModelOutput(
+  raw: string,
   activeRights: RightItem[],
 ): CoachResult | null {
-  if (!stripped.startsWith("{")) return null;
+  const output = readModelJson(raw, { fieldOrder: FIELD_ORDER });
+  if (!output) return null;
 
-  const analysisMatch = stripped.match(/"analysis"\s*:\s*"([\s\S]*?)"\s*,\s*"guilt"/);
-  if (!analysisMatch) return null;
-  const analysis = unescapeJsonString(analysisMatch[1]);
+  // Prosa statt JSON: der Text IST die Analyse, und ein "Ich habe das
+  // Recht …"-Satz darin wird zum Vorschlag.
+  if (output.source === "prose") return parseProse(output.text);
+
+  const analysis = readText(output.fields, "analysis");
   if (!analysis) return null;
 
-  const guiltMatch = stripped.match(/"guilt"\s*:\s*"(healthy|unhealthy)"/);
-  const guilt = guiltMatch ? (guiltMatch[1] as "healthy" | "unhealthy") : null;
+  const rawGuilt = output.fields.guilt;
+  const guilt =
+    rawGuilt === "healthy" || rawGuilt === "unhealthy" ? rawGuilt : null;
 
-  const rulesMatch = stripped.match(/"rules"\s*:\s*"([\s\S]*?)"\s*,\s*"match"/);
-  const rulesRaw = rulesMatch ? unescapeJsonString(rulesMatch[1]) : "";
-  const rules = rulesRaw ? rulesRaw.slice(0, TEXT_MAX_SHORT) : null;
+  // `match` ist ein Objekt und überlebt die Anker-Rettung nicht — aus
+  // geretteter Antwort muss es aus dem Rohtext geschnitten werden.
+  const right =
+    output.source === "json"
+      ? resolveMatch(output.fields.match, activeRights, TEXT_MAX_SHORT)
+      : rescueMatch(output.text, activeRights, TEXT_MAX_SHORT);
 
-  let right: RightResult = null;
-  const existingMatch = stripped.match(
-    /"type"\s*:\s*"existing"\s*,\s*"id"\s*:\s*"([^"]+)"/,
-  );
-  if (existingMatch) {
-    const hit = activeRights.find((r) => r.id === existingMatch[1]);
-    if (hit) right = { type: "existing", id: hit.id, text: hit.text };
-  } else {
-    const newMatch = stripped.match(/"right"\s*:\s*"(Ich habe das Recht[\s\S]*?)"\s*\}/);
-    if (newMatch) {
-      const text = unescapeJsonString(newMatch[1]).slice(0, TEXT_MAX_SHORT);
-      if (text) right = { type: "new", text };
-    }
+  return {
+    analysis,
+    guilt,
+    rules: readText(output.fields, "rules", TEXT_MAX_SHORT),
+    right,
+  };
+}
+
+function parseProse(text: string): CoachResult {
+  const sentence = findRightSentence(text, TEXT_MAX_SHORT);
+  if (!sentence) {
+    return { analysis: text, guilt: null, rules: null, right: null };
   }
-
-  return { analysis, guilt, rules, right };
+  const analysis = text.replace(sentence, "").trim();
+  return {
+    analysis: analysis || text,
+    guilt: null,
+    rules: null,
+    right: { type: "new", text: sentence },
+  };
 }
 
 /**
@@ -270,7 +197,11 @@ ${rightsText}
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
 
-    const { analysis, guilt, rules, right } = parseModelOutput(raw, activeRights);
+    const result = parseModelOutput(raw, activeRights);
+    if (!result) {
+      return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
+    }
+    const { analysis, guilt, rules, right } = result;
 
     // Persist onto the entry: die maschinenlesbare Vermutung wandert ins
     // content-JSONB (fürs Journal-Rendering), der Lesetext in ai_insights.

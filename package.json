@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "gate": "node scripts/check-contrast.mjs && node scripts/check-typography.mjs && node scripts/check-transitions.mjs && eslint --max-warnings=0",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test",
+    "gate": "node scripts/check-contrast.mjs && node scripts/check-typography.mjs && node scripts/check-transitions.mjs && eslint --max-warnings=0 && npm test",
     "gen:icon": "node scripts/generate-app-icon.mjs",
     "e2e": "node scripts/e2e/verify.mjs"
   },

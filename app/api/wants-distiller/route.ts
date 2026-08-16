@@ -1,4 +1,5 @@
 import { anthropic } from "@/lib/anthropic/client";
+import { readModelJson, readText } from "@/lib/anthropic/model-json";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/wants-distiller";
 import {
   RATE_LIMIT_MESSAGE,
@@ -17,6 +18,8 @@ const MAX_ENTRY_LEN = 2000;
 const MAX_VALUES_IN_PROMPT = 20;
 // Obergrenzen für die Modell-Listen — mehr wird still verworfen.
 const MAX_WANTS_OUT = 9;
+/** Ein Titel ist eine Überschrift, kein Satz. */
+const MAX_TITLE_LEN = 60;
 
 const AI_ERROR_MESSAGE =
   "Das Destillieren hat gerade nicht geklappt. Dein Audit ist gespeichert — du kannst deine Wants auch selbst formulieren.";
@@ -49,88 +52,54 @@ function parseWants(raw: unknown, valueIds: Set<string>): WantSuggestion[] {
 
   for (const item of raw.slice(0, MAX_WANTS_OUT)) {
     if (!item || typeof item !== "object") continue;
-    const v = item as {
-      text?: unknown;
-      title?: unknown;
-      value_id?: unknown;
-      reason?: unknown;
-      question?: unknown;
-      distance?: unknown;
-    };
-    if (typeof v.text !== "string" || !v.text.trim()) continue;
+    const fields = item as Record<string, unknown>;
+    const text = readText(fields, "text", TEXT_MAX_SHORT);
+    if (!text) continue;
 
-    const valueId =
-      typeof v.value_id === "string" && valueIds.has(v.value_id)
-        ? v.value_id
-        : null;
+    const rawValueId = readText(fields, "value_id");
+    const valueId = rawValueId && valueIds.has(rawValueId) ? rawValueId : null;
 
     wants.push({
-      text: v.text.trim().slice(0, TEXT_MAX_SHORT),
-      title:
-        typeof v.title === "string" && v.title.trim()
-          ? v.title.trim().slice(0, 60)
-          : null,
+      text,
+      title: readText(fields, "title", MAX_TITLE_LEN),
       valueId,
       valueLabel: valueId ? getValueLabel(valueId) : null,
-      reason:
-        typeof v.reason === "string" && v.reason.trim()
-          ? v.reason.trim().slice(0, TEXT_MAX_SHORT)
-          : null,
-      question:
-        typeof v.question === "string" && v.question.trim()
-          ? v.question.trim().slice(0, TEXT_MAX_SHORT)
-          : null,
-      distance: v.distance === "fern" ? "fern" : "nah",
+      reason: readText(fields, "reason", TEXT_MAX_SHORT),
+      question: readText(fields, "question", TEXT_MAX_SHORT),
+      distance: fields.distance === "fern" ? "fern" : "nah",
     });
   }
 
   return wants;
 }
 
+/** Die Feldreihenfolge, die der System-Prompt vorschreibt. */
+const FIELD_ORDER = ["comment", "wants"] as const;
+
 /**
- * Parse the model output. Preferred path: strict JSON per system prompt.
- * Die Listen sind per Regex kaum rettbar — bei kaputtem JSON degradiert die
- * Antwort gestuft: comment-only (die UI wechselt dann in den manuellen Modus).
+ * Parse the model output. Die Wants-Liste ist per Anker nicht rettbar — bei
+ * kaputtem JSON degradiert die Antwort deshalb gestuft auf comment-only, und
+ * die UI wechselt in den manuellen Modus. Erst wenn auch der Kommentar fehlt,
+ * ist es ein Ausfall (`null` → 502).
+ *
+ * Umgekehrt gilt seit der Vereinheitlichung: Wants OHNE Kommentar sind ein
+ * gültiges Ergebnis (vorher 502). Die Sterne sind die Nutzlast dieser Übung —
+ * sie wegzuwerfen, weil das Rahmen-Sätzchen fehlt, wäre der teurere Fehler.
+ * Gleiche Regel wie in `sternschmiede-result.ts`.
  */
-function parseModelOutput(raw: string, valueIds: Set<string>): DistillerResult {
-  const stripped = raw
-    .trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/```\s*$/, "")
-    .trim();
+function parseModelOutput(
+  raw: string,
+  valueIds: Set<string>,
+): DistillerResult | null {
+  const output = readModelJson(raw, { fieldOrder: FIELD_ORDER });
+  if (!output) return null;
 
-  try {
-    const parsed: unknown = JSON.parse(stripped);
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      typeof (parsed as { comment?: unknown }).comment === "string"
-    ) {
-      const comment = ((parsed as { comment: string }).comment).trim();
-      const wants = parseWants((parsed as { wants?: unknown }).wants, valueIds);
-      if (comment) {
-        return { comment, wants };
-      }
-    }
-  } catch {
-    // JSON kaputt → comment-Fallback unten.
-  }
+  const comment = readText(output.fields, "comment");
+  const wants =
+    output.source === "json" ? parseWants(output.fields.wants, valueIds) : [];
 
-  // Feld-Reihenfolge (comment → wants) ist per Prompt fixiert: der
-  // Kommentar lässt sich über den nachfolgenden "wants"-Key heraustrennen.
-  const commentMatch = stripped.match(/"comment"\s*:\s*"([\s\S]*?)"\s*,\s*"wants"/);
-  if (commentMatch) {
-    const comment = commentMatch[1]
-      .replace(/\\n/g, "\n")
-      .replace(/\\"/g, '"')
-      .replace(/\\\\/g, "\\")
-      .trim();
-    if (comment) {
-      return { comment, wants: [] };
-    }
-  }
-
-  return { comment: "", wants: [] };
+  if (!comment && wants.length === 0) return null;
+  return { comment: comment ?? "", wants };
 }
 
 /**
@@ -259,10 +228,11 @@ ${valuesText}
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
 
-    const { comment, wants } = parseModelOutput(raw, valueIds);
-    if (!comment && wants.length === 0) {
+    const result = parseModelOutput(raw, valueIds);
+    if (!result) {
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
+    const { comment, wants } = result;
 
     // Persist onto the entry: die Sterne als Provenienz ins content-JSONB,
     // der Lesetext in ai_insights. WICHTIG: content mergen, nie ersetzen.
