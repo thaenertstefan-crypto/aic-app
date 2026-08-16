@@ -11,7 +11,9 @@ import {
   MOOD_PULSE_SECONDS,
 } from "@/lib/utils/mood";
 
-import { saveMoodCheckinAction, type MoodCheckinState } from "./actions";
+import { ok, type ActionResult } from "@/lib/actions/action-result";
+
+import { saveMoodCheckinAction } from "./actions";
 
 const MOODS: { score: number; label: string }[] = Object.entries(
   MOOD_LABELS,
@@ -27,11 +29,7 @@ const MESSAGES: Record<number, string> = {
   5: "Sternenklar — nimm den Schwung mit in den Tag! 🌟",
 };
 
-const INITIAL_STATE: MoodCheckinState = {
-  error: null,
-  success: false,
-  score: null,
-};
+const INITIAL_STATE: ActionResult = ok();
 
 export function MoodCheckin({
   initialScore,

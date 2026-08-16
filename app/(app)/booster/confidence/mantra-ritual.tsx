@@ -22,6 +22,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+import { ok, type ActionResult } from "@/lib/actions/action-result";
+
 import {
   addCardAction,
   deleteCardAction,
@@ -29,11 +31,11 @@ import {
   saveMantraAction,
   seedDefaultCardsAction,
   updateCardAction,
-  type CleanserCheckinState,
   type MantraCardData,
 } from "./actions";
 
-const INITIAL_STATE: CleanserCheckinState = { error: null, success: false };
+/** `data` heißt hier „heute abgehakt" — vom Anfangszustand unterscheidbar. */
+const INITIAL_STATE: ActionResult<boolean> = ok(false);
 
 const MANTRA_MAX = 120;
 const CARD_MAX = 200;
@@ -59,7 +61,7 @@ function MantraBlock({ mantra }: { mantra: string }) {
     setError(null);
     startTransition(async () => {
       const res = await saveMantraAction(value);
-      if (res.success) {
+      if (res.error === null) {
         setEditing(false);
         router.refresh();
       } else {
@@ -348,8 +350,8 @@ function SituationCarousel({ situations }: { situations: MantraCardData[] }) {
     const card = situations[index];
     if (card?.id) return card.id;
     const res = await seedDefaultCardsAction();
-    if (res.error) return null;
-    return res.cards[index]?.id ?? null;
+    if (res.error !== null) return null;
+    return res.data[index]?.id ?? null;
   }
 
   async function handleUpdate(
@@ -360,7 +362,7 @@ function SituationCarousel({ situations }: { situations: MantraCardData[] }) {
     const id = await resolveId(index);
     if (!id) return false;
     const res = await updateCardAction(id, thought, reframe);
-    if (res.success) {
+    if (res.error === null) {
       router.refresh();
       return true;
     }
@@ -371,7 +373,7 @@ function SituationCarousel({ situations }: { situations: MantraCardData[] }) {
     const id = await resolveId(index);
     if (!id) return false;
     const res = await deleteCardAction(id);
-    if (res.success) {
+    if (res.error === null) {
       router.refresh();
       return true;
     }
@@ -382,10 +384,10 @@ function SituationCarousel({ situations }: { situations: MantraCardData[] }) {
     // Auf Defaults zuerst materialisieren, damit die Beispiele erhalten bleiben.
     if (usingDefaults) {
       const seed = await seedDefaultCardsAction();
-      if (seed.error) return false;
+      if (seed.error !== null) return false;
     }
     const res = await addCardAction(thought, reframe);
-    if (res.success) {
+    if (res.error === null) {
       router.refresh();
       return true;
     }
@@ -504,15 +506,16 @@ export function MantraRitual({
   );
 
   // Optimistic done-state: either it was already done, or this session just logged it.
-  const done = doneToday || state.success;
-  const displayStreak = doneToday ? streak : state.success ? streak + 1 : streak;
+  const loggedNow = state.error === null && state.data;
+  const done = doneToday || loggedNow;
+  const displayStreak = doneToday ? streak : loggedNow ? streak + 1 : streak;
 
   // Re-sync server data once the check-in succeeds for the first time.
   useEffect(() => {
-    if (state.success && !doneToday) {
+    if (loggedNow && !doneToday) {
       router.refresh();
     }
-  }, [state.success, doneToday, router]);
+  }, [loggedNow, doneToday, router]);
 
   return (
     <div className="flex w-full flex-col items-center gap-8">

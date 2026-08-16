@@ -154,20 +154,17 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
     }
 
     try {
-      const result = await saveMessyMomentAction(
-        { error: null, success: false, entryId: null },
-        formData,
-      );
+      const result = await saveMessyMomentAction(formData);
       setSubmitting(false);
 
-      if (result.error || !result.entryId) {
-        setError(result.error ?? "Speichern fehlgeschlagen. Versuch es noch einmal.");
+      if (result.error !== null) {
+        setError(result.error);
         return;
       }
 
       clearDraft();
-      setEntryId(result.entryId);
-      void runAnalysis(result.entryId);
+      setEntryId(result.data);
+      void runAnalysis(result.data);
     } catch {
       // Network error mid-request — preserve the entry as a draft.
       saveDraft(currentDraft());
@@ -184,11 +181,8 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
     try {
       const fd = new FormData();
       fd.set("text", suggestionText);
-      const res = await acceptSuggestedRightAction(
-        { error: null, success: false },
-        fd,
-      );
-      if (res.error) {
+      const res = await acceptSuggestedRightAction(fd);
+      if (res.error !== null) {
         setAcceptError(res.error);
       } else {
         setAccepted(true);
@@ -208,8 +202,8 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
       const fd = new FormData();
       fd.set("entryId", entryId);
       fd.set("feedback", value);
-      const res = await saveGuiltFeedbackAction({ error: null, success: false }, fd);
-      if (res.error) {
+      const res = await saveGuiltFeedbackAction(fd);
+      if (res.error !== null) {
         setFeedbackError(res.error);
       } else {
         setFeedback(value);

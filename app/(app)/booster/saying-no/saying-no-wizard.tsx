@@ -269,9 +269,9 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
         const fd = new FormData();
         fd.set("entryId", entryId);
         fd.set("draft2", draftText);
-        const result = await saveFinalNoAction({ error: null, success: false }, fd);
+        const result = await saveFinalNoAction(fd);
         setSubmitting(false);
-        if (result.error) {
+        if (result.error !== null) {
           setError(result.error);
           return;
         }
@@ -295,20 +295,17 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
     }
 
     try {
-      const result = await saveSayingNoEntryAction(
-        { error: null, success: false, entryId: null },
-        formData,
-      );
+      const result = await saveSayingNoEntryAction(formData);
       setSubmitting(false);
 
-      if (result.error || !result.entryId) {
-        setError(result.error ?? "Speichern fehlgeschlagen. Versuch es noch einmal.");
+      if (result.error !== null) {
+        setError(result.error);
         return;
       }
 
       clearDraft();
-      setEntryId(result.entryId);
-      void runFeedback(result.entryId);
+      setEntryId(result.data);
+      void runFeedback(result.data);
     } catch {
       // Network error mid-request — preserve the entry as a draft.
       saveDraft(currentDraft());
@@ -335,7 +332,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
       fd.set("entryId", entryId);
       fd.set("final_no", chosen);
       fd.set("final_source", source);
-      void saveFinalNoAction({ error: null, success: false }, fd).catch(() => {
+      void saveFinalNoAction(fd).catch(() => {
         /* Eintrag existiert bereits mit draft — kein harter Fehler nötig. */
       });
     }
@@ -361,11 +358,8 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
     try {
       const fd = new FormData();
       fd.set("text", suggestionText);
-      const res = await acceptSuggestedRightAction(
-        { error: null, success: false },
-        fd,
-      );
-      if (res.error) {
+      const res = await acceptSuggestedRightAction(fd);
+      if (res.error !== null) {
         setAcceptError(res.error);
       } else {
         setAccepted(true);

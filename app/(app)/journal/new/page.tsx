@@ -9,12 +9,15 @@ import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 
+import { ok } from "@/lib/actions/action-result";
+
 import { createFreeEntryAction } from "../actions";
 
 export default function NewJournalEntryPage() {
-  const [state, formAction, pending] = useActionState(createFreeEntryAction, {
-    error: null,
-  });
+  const [state, formAction, pending] = useActionState(
+    createFreeEntryAction,
+    ok(),
+  );
 
   return (
     <div className="flex min-h-svh flex-col">

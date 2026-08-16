@@ -1,7 +1,12 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { dbError } from "@/lib/utils/db-error";
+import {
+  dbFailed,
+  failed,
+  ok,
+  type ActionResult,
+} from "@/lib/actions/action-result";
+import { withUser } from "@/lib/actions/with-user";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
 import type { OverthinkingContent } from "@/lib/types/db-json";
@@ -10,29 +15,13 @@ import type { OverthinkingContent } from "@/lib/types/db-json";
 // morgen, blockt aber manipulierte Riesen-Arrays.
 const MAX_WHY_LEVELS = 10;
 
-export type OverthinkingActionState = {
-  error: string | null;
-  success: boolean;
-};
-
 /**
  * Save the completed overthinking exercise as a journal entry,
  * then mark the recipe as completed.
  */
 export async function saveOverthinkingAction(
-  _prevState: OverthinkingActionState,
   formData: FormData,
-): Promise<OverthinkingActionState> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Du musst angemeldet sein, um zu speichern.", success: false };
-  }
-
+): Promise<ActionResult> {
   const problem = formData.get("problem") as string | null;
   const whyLevelsRaw = formData.get("why_levels") as string | null;
   const challengerQuestion = formData.get("challenger_question") as string | null;
@@ -41,10 +30,10 @@ export async function saveOverthinkingAction(
   const decision = formData.get("decision") as string | null;
 
   if (!problem) {
-    return { error: "Bitte beschreib dein Problem kurz.", success: false };
+    return failed("Bitte beschreib dein Problem kurz.");
   }
   if (!decision) {
-    return { error: "Bitte notier deinen nächsten Schritt, bevor du abschließt.", success: false };
+    return failed("Bitte notier deinen nächsten Schritt, bevor du abschließt.");
   }
 
   const lengthError =
@@ -54,7 +43,7 @@ export async function saveOverthinkingAction(
     tooLong(reframedProblem ?? "", TEXT_MAX_LONG) ??
     tooLong(decision, TEXT_MAX_LONG);
   if (lengthError) {
-    return { error: lengthError, success: false };
+    return failed(lengthError);
   }
 
   let whyLevels: string[] = [];
@@ -79,81 +68,83 @@ export async function saveOverthinkingAction(
     decision,
   };
 
-  // Upsert journal_entries for this user + recipe + template_type
-  const { data: existingEntry } = await supabase
-    .from("journal_entries")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "overthinking")
-    .eq("template_type", "overthinking")
-    .maybeSingle();
-
-  if (existingEntry) {
-    const { error: updateError } = await supabase
+  return withUser(async ({ supabase, user }) => {
+    // Upsert journal_entries for this user + recipe + template_type
+    const { data: existingEntry } = await supabase
       .from("journal_entries")
-      .update({ content })
-      .eq("id", existingEntry.id);
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "overthinking")
+      .eq("template_type", "overthinking")
+      .maybeSingle();
 
-    if (updateError) {
-      return { error: dbError(updateError, "overthinking"), success: false };
+    if (existingEntry) {
+      const { error: updateError } = await supabase
+        .from("journal_entries")
+        .update({ content })
+        .eq("id", existingEntry.id);
+
+      if (updateError) {
+        return dbFailed(updateError, "overthinking");
+      }
+    } else {
+      const { error: insertError } = await supabase
+        .from("journal_entries")
+        .insert({
+          user_id: user.id,
+          recipe_slug: "overthinking",
+          template_type: "overthinking",
+          content,
+          entry_date: await serverTodayKey(),
+        });
+
+      if (insertError) {
+        return dbFailed(insertError, "overthinking");
+      }
     }
-  } else {
-    const { error: insertError } = await supabase
-      .from("journal_entries")
-      .insert({
-        user_id: user.id,
-        recipe_slug: "overthinking",
-        template_type: "overthinking",
-        content,
-        entry_date: await serverTodayKey(),
-      });
 
-    if (insertError) {
-      return { error: dbError(insertError, "overthinking"), success: false };
-    }
-  }
-
-  // Mark progress as completed with current_step = 8
-  const { data: progress } = await supabase
-    .from("user_recipe_progress")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "overthinking")
-    .order("cycle_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (progress) {
-    const { error: updateError } = await supabase
+    // Mark progress as completed with current_step = 8
+    const { data: progress } = await supabase
       .from("user_recipe_progress")
-      .update({
-        current_step: 8,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", progress.id);
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "overthinking")
+      .order("cycle_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (updateError) {
-      return { error: dbError(updateError, "overthinking"), success: false };
+    if (progress) {
+      const { error: updateError } = await supabase
+        .from("user_recipe_progress")
+        .update({
+          current_step: 8,
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", progress.id);
+
+      if (updateError) {
+        return dbFailed(updateError, "overthinking");
+      }
+    } else {
+      // Shouldn't happen (recipe was started via startRecipeAction), but handle gracefully
+      const { error: insertError } = await supabase
+        .from("user_recipe_progress")
+        .insert({
+          user_id: user.id,
+          recipe_slug: "overthinking",
+          current_step: 8,
+          status: "completed",
+          started_at: new Date().toISOString(),
+          completed_at: new Date().toISOString(),
+          cycle_number: 1,
+        });
+
+      if (insertError) {
+        return dbFailed(insertError, "overthinking");
+      }
     }
-  } else {
-    // Shouldn't happen (recipe was started via startRecipeAction), but handle gracefully
-    const { error: insertError } = await supabase
-      .from("user_recipe_progress")
-      .insert({
-        user_id: user.id,
-        recipe_slug: "overthinking",
-        current_step: 8,
-        status: "completed",
-        started_at: new Date().toISOString(),
-        completed_at: new Date().toISOString(),
-        cycle_number: 1,
-      });
 
-    if (insertError) {
-      return { error: dbError(insertError, "overthinking"), success: false };
-    }
-  }
-
-  return { error: null, success: true };
+    return ok();
+  });
 }

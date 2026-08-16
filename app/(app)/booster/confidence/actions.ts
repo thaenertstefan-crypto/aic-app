@@ -2,21 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
-import { dbError } from "@/lib/utils/db-error";
+import {
+  dbFailed,
+  failed,
+  ok,
+  type ActionResult,
+} from "@/lib/actions/action-result";
+import { withUser } from "@/lib/actions/with-user";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { DEFAULT_CARDS, DEFAULT_MANTRA } from "./defaults";
-
-export type CleanserCheckinState = {
-  error: string | null;
-  success: boolean;
-};
 
 const MANTRA_MAX = 120;
 const CARD_MAX = 200;
 const REVALIDATE_PATH = "/booster/confidence";
-
-export type MantraActionState = { error: string | null; success: boolean };
 
 // Karte für die UI: DB-Zeilen haben eine id, Default-Karten nicht (id: null).
 export type MantraCardData = {
@@ -37,58 +35,55 @@ const defaultCards = (): MantraCardData[] =>
  * WICHTIG: Der Slug bleibt "mantra", obwohl das Ritual seit dem Merge unter
  * /booster/confidence lebt — so bleiben die bestehenden Streaks der Nutzer
  * erhalten. Nicht "aufräumen"!
+ *
+ * Die Nutzlast ist „heute erledigt": das Ritual schaltet danach optimistisch
+ * auf den Erledigt-Zustand und braucht dafür ein Signal, das sich vom
+ * Anfangszustand des Formulars unterscheidet.
  */
 export async function logCleanserCheckinAction(
-  _prevState: CleanserCheckinState,
+  _prevState: ActionResult<boolean>,
   _formData: FormData,
-): Promise<CleanserCheckinState> {
-  const supabase = await createClient();
+): Promise<ActionResult<boolean>> {
+  return withUser(async ({ supabase, user }) => {
+    const today = await serverTodayKey();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const { error } = await supabase.from("cleanser_checkins").insert({
+      user_id: user.id,
+      cleanser_slug: "mantra",
+      date: today,
+    });
 
-  if (!user) {
-    return { error: "Du musst angemeldet sein.", success: false };
-  }
+    // 23505 = unique_violation → schon heute erledigt, kein echter Fehler.
+    if (error && error.code !== "23505") {
+      return dbFailed(error, "mantra");
+    }
 
-  const today = await serverTodayKey();
-
-  const { error } = await supabase.from("cleanser_checkins").insert({
-    user_id: user.id,
-    cleanser_slug: "mantra",
-    date: today,
+    return ok(true);
   });
-
-  // 23505 = unique_violation → schon heute erledigt, kein echter Fehler.
-  if (error && error.code !== "23505") {
-    return { error: dbError(error, "mantra"), success: false };
-  }
-
-  return { error: null, success: true };
 }
 
 /**
  * Stiller Check-in beim Abschluss des Moment-Flows („Gleich bin ich dran").
  * Bewusst OHNE Streak-UI — ein Akut-Werkzeug soll keinen Täglich-Nutzen-Anreiz
- * setzen; die Daten liegen nur für spätere Statistiken vor. Fire-and-forget
- * vom Client, deshalb keine Fehlermeldung an den User (23505 = heute schon
+ * setzen; die Daten liegen nur für spätere Statistiken vor. Der Client ruft
+ * fire-and-forget auf und wertet das Ergebnis nie aus (23505 = heute schon
  * geloggt ist hier schlicht egal).
  */
-export async function logMomentFlowCheckin(): Promise<void> {
-  const supabase = await createClient();
+export async function logMomentFlowCheckin(): Promise<ActionResult> {
+  return withUser(async ({ supabase, user }) => {
+    const today = await serverTodayKey();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
+    const { error } = await supabase.from("cleanser_checkins").insert({
+      user_id: user.id,
+      cleanser_slug: "confidence",
+      date: today,
+    });
 
-  const today = await serverTodayKey();
+    if (error && error.code !== "23505") {
+      return dbFailed(error, "confidence");
+    }
 
-  await supabase.from("cleanser_checkins").insert({
-    user_id: user.id,
-    cleanser_slug: "confidence",
-    date: today,
+    return ok();
   });
 }
 
@@ -98,74 +93,65 @@ export async function logMomentFlowCheckin(): Promise<void> {
  * Fallback-Strategie: Hat der User noch kein eigenes Mantra bzw. keine eigenen
  * Karten, werden die Default-Konstanten zurückgegeben (Karten dann mit
  * `id: null`, damit die UI sie als nicht-DB-gestützt erkennen kann).
+ *
+ * Bewusst **kein** `ActionResult`: die Defaults sind die Antwort auf jedes
+ * „nichts da" — auch auf „keine Sitzung mehr". Ein Ergebnis zum Auspacken
+ * würde die Server-Komponente zwingen, diesen Fallback ein zweites Mal
+ * hinzuschreiben.
  */
 export async function getMantraData(): Promise<MantraData> {
-  const supabase = await createClient();
+  const result = await withUser(async ({ supabase, user }) => {
+    const { data: mantraRow } = await supabase
+      .from("user_mantra")
+      .select("text")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const { data: cardRows } = await supabase
+      .from("mantra_cards")
+      .select("id, thought, reframe")
+      .eq("user_id", user.id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
 
-  if (!user) {
-    return { mantra: DEFAULT_MANTRA, cards: defaultCards() };
-  }
+    const cards: MantraCardData[] =
+      cardRows && cardRows.length > 0 ? cardRows : defaultCards();
 
-  const { data: mantraRow } = await supabase
-    .from("user_mantra")
-    .select("text")
-    .eq("user_id", user.id)
-    .maybeSingle();
+    return ok({ mantra: mantraRow?.text ?? DEFAULT_MANTRA, cards });
+  });
 
-  const { data: cardRows } = await supabase
-    .from("mantra_cards")
-    .select("id, thought, reframe")
-    .eq("user_id", user.id)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
-
-  const cards: MantraCardData[] =
-    cardRows && cardRows.length > 0 ? cardRows : defaultCards();
-
-  return { mantra: mantraRow?.text ?? DEFAULT_MANTRA, cards };
+  return result.error === null
+    ? result.data
+    : { mantra: DEFAULT_MANTRA, cards: defaultCards() };
 }
 
 /** Mantra speichern (genau eins pro User, via unique(user_id)-Upsert). */
-export async function saveMantraAction(
-  text: string,
-): Promise<MantraActionState> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Du musst angemeldet sein.", success: false };
-  }
-
+export async function saveMantraAction(text: string): Promise<ActionResult> {
   const trimmed = (text ?? "").trim();
   if (!trimmed) {
-    return { error: "Bitte gib ein Mantra ein.", success: false };
+    return failed("Bitte gib ein Mantra ein.");
   }
   if (trimmed.length > MANTRA_MAX) {
-    return { error: `Maximal ${MANTRA_MAX} Zeichen.`, success: false };
+    return failed(`Maximal ${MANTRA_MAX} Zeichen.`);
   }
 
-  const { error } = await supabase.from("user_mantra").upsert(
-    {
-      user_id: user.id,
-      text: trimmed,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id" },
-  );
+  const result = await withUser(async ({ supabase, user }) => {
+    const { error } = await supabase.from("user_mantra").upsert(
+      {
+        user_id: user.id,
+        text: trimmed,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" },
+    );
 
-  if (error) {
-    return { error: dbError(error, "mantra"), success: false };
-  }
+    return error ? dbFailed(error, "mantra") : ok();
+  });
+
+  if (result.error !== null) return result;
 
   revalidatePath(REVALIDATE_PATH);
-  return { error: null, success: true };
+  return result;
 }
 
 /** Validiert ein Gedanke/Reframe-Paar; gibt eine Fehlermeldung oder null zurück. */
@@ -186,46 +172,38 @@ function validateCardFields(
 export async function addCardAction(
   thought: string,
   reframe: string,
-): Promise<MantraActionState> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Du musst angemeldet sein.", success: false };
-  }
-
+): Promise<ActionResult> {
   const validationError = validateCardFields(thought ?? "", reframe ?? "");
   if (validationError) {
-    return { error: validationError, success: false };
+    return failed(validationError);
   }
 
-  // Nächste sort_order ans Ende.
-  const { data: last } = await supabase
-    .from("mantra_cards")
-    .select("sort_order")
-    .eq("user_id", user.id)
-    .order("sort_order", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const result = await withUser(async ({ supabase, user }) => {
+    // Nächste sort_order ans Ende.
+    const { data: last } = await supabase
+      .from("mantra_cards")
+      .select("sort_order")
+      .eq("user_id", user.id)
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  const sort_order = (last?.sort_order ?? -1) + 1;
+    const sort_order = (last?.sort_order ?? -1) + 1;
 
-  const { error } = await supabase.from("mantra_cards").insert({
-    user_id: user.id,
-    thought: thought.trim(),
-    reframe: reframe.trim(),
-    sort_order,
+    const { error } = await supabase.from("mantra_cards").insert({
+      user_id: user.id,
+      thought: thought.trim(),
+      reframe: reframe.trim(),
+      sort_order,
+    });
+
+    return error ? dbFailed(error, "mantra") : ok();
   });
 
-  if (error) {
-    return { error: dbError(error, "mantra"), success: false };
-  }
+  if (result.error !== null) return result;
 
   revalidatePath(REVALIDATE_PATH);
-  return { error: null, success: true };
+  return result;
 }
 
 /** Eigene Reframe-Karte bearbeiten. */
@@ -233,71 +211,53 @@ export async function updateCardAction(
   id: string,
   thought: string,
   reframe: string,
-): Promise<MantraActionState> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Du musst angemeldet sein.", success: false };
-  }
-
+): Promise<ActionResult> {
   if (!id) {
-    return { error: "Karte nicht gefunden.", success: false };
+    return failed("Karte nicht gefunden.");
   }
 
   const validationError = validateCardFields(thought ?? "", reframe ?? "");
   if (validationError) {
-    return { error: validationError, success: false };
+    return failed(validationError);
   }
 
-  // RLS scoped auf den Owner; der user_id-Filter ist zusätzliche Absicherung.
-  const { error } = await supabase
-    .from("mantra_cards")
-    .update({ thought: thought.trim(), reframe: reframe.trim() })
-    .eq("id", id)
-    .eq("user_id", user.id);
+  const result = await withUser(async ({ supabase, user }) => {
+    // RLS scoped auf den Owner; der user_id-Filter ist zusätzliche Absicherung.
+    const { error } = await supabase
+      .from("mantra_cards")
+      .update({ thought: thought.trim(), reframe: reframe.trim() })
+      .eq("id", id)
+      .eq("user_id", user.id);
 
-  if (error) {
-    return { error: dbError(error, "mantra"), success: false };
-  }
+    return error ? dbFailed(error, "mantra") : ok();
+  });
+
+  if (result.error !== null) return result;
 
   revalidatePath(REVALIDATE_PATH);
-  return { error: null, success: true };
+  return result;
 }
 
 /** Eigene Reframe-Karte löschen. */
-export async function deleteCardAction(
-  id: string,
-): Promise<MantraActionState> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Du musst angemeldet sein.", success: false };
-  }
-
+export async function deleteCardAction(id: string): Promise<ActionResult> {
   if (!id) {
-    return { error: "Karte nicht gefunden.", success: false };
+    return failed("Karte nicht gefunden.");
   }
 
-  const { error } = await supabase
-    .from("mantra_cards")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
+  const result = await withUser(async ({ supabase, user }) => {
+    const { error } = await supabase
+      .from("mantra_cards")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
 
-  if (error) {
-    return { error: dbError(error, "mantra"), success: false };
-  }
+    return error ? dbFailed(error, "mantra") : ok();
+  });
+
+  if (result.error !== null) return result;
 
   revalidatePath(REVALIDATE_PATH);
-  return { error: null, success: true };
+  return result;
 }
 
 /**
@@ -308,51 +268,43 @@ export async function deleteCardAction(
  * Idempotent: Hat der User bereits Karten, werden diese unverändert
  * zurückgegeben (kein Doppel-Seed bei Races/Doppelklicks).
  */
-export async function seedDefaultCardsAction(): Promise<{
-  error: string | null;
-  cards: MantraCardData[];
-}> {
-  const supabase = await createClient();
+export async function seedDefaultCardsAction(): Promise<
+  ActionResult<MantraCardData[]>
+> {
+  return withUser(async ({ supabase, user }) => {
+    const { data: existing } = await supabase
+      .from("mantra_cards")
+      .select("id, thought, reframe")
+      .eq("user_id", user.id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    // Schon materialisiert → unverändert zurück, ohne die Seite zu invalidieren.
+    if (existing && existing.length > 0) {
+      return ok<MantraCardData[]>(existing);
+    }
 
-  if (!user) {
-    return { error: "Du musst angemeldet sein.", cards: [] };
-  }
+    const rows = DEFAULT_CARDS.map((c, i) => ({
+      user_id: user.id,
+      thought: c.thought,
+      reframe: c.reframe,
+      sort_order: i,
+    }));
 
-  const { data: existing } = await supabase
-    .from("mantra_cards")
-    .select("id, thought, reframe")
-    .eq("user_id", user.id)
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
+    const { data: inserted, error } = await supabase
+      .from("mantra_cards")
+      .insert(rows)
+      .select("id, thought, reframe, sort_order");
 
-  if (existing && existing.length > 0) {
-    return { error: null, cards: existing };
-  }
+    if (error || !inserted) {
+      return dbFailed(error, "mantra_cards.insert");
+    }
 
-  const rows = DEFAULT_CARDS.map((c, i) => ({
-    user_id: user.id,
-    thought: c.thought,
-    reframe: c.reframe,
-    sort_order: i,
-  }));
+    const cards: MantraCardData[] = [...inserted]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((r) => ({ id: r.id, thought: r.thought, reframe: r.reframe }));
 
-  const { data: inserted, error } = await supabase
-    .from("mantra_cards")
-    .insert(rows)
-    .select("id, thought, reframe, sort_order");
-
-  if (error || !inserted) {
-    return { error: dbError(error, "mantra_cards.insert"), cards: [] };
-  }
-
-  const cards: MantraCardData[] = [...inserted]
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .map((r) => ({ id: r.id, thought: r.thought, reframe: r.reframe }));
-
-  revalidatePath(REVALIDATE_PATH);
-  return { error: null, cards };
+    revalidatePath(REVALIDATE_PATH);
+    return ok(cards);
+  });
 }

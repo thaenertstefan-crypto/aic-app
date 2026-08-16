@@ -1,52 +1,42 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { dbError } from "@/lib/utils/db-error";
+import {
+  dbFailed,
+  failed,
+  ok,
+  type ActionResult,
+} from "@/lib/actions/action-result";
+import { withUser } from "@/lib/actions/with-user";
 import { serverTodayKey } from "@/lib/server/timezone";
-
-export type MoodCheckinState = {
-  error: string | null;
-  success: boolean;
-  /** The score that was just saved, so the client can confirm the selection. */
-  score: number | null;
-};
 
 /**
  * Save (or update) today's mood check-in for the current user.
  * A unique constraint on (user_id, date) lets us upsert: re-tapping a mood
  * simply overwrites today's score instead of creating duplicate rows.
+ *
+ * Ohne Nutzlast: der alte `score`-Rückgabewert („damit der Client die Auswahl
+ * bestätigen kann") wurde nie gelesen — die Auswahl steht schon optimistisch
+ * im Client.
  */
 export async function saveMoodCheckinAction(
-  _prevState: MoodCheckinState,
+  _prevState: ActionResult,
   formData: FormData,
-): Promise<MoodCheckinState> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Du musst angemeldet sein.", success: false, score: null };
-  }
-
+): Promise<ActionResult> {
   const score = Number(formData.get("mood_score"));
   if (!Number.isInteger(score) || score < 1 || score > 5) {
-    return { error: "Ungültige Auswahl.", success: false, score: null };
+    return failed("Ungültige Auswahl.");
   }
 
-  const today = await serverTodayKey();
+  return withUser(async ({ supabase, user }) => {
+    const today = await serverTodayKey();
 
-  const { error } = await supabase
-    .from("daily_checkins")
-    .upsert(
-      { user_id: user.id, date: today, mood_score: score },
-      { onConflict: "user_id,date" },
-    );
+    const { error } = await supabase
+      .from("daily_checkins")
+      .upsert(
+        { user_id: user.id, date: today, mood_score: score },
+        { onConflict: "user_id,date" },
+      );
 
-  if (error) {
-    return { error: dbError(error, "daily_checkins"), success: false, score: null };
-  }
-
-  return { error: null, success: true, score };
+    return error ? dbFailed(error, "daily_checkins") : ok();
+  });
 }

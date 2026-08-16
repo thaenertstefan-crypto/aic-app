@@ -16,6 +16,8 @@ import { Mascot } from "@/components/brand/mascot";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { cn } from "@/lib/utils";
 
+import { ok } from "@/lib/actions/action-result";
+
 import { saveBetReflectionAction } from "../../actions";
 
 type Vibe = "energized" | "neutral" | "drained";
@@ -33,9 +35,10 @@ export function ReflectForm({
   betId: string;
   betText: string;
 }) {
-  const [state, formAction, pending] = useActionState(saveBetReflectionAction, {
-    error: null,
-  });
+  const [state, formAction, pending] = useActionState(
+    saveBetReflectionAction,
+    ok(false),
+  );
   const [vibe, setVibe] = useState<Vibe | null>(null);
   // „Kurz" halten: die drei optionalen Vertiefungen liegen zugeklappt hinter
   // einer Disclosure. Sie bleiben gemountet (nur per `hidden` versteckt), damit
@@ -43,7 +46,7 @@ export function ReflectForm({
   const [deepOpen, setDeepOpen] = useState(false);
 
   // Warmer Abschluss (wie Journey/Schmiede) statt Server-Redirect.
-  if (state.success) {
+  if (state.error === null && state.data) {
     return (
       <div className="flex min-h-lvh flex-col items-center px-4 py-10">
         <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">

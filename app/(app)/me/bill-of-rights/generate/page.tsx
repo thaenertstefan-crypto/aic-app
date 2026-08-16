@@ -17,6 +17,8 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { cn } from "@/lib/utils";
 
+import { ok } from "@/lib/actions/action-result";
+
 import { saveGeneratedRightAction } from "../actions";
 
 const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
@@ -74,9 +76,10 @@ export default function GenerateRightPage() {
   const [loading, setLoading] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
 
-  const [state, formAction, pending] = useActionState(saveGeneratedRightAction, {
-    error: null,
-  });
+  const [state, formAction, pending] = useActionState(
+    saveGeneratedRightAction,
+    ok(),
+  );
 
   const canGenerate = p1.trim().length > 0 && !loading;
 

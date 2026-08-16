@@ -115,12 +115,9 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
     }
 
     try {
-      const result = await saveShadowEntryAction(
-        { error: null, success: false },
-        formData,
-      );
+      const result = await saveShadowEntryAction(formData);
       setSaving(false);
-      if (result.error) {
+      if (result.error !== null) {
         setError(result.error);
         return;
       }

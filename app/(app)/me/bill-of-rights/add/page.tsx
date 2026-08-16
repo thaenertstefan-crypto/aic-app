@@ -10,6 +10,8 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 
+import { ok } from "@/lib/actions/action-result";
+
 import { appendRightAction } from "../actions";
 
 const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
@@ -18,9 +20,7 @@ const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
 const PREFIX = "Ich habe das Recht,";
 
 export default function AddRightPage() {
-  const [state, formAction, pending] = useActionState(appendRightAction, {
-    error: null,
-  });
+  const [state, formAction, pending] = useActionState(appendRightAction, ok());
   const [rest, setRest] = useState("");
 
   return (

@@ -2,9 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
+import {
+  dbFailed,
+  failed,
+  ok,
+  type ActionResult,
+} from "@/lib/actions/action-result";
+import { withUser } from "@/lib/actions/with-user";
 import type { MessyMomentContent, RightItem } from "@/lib/types/db-json";
-import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { saveRightsAction } from "@/lib/recipes/bill-of-rights/actions";
 import {
@@ -21,40 +26,25 @@ import { patchJournalContent } from "@/lib/utils/journal-content";
 // ist darauf gekeyed). Nach dem Speichern markiert die Action das Rezept als
 // abgeschlossen (wie Overthinking: wiederholbar, Badge zeigt "Abgeschlossen").
 
-export type MessyMomentActionState = {
-  error: string | null;
-  success: boolean;
-  /** ID des frisch angelegten Eintrags — Input für /api/messy-guilt-coach. */
-  entryId: string | null;
-};
-
 /**
  * Save a new "Things Got Messy" reflection (always inserts a new row),
  * then mark the recipe as completed.
+ *
+ * Die Nutzlast ist die ID des frischen Eintrags — Input für
+ * /api/messy-guilt-coach.
  */
 export async function saveMessyMomentAction(
-  _prevState: MessyMomentActionState,
   formData: FormData,
-): Promise<MessyMomentActionState> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Du musst angemeldet sein, um zu speichern.", success: false, entryId: null };
-  }
-
+): Promise<ActionResult<string>> {
   const messyWhen = formData.get("messy_when") as string | null;
 
   if (!messyWhen?.trim()) {
-    return { error: "Bitte erzähl kurz, was passiert ist.", success: false, entryId: null };
+    return failed("Bitte erzähl kurz, was passiert ist.");
   }
 
   const lengthError = tooLong(messyWhen, TEXT_MAX_LONG);
   if (lengthError) {
-    return { error: lengthError, success: false, entryId: null };
+    return failed(lengthError);
   }
 
   // Einordnung (gesund/ungesund) + Regel-Konflikt liefert die KI danach —
@@ -63,70 +53,67 @@ export async function saveMessyMomentAction(
     messy_when: messyWhen.trim(),
   } satisfies MessyMomentContent;
 
-  const { data: inserted, error: insertError } = await supabase
-    .from("journal_entries")
-    .insert({
-      user_id: user.id,
-      recipe_slug: "things-got-messy",
-      template_type: "messy_moment",
-      content,
-      entry_date: await serverTodayKey(),
-    })
-    .select("id")
-    .single();
-
-  if (insertError || !inserted) {
-    return { error: dbError(insertError, "things-got-messy"), success: false, entryId: null };
-  }
-
-  // Rezept-Fortschritt auf "completed" setzen (höchster Zyklus).
-  const { data: progress } = await supabase
-    .from("user_recipe_progress")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "things-got-messy")
-    .order("cycle_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (progress) {
-    const { error: updateError } = await supabase
-      .from("user_recipe_progress")
-      .update({
-        current_step: 1,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", progress.id);
-
-    if (updateError) {
-      return { error: dbError(updateError, "things-got-messy"), success: false, entryId: null };
-    }
-  } else {
-    const { error: progressInsertError } = await supabase
-      .from("user_recipe_progress")
+  return withUser(async ({ supabase, user }) => {
+    const { data: inserted, error: insertError } = await supabase
+      .from("journal_entries")
       .insert({
         user_id: user.id,
         recipe_slug: "things-got-messy",
-        current_step: 1,
-        status: "completed",
-        started_at: new Date().toISOString(),
-        completed_at: new Date().toISOString(),
-        cycle_number: 1,
-      });
+        template_type: "messy_moment",
+        content,
+        entry_date: await serverTodayKey(),
+      })
+      .select("id")
+      .single();
 
-    if (progressInsertError) {
-      return { error: dbError(progressInsertError, "things-got-messy"), success: false, entryId: null };
+    if (insertError || !inserted) {
+      return dbFailed(insertError, "things-got-messy");
     }
-  }
 
-  return { error: null, success: true, entryId: inserted.id };
+    // Rezept-Fortschritt auf "completed" setzen (höchster Zyklus).
+    const { data: progress } = await supabase
+      .from("user_recipe_progress")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "things-got-messy")
+      .order("cycle_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (progress) {
+      const { error: updateError } = await supabase
+        .from("user_recipe_progress")
+        .update({
+          current_step: 1,
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", progress.id);
+
+      if (updateError) {
+        return dbFailed(updateError, "things-got-messy");
+      }
+    } else {
+      const { error: progressInsertError } = await supabase
+        .from("user_recipe_progress")
+        .insert({
+          user_id: user.id,
+          recipe_slug: "things-got-messy",
+          current_step: 1,
+          status: "completed",
+          started_at: new Date().toISOString(),
+          completed_at: new Date().toISOString(),
+          cycle_number: 1,
+        });
+
+      if (progressInsertError) {
+        return dbFailed(progressInsertError, "things-got-messy");
+      }
+    }
+
+    return ok(inserted.id);
+  });
 }
-
-export type GuiltFeedbackActionState = {
-  error: string | null;
-  success: boolean;
-};
 
 /**
  * Antwort auf „Fühlt sich das stimmig an?" am Ergebnis-Screen: schreibt
@@ -134,57 +121,47 @@ export type GuiltFeedbackActionState = {
  * überschreibt einfach (Single-User, kein Concurrency-Thema).
  */
 export async function saveGuiltFeedbackAction(
-  _prevState: GuiltFeedbackActionState,
   formData: FormData,
-): Promise<GuiltFeedbackActionState> {
+): Promise<ActionResult> {
   const entryId = (formData.get("entryId") as string | null)?.trim() ?? "";
   const feedback = formData.get("feedback") as string | null;
 
   if (!entryId || (feedback !== "agree" && feedback !== "disagree")) {
-    return { error: "Das hat gerade nicht geklappt. Versuch es noch einmal.", success: false };
+    return failed("Das hat gerade nicht geklappt. Versuch es noch einmal.");
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Du musst angemeldet sein.", success: false };
+  const result = await withUser(async ({ supabase, user }) => {
+    const { data: row } = await supabase
+      .from("journal_entries")
+      .select("content")
+      .eq("id", entryId)
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "things-got-messy")
+      .eq("template_type", "messy_moment")
+      .maybeSingle();
 
-  const { data: row } = await supabase
-    .from("journal_entries")
-    .select("content")
-    .eq("id", entryId)
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "things-got-messy")
-    .eq("template_type", "messy_moment")
-    .maybeSingle();
+    if (!row) {
+      return failed("Wir konnten deinen Eintrag nicht finden.");
+    }
 
-  if (!row) {
-    return { error: "Wir konnten deinen Eintrag nicht finden.", success: false };
-  }
+    const merged = patchJournalContent("messy_moment", row.content, {
+      guilt_feedback: feedback,
+    });
 
-  const merged = patchJournalContent("messy_moment", row.content, {
-    guilt_feedback: feedback,
+    const { error: updateError } = await supabase
+      .from("journal_entries")
+      .update({ content: merged })
+      .eq("id", entryId)
+      .eq("user_id", user.id);
+
+    return updateError ? dbFailed(updateError, "things-got-messy") : ok();
   });
 
-  const { error: updateError } = await supabase
-    .from("journal_entries")
-    .update({ content: merged })
-    .eq("id", entryId)
-    .eq("user_id", user.id);
-
-  if (updateError) {
-    return { error: dbError(updateError, "things-got-messy"), success: false };
-  }
+  if (result.error !== null) return result;
 
   revalidatePath("/journal");
-  return { error: null, success: true };
+  return result;
 }
-
-export type AcceptRightActionState = {
-  error: string | null;
-  success: boolean;
-};
 
 /**
  * KI-Vorschlag aus dem Ergebnis-Screen übernehmen: hängt das (ggf. vom User
@@ -193,37 +170,34 @@ export type AcceptRightActionState = {
  * ohne Redirect, damit der Wizard auf seinem Abschluss-Screen bleibt.
  */
 export async function acceptSuggestedRightAction(
-  _prevState: AcceptRightActionState,
   formData: FormData,
-): Promise<AcceptRightActionState> {
+): Promise<ActionResult> {
   const text = (formData.get("text") as string | null)?.trim() ?? "";
-  if (!text) return { error: "Der Vorschlag ist leer.", success: false };
+  if (!text) return failed("Der Vorschlag ist leer.");
   const lengthError = tooLong(text, TEXT_MAX_SHORT);
-  if (lengthError) return { error: lengthError, success: false };
+  if (lengthError) return failed(lengthError);
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Du musst angemeldet sein.", success: false };
+  const result = await withUser(async ({ supabase, user }) => {
+    const { data: bor } = await supabase
+      .from("bill_of_rights")
+      .select("rights")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const rights = (bor?.rights as RightItem[] | null) ?? [];
 
-  const { data: bor } = await supabase
-    .from("bill_of_rights")
-    .select("rights")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  const rights = (bor?.rights as RightItem[] | null) ?? [];
+    const updated: RightItem[] = [
+      ...rights,
+      { id: crypto.randomUUID(), text, active: true },
+    ];
 
-  const updated: RightItem[] = [
-    ...rights,
-    { id: crypto.randomUUID(), text, active: true },
-  ];
+    const fd = new FormData();
+    fd.set("rights", JSON.stringify(updated));
+    const res = await saveRightsAction({ error: null, success: false }, fd);
+    return res.error ? failed(res.error) : ok();
+  });
 
-  const fd = new FormData();
-  fd.set("rights", JSON.stringify(updated));
-  const res = await saveRightsAction({ error: null, success: false }, fd);
-  if (res.error) return { error: res.error, success: false };
+  if (result.error !== null) return result;
 
   revalidatePath("/me/bill-of-rights");
-  return { error: null, success: true };
+  return result;
 }

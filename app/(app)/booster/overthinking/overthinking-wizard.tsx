@@ -407,13 +407,13 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
     }
 
     try {
-      const result = await saveOverthinkingAction({ error: null, success: false }, formData);
+      const result = await saveOverthinkingAction(formData);
 
       setSubmitting(false);
 
-      if (result.error) {
+      if (result.error !== null) {
         setError(result.error);
-      } else if (result.success) {
+      } else {
         clearDraft();
         setSaved(true);
       }
