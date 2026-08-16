@@ -48,6 +48,10 @@ verbindlichen Quellen; hier stehen nur die Regeln, die sich am Code festmachen l
 - Server-Actions und Backend-Logik der Übungen liegen in `lib/recipes/**/actions.ts` — nicht im
   Routenbaum; geteilte Bausteine in `components/recipes/`, Journal-Formatierung in
   `lib/utils/journal.ts`.
+- Eine **neue** Server-Action beginnt mit `withUser` aus `lib/actions/` und gibt ein `ActionResult<T>`
+  zurück (`ok`/`failed`/`dbFailed`). Eine neu geschriebene `auth.getUser()`-Präambel oder eine eigene
+  Rückgabeform ist ein Befund; die 41 Altbestände sind es noch nicht, die migrieren eigene Tickets.
+  Der Fehlerzustand „nicht angemeldet" ist `SESSION_EXPIRED` — nie ein neu getippter Satz.
 - **Neue reine Module unter `lib/` bekommen eine `*.test.ts`** — co-located, ausgeführt von
   `node --test` als Teil von `npm run gate`. „Rein" heißt: keine Netzwerk-, DB- oder
   React-Abhängigkeit. Für Komponenten und Server-Actions gilt die Regel bewusst **nicht**.
