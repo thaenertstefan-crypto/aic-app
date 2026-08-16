@@ -43,10 +43,13 @@ verbindlichen Quellen; hier stehen nur die Regeln, die sich am Code festmachen l
 ## Struktur
 
 - Übungen liegen unter `app/(app)/me/*` (durable: Werte, Wants, Bill of Rights) und
-  `app/(app)/booster/*` (akut). Die Schritte einer Übung sind eine Phasen-State-Machine in der
-  jeweiligen Client-Komponente.
+  `app/(app)/booster/*` (akut). Die **Bühnen** einer Übung sind eine Phasen-State-Machine in der
+  jeweiligen Client-Komponente. Begriffe siehe [CONTEXT.md](CONTEXT.md).
 - Server-Actions und Backend-Logik bleiben in `app/(app)/recipes/**/actions.ts`; geteilte
-  Bausteine in `components/recipes/`, Journal-Templates in `components/journal/templates/`.
+  Bausteine in `components/recipes/`, Journal-Formatierung in `lib/utils/journal.ts`.
+- **Neue reine Module unter `lib/` bekommen eine `*.test.ts`** — co-located, ausgeführt von
+  `node --test` als Teil von `npm run gate`. „Rein" heißt: keine Netzwerk-, DB- oder
+  React-Abhängigkeit. Für Komponenten und Server-Actions gilt die Regel bewusst **nicht**.
 - AI-Aufrufe laufen über `lib/anthropic/`, System-Prompts liegen in `lib/anthropic/prompts/`.
   Ein Prompt-String inline in einer Komponente ist ein Befund.
 
