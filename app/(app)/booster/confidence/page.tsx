@@ -1,3 +1,4 @@
+import { getCachedUser } from "@/lib/supabase/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { computeStreak } from "@/lib/utils/streak";
 import { serverTodayKey } from "@/lib/server/timezone";
@@ -8,11 +9,8 @@ import { ConfidenceBooster } from "./confidence-booster";
 import { getMantraData } from "./actions";
 
 export default async function ConfidenceBoosterPage() {
+  const user = await getCachedUser();
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const today = await serverTodayKey();
 

@@ -7,6 +7,7 @@ import {
   checkRateLimit,
   logUsage,
 } from "@/lib/anthropic/rate-limit";
+import { SESSION_EXPIRED } from "@/lib/actions/action-result";
 import { createClient } from "@/lib/supabase/server";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
 import {
@@ -121,7 +122,7 @@ export async function POST(request: Request) {
 
   if (!user) {
     return Response.json(
-      { error: "Du musst angemeldet sein." },
+      { error: SESSION_EXPIRED },
       { status: 401 },
     );
   }

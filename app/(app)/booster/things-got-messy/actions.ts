@@ -192,8 +192,8 @@ export async function acceptSuggestedRightAction(
 
     const fd = new FormData();
     fd.set("rights", JSON.stringify(updated));
-    const res = await saveRightsAction({ error: null, success: false }, fd);
-    return res.error ? failed(res.error) : ok();
+    const res = await saveRightsAction(fd);
+    return res.error !== null ? failed(res.error) : ok();
   });
 
   if (result.error !== null) return result;

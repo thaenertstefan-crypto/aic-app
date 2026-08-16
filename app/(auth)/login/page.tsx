@@ -17,6 +17,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { loginAction } from "@/app/(auth)/auth.actions";
+import { ok } from "@/lib/actions/action-result";
 import { invalidMessage, clearValidity } from "@/lib/utils/form-validation";
 import { POST_LOGIN_KEY } from "@/components/dashboard/dashboard-reveal";
 
@@ -30,9 +31,7 @@ function markPostLogin() {
 }
 
 export default function LoginPage() {
-  const [state, formAction, pending] = useActionState(loginAction, {
-    error: null,
-  });
+  const [state, formAction, pending] = useActionState(loginAction, ok());
 
   return (
     <Card size="sm">

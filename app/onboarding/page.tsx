@@ -36,7 +36,11 @@ import {
 import { cn } from "@/lib/utils";
 import { localDateKey } from "@/lib/utils/date";
 
+import { ok, type ActionResult } from "@/lib/actions/action-result";
 import { completeOnboardingAction } from "@/app/onboarding/onboarding.actions";
+
+/** „Noch nicht abgeschickt" — die Nutzlast unterscheidet das vom Erfolg. */
+const INITIAL_STATE: ActionResult<boolean> = ok(false);
 
 /** Gültigkeitsfenster für den Post-Login-Marker (analog dashboard-reveal). */
 const POST_LOGIN_MAX_AGE_MS = 10_000;
@@ -164,15 +168,19 @@ export default function OnboardingPage() {
     }
   }, [showLoginIntro]);
 
-  const [state, formAction, pending] = useActionState(completeOnboardingAction, {
-    error: null,
-    success: false,
-  });
+  const [state, formAction, pending] = useActionState(
+    completeOnboardingAction,
+    INITIAL_STATE,
+  );
+
+  // „Wirklich durchgelaufen": der Anfangszustand trägt ebenfalls `error: null`,
+  // deshalb entscheidet die Nutzlast, nicht das fehlende Fehlerfeld.
+  const completed = state.error === null && state.data;
 
   const fallbackTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!state.success) return;
+    if (!completed) return;
     // Reminder am Onboarding-Tag unterdrücken (Sicherheitsnetz).
     try {
       localStorage.setItem("aic_reminder_date", localDateKey());
@@ -204,7 +212,7 @@ export default function OnboardingPage() {
       window.clearTimeout(go);
       if (fallbackTimer.current) window.clearTimeout(fallbackTimer.current);
     };
-  }, [state.success, reduced, router]);
+  }, [completed, reduced, router]);
 
   // Rücknahme der Übergabe-Sequenz, sobald die Server-Action abgeschlossen ist,
   // ohne Erfolg — die Karte kommt mit FormError zurück. Trigger ist die
@@ -213,11 +221,11 @@ export default function OnboardingPage() {
   // `Object.is` würde den Effect dann beim zweiten Versuch nicht erneut
   // feuern — die Übergabe bliebe für immer ausgeblendet hängen.
   useEffect(() => {
-    if (pending || state.success) return;
+    if (pending || completed) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Rücknahme der Übergabe-Sequenz nach abgeschlossener, erfolgloser Server-Action
     setHandover(false);
     handoverStart.current = null;
-  }, [pending, state.success]);
+  }, [pending, completed]);
 
   // Mascot-Entrance: entweder die Login→Onboarding-Sprungsequenz (nur beim
   // allerersten Eintritt nach Login) oder der normale Mount-Tween.

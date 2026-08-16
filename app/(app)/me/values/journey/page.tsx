@@ -1,3 +1,4 @@
+import { getCachedUser } from "@/lib/supabase/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { serverTodayKey } from "@/lib/server/timezone";
 
@@ -6,11 +7,8 @@ import { ValuesJourneyClient } from "./values-journey-client";
 const LAST_INDEX = 8;
 
 export default async function ValuesJourneyPage() {
+  const user = await getCachedUser();
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const completed = new Set<number>();
   let latestEntryDate: string | null = null;

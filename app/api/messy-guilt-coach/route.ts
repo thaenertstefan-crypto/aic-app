@@ -13,6 +13,7 @@ import {
   rescueMatch,
   resolveMatch,
 } from "@/lib/anthropic/right-match";
+import { SESSION_EXPIRED } from "@/lib/actions/action-result";
 import { createClient } from "@/lib/supabase/server";
 import type { RightItem } from "@/lib/types/db-json";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
 
   if (!user) {
     return Response.json(
-      { error: "Du musst angemeldet sein." },
+      { error: SESSION_EXPIRED },
       { status: 401 },
     );
   }

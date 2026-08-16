@@ -135,12 +135,12 @@ export function Sternschmiede({
     const fd = new FormData();
     fd.set("bets", JSON.stringify(updated));
     fd.set("previousIds", JSON.stringify(previous.map((b) => b.id)));
-    const res = await saveBetsAction({ error: null }, fd);
-    if (res.error) {
+    const res = await saveBetsAction(fd);
+    if (res.error !== null) {
       setBets(previous);
       setBetError(res.error);
-    } else if (res.bets) {
-      setBets(res.bets);
+    } else {
+      setBets(res.data);
     }
   }
 
@@ -229,19 +229,16 @@ export function Sternschmiede({
     fd.set("bets", JSON.stringify(items));
     fd.set("previousIds", "[]");
     try {
-      const result = await saveBetsAction({ error: null }, fd);
+      const result = await saveBetsAction(fd);
       setSaving(false);
-      if (result.error) {
+      if (result.error !== null) {
         setError(result.error);
         return;
       }
       // Frisch geschlagene Funken sofort in die Landing-Liste übernehmen —
-      // bevorzugt die autoritative Server-Liste, sonst lokaler Merge.
-      if (result.bets) {
-        setBets(result.bets);
-      } else {
-        setBets((prev) => [...prev, ...items]);
-      }
+      // die Nutzlast ist die autoritative Server-Liste, ein lokaler Merge als
+      // Rückfallebene ist damit nicht mehr nötig.
+      setBets(result.data);
       setPhase("done");
     } catch {
       setSaving(false);

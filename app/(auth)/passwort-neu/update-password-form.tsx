@@ -14,12 +14,14 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { FormError } from "@/components/ui/form-error";
 import { updatePasswordAction } from "@/app/(auth)/auth.actions";
+import { ok } from "@/lib/actions/action-result";
 import { invalidMessage, clearValidity } from "@/lib/utils/form-validation";
 
 export function UpdatePasswordForm() {
-  const [state, formAction, pending] = useActionState(updatePasswordAction, {
-    error: null,
-  });
+  const [state, formAction, pending] = useActionState(
+    updatePasswordAction,
+    ok(),
+  );
 
   return (
     <Card size="sm">

@@ -7,9 +7,10 @@
  * selbst betrifft — dass `T` durch den Callback bis zum Ergebnis durchläuft
  * und der Kontext trägt, was eine Action braucht.
  *
- * Solange die Aufrufer nicht migriert sind (zwei Folge-Tickets), hat `withUser`
- * null echte Nutzer und der Compiler prüft sonst nichts daran. Diese Datei darf
- * weg, sobald echte Actions dasselbe beweisen.
+ * Die Aufrufer sind inzwischen migriert, `withUser` hat also echte Nutzer. Was
+ * hier bleibt, beweisen sie trotzdem nicht: dass eine schreibende Action ohne
+ * Nutzlast KEIN `success`-Feld mehr trägt, lässt sich nur mit einem
+ * `@ts-expect-error` festhalten — ein fehlendes Feld fällt sonst niemandem auf.
  */
 import { dbFailed, failed, ok } from "./action-result.ts";
 import { withUser } from "./with-user.ts";

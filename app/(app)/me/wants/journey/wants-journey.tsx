@@ -327,20 +327,17 @@ export function WantsJourney({
     formData.set("principles", principles);
 
     try {
-      const result = await saveYinYangEntryAction(
-        { error: null, success: false, entryId: null },
-        formData,
-      );
+      const result = await saveYinYangEntryAction(formData);
       setSubmitting(false);
 
-      if (result.error || !result.entryId) {
-        setError(result.error ?? "Speichern fehlgeschlagen. Versuch es noch einmal.");
+      if (result.error !== null) {
+        setError(result.error);
         return;
       }
 
       clearDraft();
-      setEntryId(result.entryId);
-      void runDistiller(result.entryId);
+      setEntryId(result.data);
+      void runDistiller(result.data);
     } catch {
       // Network error mid-request — preserve the audit as a draft.
       saveDraft(currentDraft());
@@ -399,9 +396,9 @@ export function WantsJourney({
     fd.set("previousIds", "[]");
 
     try {
-      const result = await saveWantsAction({ error: null }, fd);
+      const result = await saveWantsAction(fd);
       setSavingWants(false);
-      if (result.error) {
+      if (result.error !== null) {
         setWantsError(result.error);
         return;
       }

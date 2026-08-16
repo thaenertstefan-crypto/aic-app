@@ -7,6 +7,7 @@ import {
   checkRateLimit,
   logUsage,
 } from "@/lib/anthropic/rate-limit";
+import { SESSION_EXPIRED } from "@/lib/actions/action-result";
 import { createClient } from "@/lib/supabase/server";
 import {
   patchJournalContent,
@@ -41,7 +42,7 @@ export async function POST() {
 
   if (!user) {
     return Response.json(
-      { error: "Du musst angemeldet sein." },
+      { error: SESSION_EXPIRED },
       { status: 401 },
     );
   }

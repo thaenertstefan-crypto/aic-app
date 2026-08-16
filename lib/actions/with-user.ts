@@ -17,9 +17,10 @@ import { type ActionResult, failed, SESSION_EXPIRED } from "./action-result.ts";
  * nicht rein im Sinne der Testregel in CODING_STANDARDS.md. Der Gewinn hier
  * ist Lokalität und eine Fehlermeldung statt vier — nicht Prüfbarkeit.
  *
- * Bestehende Aufrufer sind absichtlich noch nicht migriert; das passiert in
- * zwei Folge-Tickets. Bis dahin stehen `lib/types/action-state.ts` und die
- * rohen `auth.getUser()`-Präambeln unverändert daneben.
+ * Alle Server-Actions sind inzwischen migriert; `lib/types/action-state.ts` ist
+ * damit weg. Die einzige begründete Ausnahme steht in `app/(auth)/auth.actions.ts`:
+ * Login, Signup und Reset laufen VOR der Anmeldung, dort gibt es keinen User zu
+ * holen. Die gemeinsame Ergebnisform gilt trotzdem auch dort.
  */
 
 // Aus den Quellen abgeleitet statt nachgeschrieben: ein handgepflegter

@@ -1,16 +1,18 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  dbFailed,
+  failed,
+  ok,
+  type ActionResult,
+} from "@/lib/actions/action-result";
+import { withUser, type ActionContext } from "@/lib/actions/with-user";
 import type {
-  Database,
   Json,
   TablesInsert,
   TablesUpdate,
 } from "@/lib/supabase/database.types";
-import type { ActionState } from "@/lib/types/action-state";
 import type { BetItem, WantItem, YinYangContent } from "@/lib/types/db-json";
-import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
 import {
   TEXT_MAX_LONG,
@@ -96,13 +98,14 @@ function parsePreviousIds(raw: FormDataEntryValue | null): string[] {
   }
 }
 
-type WantsRowClient = SupabaseClient<Database>;
-
 /**
  * Reload-vor-Write-Merge auf eine der beiden JSONB-Spalten: DB-Elemente, die
  * der Client weder kannte (previousIds) noch mitschickt, wurden parallel
  * angelegt und bleiben erhalten; Elemente aus previousIds, die jetzt fehlen,
  * sind echte Löschungen.
+ *
+ * Die Nutzlast ist das gemergte Array — genau das, was beide Aufrufer
+ * anschließend an den Client zurückgeben.
  */
 // Die zweite Hälfte der Schranke ist der Grund, warum kein Cast mehr nötig
 // ist: sie sagt aus, was die JSONB-Spalte ohnehin verlangt — die Elemente
@@ -111,16 +114,15 @@ type WantsRowClient = SupabaseClient<Database>;
 async function mergeIntoColumn<
   T extends { id: string } & { [key: string]: Json | undefined },
 >(
-  supabase: WantsRowClient,
-  userId: string,
+  { supabase, user }: ActionContext,
   column: "wants" | "bets",
   incoming: T[],
   previousIds: string[],
-): Promise<{ error: string | null; merged: T[] }> {
+): Promise<ActionResult<T[]>> {
   const { data: existing } = await supabase
     .from("wants")
     .select(`id, ${column}`)
-    .eq("user_id", userId)
+    .eq("user_id", user.id)
     .maybeSingle<{ id: string } & Record<"wants" | "bets", unknown>>();
 
   const dbItems = ((existing?.[column] as T[] | null) ?? []) as T[];
@@ -141,19 +143,19 @@ async function mergeIntoColumn<
       .from("wants")
       .update(updatePayload)
       .eq("id", existing.id);
-    if (updateError) return { error: dbError(updateError, "wants"), merged };
+    if (updateError) return dbFailed(updateError, "wants");
   } else {
     const insertPayload: TablesInsert<"wants"> =
       column === "wants"
-        ? { user_id: userId, wants: jsonMerged }
-        : { user_id: userId, bets: jsonMerged };
+        ? { user_id: user.id, wants: jsonMerged }
+        : { user_id: user.id, bets: jsonMerged };
     const { error: insertError } = await supabase
       .from("wants")
       .insert(insertPayload);
-    if (insertError) return { error: dbError(insertError, "wants"), merged };
+    if (insertError) return dbFailed(insertError, "wants");
   }
 
-  return { error: null, merged };
+  return ok(merged);
 }
 
 // ─── Get all data for the page ─────────────────────────────────────────
@@ -164,326 +166,271 @@ export type WantsData = {
   introSeen: boolean;
 };
 
-export async function getWantsData(): Promise<{
-  error: string | null;
-  data: WantsData | null;
-}> {
-  const supabase = await createClient();
+export async function getWantsData(): Promise<ActionResult<WantsData>> {
+  return withUser(async ({ supabase, user }) => {
+    const { data: row } = await supabase
+      .from("wants")
+      .select("wants, bets")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    // Intro "schon gesehen?" — gilt pro Slug, sobald irgendeine Zeile intro_seen=true hat.
+    const { data: introRow } = await supabase
+      .from("user_recipe_progress")
+      .select("intro_seen")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "wants")
+      .eq("intro_seen", true)
+      .limit(1)
+      .maybeSingle();
 
-  if (!user) {
-    return { error: "Du musst angemeldet sein.", data: null };
-  }
-
-  const { data: row } = await supabase
-    .from("wants")
-    .select("wants, bets")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  // Intro "schon gesehen?" — gilt pro Slug, sobald irgendeine Zeile intro_seen=true hat.
-  const { data: introRow } = await supabase
-    .from("user_recipe_progress")
-    .select("intro_seen")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "wants")
-    .eq("intro_seen", true)
-    .limit(1)
-    .maybeSingle();
-
-  return {
-    error: null,
-    data: {
+    return ok({
       wants: (row?.wants as WantItem[] | null) ?? null,
       bets: (row?.bets as BetItem[] | null) ?? null,
       introSeen: Boolean(introRow),
-    },
-  };
+    });
+  });
 }
 
-/** True, sobald der User irgendeine Werte-Hypothese hat (bestätigt ODER nicht) —
- *  Basis für den weichen Nudge vor dem Wants-Audit. */
+/**
+ * True, sobald der User irgendeine Werte-Hypothese hat (bestätigt ODER nicht) —
+ * Basis für den weichen Nudge vor dem Wants-Audit.
+ *
+ * Bewusst **kein** `ActionResult`: der Aufrufer reicht den Boolean direkt als
+ * Prop weiter. „Noch keine Hypothese" ist die richtige Antwort auf jeden
+ * Fehlerfall — der Nudge zu viel ist harmlos, ein Ergebnis zum Auspacken
+ * zwänge dem Aufrufer einen Zweig auf, in dem er dasselbe täte.
+ */
 export async function hasValuesHypothesis(): Promise<boolean> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return false;
+  const result = await withUser(async ({ supabase, user }) => {
+    const { data } = await supabase
+      .from("values_hypothesis")
+      .select("id")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
 
-  const { data } = await supabase
-    .from("values_hypothesis")
-    .select("id")
-    .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+    return ok(Boolean(data));
+  });
 
-  return Boolean(data);
+  return result.error === null ? result.data : false;
 }
 
 // ─── Save Wants ─────────────────────────────────────────────────────────
 
-/** Liefert zusätzlich das gemergte Array zurück, damit der Client seinen
- *  State mit dem Server-Stand synchronisieren kann. */
-export type SaveWantsState = ActionState & {
-  wants?: WantItem[];
-};
-
+/** Die Nutzlast ist das gemergte Array — der Client synchronisiert seinen
+ *  State damit auf den Server-Stand. */
 export async function saveWantsAction(
-  _prevState: ActionState,
   formData: FormData,
-): Promise<SaveWantsState> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Du musst angemeldet sein, um zu speichern.", success: false };
-  }
-
-  const incomingRaw = parseItems(formData.get("wants"), MAX_WANTS, isWantItem);
-  if (!incomingRaw) {
-    return { error: "Ungültiges Format.", success: false };
-  }
-
-  // Auf die bekannte Shape normalisieren — keine Fremd-Properties ins JSONB.
-  const incoming: WantItem[] = incomingRaw.map((w) => ({
-    id: w.id,
-    text: w.text,
-    active: w.active,
-    title: w.title?.trim() ? w.title.trim() : null,
-    distance: w.distance ?? "nah",
-    valueId: w.valueId ?? null,
-    source: w.source ?? "own",
-  }));
-
-  const previousIds = parsePreviousIds(formData.get("previousIds"));
-
-  const { error: mergeError, merged } = await mergeIntoColumn(
-    supabase,
-    user.id,
-    "wants",
-    incoming,
-    previousIds,
-  );
-  if (mergeError) {
-    return { error: mergeError, success: false };
-  }
-
-  // Fortschritt: abgeschlossen, sobald mindestens ein Want existiert. Seit dem
-  // Wegfall von „loslassen" kann kein Want mehr erlöschen (active bleibt immer
-  // true), darum ist das Gate schlicht „gibt es Sterne". Little Bets gaten nicht.
-  const completed = merged.length > 0;
-
-  const { data: progress } = await supabase
-    .from("user_recipe_progress")
-    .select("id, status")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "wants")
-    .order("cycle_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (progress) {
-    const update: TablesUpdate<"user_recipe_progress"> = { current_step: 2 };
-    if (completed && progress.status !== "completed") {
-      update.status = "completed";
-      update.completed_at = new Date().toISOString();
-    } else if (!completed && progress.status === "not_started") {
-      update.status = "in_progress";
+): Promise<ActionResult<WantItem[]>> {
+  return withUser(async (ctx) => {
+    const incomingRaw = parseItems(
+      formData.get("wants"),
+      MAX_WANTS,
+      isWantItem,
+    );
+    if (!incomingRaw) {
+      return failed("Ungültiges Format.");
     }
-    const { error: progressError } = await supabase
+
+    // Auf die bekannte Shape normalisieren — keine Fremd-Properties ins JSONB.
+    const incoming: WantItem[] = incomingRaw.map((w) => ({
+      id: w.id,
+      text: w.text,
+      active: w.active,
+      title: w.title?.trim() ? w.title.trim() : null,
+      distance: w.distance ?? "nah",
+      valueId: w.valueId ?? null,
+      source: w.source ?? "own",
+    }));
+
+    const previousIds = parsePreviousIds(formData.get("previousIds"));
+
+    const mergeResult = await mergeIntoColumn(
+      ctx,
+      "wants",
+      incoming,
+      previousIds,
+    );
+    if (mergeResult.error !== null) return mergeResult;
+    const merged = mergeResult.data;
+
+    const { supabase, user } = ctx;
+
+    // Fortschritt: abgeschlossen, sobald mindestens ein Want existiert. Seit dem
+    // Wegfall von „loslassen" kann kein Want mehr erlöschen (active bleibt immer
+    // true), darum ist das Gate schlicht „gibt es Sterne". Little Bets gaten nicht.
+    const completed = merged.length > 0;
+
+    const { data: progress } = await supabase
       .from("user_recipe_progress")
-      .update(update)
-      .eq("id", progress.id);
-    if (progressError) {
-      return { error: dbError(progressError, "wants"), success: false };
-    }
-  } else {
-    const insert: TablesInsert<"user_recipe_progress"> = {
-      user_id: user.id,
-      recipe_slug: "wants",
-      current_step: 2,
-      status: completed ? "completed" : "in_progress",
-      started_at: new Date().toISOString(),
-      cycle_number: 1,
-    };
-    if (completed) {
-      insert.completed_at = new Date().toISOString();
-    }
-    const { error: progressError } = await supabase
-      .from("user_recipe_progress")
-      .insert(insert);
-    if (progressError) {
-      return { error: dbError(progressError, "wants"), success: false };
-    }
-  }
+      .select("id, status")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "wants")
+      .order("cycle_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  return { error: null, success: true, wants: merged };
+    if (progress) {
+      const update: TablesUpdate<"user_recipe_progress"> = { current_step: 2 };
+      if (completed && progress.status !== "completed") {
+        update.status = "completed";
+        update.completed_at = new Date().toISOString();
+      } else if (!completed && progress.status === "not_started") {
+        update.status = "in_progress";
+      }
+      const { error: progressError } = await supabase
+        .from("user_recipe_progress")
+        .update(update)
+        .eq("id", progress.id);
+      if (progressError) {
+        return dbFailed(progressError, "wants");
+      }
+    } else {
+      const insert: TablesInsert<"user_recipe_progress"> = {
+        user_id: user.id,
+        recipe_slug: "wants",
+        current_step: 2,
+        status: completed ? "completed" : "in_progress",
+        started_at: new Date().toISOString(),
+        cycle_number: 1,
+      };
+      if (completed) {
+        insert.completed_at = new Date().toISOString();
+      }
+      const { error: progressError } = await supabase
+        .from("user_recipe_progress")
+        .insert(insert);
+      if (progressError) {
+        return dbFailed(progressError, "wants");
+      }
+    }
+
+    return ok(merged);
+  });
 }
 
 // ─── Save Bets ──────────────────────────────────────────────────────────
 
-export type SaveBetsState = ActionState & {
-  bets?: BetItem[];
-};
-
 export async function saveBetsAction(
-  _prevState: ActionState,
   formData: FormData,
-): Promise<SaveBetsState> {
-  const supabase = await createClient();
+): Promise<ActionResult<BetItem[]>> {
+  return withUser(async (ctx) => {
+    const incomingRaw = parseItems(formData.get("bets"), MAX_BETS, isBetItem);
+    if (!incomingRaw) {
+      return failed("Ungültiges Format.");
+    }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const incoming: BetItem[] = incomingRaw.map((b) => ({
+      id: b.id,
+      text: b.text,
+      wantId: b.wantId ?? null,
+      status: b.status,
+      journalEntryId: b.journalEntryId ?? null,
+      source: b.source ?? "own",
+    }));
 
-  if (!user) {
-    return { error: "Du musst angemeldet sein, um zu speichern.", success: false };
-  }
+    const previousIds = parsePreviousIds(formData.get("previousIds"));
 
-  const incomingRaw = parseItems(formData.get("bets"), MAX_BETS, isBetItem);
-  if (!incomingRaw) {
-    return { error: "Ungültiges Format.", success: false };
-  }
-
-  const incoming: BetItem[] = incomingRaw.map((b) => ({
-    id: b.id,
-    text: b.text,
-    wantId: b.wantId ?? null,
-    status: b.status,
-    journalEntryId: b.journalEntryId ?? null,
-    source: b.source ?? "own",
-  }));
-
-  const previousIds = parsePreviousIds(formData.get("previousIds"));
-
-  const { error: mergeError, merged } = await mergeIntoColumn(
-    supabase,
-    user.id,
-    "bets",
-    incoming,
-    previousIds,
-  );
-  if (mergeError) {
-    return { error: mergeError, success: false };
-  }
-
-  return { error: null, success: true, bets: merged };
+    return mergeIntoColumn(ctx, "bets", incoming, previousIds);
+  });
 }
 
 // ─── Yin-&-Yang-Audit speichern ─────────────────────────────────────────
-
-export type YinYangActionState = {
-  error: string | null;
-  success: boolean;
-  /** ID des frisch angelegten Eintrags — Input für /api/wants-distiller. */
-  entryId: string | null;
-};
 
 /**
  * Speichert das Audit als neuen Journal-Eintrag (jeder Durchlauf ein eigener
  * Eintrag — auch beim Re-Run) und setzt den Fortschritt auf in_progress,
  * ohne einen bereits abgeschlossenen Durchlauf zurückzustufen.
+ *
+ * Die Nutzlast ist die ID des frisch angelegten Eintrags — Input für
+ * /api/wants-distiller. Sie ist jetzt nicht mehr optional: gab es kein
+ * `error`, gibt es die ID.
  */
 export async function saveYinYangEntryAction(
-  _prevState: YinYangActionState,
   formData: FormData,
-): Promise<YinYangActionState> {
-  const supabase = await createClient();
+): Promise<ActionResult<string>> {
+  return withUser(async ({ supabase, user }) => {
+    const yin = (formData.get("yin") as string | null)?.trim() ?? "";
+    const yang = (formData.get("yang") as string | null)?.trim() ?? "";
+    const principles =
+      (formData.get("principles") as string | null)?.trim() ?? "";
+    const tagtraum = (formData.get("tagtraum") as string | null)?.trim() ?? "";
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Du musst angemeldet sein, um zu speichern.", success: false, entryId: null };
-  }
-
-  const yin = (formData.get("yin") as string | null)?.trim() ?? "";
-  const yang = (formData.get("yang") as string | null)?.trim() ?? "";
-  const principles = (formData.get("principles") as string | null)?.trim() ?? "";
-  const tagtraum = (formData.get("tagtraum") as string | null)?.trim() ?? "";
-
-  if (!yin || !yang) {
-    return {
-      error: "Beide Seiten gehören zum Audit — füll bitte Yin und Yang aus.",
-      success: false,
-      entryId: null,
-    };
-  }
-
-  const lengthError =
-    tooLong(yin, TEXT_MAX_LONG) ??
-    tooLong(yang, TEXT_MAX_LONG) ??
-    (principles ? tooLong(principles, TEXT_MAX_LONG) : null) ??
-    (tagtraum ? tooLong(tagtraum, TEXT_MAX_LONG) : null);
-  if (lengthError) {
-    return { error: lengthError, success: false, entryId: null };
-  }
-
-  const content: YinYangContent = { yin, yang };
-  if (principles) {
-    content.principles = principles;
-  }
-  if (tagtraum) {
-    content.tagtraum = tagtraum;
-  }
-
-  const { data: inserted, error: insertError } = await supabase
-    .from("journal_entries")
-    .insert({
-      user_id: user.id,
-      recipe_slug: "wants",
-      template_type: "yin_yang",
-      content,
-      entry_date: await serverTodayKey(),
-    })
-    .select("id")
-    .single();
-
-  if (insertError || !inserted) {
-    return { error: dbError(insertError, "wants"), success: false, entryId: null };
-  }
-
-  const { data: progress } = await supabase
-    .from("user_recipe_progress")
-    .select("id, status")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "wants")
-    .order("cycle_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (progress) {
-    if (progress.status !== "completed") {
-      const { error: updateError } = await supabase
-        .from("user_recipe_progress")
-        .update({ current_step: 1, status: "in_progress" })
-        .eq("id", progress.id);
-      if (updateError) {
-        return { error: dbError(updateError, "wants"), success: false, entryId: null };
-      }
+    if (!yin || !yang) {
+      return failed(
+        "Beide Seiten gehören zum Audit — füll bitte Yin und Yang aus.",
+      );
     }
-  } else {
-    const { error: progressError } = await supabase
-      .from("user_recipe_progress")
+
+    const lengthError =
+      tooLong(yin, TEXT_MAX_LONG) ??
+      tooLong(yang, TEXT_MAX_LONG) ??
+      (principles ? tooLong(principles, TEXT_MAX_LONG) : null) ??
+      (tagtraum ? tooLong(tagtraum, TEXT_MAX_LONG) : null);
+    if (lengthError) {
+      return failed(lengthError);
+    }
+
+    const content: YinYangContent = { yin, yang };
+    if (principles) {
+      content.principles = principles;
+    }
+    if (tagtraum) {
+      content.tagtraum = tagtraum;
+    }
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("journal_entries")
       .insert({
         user_id: user.id,
         recipe_slug: "wants",
-        current_step: 1,
-        status: "in_progress",
-        started_at: new Date().toISOString(),
-        cycle_number: 1,
-      });
-    if (progressError) {
-      return { error: dbError(progressError, "wants"), success: false, entryId: null };
-    }
-  }
+        template_type: "yin_yang",
+        content,
+        entry_date: await serverTodayKey(),
+      })
+      .select("id")
+      .single();
 
-  return { error: null, success: true, entryId: inserted.id };
+    if (insertError || !inserted) {
+      return dbFailed(insertError, "wants");
+    }
+
+    const { data: progress } = await supabase
+      .from("user_recipe_progress")
+      .select("id, status")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "wants")
+      .order("cycle_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (progress) {
+      if (progress.status !== "completed") {
+        const { error: updateError } = await supabase
+          .from("user_recipe_progress")
+          .update({ current_step: 1, status: "in_progress" })
+          .eq("id", progress.id);
+        if (updateError) {
+          return dbFailed(updateError, "wants");
+        }
+      }
+    } else {
+      const { error: progressError } = await supabase
+        .from("user_recipe_progress")
+        .insert({
+          user_id: user.id,
+          recipe_slug: "wants",
+          current_step: 1,
+          status: "in_progress",
+          started_at: new Date().toISOString(),
+          cycle_number: 1,
+        });
+      if (progressError) {
+        return dbFailed(progressError, "wants");
+      }
+    }
+
+    return ok(inserted.id);
+  });
 }

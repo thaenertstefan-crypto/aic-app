@@ -7,6 +7,7 @@ import {
   logUsage,
 } from "@/lib/anthropic/rate-limit";
 import { parseForgeOutput } from "@/lib/anthropic/sternschmiede-result";
+import { SESSION_EXPIRED } from "@/lib/actions/action-result";
 import { createClient } from "@/lib/supabase/server";
 import type { WantItem } from "@/lib/types/db-json";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return Response.json({ error: "Du musst angemeldet sein." }, { status: 401 });
+    return Response.json({ error: SESSION_EXPIRED }, { status: 401 });
   }
 
   const body = (await request.json().catch(() => ({}))) as { childAnswer?: unknown };

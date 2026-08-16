@@ -3,11 +3,15 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
+import { failed, ok, type ActionResult } from "@/lib/actions/action-result";
 import { createClient } from "@/lib/supabase/server";
 
-export type AuthState = {
-  error: string | null;
-};
+// Diese Actions sind die EINZIGEN, die `withUser` nicht nutzen — und zwar aus
+// dem Grund, der withUser ausmacht: sie laufen vor der Anmeldung. Login,
+// Signup und der Reset-Link haben per Definition keinen angemeldeten User,
+// updatePasswordAction arbeitet auf der Recovery-Session aus dem Mail-Link.
+// Die gemeinsame Ergebnisform gilt trotzdem: ActionResult<T> statt drei
+// eigener State-Typen.
 
 /** Map common (English) Supabase auth errors to warm German microcopy. */
 function friendlyAuthError(message: string): string {
@@ -31,14 +35,14 @@ function friendlyAuthError(message: string): string {
 }
 
 export async function loginAction(
-  _prevState: AuthState,
+  _prevState: ActionResult,
   formData: FormData,
-): Promise<AuthState> {
+): Promise<ActionResult> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
   if (!email || !password) {
-    return { error: "Bitte E-Mail und Passwort eingeben." };
+    return failed("Bitte E-Mail und Passwort eingeben.");
   }
 
   const supabase = await createClient();
@@ -49,22 +53,22 @@ export async function loginAction(
   });
 
   if (error) {
-    return { error: friendlyAuthError(error.message) };
+    return failed(friendlyAuthError(error.message));
   }
 
   redirect("/dashboard");
 }
 
 export async function signupAction(
-  _prevState: AuthState,
+  _prevState: ActionResult,
   formData: FormData,
-): Promise<AuthState> {
+): Promise<ActionResult> {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
   if (!name || !email || !password) {
-    return { error: "Bitte alle Felder ausfüllen." };
+    return failed("Bitte alle Felder ausfüllen.");
   }
 
   const supabase = await createClient();
@@ -78,7 +82,7 @@ export async function signupAction(
   });
 
   if (error) {
-    return { error: friendlyAuthError(error.message) };
+    return failed(friendlyAuthError(error.message));
   }
 
   redirect("/onboarding");
@@ -90,25 +94,23 @@ export async function signoutAction(): Promise<void> {
   redirect("/login");
 }
 
-export type ResetRequestState = {
-  error: string | null;
-  sent: boolean;
-};
-
 /**
  * Schickt einen Passwort-Reset-Link. Bewusst enumeration-safe: bei gültiger
- * Eingabe immer `sent: true`, egal ob die E-Mail existiert (Supabase
+ * Eingabe immer „abgeschickt", egal ob die E-Mail existiert (Supabase
  * verrät es ebenfalls nicht). So erfährt niemand, welche Adressen registriert
  * sind.
+ *
+ * Die Nutzlast ist genau dieses „abgeschickt": das Formular startet auf
+ * `ok(false)` und tauscht die Ansicht erst, wenn hier `ok(true)` ankommt.
  */
 export async function requestPasswordResetAction(
-  _prevState: ResetRequestState,
+  _prevState: ActionResult<boolean>,
   formData: FormData,
-): Promise<ResetRequestState> {
+): Promise<ActionResult<boolean>> {
   const email = formData.get("email") as string;
 
   if (!email) {
-    return { error: "Bitte gib deine E-Mail-Adresse ein.", sent: false };
+    return failed("Bitte gib deine E-Mail-Adresse ein.");
   }
 
   const h = await headers();
@@ -121,7 +123,7 @@ export async function requestPasswordResetAction(
     redirectTo: `${origin}/auth/callback?next=/passwort-neu`,
   });
 
-  return { error: null, sent: true };
+  return ok(true);
 }
 
 /**
@@ -129,20 +131,20 @@ export async function requestPasswordResetAction(
  * Recovery-Link über /auth/callback). Danach ist die Person direkt drin.
  */
 export async function updatePasswordAction(
-  _prevState: AuthState,
+  _prevState: ActionResult,
   formData: FormData,
-): Promise<AuthState> {
+): Promise<ActionResult> {
   const password = formData.get("password") as string;
 
   if (!password || password.length < 6) {
-    return { error: "Dein Passwort sollte mindestens 6 Zeichen lang sein." };
+    return failed("Dein Passwort sollte mindestens 6 Zeichen lang sein.");
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    return { error: friendlyAuthError(error.message) };
+    return failed(friendlyAuthError(error.message));
   }
 
   redirect("/dashboard");

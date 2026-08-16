@@ -171,14 +171,14 @@ export function BillOfRightsMe({
     // Baseline-IDs mitschicken, damit der Server beabsichtigte Löschungen von
     // parallel (auf einem anderen Gerät) hinzugefügten Rechten unterscheiden kann.
     fd.set("previousIds", JSON.stringify(previous.map((r) => r.id)));
-    const result = await saveRightsAction({ error: null, success: false }, fd);
-    if (result.error) {
+    const result = await saveRightsAction(fd);
+    if (result.error !== null) {
       setRights(previous);
       setSaveError(result.error);
-    } else if (result.rights) {
+    } else {
       // Mit dem gemergten Server-Stand synchronisieren (inkl. evtl. parallel
       // hinzugefügter Rechte), statt rein optimistisch zu bleiben.
-      setRights(result.rights);
+      setRights(result.data);
     }
   }
 

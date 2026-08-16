@@ -16,13 +16,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { requestPasswordResetAction } from "@/app/(auth)/auth.actions";
+import { ok, type ActionResult } from "@/lib/actions/action-result";
 import { invalidMessage, clearValidity } from "@/lib/utils/form-validation";
+
+/** „Noch nicht abgeschickt" — die Nutzlast unterscheidet das vom Erfolg. */
+const INITIAL_STATE: ActionResult<boolean> = ok(false);
 
 export default function PasswortVergessenPage() {
   const [state, formAction, pending] = useActionState(
     requestPasswordResetAction,
-    { error: null, sent: false },
+    INITIAL_STATE,
   );
+
+  const sent = state.error === null && state.data;
 
   return (
     <Card size="sm">
@@ -34,7 +40,7 @@ export default function PasswortVergessenPage() {
         </CardDescription>
       </CardHeader>
 
-      {state.sent ? (
+      {sent ? (
         <CardContent>
           <p className="rounded-lg bg-success/10 px-3 py-2 text-sm text-foreground">
             Wenn es ein Konto mit dieser E-Mail gibt, ist der Link jetzt

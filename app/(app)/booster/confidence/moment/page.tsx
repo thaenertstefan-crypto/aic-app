@@ -1,3 +1,4 @@
+import { getCachedUser } from "@/lib/supabase/get-user";
 import { createClient } from "@/lib/supabase/server";
 import type { RightItem } from "@/lib/types/db-json";
 
@@ -11,11 +12,8 @@ function dayOfYear(date: Date): number {
 }
 
 export default async function MomentFlowPage() {
+  const user = await getCachedUser();
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   let mantra = DEFAULT_MANTRA;
   let right: string | null = null;

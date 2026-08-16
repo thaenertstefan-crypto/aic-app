@@ -15,6 +15,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { ValueChip } from "@/components/recipes/value-chip";
 
+import { ok, type ActionResult } from "@/lib/actions/action-result";
 import { getValueLabel } from "@/lib/utils/values-bank";
 import { getValueEmoji } from "@/lib/utils/values-emojis";
 import { getValueDescription } from "@/lib/utils/values-descriptions";
@@ -36,6 +37,9 @@ interface EvaluationFormProps {
   initialData: EvaluationPageData;
 }
 
+/** „Noch nicht abgeschickt" — die Nutzlast unterscheidet das vom Erfolg. */
+const INITIAL_STATE: ActionResult<boolean> = ok(false);
+
 /**
  * Vier Bühnen statt drei Phasen:
  *   rueckblick   — die Woche nachlesen, optional ergänzen
@@ -43,8 +47,8 @@ interface EvaluationFormProps {
  *   feier        — TRANSIENT, nur direkt nach dem Speichern
  *   rueckblick-erkenntnisse — Wiederbesuch, nur lesen
  *
- * Die Feier erscheint ausschließlich aus `adjustState.success` in derselben
- * Session. Wer später über den Stern zurückkommt, landet auf dem
+ * Die Feier erscheint ausschließlich aus einem erfolgreichen `adjustState` in
+ * derselben Session. Wer später über den Stern zurückkommt, landet auf dem
  * Erkenntnis-Rückblick — vorher rendete `complete` die Feier, und genau
  * deshalb ging die KI-Einschätzung verloren.
  */
@@ -75,16 +79,18 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
   // zeigen.
   const [reflectionState, reflectionAction, reflectionPending] = useActionState(
     saveEvalReflectionAction,
-    { error: null, success: false },
+    INITIAL_STATE,
   );
   const [adjustState, adjustAction, adjustPending] = useActionState(
     saveAdjustedHypothesisAction,
-    { error: null, success: false },
+    INITIAL_STATE,
   );
 
-  const stage: Stage = adjustState.success
+  // `error === null` allein reicht hier nicht: das wäre schon der
+  // Anfangszustand. Erst die Nutzlast sagt „ist wirklich gelaufen".
+  const stage: Stage = adjustState.error === null && adjustState.data
     ? "feier"
-    : reflectionState.success
+    : reflectionState.error === null && reflectionState.data
       ? "erkenntnisse"
       : phase === "complete"
         ? "rueckblick-erkenntnisse"

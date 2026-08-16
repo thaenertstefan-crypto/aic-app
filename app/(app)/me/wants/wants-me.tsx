@@ -75,14 +75,14 @@ export function WantsMe({
     const fd = new FormData();
     fd.set("wants", JSON.stringify(updated));
     fd.set("previousIds", JSON.stringify(previous.map((w) => w.id)));
-    const res = await saveWantsAction({ error: null }, fd);
-    if (res.error) {
+    const res = await saveWantsAction(fd);
+    if (res.error !== null) {
       setWants(previous);
       setSaveError(res.error);
-    } else if (res.wants) {
-      setWants(res.wants);
+    } else {
+      setWants(res.data);
     }
-    return res.error ?? null;
+    return res.error;
   }
 
   // Speichern aus dem Fokus: den Fehler zurückgeben, damit die (das seitliche

@@ -24,8 +24,8 @@ import {
 async function persistRights(rights: RightItem[]): Promise<ActionResult> {
   const fd = new FormData();
   fd.set("rights", JSON.stringify(rights));
-  const res = await saveRightsAction({ error: null, success: false }, fd);
-  return res.error ? failed(res.error) : ok();
+  const res = await saveRightsAction(fd);
+  return res.error !== null ? failed(res.error) : ok();
 }
 
 /** Hängt ein Recht ans bestehende Array des Users an und schreibt es zurück. */

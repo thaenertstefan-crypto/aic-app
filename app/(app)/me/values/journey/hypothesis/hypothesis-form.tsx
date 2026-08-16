@@ -11,12 +11,16 @@ import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
 
+import { ok, type ActionResult } from "@/lib/actions/action-result";
 import { SELECTABLE_VALUES, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
 import { getValueEmoji } from "@/lib/utils/values-emojis";
 import { getValueDescription } from "@/lib/utils/values-descriptions";
 import { saveHypothesisAction } from "@/lib/recipes/values/actions";
 
 const MAX_VALUES = 5;
+
+/** „Noch nicht abgeschickt" — die Nutzlast unterscheidet das vom Erfolg. */
+const INITIAL_STATE: ActionResult<boolean> = ok(false);
 
 type Props = {
   /** Previously selected values, used to pre-fill the form on revisit. */
@@ -30,9 +34,10 @@ export function HypothesisForm({ initialValues }: Props) {
   const [customValue, setCustomValue] = useState("");
   const valuesRef = useRef<HTMLInputElement>(null);
 
-  const [state, formAction, pending] = useActionState(saveHypothesisAction, {
-    error: null,
-  });
+  const [state, formAction, pending] = useActionState(
+    saveHypothesisAction,
+    INITIAL_STATE,
+  );
 
   // Sync the hidden input whenever selectedValues changes
   useEffect(() => {
@@ -75,7 +80,7 @@ export function HypothesisForm({ initialValues }: Props) {
   const remaining = MAX_VALUES - selectedValues.length;
 
   // ── Completion-Screen nach erfolgreichem Speichern ──
-  if (state.success) {
+  if (state.error === null && state.data) {
     return (
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center gap-6 px-4 py-8 text-center">
         <CompletionCelebration />

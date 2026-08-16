@@ -13,12 +13,12 @@ import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { formatDateDE, localDateKey } from "@/lib/utils/date";
 
+import { failed, ok, type ActionResult } from "@/lib/actions/action-result";
 import {
   saveJournalEntryAction,
   type JournalEntry,
   type JournalPageData,
 } from "@/lib/recipes/values/actions";
-import type { ActionState } from "@/lib/types/action-state";
 
 type JournalDraft = { happenings: string };
 
@@ -113,7 +113,10 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
   // Form action — wraps the server action to fall back to a local draft when
   // the request can't reach the server (offline or network error).
   const [state, formAction, pending] = useActionState(
-    async (prev: ActionState, formData: FormData) => {
+    async (
+      _prev: ActionResult,
+      formData: FormData,
+    ): Promise<ActionResult> => {
       const draft: JournalDraft = {
         happenings: (formData.get("happenings") as string) ?? "",
       };
@@ -122,33 +125,31 @@ export function JournalForm({ initialData, viewEntry = null, viewDay }: JournalF
       // würden sonst später ins heutige Formular restauriert.
       if (!pastEntry && typeof navigator !== "undefined" && !navigator.onLine) {
         saveDraft(draft);
-        return {
-          error:
-            "Du bist offline – dein Eintrag wurde als Entwurf gesichert und wartet, bis du wieder Verbindung hast.",
-        };
+        return failed(
+          "Du bist offline – dein Eintrag wurde als Entwurf gesichert und wartet, bis du wieder Verbindung hast.",
+        );
       }
 
       try {
-        const result = await saveJournalEntryAction(prev, formData);
-        if (!result.error) {
+        const result = await saveJournalEntryAction(formData);
+        if (result.error === null) {
           if (!pastEntry) clearDraft();
           setIsEditing(false);
         }
         return result;
       } catch {
         if (pastEntry) {
-          return {
-            error: "Speichern fehlgeschlagen – versuch es später noch einmal.",
-          };
+          return failed(
+            "Speichern fehlgeschlagen – versuch es später noch einmal.",
+          );
         }
         saveDraft(draft);
-        return {
-          error:
-            "Speichern fehlgeschlagen – dein Eintrag wurde als Entwurf gesichert. Versuch es später noch einmal.",
-        };
+        return failed(
+          "Speichern fehlgeschlagen – dein Eintrag wurde als Entwurf gesichert. Versuch es später noch einmal.",
+        );
       }
     },
-    { error: null },
+    ok(),
   );
 
   // ─── Render ──────────────────────────────────────────────────────

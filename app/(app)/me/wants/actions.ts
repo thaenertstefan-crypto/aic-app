@@ -103,8 +103,8 @@ export async function saveBetReflectionAction(
 
     const fd = new FormData();
     fd.set("bets", JSON.stringify(updatedBets));
-    const res = await saveBetsAction({ error: null }, fd);
-    if (res.error) return failed(res.error);
+    const res = await saveBetsAction(fd);
+    if (res.error !== null) return failed(res.error);
 
     return ok(true);
   });
