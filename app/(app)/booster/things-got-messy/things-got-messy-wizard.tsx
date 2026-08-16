@@ -24,7 +24,7 @@ import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
-import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
+import { markRecipeIntroSeenAction } from "@/lib/recipes/actions";
 
 import {
   acceptSuggestedRightAction,

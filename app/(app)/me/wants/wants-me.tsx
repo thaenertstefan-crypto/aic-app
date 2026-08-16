@@ -28,7 +28,7 @@ import { useWarp, warpPageClass } from "@/components/wants/warp-transition";
 import { cn } from "@/lib/utils";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { PAGE_TITLES } from "@/lib/content/labels";
-import { saveWantsAction } from "@/app/(app)/recipes/wants/actions";
+import { saveWantsAction } from "@/lib/recipes/wants/actions";
 import { StarMap } from "./star-map";
 import type { WantItem } from "@/lib/types/db-json";
 

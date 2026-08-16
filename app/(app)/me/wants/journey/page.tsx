@@ -1,4 +1,4 @@
-import { getWantsData, hasValuesHypothesis } from "@/app/(app)/recipes/wants/actions";
+import { getWantsData, hasValuesHypothesis } from "@/lib/recipes/wants/actions";
 
 import { WantsJourney } from "./wants-journey";
 

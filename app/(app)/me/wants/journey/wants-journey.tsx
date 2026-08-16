@@ -30,14 +30,14 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
-import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
+import { markRecipeIntroSeenAction } from "@/lib/recipes/actions";
 import type { WantItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
 
 import {
   saveWantsAction,
   saveYinYangEntryAction,
-} from "@/app/(app)/recipes/wants/actions";
+} from "@/lib/recipes/wants/actions";
 
 const INTRO_CARDS = getRecipeIntro("wants") ?? [];
 

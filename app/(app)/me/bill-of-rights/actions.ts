@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
-import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
+import { saveRightsAction } from "@/lib/recipes/bill-of-rights/actions";
 import type { BillOfRightsContent, RightItem } from "@/lib/types/db-json";
 import {
   TEXT_MAX_LONG,

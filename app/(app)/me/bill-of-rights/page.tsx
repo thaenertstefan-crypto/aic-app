@@ -1,4 +1,4 @@
-import { getBillOfRightsData } from "@/app/(app)/recipes/bill-of-rights/actions";
+import { getBillOfRightsData } from "@/lib/recipes/bill-of-rights/actions";
 
 import { BillOfRightsMe } from "./bill-of-rights-me";
 

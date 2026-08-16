@@ -9,7 +9,7 @@ import { getValueLabel } from "@/lib/utils/values-bank";
 import { getValueEmoji } from "@/lib/utils/values-emojis";
 import { getValueDescription } from "@/lib/utils/values-descriptions";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
-import { hasSeenRecipeIntro } from "@/app/(app)/recipes/actions";
+import { hasSeenRecipeIntro } from "@/lib/recipes/actions";
 import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { ValuesCompass, type CompassValue } from "./values-compass";

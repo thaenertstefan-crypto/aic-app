@@ -22,7 +22,7 @@ import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { BillOfRightsSky } from "./bill-of-rights-sky";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
-import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
+import { saveRightsAction } from "@/lib/recipes/bill-of-rights/actions";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 import type { RightItem } from "@/lib/types/db-json";

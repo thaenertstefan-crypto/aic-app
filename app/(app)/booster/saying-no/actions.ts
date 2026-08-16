@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { RightItem, SayingNoContent } from "@/lib/types/db-json";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
-import { saveRightsAction } from "@/app/(app)/recipes/bill-of-rights/actions";
+import { saveRightsAction } from "@/lib/recipes/bill-of-rights/actions";
 import {
   TEXT_MAX_LONG,
   TEXT_MAX_SHORT,

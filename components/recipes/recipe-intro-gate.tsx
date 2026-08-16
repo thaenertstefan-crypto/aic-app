@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
+import { markRecipeIntroSeenAction } from "@/lib/recipes/actions";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { ValuesIntroMascot } from "@/components/recipes/values-intro-mascot";
 import { WantsIntroMascot } from "@/components/recipes/wants-intro-mascot";

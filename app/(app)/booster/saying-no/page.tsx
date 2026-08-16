@@ -1,4 +1,4 @@
-import { hasSeenRecipeIntro } from "@/app/(app)/recipes/actions";
+import { hasSeenRecipeIntro } from "@/lib/recipes/actions";
 import { BoosterArrive } from "@/components/booster/booster-arrive";
 import { SayingNoWizard } from "./saying-no-wizard";
 

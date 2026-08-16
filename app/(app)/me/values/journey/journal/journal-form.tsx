@@ -17,7 +17,7 @@ import {
   saveJournalEntryAction,
   type JournalEntry,
   type JournalPageData,
-} from "@/app/(app)/recipes/values/actions";
+} from "@/lib/recipes/values/actions";
 import type { ActionState } from "@/lib/types/action-state";
 
 type JournalDraft = { happenings: string };

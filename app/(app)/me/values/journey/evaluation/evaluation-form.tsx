@@ -26,7 +26,7 @@ import {
   saveEvalReflectionAction,
   saveAdjustedHypothesisAction,
   type EvaluationPageData,
-} from "@/app/(app)/recipes/values/actions";
+} from "@/lib/recipes/values/actions";
 
 import { ErkenntnisseStage } from "./erkenntnisse-stage";
 

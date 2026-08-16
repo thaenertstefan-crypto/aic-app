@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
-import { saveBetsAction } from "@/app/(app)/recipes/wants/actions";
+import { saveBetsAction } from "@/lib/recipes/wants/actions";
 import type { BetItem, LittleBetContent } from "@/lib/types/db-json";
 import {
   TEXT_MAX_LONG,

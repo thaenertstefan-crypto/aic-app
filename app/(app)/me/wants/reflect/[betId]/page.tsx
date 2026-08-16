@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { Mascot } from "@/components/brand/mascot";
 import { PAGE_TITLES } from "@/lib/content/labels";
-import { getWantsData } from "@/app/(app)/recipes/wants/actions";
+import { getWantsData } from "@/lib/recipes/wants/actions";
 
 import { ReflectForm } from "./reflect-form";
 

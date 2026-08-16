@@ -20,7 +20,7 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
-import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
+import { markRecipeIntroSeenAction } from "@/lib/recipes/actions";
 
 import { markShadowDoneAction, saveShadowEntryAction } from "./actions";
 

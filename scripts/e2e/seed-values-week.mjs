@@ -1,7 +1,7 @@
 /**
  * Befüllt den festen E2E-Test-Account mit einer vollständigen Werte-Woche,
  * damit /me/values/journey/evaluation nicht auf /me/values/journey/journal
- * redirected (siehe app/(app)/recipes/values/actions.ts getEvaluationData()
+ * redirected (siehe lib/recipes/values/actions.ts getEvaluationData()
  * + app/(app)/me/values/journey/evaluation/page.tsx):
  *
  *   - Redirect passiert, wenn weniger als 7 journal_entries mit

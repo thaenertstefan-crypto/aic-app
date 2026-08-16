@@ -22,7 +22,7 @@ import { FunkenSky } from "@/components/wants/funken-sky";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
-import { saveBetsAction } from "@/app/(app)/recipes/wants/actions";
+import { saveBetsAction } from "@/lib/recipes/wants/actions";
 import type { BetItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
 

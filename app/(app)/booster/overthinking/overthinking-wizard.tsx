@@ -29,7 +29,7 @@ import { PAGE_TITLES } from "@/lib/content/labels";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 
-import { markRecipeIntroSeenAction } from "@/app/(app)/recipes/actions";
+import { markRecipeIntroSeenAction } from "@/lib/recipes/actions";
 import { saveOverthinkingAction } from "./actions";
 
 const INTRO_CARDS = getRecipeIntro("overthinking") ?? [];

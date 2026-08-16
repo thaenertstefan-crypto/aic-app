@@ -1,5 +1,5 @@
 import { SubPageHeader } from "@/components/layout/sub-page-header";
-import { getHypothesisData } from "@/app/(app)/recipes/values/actions";
+import { getHypothesisData } from "@/lib/recipes/values/actions";
 import { HypothesisForm } from "./hypothesis-form";
 
 export default async function ValuesHypothesisPage() {

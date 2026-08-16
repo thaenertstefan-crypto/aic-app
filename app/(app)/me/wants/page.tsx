@@ -1,4 +1,4 @@
-import { getWantsData } from "@/app/(app)/recipes/wants/actions";
+import { getWantsData } from "@/lib/recipes/wants/actions";
 
 import { WantsMe } from "./wants-me";
 

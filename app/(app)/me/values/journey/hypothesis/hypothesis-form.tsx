@@ -14,7 +14,7 @@ import { CompletionCelebration } from "@/components/ui/completion-celebration";
 import { SELECTABLE_VALUES, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/values-bank";
 import { getValueEmoji } from "@/lib/utils/values-emojis";
 import { getValueDescription } from "@/lib/utils/values-descriptions";
-import { saveHypothesisAction } from "@/app/(app)/recipes/values/actions";
+import { saveHypothesisAction } from "@/lib/recipes/values/actions";
 
 const MAX_VALUES = 5;
 

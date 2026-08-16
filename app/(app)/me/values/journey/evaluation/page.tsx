@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getEvaluationData } from "@/app/(app)/recipes/values/actions";
+import { getEvaluationData } from "@/lib/recipes/values/actions";
 import { EvaluationForm } from "./evaluation-form";
 
 export default async function EvaluationPage() {

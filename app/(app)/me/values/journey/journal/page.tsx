@@ -1,6 +1,6 @@
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { serverTodayKey } from "@/lib/server/timezone";
-import { getJournalData } from "@/app/(app)/recipes/values/actions";
+import { getJournalData } from "@/lib/recipes/values/actions";
 import { JournalForm } from "./journal-form";
 
 export default async function JournalPage({
