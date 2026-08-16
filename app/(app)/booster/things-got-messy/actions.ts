@@ -12,6 +12,7 @@ import {
   TEXT_MAX_SHORT,
   tooLong,
 } from "@/lib/utils/form-validation";
+import { patchJournalContent } from "@/lib/utils/journal-content";
 
 // ─── Things Got Messy ───────────────────────────────────────────────────
 // Geführtes Mini-Rezept im Kopfwetter. Einträge werden als
@@ -162,10 +163,9 @@ export async function saveGuiltFeedbackAction(
     return { error: "Wir konnten deinen Eintrag nicht finden.", success: false };
   }
 
-  const merged: MessyMomentContent = {
-    ...(row.content as MessyMomentContent),
+  const merged = patchJournalContent("messy_moment", row.content, {
     guilt_feedback: feedback,
-  };
+  });
 
   const { error: updateError } = await supabase
     .from("journal_entries")

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import type { Json } from "@/lib/supabase/database.types";
 import { getCachedUser } from "@/lib/supabase/get-user";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
@@ -76,7 +77,7 @@ export async function getJournalPage(
  */
 export async function getJournalEntryDetail(
   id: string,
-): Promise<{ content: Record<string, unknown>; ai_insights: string | null } | null> {
+): Promise<{ content: Json; ai_insights: string | null } | null> {
   const user = await getCachedUser();
   if (!user) return null;
 
@@ -89,8 +90,10 @@ export async function getJournalEntryDetail(
     .maybeSingle();
 
   if (!data) return null;
+  // Roh weiterreichen: verengt wird erst in getContentSections, zusammen mit
+  // dem template_type — ohne den ist der content nur eine Form ohne Bedeutung.
   return {
-    content: (data.content as Record<string, unknown>) ?? {},
+    content: data.content,
     ai_insights: data.ai_insights ?? null,
   };
 }

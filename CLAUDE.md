@@ -16,6 +16,7 @@ A self-development companion app that turns workbook exercises into interactive 
 ## Architecture Conventions
 - **DB calls:** `lib/supabase/client.ts` (browser) / `lib/supabase/server.ts` (server components)
 - **DB types:** Generierte Supabase-`Database`-Typen liegen in `lib/supabase/database.types.ts` (Client ist generisch typisiert). Bei Schema-Änderungen neu ziehen — siehe Header der Datei. JSONB-Spalten kommen als `Json`; die schmalen Element-Shapes (`RightItem`, `*Content`) stehen zentral in `lib/types/db-json.ts`.
+- **`journal_entries.content` nie casten.** `lib/utils/journal-content.ts` ist der einzige Weg von `Json` auf einen `*Content`-Shape: `readJournalContent(template_type, content)` verengt geprüft (im Zweifel das Glied `"unknown"`, es wirft nie), `patchJournalContent(template, content, patch)` merged ein Update — Patch getypt, Bestand roh, damit kein undeklariertes Feld beim Speichern verschwindet.
 - **AI calls:** `lib/anthropic/`, system prompts in `lib/anthropic/prompts/`
 - **Recipe/exercise UI:** Übungen leben unter `app/(app)/me/*` (durable: Werte, Wants, Bill of Rights) und `app/(app)/booster/*` (akut). Die „Steps" jeder Übung sind eine Phasen-State-Machine in der jeweiligen Client-Komponente (z. B. `me/wants/journey/wants-journey.tsx`). Server-Actions/Backend liegen in `lib/recipes/**/actions.ts` (außerhalb des Routenbaums); geteilte Bausteine in `components/recipes/`.
 - **Journal template components:** `components/journal/templates/`

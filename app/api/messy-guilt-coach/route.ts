@@ -14,8 +14,12 @@ import {
   resolveMatch,
 } from "@/lib/anthropic/right-match";
 import { createClient } from "@/lib/supabase/server";
-import type { MessyMomentContent, RightItem } from "@/lib/types/db-json";
+import type { RightItem } from "@/lib/types/db-json";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
+import {
+  patchJournalContent,
+  readJournalContent,
+} from "@/lib/utils/journal-content";
 
 // Entry texts come from the user's own DB (already length-capped at save time),
 // so defensively truncate instead of 400ing — max_tokens only bounds the OUTPUT.
@@ -127,7 +131,7 @@ export async function POST(request: Request) {
   const [{ data: entry }, { data: bor }] = await Promise.all([
     supabase
       .from("journal_entries")
-      .select("id, content")
+      .select("id, template_type, content")
       .eq("id", entryId)
       .eq("user_id", user.id)
       .eq("recipe_slug", "things-got-messy")
@@ -140,14 +144,19 @@ export async function POST(request: Request) {
       .maybeSingle(),
   ]);
 
-  if (!entry) {
+  // Ein content ohne messy_when ist für diese Route so gut wie kein Eintrag —
+  // die Route hätte sonst ein leeres <messy_when> ans Modell geschickt.
+  const moment = entry
+    ? readJournalContent(entry.template_type, entry.content)
+    : null;
+  if (!entry || moment?.template !== "messy_moment") {
     return Response.json(
       { error: "Wir konnten deinen Eintrag nicht finden." },
       { status: 404 },
     );
   }
+  const { content } = moment;
 
-  const content = entry.content as MessyMomentContent;
   const activeRights = (((bor?.rights as RightItem[] | null) ?? [])
     .filter((r) => r.active)
     .slice(0, MAX_RIGHTS_IN_PROMPT))
@@ -206,11 +215,10 @@ ${rightsText}
     // Persist onto the entry: die maschinenlesbare Vermutung wandert ins
     // content-JSONB (fürs Journal-Rendering), der Lesetext in ai_insights.
     // WICHTIG: content mergen, nie ersetzen — sonst ist messy_when weg.
-    const mergedContent: MessyMomentContent = {
-      ...content,
+    const mergedContent = patchJournalContent("messy_moment", entry.content, {
       ai_guilt_guess: guilt,
       ai_rules_conflict: rules,
-    };
+    });
 
     const insightParts = [analysis];
     if (guilt) {

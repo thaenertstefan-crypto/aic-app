@@ -35,11 +35,16 @@
  * verschwindet beim Type-Stripping. So bleibt die Datei mit purem Node prüfbar
  * (`npm test`), obwohl `journal.ts` nebenan lucide-react zieht.
  *
- * Dieses Modul ändert noch keinen Aufrufer. Die bestehenden `as`-Casts hier
- * abzulösen ist ein eigenes Ticket — getrennt, damit bei einem roten Lauf klar
- * ist, welche Hälfte schuld war.
+ * Zwei Richtungen, zwei Regeln:
+ * - **Lesen** (`readJournalContent`) prüft und verengt. Was nicht deklariert
+ *   ist, gibt es beim Lesen nicht.
+ * - **Schreiben** (`patchJournalContent`) prüft nur, was NEU hineingeht, und
+ *   reicht den Bestand roh durch. Ein Merge, der auf dem geprüften Shape
+ *   aufsetzt, würde jedes undeklarierte Feld beim nächsten Speichern
+ *   wegschreiben — derselbe lautlose Datenverlust, nur auf der Schreibseite.
  */
 
+import type { Json } from "../supabase/database.types.ts";
 import type {
   BillOfRightsContent,
   DailyValueContent,
@@ -55,9 +60,11 @@ import type {
 } from "../types/db-json.ts";
 import type { TemplateType } from "./journal.ts";
 
-/** Ein rohes JSON-Objekt aus einer JSONB-Spalte: Schlüssel bekannt, Werte
- *  nicht. Alles in diesem Modul beginnt hier. */
-type JsonObject = Record<string, unknown>;
+/** Ein rohes JSON-Objekt aus einer JSONB-Spalte: Schlüssel bekannt, Werte nur
+ *  als `Json`. Alles in diesem Modul beginnt hier — und `patchJournalContent`
+ *  endet hier, weshalb `Json` und nicht `unknown` der Werttyp ist: das Ergebnis
+ *  muss ohne Cast in die Spalte zurückgeschrieben werden können. */
+type JsonObject = { [key: string]: Json | undefined };
 
 /* ------------------------------------------------------------------ */
 /*  Die Union                                                         */
@@ -100,6 +107,13 @@ type Member<K extends TemplateType> = Extract<
   { template: K }
 >;
 
+/**
+ * Der `content`-Shape zu einem `template_type`. Damit hängt an jeder Stelle,
+ * die einen Eintrag verarbeitet, nur noch der Schlüssel — der Shape kommt aus
+ * `db-json.ts` nach. Eine Änderung dort weckt den Compiler hier.
+ */
+export type JournalContentFor<K extends TemplateType> = Member<K>["content"];
+
 /* ------------------------------------------------------------------ */
 /*  Eingang                                                           */
 /* ------------------------------------------------------------------ */
@@ -138,6 +152,59 @@ export function readJournalContent(
  */
 export function isKnownTemplate(value: string): value is TemplateType {
   return Object.hasOwn(READERS, value);
+}
+
+/*
+ * Kein `readEntryAs(template, …)`-Kurzschluss hier, obwohl vier Routen dasselbe
+ * Muster fahren (`readJournalContent` + Vergleich der Diskriminante gegen ein
+ * Literal). Der Versuch scheitert am Typsystem, nicht am Aufwand:
+ * `JournalContentFor<K>` ist über `Extract` definiert, also ein aufgeschobener
+ * Conditional Type. Innerhalb eines generischen Rumpfs fällt `member.content`
+ * auf die Constraint zurück — die Vereinigung ALLER zehn Shapes — und ließe
+ * sich nur per Cast zurückholen. Ein Cast ist aber genau das, was dieses Modul
+ * abschafft.
+ *
+ * Auflösbar wäre es, indem die Paarung als Mapped Type statt als Union
+ * geschrieben wird. Das ist eine Umstellung an der Wurzel dieses Moduls für
+ * vier eingesparte Zeilen — die Duplikation ist hier der billigere Posten.
+ * Am Aufrufer ist `template` ein Literal, dort greift die Verengung normal.
+ */
+
+/* ------------------------------------------------------------------ */
+/*  Ausgang                                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Ein Merge-Update auf `content`: legt `patch` über den bestehenden Stand und
+ * gibt das fertige Objekt für die Spalte zurück.
+ *
+ * `template` steht nur da, um `patch` an seinen Shape zu binden — zur Laufzeit
+ * passiert damit nichts. Genau das ist der Gewinn: `patchJournalContent(
+ * "yin_yang", …, { ai_wants })` schlägt fehl, sobald sich `ai_wants` in
+ * `db-json.ts` ändert.
+ *
+ * Der Bestand wird bewusst NICHT verengt, sondern roh durchgereicht. Ein Merge
+ * auf dem geprüften Shape würde jedes Feld wegschreiben, das (noch) nicht in
+ * `db-json.ts` steht — beim Lesen ist dieses Vergessen Absicht, beim
+ * Zurückschreiben wäre es Datenverlust.
+ *
+ * `undefined` im Patch heißt „nicht setzen“, nicht „löschen“: ein Feld auf
+ * `undefined` zu spreaden würde es aus dem JSON kippen und damit den
+ * bestehenden Wert still entfernen.
+ */
+export function patchJournalContent<K extends TemplateType>(
+  template: K,
+  current: unknown,
+  patch: Partial<JournalContentFor<K>>,
+): Json {
+  const merged = toJsonObject(current);
+
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined) continue;
+    setJsonKey(merged, key, value);
+  }
+
+  return merged;
 }
 
 /* ------------------------------------------------------------------ */
@@ -603,15 +670,22 @@ function toJsonObject(value: unknown): JsonObject {
 
   const record: JsonObject = {};
   for (const [key, item] of Object.entries(value)) {
-    // defineProperty statt Zuweisung: JSONB darf einen Schlüssel "__proto__"
-    // tragen, und `record["__proto__"] = …` würde den Setter treffen statt zu
-    // kopieren — die Kopie verlöre still genau das Feld, das sie kopieren soll.
-    Object.defineProperty(record, key, {
-      value: item,
-      enumerable: true,
-      writable: true,
-      configurable: true,
-    });
+    setJsonKey(record, key, item);
   }
   return record;
+}
+
+/**
+ * Setzt einen Schlüssel per `defineProperty` statt per Zuweisung. JSONB darf
+ * einen Schlüssel `"__proto__"` tragen, und `record["__proto__"] = …` träfe
+ * den Setter statt zu schreiben — das Objekt verlöre still genau das Feld, um
+ * das es geht. Beide Wege ins JSONB (kopieren und patchen) gehen hier durch.
+ */
+function setJsonKey(target: JsonObject, key: string, value: unknown): void {
+  Object.defineProperty(target, key, {
+    value,
+    enumerable: true,
+    writable: true,
+    configurable: true,
+  });
 }

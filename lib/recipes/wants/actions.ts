@@ -104,7 +104,13 @@ type WantsRowClient = SupabaseClient<Database>;
  * angelegt und bleiben erhalten; Elemente aus previousIds, die jetzt fehlen,
  * sind echte Löschungen.
  */
-async function mergeIntoColumn<T extends { id: string }>(
+// Die zweite Hälfte der Schranke ist der Grund, warum kein Cast mehr nötig
+// ist: sie sagt aus, was die JSONB-Spalte ohnehin verlangt — die Elemente
+// müssen JSON sein. Vorher stand dafür ein `as unknown as Json`, das die Frage
+// nur überging.
+async function mergeIntoColumn<
+  T extends { id: string } & { [key: string]: Json | undefined },
+>(
   supabase: WantsRowClient,
   userId: string,
   column: "wants" | "bets",
@@ -124,8 +130,7 @@ async function mergeIntoColumn<T extends { id: string }>(
     (item) => !incomingIds.has(item.id) && !previousIdSet.has(item.id),
   );
   const merged: T[] = [...incoming, ...concurrentAdds];
-  // JSONB-Spalten sind in den generierten Typen `Json`; der Cast bleibt bewusst.
-  const jsonMerged = merged as unknown as Json;
+  const jsonMerged: Json = merged;
 
   if (existing) {
     const updatePayload: TablesUpdate<"wants"> =

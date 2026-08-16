@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { isKnownTemplate, readJournalContent } from "./journal-content.ts";
+import {
+  isKnownTemplate,
+  patchJournalContent,
+  readJournalContent,
+} from "./journal-content.ts";
 
 /* ------------------------------------------------------------------ */
 /*  Diskriminante                                                     */
@@ -605,5 +609,107 @@ describe("optionale Felder degradieren", () => {
       templateType: "gratitude",
       content: raw,
     });
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/*  Die Schreibseite                                                  */
+/* ------------------------------------------------------------------ */
+
+describe("patchJournalContent — der Bestand bleibt roh", () => {
+  it("legt den Patch über den bestehenden content", () => {
+    const merged = patchJournalContent(
+      "messy_moment",
+      { messy_when: "Beim Absagen", ai_guilt_guess: null },
+      { ai_guilt_guess: "unhealthy", ai_rules_conflict: "Zwei Regeln." },
+    );
+    assert.deepEqual(merged, {
+      messy_when: "Beim Absagen",
+      ai_guilt_guess: "unhealthy",
+      ai_rules_conflict: "Zwei Regeln.",
+    });
+  });
+
+  it("bewahrt undeklarierte Felder — anders als beim Lesen", () => {
+    // Die entscheidende Asymmetrie: Lesen vergisst, was nicht deklariert ist;
+    // Schreiben darf das nicht, sonst wäre jeder Merge ein stiller Verlust.
+    const merged = patchJournalContent(
+      "free",
+      { body: "Text", feld_aus_der_zukunft: "bleibt" },
+      { title: "Titel" },
+    );
+    assert.deepEqual(merged, {
+      body: "Text",
+      feld_aus_der_zukunft: "bleibt",
+      title: "Titel",
+    });
+  });
+
+  it("bewahrt den Bestand auch, wenn er sich gar nicht lesen ließe", () => {
+    // Kein `body` — als Eintrag wäre das "unknown". Ein Merge darf trotzdem
+    // nichts wegwerfen, sonst kostet ein Schreibzugriff den halben Eintrag.
+    const merged = patchJournalContent(
+      "free",
+      { halb: "kaputt" },
+      { title: "Titel" },
+    );
+    assert.deepEqual(merged, { halb: "kaputt", title: "Titel" });
+  });
+
+  it("behandelt undefined als „nicht setzen“, nicht als „löschen“", () => {
+    // Ein auf undefined gespreadetes Feld fällt beim Serialisieren aus dem
+    // JSON — der bestehende Wert wäre damit still weg.
+    const merged = patchJournalContent(
+      "saying_no",
+      { mode: "real", situation: "Anfrage", draft: "Nein.", draft2: "Nein!" },
+      { draft2: undefined, final_no: "Nein!" },
+    );
+    assert.deepEqual(merged, {
+      mode: "real",
+      situation: "Anfrage",
+      draft: "Nein.",
+      draft2: "Nein!",
+      final_no: "Nein!",
+    });
+  });
+
+  it("schreibt explizites null durch — das ist eine Aussage", () => {
+    const merged = patchJournalContent(
+      "saying_no",
+      { mode: "real", situation: "Anfrage", draft: "Nein." },
+      { ai_checklist: null, ai_improved: null },
+    );
+    assert.deepEqual(merged, {
+      mode: "real",
+      situation: "Anfrage",
+      draft: "Nein.",
+      ai_checklist: null,
+      ai_improved: null,
+    });
+  });
+
+  it("macht aus einem Nicht-Objekt einen leeren Bestand statt zu werfen", () => {
+    for (const raw of [null, undefined, 42, "text", ["a"]]) {
+      assert.deepEqual(patchJournalContent("free", raw, { body: "Text" }), {
+        body: "Text",
+      });
+    }
+  });
+
+  it("kopiert einen __proto__-Schlüssel, statt den Setter zu treffen", () => {
+    const raw = JSON.parse('{"body":"Text","__proto__":{"gekapert":true}}');
+    const merged = patchJournalContent("free", raw, { title: "Titel" });
+    assert.deepEqual(Object.keys(merged as object).sort(), [
+      "__proto__",
+      "body",
+      "title",
+    ]);
+    assert.equal(Object.getPrototypeOf(merged) === Object.prototype, true);
+  });
+
+  it("lässt den bestehenden content unangetastet", () => {
+    const raw = { body: "Text" };
+    patchJournalContent("free", raw, { title: "Titel" });
+    assert.deepEqual(raw, { body: "Text" });
   });
 });

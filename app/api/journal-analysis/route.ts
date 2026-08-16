@@ -8,7 +8,10 @@ import {
   logUsage,
 } from "@/lib/anthropic/rate-limit";
 import { createClient } from "@/lib/supabase/server";
-import type { DailyValueContent, ValueEvalContent } from "@/lib/types/db-json";
+import {
+  patchJournalContent,
+  readJournalContent,
+} from "@/lib/utils/journal-content";
 import { VALUES_BANK, getValueLabel } from "@/lib/utils/values-bank";
 
 // Warm German fallback shown when the AI call fails for any reason.
@@ -66,7 +69,7 @@ export async function POST() {
     // Most recent 7 daily_value entries = the current cycle.
     supabase
       .from("journal_entries")
-      .select("content")
+      .select("template_type, content")
       .eq("user_id", user.id)
       .eq("recipe_slug", "values")
       .eq("template_type", "daily_value")
@@ -83,28 +86,36 @@ export async function POST() {
     // The value_eval entry holds the user's reflection and is where we save insights.
     supabase
       .from("journal_entries")
-      .select("id, content")
+      .select("id, template_type, content")
       .eq("user_id", user.id)
       .eq("recipe_slug", "values")
       .eq("template_type", "value_eval")
       .maybeSingle(),
   ]);
 
-  // Chronological order reads more naturally in the prompt.
-  const entries = ((dailyEntries ?? []).reverse() as { content: DailyValueContent }[]);
+  // Chronological order reads more naturally in the prompt. Einträge, deren
+  // content kein Tagebuch-Eintrag ist, fallen raus, statt als leerer Tag im
+  // Prompt zu landen — flatMap, weil das Glied die Verengung mitbringt.
+  const entries = (dailyEntries ?? [])
+    .flatMap((row) => {
+      const entry = readJournalContent(row.template_type, row.content);
+      return entry.template === "daily_value" ? [entry.content] : [];
+    })
+    .reverse();
 
   const values = (hypothesisRow?.values as string[] | undefined) ?? [];
 
-  const reflection = (evalRow?.content as ValueEvalContent | undefined) ?? {
-    positive_reflection: "",
-    negative_reflection: "",
-  };
+  const evalEntry = evalRow
+    ? readJournalContent(evalRow.template_type, evalRow.content)
+    : null;
+  const reflection =
+    evalEntry?.template === "value_eval" ? evalEntry.content : null;
 
   try {
     const entriesText = entries
       .map(
-        (entry, i) =>
-          `Tag ${i + 1}\nWas ist passiert: ${clampEntryText(entry.content.happenings)}\nGedanken & Gefühle: ${clampEntryText(entry.content.response ?? "") || "(keine Angabe)"}`,
+        (content, i) =>
+          `Tag ${i + 1}\nWas ist passiert: ${clampEntryText(content.happenings)}\nGedanken & Gefühle: ${clampEntryText(content.response ?? "") || "(keine Angabe)"}`,
       )
       .join("\n\n");
 
@@ -121,8 +132,8 @@ ${entriesText || "(keine Einträge vorhanden)"}
 
 Rückblick der Person:
 <rueckblick>
-Positive Momente: ${clampEntryText(reflection.positive_reflection) || "(keine Angabe)"}
-Belastende Momente: ${clampEntryText(reflection.negative_reflection) || "(keine Angabe)"}
+Positive Momente: ${clampEntryText(reflection?.positive_reflection ?? "") || "(keine Angabe)"}
+Belastende Momente: ${clampEntryText(reflection?.negative_reflection ?? "") || "(keine Angabe)"}
 </rueckblick>`;
 
     const message = await anthropic.messages.create({
@@ -159,11 +170,10 @@ Belastende Momente: ${clampEntryText(reflection.negative_reflection) || "(keine 
         .from("journal_entries")
         .update({
           ai_insights: result.insights,
-          content: {
-            ...((evalRow.content as Record<string, unknown>) ?? {}),
+          content: patchJournalContent("value_eval", evalRow.content, {
             ai_confirmed: result.confirmed,
             ai_suggested: result.suggested,
-          },
+          }),
         })
         .eq("id", evalRow.id);
     }

@@ -25,15 +25,14 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
-type Detail = {
-  content: Record<string, unknown>;
-  ai_insights: string | null;
-};
+/** `content` bleibt roh — `getContentSections` verengt es zusammen mit dem
+ *  template_type des Eintrags. */
+type Detail = Awaited<ReturnType<typeof getJournalEntryDetail>>;
 
 export function JournalDetailDialog({ entry, open, onOpenChange }: Props) {
   // Voll-Inhalt (content + ai_insights) wird erst beim Öffnen pro Eintrag
   // nachgeladen — die Liste trägt nur die schlanke Vorschau.
-  const [detail, setDetail] = useState<Detail | null>(null);
+  const [detail, setDetail] = useState<Detail>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

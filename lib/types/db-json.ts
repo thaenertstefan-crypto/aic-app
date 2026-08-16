@@ -4,8 +4,16 @@
  * Die generierten Supabase-Typen (lib/supabase/database.types.ts) liefern
  * JSONB-Spalten nur als `Json`. Statt an jeder Lesestelle ein eigenes inline-
  * Literal zu casten, leben die konkreten Element-Shapes hier zentral — so gibt
- * es pro Form genau EINE Quelle, und ein Cast (`row.col as RightItem[]`) bleibt
- * bewusst und dokumentiert.
+ * es pro Form genau EINE Quelle.
+ *
+ * Wie aus `Json` einer dieser Shapes wird, hängt an der Spalte:
+ * - `journal_entries.content` — **nie casten.** `lib/utils/journal-content.ts`
+ *   verengt über `template_type` und prüft dabei; die elf `*Content`-Typen
+ *   werden ausschließlich von dort aus erreicht (`readJournalContent` zum
+ *   Lesen, `patchJournalContent` zum Mergen).
+ * - `bill_of_rights.rights`, `wants.wants`, `wants.bets` — dort steht weiterhin
+ *   ein Cast (`row.col as RightItem[]`), bewusst und dokumentiert. Diese Arrays
+ *   haben keine Diskriminante, an der sich eine Prüfung festmachen ließe.
  */
 
 /** Element von `bill_of_rights.rights` (JSONB-Array). */

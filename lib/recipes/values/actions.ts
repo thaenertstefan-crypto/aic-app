@@ -10,6 +10,11 @@ import type { DailyValueContent, ValueEvalContent } from "@/lib/types/db-json";
 import { dbError } from "@/lib/utils/db-error";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
+import type { Tables } from "@/lib/supabase/database.types";
+import {
+  patchJournalContent,
+  readJournalContent,
+} from "@/lib/utils/journal-content";
 
 // Werte-Slugs/-Labels sind Kurzstrings; custom Werte sind erlaubt, daher wird
 // nur Typ + Länge geprüft (nicht gegen die values-bank).
@@ -170,6 +175,43 @@ export type JournalEntry = {
   content: DailyValueContent;
 };
 
+/** Die Spalten, aus denen ein `JournalEntry` gelesen wird — `template_type`
+ *  gehört dazu, weil ohne die Diskriminante nichts zu verengen ist. */
+const JOURNAL_ENTRY_SELECT = "id, entry_date, template_type, content";
+
+/** Genau die Spalten aus `JOURNAL_ENTRY_SELECT`, aus den generierten Typen
+ *  abgeleitet statt nachgebaut. */
+type JournalEntrySelection = Pick<
+  Tables<"journal_entries">,
+  "id" | "entry_date" | "template_type" | "content"
+>;
+
+/**
+ * DB-Zeilen auf den geprüften Shape ziehen.
+ *
+ * Eine Zeile, die sich nicht als `daily_value` lesen lässt, bleibt trotzdem in
+ * der Liste — mit leerem Text, also genau dem, was vor der Verengung zu sehen
+ * war. Sie wegzulassen wäre teurer als es aussieht: an der LÄNGE dieser Liste
+ * hängen zwei Gates (`evaluation/page.tsx` leitet unter 7 Einträgen zurück,
+ * `journal-form.tsx` schaltet ab 7 frei), während der Fortschritt in
+ * `saveJournalEntryAction` per DB-`count(*)` zählt. Eine gefilterte Liste
+ * ließe beide Zähler auseinanderlaufen: „7 von 7“ im Journal, und die
+ * Auswertung wirft trotzdem zurück.
+ */
+function toJournalEntries(
+  rows: JournalEntrySelection[] | null,
+): JournalEntry[] {
+  return (rows ?? []).map((row) => {
+    const entry = readJournalContent(row.template_type, row.content);
+    return {
+      id: row.id,
+      entry_date: row.entry_date ?? "",
+      content:
+        entry.template === "daily_value" ? entry.content : { happenings: "" },
+    };
+  });
+}
+
 export type JournalPageData = {
   hypothesis: string[] | null;
   entries: JournalEntry[];
@@ -205,7 +247,7 @@ export async function getJournalData(
   // Journal-Einträge werden immer frisch gelesen.
   const entriesQuery = supabase
     .from("journal_entries")
-    .select("id, entry_date, content")
+    .select(JOURNAL_ENTRY_SELECT)
     .eq("user_id", user.id)
     .eq("recipe_slug", "values")
     .eq("template_type", "daily_value")
@@ -219,7 +261,7 @@ export async function getJournalData(
     }
     return {
       hypothesis: preloaded.hypothesisValues,
-      entries: (entries as JournalEntry[]) ?? [],
+      entries: toJournalEntries(entries),
       startedAt: preloaded.progress?.started_at ?? null,
       currentStep: preloaded.progress?.current_step ?? 1,
     };
@@ -257,7 +299,7 @@ export async function getJournalData(
 
   return {
     hypothesis: (hypothesisRow?.values as string[]) ?? null,
-    entries: (entries as JournalEntry[]) ?? [],
+    entries: toJournalEntries(entries),
     startedAt: progress?.started_at ?? null,
     currentStep: progress?.current_step ?? 1,
   };
@@ -318,10 +360,9 @@ export async function saveJournalEntryAction(
     const { error: updateError } = await supabase
       .from("journal_entries")
       .update({
-        content: {
-          ...((target.content as Record<string, unknown>) ?? {}),
+        content: patchJournalContent("daily_value", target.content, {
           happenings,
-        },
+        }),
       })
       .eq("id", target.id);
 
@@ -347,10 +388,9 @@ export async function saveJournalEntryAction(
     const { error: updateError } = await supabase
       .from("journal_entries")
       .update({
-        content: {
-          ...((existingEntry.content as Record<string, unknown>) ?? {}),
+        content: patchJournalContent("daily_value", existingEntry.content, {
           happenings,
-        },
+        }),
       })
       .eq("id", existingEntry.id);
 
@@ -479,7 +519,7 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
       .maybeSingle(),
     supabase
       .from("journal_entries")
-      .select("id, entry_date, content")
+      .select(JOURNAL_ENTRY_SELECT)
       .eq("user_id", user.id)
       .eq("recipe_slug", "values")
       .eq("template_type", "daily_value")
@@ -487,7 +527,7 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
       .limit(7),
     supabase
       .from("journal_entries")
-      .select("id, content, ai_insights")
+      .select("id, template_type, content, ai_insights")
       .eq("user_id", user.id)
       .eq("recipe_slug", "values")
       .eq("template_type", "value_eval")
@@ -498,15 +538,21 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
   const hypothesisVersion = hypothesisRow?.version ?? 1;
 
   // Show them in chronological order.
-  const cycleEntries = ((entries as JournalEntry[]) ?? []).slice().reverse();
+  const cycleEntries = toJournalEntries(entries).reverse();
 
+  // Die Zeile trägt die Phase der Auswertung, auch wenn ihr content (noch)
+  // nicht lesbar ist — deshalb bleibt der Eintrag bestehen und nur der content
+  // fällt auf die leere Reflexion zurück, wie bisher bei fehlendem content.
+  const evalContent = evalRow
+    ? readJournalContent(evalRow.template_type, evalRow.content)
+    : null;
   const valueEvalEntry: ValueEvalEntry = evalRow
     ? {
         id: evalRow.id,
-        content: (evalRow.content as ValueEvalContent) ?? {
-          positive_reflection: "",
-          negative_reflection: "",
-        },
+        content:
+          evalContent?.template === "value_eval"
+            ? evalContent.content
+            : { positive_reflection: "", negative_reflection: "" },
         aiInsights: evalRow.ai_insights ?? null,
       }
     : null;
@@ -589,11 +635,10 @@ export async function saveEvalReflectionAction(
     const { error: updateError } = await supabase
       .from("journal_entries")
       .update({
-        content: {
-          ...((existing.content as Record<string, unknown>) ?? {}),
+        content: patchJournalContent("value_eval", existing.content, {
           positive_reflection: positiveReflection,
           negative_reflection: negativeReflection,
-        },
+        }),
       })
       .eq("id", existing.id);
 

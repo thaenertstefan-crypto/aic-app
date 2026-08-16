@@ -13,6 +13,23 @@ import {
 } from "lucide-react";
 
 import { PAGE_TITLES } from "@/lib/content/labels";
+import type { Json } from "@/lib/supabase/database.types";
+import type {
+  BillOfRightsContent,
+  DailyValueContent,
+  FreeEntryContent,
+  LittleBetContent,
+  MessyMomentContent,
+  OverthinkingContent,
+  SayingNoContent,
+  ShadowContent,
+  ValueEvalContent,
+  YinYangContent,
+} from "@/lib/types/db-json";
+import {
+  readJournalContent,
+  type KnownJournalContent,
+} from "./journal-content";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
@@ -29,17 +46,6 @@ export type TemplateType =
   | "saying_no"
   | "shadow"
   | "free";
-
-export type JournalEntryRow = {
-  id: string;
-  user_id: string;
-  recipe_slug: string | null;
-  template_type: string;
-  entry_date: string;
-  content: Record<string, unknown>;
-  ai_insights: string | null;
-  created_at: string;
-};
 
 /**
  * Schlanke Variante für die Journal-Liste: enthält NUR die für Anzeige und
@@ -230,171 +236,161 @@ export { formatDateDE } from "./date";
 /*  Per-template-type content formatters                              */
 /* ------------------------------------------------------------------ */
 
-function formatDailyValue(content: Record<string, unknown>): ContentSection[] {
+function formatDailyValue(content: DailyValueContent): ContentSection[] {
   const sections: ContentSection[] = [
-    { label: "Was ist passiert?", value: stringField(content, "happenings") },
+    { label: "Was ist passiert?", value: content.happenings },
   ];
 
   // Alt-Einträge (vor der 1-Feld-Zusammenlegung) tragen noch ein eigenes
   // `response` — neue Einträge haben das Feld gar nicht mehr. Nur zeigen,
   // wenn tatsächlich etwas da ist, sonst bleibt eine leere Sektion stehen.
-  const response = stringField(content, "response");
-  if (response) {
-    sections.push({ label: "Gedanken und Gefühle", value: response });
+  if (content.response) {
+    sections.push({ label: "Gedanken und Gefühle", value: content.response });
   }
 
   return sections;
 }
 
-function formatValueEval(content: Record<string, unknown>): ContentSection[] {
+function formatValueEval(content: ValueEvalContent): ContentSection[] {
   return [
-    {
-      label: "Was lief gut?",
-      value: stringField(content, "positive_reflection"),
-    },
-    {
-      label: "Was war schwierig?",
-      value: stringField(content, "negative_reflection"),
-    },
+    { label: "Was lief gut?", value: content.positive_reflection },
+    { label: "Was war schwierig?", value: content.negative_reflection },
   ];
 }
 
-function formatYinYang(content: Record<string, unknown>): ContentSection[] {
+function formatYinYang(content: YinYangContent): ContentSection[] {
   const sections: ContentSection[] = [
-    {
-      label: "Wofür nimmst du Mühsal in Kauf?",
-      value: stringField(content, "yin"),
-    },
-    {
-      label: "Was bringt dich in Flow?",
-      value: stringField(content, "yang"),
-    },
+    { label: "Wofür nimmst du Mühsal in Kauf?", value: content.yin },
+    { label: "Was bringt dich in Flow?", value: content.yang },
   ];
 
-  const principles = stringField(content, "principles");
-  if (principles) {
-    sections.push({ label: "Die Prinzipien dahinter", value: principles });
+  if (content.principles) {
+    sections.push({
+      label: "Die Prinzipien dahinter",
+      value: content.principles,
+    });
   }
 
   // Die destillierten Hypothesen (von /api/wants-distiller nachgetragen).
-  const aiWants = content["ai_wants"];
-  if (Array.isArray(aiWants) && aiWants.length > 0) {
-    const texts = aiWants
-      .map((w) =>
-        typeof (w as Record<string, unknown>)?.text === "string"
-          ? ((w as Record<string, unknown>).text as string)
-          : "",
-      )
-      .filter(Boolean);
-    if (texts.length > 0) {
-      sections.push({
-        label: "Deine Wants-Hypothesen",
-        value: texts.map((t) => `• ${t}`).join("\n"),
-      });
-    }
+  const texts = (content.ai_wants ?? []).map((w) => w.text).filter(Boolean);
+  if (texts.length > 0) {
+    sections.push({
+      label: "Deine Wants-Hypothesen",
+      value: texts.map((t) => `• ${t}`).join("\n"),
+    });
   }
 
   return sections;
 }
 
-function formatLittleBet(content: Record<string, unknown>): ContentSection[] {
+/** Die drei Vibe-Stufen als Text. `Record` über den Feldtyp: eine vierte Stufe
+ *  in `db-json.ts` bricht hier den Build, statt still ohne Label zu rendern. */
+const VIBE_LABELS: Record<NonNullable<LittleBetContent["vibe"]>, string> = {
+  energized: "Hat mir Energie gegeben",
+  neutral: "War okay",
+  drained: "Hat mich eher ausgelaugt",
+};
+
+function formatLittleBet(content: LittleBetContent): ContentSection[] {
   const sections: ContentSection[] = [
-    { label: "Dein Little Bet", value: stringField(content, "bet_text") },
-    { label: "Wie war's?", value: stringField(content, "experience") },
+    { label: "Dein Little Bet", value: content.bet_text },
+    { label: "Wie war's?", value: content.experience },
   ];
 
-  const liked = stringField(content, "liked");
-  if (liked) sections.push({ label: "Was dir gefallen hat", value: liked });
-
-  const disliked = stringField(content, "disliked");
-  if (disliked) sections.push({ label: "Was dir nicht gefallen hat", value: disliked });
-
-  const vibeLabels: Record<string, string> = {
-    energized: "Hat mir Energie gegeben",
-    neutral: "War okay",
-    drained: "Hat mich eher ausgelaugt",
-  };
-  const vibe = stringField(content, "vibe");
-  if (vibe && vibeLabels[vibe]) {
-    sections.push({ label: "Leute & Vibe", value: vibeLabels[vibe] });
+  if (content.liked) {
+    sections.push({ label: "Was dir gefallen hat", value: content.liked });
   }
 
-  const changedWants = stringField(content, "changed_wants");
-  if (changedWants) {
-    sections.push({ label: "Was das mit deinen Wants macht", value: changedWants });
+  if (content.disliked) {
+    sections.push({ label: "Was dir nicht gefallen hat", value: content.disliked });
+  }
+
+  if (content.vibe) {
+    sections.push({ label: "Leute & Vibe", value: VIBE_LABELS[content.vibe] });
+  }
+
+  if (content.changed_wants) {
+    sections.push({
+      label: "Was das mit deinen Wants macht",
+      value: content.changed_wants,
+    });
   }
 
   return sections;
 }
 
-function formatBillOfRights(
-  content: Record<string, unknown>,
-): ContentSection[] {
+function formatBillOfRights(content: BillOfRightsContent): ContentSection[] {
   // Neue Einträge (Regel-Duell): prompt1 + ai_analysis + old_rule.
   // Alt-Einträge: prompt1, prompt2, prompt3 (nur noch lesend).
   const sections: ContentSection[] = [];
-  const p1 = stringField(content, "prompt1");
-  const analysis = stringField(content, "ai_analysis");
-  const oldRule = stringField(content, "old_rule");
-  const p2 = stringField(content, "prompt2");
-  const p3 = stringField(content, "prompt3");
 
-  if (p1) sections.push({ label: "Deine Reflexion", value: p1 });
-  if (analysis) sections.push({ label: "Meine Einschätzung", value: analysis });
-  if (oldRule) sections.push({ label: "Die alte Regel", value: oldRule });
-  if (p2) sections.push({ label: "Was dir wichtig ist", value: p2 });
-  if (p3) sections.push({ label: "Was du dir vornimmst", value: p3 });
+  if (content.prompt1) {
+    sections.push({ label: "Deine Reflexion", value: content.prompt1 });
+  }
+  if (content.ai_analysis) {
+    sections.push({ label: "Meine Einschätzung", value: content.ai_analysis });
+  }
+  if (content.old_rule) {
+    sections.push({ label: "Die alte Regel", value: content.old_rule });
+  }
+  if (content.prompt2) {
+    sections.push({ label: "Was dir wichtig ist", value: content.prompt2 });
+  }
+  if (content.prompt3) {
+    sections.push({ label: "Was du dir vornimmst", value: content.prompt3 });
+  }
 
   return sections;
 }
 
-function formatMessyMoment(content: Record<string, unknown>): ContentSection[] {
+/** Die Selbst-Einordnung der Alt-Einträge als Text (s. VIBE_LABELS). */
+const GUILT_LABELS: Record<
+  NonNullable<MessyMomentContent["guilt_type"]>,
+  string
+> = {
+  healthy: "Gesundes Schuldgefühl",
+  unhealthy: "Ungesundes Schuldgefühl",
+  unsure: "Bin mir nicht sicher",
+};
+
+function formatMessyMoment(content: MessyMomentContent): ContentSection[] {
   // Alt-Einträge (Formular bis Juli 2026) haben guilt_type vom User selbst —
   // sie rendern unverändert. Neue Einträge tragen stattdessen die KI-Felder
   // ai_guilt_guess/ai_rules_conflict (+ guilt_feedback vom Bestätigungs-Tap).
-  const guiltRaw = stringField(content, "guilt_type");
-
-  if (guiltRaw) {
-    const guiltLabels: Record<string, string> = {
-      healthy: "Gesundes Schuldgefühl",
-      unhealthy: "Ungesundes Schuldgefühl",
-      unsure: "Bin mir nicht sicher",
-    };
-
+  if (content.guilt_type) {
     return [
-      {
-        label: "Was war die Situation?",
-        value: stringField(content, "messy_when"),
-      },
+      { label: "Was war die Situation?", value: content.messy_when },
       {
         label: "Welche Regeln standen im Konflikt?",
-        value: stringField(content, "conflicting_rules"),
+        value: content.conflicting_rules ?? "",
       },
-      { label: "Art des Schuldgefühls", value: guiltLabels[guiltRaw] ?? guiltRaw },
+      {
+        label: "Art des Schuldgefühls",
+        value: GUILT_LABELS[content.guilt_type],
+      },
     ];
   }
 
   const sections: ContentSection[] = [
-    {
-      label: "Was war die Situation?",
-      value: stringField(content, "messy_when"),
-    },
+    { label: "Was war die Situation?", value: content.messy_when },
   ];
 
-  const rules = stringField(content, "ai_rules_conflict");
-  if (rules) {
-    sections.push({ label: "Die Regeln im Konflikt", value: rules });
+  if (content.ai_rules_conflict) {
+    sections.push({
+      label: "Die Regeln im Konflikt",
+      value: content.ai_rules_conflict,
+    });
   }
 
-  const guess = stringField(content, "ai_guilt_guess");
-  if (guess === "healthy" || guess === "unhealthy") {
+  if (content.ai_guilt_guess) {
     const base =
-      guess === "healthy" ? "Vermutlich gesunde Schuld" : "Vermutlich ungesunde Schuld";
-    const feedback = stringField(content, "guilt_feedback");
+      content.ai_guilt_guess === "healthy"
+        ? "Vermutlich gesunde Schuld"
+        : "Vermutlich ungesunde Schuld";
     const suffix =
-      feedback === "agree"
+      content.guilt_feedback === "agree"
         ? " — du fandest: passt"
-        : feedback === "disagree"
+        : content.guilt_feedback === "disagree"
           ? " — du fandest: passt eher nicht"
           : "";
     sections.push({ label: "Einschätzung deines Begleiters", value: base + suffix });
@@ -403,17 +399,12 @@ function formatMessyMoment(content: Record<string, unknown>): ContentSection[] {
   return sections;
 }
 
-function formatOverthinking(
-  content: Record<string, unknown>,
-): ContentSection[] {
+function formatOverthinking(content: OverthinkingContent): ContentSection[] {
   // Nur die tiefste Warum-Ebene — die Zwischenebenen sind Weg, nicht Ergebnis.
-  const whyLevels = content["why_levels"];
-  const deepest = Array.isArray(whyLevels)
-    ? [...(whyLevels as string[])].reverse().find((v) => v?.trim())
-    : undefined;
+  const deepest = [...content.why_levels].reverse().find((v) => v.trim());
 
   const sections: ContentSection[] = [
-    { label: "Das Problem", value: stringField(content, "problem") },
+    { label: "Das Problem", value: content.problem },
   ];
 
   if (deepest) {
@@ -421,51 +412,59 @@ function formatOverthinking(
   }
 
   // Die KI-Frage aus dem Perspektivwechsel (Alt-Einträge haben sie nicht).
-  const challengerQuestion = stringField(content, "challenger_question");
-  if (challengerQuestion) {
-    sections.push({ label: "Die Reframe-Frage", value: challengerQuestion });
+  if (content.challenger_question) {
+    sections.push({
+      label: "Die Reframe-Frage",
+      value: content.challenger_question,
+    });
   }
 
-  const whatIfWrong = stringField(content, "what_if_wrong");
-  if (whatIfWrong) {
-    sections.push({ label: "Deine neue Perspektive", value: whatIfWrong });
+  if (content.what_if_wrong) {
+    sections.push({
+      label: "Deine neue Perspektive",
+      value: content.what_if_wrong,
+    });
   }
 
-  const whatItWouldMean = stringField(content, "what_it_would_mean");
-  if (whatItWouldMean) {
-    sections.push({ label: "Was würde das bedeuten?", value: whatItWouldMean });
+  if (content.what_it_would_mean) {
+    sections.push({
+      label: "Was würde das bedeuten?",
+      value: content.what_it_would_mean,
+    });
   }
 
-  const reframedProblem = stringField(content, "reframed_problem");
-  if (reframedProblem) {
+  if (content.reframed_problem) {
     sections.push({
       label: "Was würde diese Perspektive für dein Problem bedeuten?",
-      value: reframedProblem,
+      value: content.reframed_problem,
     });
   }
 
   // Rückwärtskompatibel: ältere Einträge mit dem alten Vergleichsblock.
-  const currentProblem = stringField(content, "current_problem");
-  if (currentProblem) sections.push({ label: "Das aktuelle Problem", value: currentProblem });
-  const newProblem = stringField(content, "new_problem");
-  if (newProblem) sections.push({ label: "Das neue Problem", value: newProblem });
+  if (content.current_problem) {
+    sections.push({
+      label: "Das aktuelle Problem",
+      value: content.current_problem,
+    });
+  }
+  if (content.new_problem) {
+    sections.push({ label: "Das neue Problem", value: content.new_problem });
+  }
 
-  sections.push({ label: "Dein nächster Schritt", value: stringField(content, "decision") });
+  sections.push({ label: "Dein nächster Schritt", value: content.decision });
 
   return sections;
 }
 
-function formatSayingNo(content: Record<string, unknown>): ContentSection[] {
-  const isPractice = stringField(content, "mode") === "practice";
-  const draft = stringField(content, "draft");
-  const draft2 = stringField(content, "draft2");
-  const finalNo =
-    stringField(content, "final_no") || draft2 || draft;
+function formatSayingNo(content: SayingNoContent): ContentSection[] {
+  const isPractice = content.mode === "practice";
+  const draft = content.draft;
+  const finalNo = content.final_no || content.draft2 || draft;
 
   const sections: ContentSection[] = [
     {
       label: isPractice ? "Das Übungsszenario" : "Die Anfrage",
-      value: stringField(content, "situation"),
+      value: content.situation,
     },
   ];
 
@@ -478,36 +477,30 @@ function formatSayingNo(content: Record<string, unknown>): ContentSection[] {
   sections.push({ label: "Dein Nein", value: finalNo });
 
   // Kompakte Blueprint-Bilanz aus den KI-Verdicts (fehlt bei Alt-/Offline-Einträgen).
-  const checklist = content["ai_checklist"];
-  if (checklist && typeof checklist === "object") {
-    const values = Object.values(checklist as Record<string, unknown>).filter(
-      (v): v is boolean => typeof v === "boolean",
-    );
-    if (values.length > 0) {
-      const passed = values.filter(Boolean).length;
-      sections.push({
-        label: "Blueprint-Check",
-        value: `${passed} von ${values.length} Schichten ✓`,
-      });
-    }
+  // Die Checkliste kommt entweder vollständig oder gar nicht — eine halbe
+  // ergäbe eine falsche Bilanz, deshalb verwirft die Verengung sie ganz.
+  if (content.ai_checklist) {
+    const layers = Object.values(content.ai_checklist);
+    sections.push({
+      label: "Blueprint-Check",
+      value: `${layers.filter(Boolean).length} von ${layers.length} Schichten ✓`,
+    });
   }
 
   return sections;
 }
 
-function formatShadow(content: Record<string, unknown>): ContentSection[] {
+function formatShadow(content: ShadowContent): ContentSection[] {
   // Nur der rohe Text — bewusst ohne KI-Felder (gibt es hier nie) und ohne
   // weitere Aufbereitung: das Shadow Journal gehört ganz dem User.
-  return [{ label: "Dein Eintrag", value: stringField(content, "body") }];
+  return [{ label: "Dein Eintrag", value: content.body }];
 }
 
-function formatFree(content: Record<string, unknown>): ContentSection[] {
+function formatFree(content: FreeEntryContent): ContentSection[] {
   const sections: ContentSection[] = [];
-  const title = stringField(content, "title");
-  const body = stringField(content, "body");
 
-  if (title) sections.push({ label: "Titel", value: title });
-  sections.push({ label: "Eintrag", value: body });
+  if (content.title) sections.push({ label: "Titel", value: content.title });
+  sections.push({ label: "Eintrag", value: content.body });
 
   return sections;
 }
@@ -516,39 +509,66 @@ function formatFree(content: Record<string, unknown>): ContentSection[] {
 /*  Dispatcher                                                        */
 /* ------------------------------------------------------------------ */
 
-const FORMATTERS: Record<
-  string,
-  (content: Record<string, unknown>) => ContentSection[]
-> = {
-  daily_value: formatDailyValue,
-  value_eval: formatValueEval,
-  yin_yang: formatYinYang,
-  little_bet: formatLittleBet,
-  bill_of_rights: formatBillOfRights,
-  messy_moment: formatMessyMoment,
-  overthinking: formatOverthinking,
-  saying_no: formatSayingNo,
-  shadow: formatShadow,
-  free: formatFree,
-};
+/**
+ * Der `switch` über die Diskriminante ist der ganze Punkt: `entry.content` ist
+ * in jedem Zweig der Shape, den der Formatter erwartet — ohne eine einzige
+ * Behauptung. Fehlt ein Glied, fehlt dieser Funktion ein Rückgabepfad, und
+ * `tsc` sagt das. Eine Tabelle `template_type → Formatter` könnte das nicht:
+ * sie prüft die Schlüssel, aber nicht, dass Schlüssel und content-Shape beim
+ * Aufruf zusammengehören.
+ */
+function formatKnown(entry: KnownJournalContent): ContentSection[] {
+  switch (entry.template) {
+    case "daily_value":
+      return formatDailyValue(entry.content);
+    case "value_eval":
+      return formatValueEval(entry.content);
+    case "yin_yang":
+      return formatYinYang(entry.content);
+    case "little_bet":
+      return formatLittleBet(entry.content);
+    case "bill_of_rights":
+      return formatBillOfRights(entry.content);
+    case "messy_moment":
+      return formatMessyMoment(entry.content);
+    case "overthinking":
+      return formatOverthinking(entry.content);
+    case "saying_no":
+      return formatSayingNo(entry.content);
+    case "shadow":
+      return formatShadow(entry.content);
+    case "free":
+      return formatFree(entry.content);
+  }
+}
 
 /**
- * Get ordered content sections for a given template_type and content blob.
- * Used by the detail dialog to render a nicely formatted view.
+ * Die geordneten Sektionen eines Eintrags für die Detailansicht.
+ *
+ * Nimmt beide Achsen so, wie die Datenbank sie liefert — `template_type` ist
+ * dort ein nackter `string`, `content` ein nackter `Json` — und verengt sie in
+ * einem Schritt: ab `formatKnown` ist `content` getypt.
+ *
+ * Der generische Fallback greift jetzt in zwei Fällen — unbekannter
+ * `template_type` (wie bisher) UND ein content, der seinen eigenen Shape nicht
+ * erfüllt. Beides heißt dasselbe: „dafür kann ich nicht geradestehen“, und
+ * alle Schlüssel roh zu zeigen ist ehrlicher als halb leere Sektionen mit
+ * vertrauten Überschriften.
  */
 export function getContentSections(
   templateType: string,
-  content: Record<string, unknown>,
+  content: Json,
 ): ContentSection[] {
-  const formatter = FORMATTERS[templateType];
-  if (!formatter) {
-    // Fallback: show all keys alphabetically
-    return Object.entries(content).map(([key, val]) => ({
+  const entry = readJournalContent(templateType, content);
+
+  if (entry.template === "unknown") {
+    return Object.entries(entry.content).map(([key, val]) => ({
       label: key,
       value: formatValue(val),
     }));
   }
-  return formatter(content);
+
+  return formatKnown(entry);
 }
 
 /* ------------------------------------------------------------------ */
@@ -609,15 +629,6 @@ export function getFilterTabs(): FilterTab[] {
 /* ------------------------------------------------------------------ */
 /*  Internal helpers                                                  */
 /* ------------------------------------------------------------------ */
-
-function stringField(
-  content: Record<string, unknown>,
-  key: string,
-): string {
-  const val = content[key];
-  if (typeof val === "string") return val;
-  return "";
-}
 
 function formatValue(val: unknown): string {
   if (typeof val === "string") return val;

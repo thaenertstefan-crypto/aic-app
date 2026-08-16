@@ -8,8 +8,11 @@ import {
   logUsage,
 } from "@/lib/anthropic/rate-limit";
 import { createClient } from "@/lib/supabase/server";
-import type { YinYangContent } from "@/lib/types/db-json";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
+import {
+  patchJournalContent,
+  readJournalContent,
+} from "@/lib/utils/journal-content";
 import { getValueLabel } from "@/lib/utils/values-bank";
 
 // Audit texts come from the user's own DB (length-capped at save time), so
@@ -138,7 +141,7 @@ export async function POST(request: Request) {
   const [{ data: entry }, { data: hypothesisRow }] = await Promise.all([
     supabase
       .from("journal_entries")
-      .select("id, content")
+      .select("id, template_type, content")
       .eq("id", entryId)
       .eq("user_id", user.id)
       .eq("recipe_slug", "wants")
@@ -161,10 +164,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const content = entry.content as YinYangContent;
-  const yin = (content.yin ?? "").trim();
-  const yang = (content.yang ?? "").trim();
-  if (!yin || !yang) {
+  // Ein content ohne yin/yang verengt gar nicht erst zu einem Audit — für
+  // diese Route derselbe Befund wie leere Felder: noch nicht vollständig.
+  const audit = readJournalContent(entry.template_type, entry.content);
+  const content = audit.template === "yin_yang" ? audit.content : null;
+  const yin = content?.yin.trim();
+  const yang = content?.yang.trim();
+  if (!content || !yin || !yang) {
     return Response.json(
       { error: "Dein Audit ist noch nicht vollständig." },
       { status: 400 },
@@ -236,10 +242,9 @@ ${valuesText}
 
     // Persist onto the entry: die Sterne als Provenienz ins content-JSONB,
     // der Lesetext in ai_insights. WICHTIG: content mergen, nie ersetzen.
-    const mergedContent: YinYangContent = {
-      ...content,
+    const mergedContent = patchJournalContent("yin_yang", entry.content, {
       ai_wants: wants.map((w) => ({ text: w.text, value_id: w.valueId })),
-    };
+    });
 
     const insightParts = [comment];
     if (wants.length > 0) {

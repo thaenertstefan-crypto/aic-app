@@ -12,6 +12,7 @@ import {
   TEXT_MAX_SHORT,
   tooLong,
 } from "@/lib/utils/form-validation";
+import { patchJournalContent } from "@/lib/utils/journal-content";
 
 // ─── Nein-Trainer ───────────────────────────────────────────────────────
 // Geführtes Mini-Rezept im Kopfwetter (Saying 'No' Blueprint).
@@ -190,19 +191,18 @@ export async function saveFinalNoAction(
     return { error: "Wir konnten deinen Eintrag nicht finden.", success: false };
   }
 
-  const merged: SayingNoContent = {
-    ...(row.content as SayingNoContent),
-  };
+  const patch: Partial<SayingNoContent> = {};
   if (draft2) {
-    merged.draft2 = draft2;
+    patch.draft2 = draft2;
   }
   if (finalNo) {
-    merged.final_no = finalNo;
-    merged.final_source =
+    patch.final_no = finalNo;
+    patch.final_source =
       finalSource === "own" || finalSource === "ai" || finalSource === "edited"
         ? finalSource
         : "own";
   }
+  const merged = patchJournalContent("saying_no", row.content, patch);
 
   const { error: updateError } = await supabase
     .from("journal_entries")

@@ -18,12 +18,12 @@ import {
   resolveMatch,
 } from "@/lib/anthropic/right-match";
 import { createClient } from "@/lib/supabase/server";
-import type {
-  RightItem,
-  SayingNoChecklist,
-  SayingNoContent,
-} from "@/lib/types/db-json";
+import type { RightItem, SayingNoChecklist } from "@/lib/types/db-json";
 import { TEXT_MAX_LONG, TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
+import {
+  patchJournalContent,
+  readJournalContent,
+} from "@/lib/utils/journal-content";
 
 // Entry texts come from the user's own DB (already length-capped at save time),
 // so defensively truncate instead of 400ing — max_tokens only bounds the OUTPUT.
@@ -285,7 +285,7 @@ async function handleFeedback(
   const [{ data: entry }, { data: bor }] = await Promise.all([
     supabase
       .from("journal_entries")
-      .select("id, content")
+      .select("id, template_type, content")
       .eq("id", entryId)
       .eq("user_id", userId)
       .eq("recipe_slug", "saying-no")
@@ -298,15 +298,20 @@ async function handleFeedback(
       .maybeSingle(),
   ]);
 
-  if (!entry) {
+  // Ohne mode/situation/draft ist es kein Nein-Eintrag, egal was die Zeile
+  // behauptet — für diese Route derselbe Befund wie eine fehlende Zeile.
+  const noEntry = entry
+    ? readJournalContent(entry.template_type, entry.content)
+    : null;
+  if (!entry || noEntry?.template !== "saying_no") {
     return Response.json(
       { error: "Wir konnten deinen Eintrag nicht finden." },
       { status: 404 },
     );
   }
+  const { content } = noEntry;
 
-  const content = entry.content as SayingNoContent;
-  const draft = (content.draft2 ?? content.draft ?? "").trim();
+  const draft = (content.draft2 ?? content.draft).trim();
   if (!draft) {
     return Response.json(
       { error: "Es fehlt dein Nein-Entwurf für das Feedback." },
@@ -335,7 +340,7 @@ async function handleFeedback(
         : "Die echte Anfrage, zu der die Person Nein sagen will";
 
     const userMessage = `${situationLabel}:
-<situation>${clampText(content.situation ?? "") || "(keine Angabe)"}</situation>
+<situation>${clampText(content.situation) || "(keine Angabe)"}</situation>
 
 Der Nein-Entwurf der Person:
 <draft>${clampText(draft)}</draft>
@@ -376,8 +381,7 @@ ${rightsText}
     // Persist onto the entry: die maschinenlesbaren Verdicts wandern ins
     // content-JSONB (fürs Journal-Rendering), der Lesetext in ai_insights.
     // WICHTIG: content mergen, nie ersetzen — sonst sind situation/draft weg.
-    const mergedContent: SayingNoContent = {
-      ...content,
+    const mergedContent = patchJournalContent("saying_no", entry.content, {
       ai_checklist: checklist
         ? {
             complete_sentence: checklist.complete_sentence.pass,
@@ -387,7 +391,7 @@ ${rightsText}
           }
         : null,
       ai_improved: improved,
-    };
+    });
 
     const insightParts = [comment];
     if (checklist) {
