@@ -1,20 +1,12 @@
-import { anthropic } from "@/lib/anthropic/client";
+import { withAiRoute } from "@/lib/anthropic/ask-model";
 import { readModelJson, readText } from "@/lib/anthropic/model-json";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/messy-guilt-coach";
-import {
-  MESSY_GUILT_LIMIT,
-  RATE_LIMIT_MESSAGE,
-  checkRateLimit,
-  logUsage,
-} from "@/lib/anthropic/rate-limit";
 import {
   type RightResult,
   findRightSentence,
   rescueMatch,
   resolveMatch,
 } from "@/lib/anthropic/right-match";
-import { SESSION_EXPIRED } from "@/lib/actions/action-result";
-import { createClient } from "@/lib/supabase/server";
 import type { RightItem } from "@/lib/types/db-json";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
 import {
@@ -105,109 +97,76 @@ function parseProse(text: string): CoachResult {
  * the RLS-scoped client) and returns { analysis, right }. The result is also
  * persisted onto the entry's ai_insights column.
  */
-export async function POST(request: Request) {
-  const supabase = await createClient();
+export const POST = withAiRoute(
+  { endpoint: "messy-guilt-coach", failure: AI_ERROR_MESSAGE },
+  async ({ supabase, user, askModel }, request) => {
+    const { entryId } = (await request.json()) as { entryId?: string };
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    if (!entryId || typeof entryId !== "string") {
+      return Response.json(
+        { error: "Es fehlt der Eintrag für die Auswertung." },
+        { status: 400 },
+      );
+    }
 
-  if (!user) {
-    return Response.json(
-      { error: SESSION_EXPIRED },
-      { status: 401 },
-    );
-  }
+    // Die zwei Reads sind unabhängig → parallel laden.
+    const [{ data: entry }, { data: bor }] = await Promise.all([
+      supabase
+        .from("journal_entries")
+        .select("id, template_type, content")
+        .eq("id", entryId)
+        .eq("user_id", user.id)
+        .eq("recipe_slug", "things-got-messy")
+        .eq("template_type", "messy_moment")
+        .maybeSingle(),
+      supabase
+        .from("bill_of_rights")
+        .select("rights")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]);
 
-  const { entryId } = (await request.json()) as { entryId?: string };
+    // Ein content ohne messy_when ist für diese Route so gut wie kein Eintrag —
+    // die Route hätte sonst ein leeres <messy_when> ans Modell geschickt.
+    const moment = entry
+      ? readJournalContent(entry.template_type, entry.content)
+      : null;
+    if (!entry || moment?.template !== "messy_moment") {
+      return Response.json(
+        { error: "Wir konnten deinen Eintrag nicht finden." },
+        { status: 404 },
+      );
+    }
+    const { content } = moment;
 
-  if (!entryId || typeof entryId !== "string") {
-    return Response.json(
-      { error: "Es fehlt der Eintrag für die Auswertung." },
-      { status: 400 },
-    );
-  }
+    const activeRights = ((bor?.rights as RightItem[] | null) ?? [])
+      .filter((r) => r.active)
+      .slice(0, MAX_RIGHTS_IN_PROMPT)
+      .map((r) => ({ ...r, text: r.text.slice(0, TEXT_MAX_SHORT) }));
 
-  // Die zwei Reads sind unabhängig → parallel laden.
-  const [{ data: entry }, { data: bor }] = await Promise.all([
-    supabase
-      .from("journal_entries")
-      .select("id, template_type, content")
-      .eq("id", entryId)
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "things-got-messy")
-      .eq("template_type", "messy_moment")
-      .maybeSingle(),
-    supabase
-      .from("bill_of_rights")
-      .select("rights")
-      .eq("user_id", user.id)
-      .maybeSingle(),
-  ]);
-
-  // Ein content ohne messy_when ist für diese Route so gut wie kein Eintrag —
-  // die Route hätte sonst ein leeres <messy_when> ans Modell geschickt.
-  const moment = entry
-    ? readJournalContent(entry.template_type, entry.content)
-    : null;
-  if (!entry || moment?.template !== "messy_moment") {
-    return Response.json(
-      { error: "Wir konnten deinen Eintrag nicht finden." },
-      { status: 404 },
-    );
-  }
-  const { content } = moment;
-
-  const activeRights = (((bor?.rights as RightItem[] | null) ?? [])
-    .filter((r) => r.active)
-    .slice(0, MAX_RIGHTS_IN_PROMPT))
-    .map((r) => ({ ...r, text: r.text.slice(0, TEXT_MAX_SHORT) }));
-
-  // Cap hourly AI calls per user (checked after input validation so invalid
-  // requests don't burn quota).
-  if (
-    await checkRateLimit(supabase, user.id, "messy-guilt-coach", MESSY_GUILT_LIMIT)
-  ) {
-    return Response.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
-  }
-
-  try {
     const rightsText =
       activeRights.length > 0
-        ? activeRights.map((r) => `<right id="${r.id}">${r.text}</right>`).join("\n")
+        ? activeRights
+            .map((r) => `<right id="${r.id}">${r.text}</right>`)
+            .join("\n")
         : "(noch keine Rechte vorhanden — es muss ein neues vorgeschlagen werden)";
 
-    const userMessage = `Was passiert ist und wo sich das Schuldgefühl gemeldet hat:
+    const answer = await askModel({
+      system: SYSTEM_PROMPT,
+      // Analyse (2–4 Sätze) + Einordnung + Regeln-Satz + JSON-Gerüst +
+      // Rechts-Satz — 700 lässt Luft, damit nie mitten im Satz abgeschnitten wird.
+      maxTokens: 700,
+      message: `Was passiert ist und wo sich das Schuldgefühl gemeldet hat:
 <messy_when>${clampText(content.messy_when) || "(keine Angabe)"}</messy_when>
 
 Die bisherigen Rechte der Person:
 <rights>
 ${rightsText}
-</rights>`;
-
-    const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
-      // Analyse (2–4 Sätze) + Einordnung + Regeln-Satz + JSON-Gerüst +
-      // Rechts-Satz — 700 lässt Luft, damit nie mitten im Satz abgeschnitten wird.
-      max_tokens: 700,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
+</rights>`,
     });
+    if (answer.failure !== null) return answer.failure;
 
-    // Only count genuinely successful generations against the quota.
-    await logUsage(supabase, user.id, "messy-guilt-coach");
-
-    const raw = message.content
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("")
-      .trim();
-
-    if (!raw) {
-      return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
-    }
-
-    const result = parseModelOutput(raw, activeRights);
+    const result = parseModelOutput(answer.text, activeRights);
     if (!result) {
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
@@ -231,7 +190,9 @@ ${rightsText}
       insightParts.push(`Die Regeln im Konflikt: ${rules}`);
     }
     if (right?.type === "existing") {
-      insightParts.push(`Passendes Recht aus deinem Bill of Rights: ${right.text}`);
+      insightParts.push(
+        `Passendes Recht aus deinem Bill of Rights: ${right.text}`,
+      );
     } else if (right?.type === "new") {
       insightParts.push(`Vorschlag für ein neues Recht: ${right.text}`);
     }
@@ -244,8 +205,5 @@ ${rightsText}
       .eq("id", entry.id);
 
     return Response.json({ analysis, guilt, rules, right });
-  } catch (error) {
-    console.error("messy-guilt-coach: AI call failed", error);
-    return Response.json({ error: AI_ERROR_MESSAGE }, { status: 500 });
-  }
-}
+  },
+);

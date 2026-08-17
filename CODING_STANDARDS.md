@@ -63,11 +63,24 @@ verbindlichen Quellen; hier stehen nur die Regeln, die sich am Code festmachen l
 - In **API-Routen** gilt der Wortlaut (`SESSION_EXPIRED`), nicht aber `withUser`/`getCachedUser`:
   eine Route läuft in ihrem eigenen Request-Kontext und fragt einmal ab, dort dedupliziert
   `getCachedUser` nichts und baut nur einen zweiten Client (siehe `lib/supabase/get-user.ts`).
+  Für **KI-Routen** erledigt das `withAiRoute` (siehe unten) — dort ist eine eigene
+  `auth.getUser()`-Präambel ein Befund.
 - **Neue reine Module unter `lib/` bekommen eine `*.test.ts`** — co-located, ausgeführt von
   `node --test` als Teil von `npm run gate`. „Rein" heißt: keine Netzwerk-, DB- oder
   React-Abhängigkeit. Für Komponenten und Server-Actions gilt die Regel bewusst **nicht**.
 - AI-Aufrufe laufen über `lib/anthropic/`, System-Prompts liegen in `lib/anthropic/prompts/`.
   Ein Prompt-String inline in einer Komponente ist ein Befund.
+- Eine **KI-Route** beginnt mit `withAiRoute({ endpoint, failure }, handler)` aus
+  `lib/anthropic/ask-model.ts` und ruft das Modell über das `askModel` aus dem Kontext auf; das
+  Ergebnis wird über `result.failure !== null` geprüft und die mitgelieferte `Response`
+  durchgereicht. Ein Befund ist alles, was das Modul schon trägt: ein eigener Modellaufruf, ein
+  `claude-*`-Literal, ein handgeschriebener `checkRateLimit`/`logUsage`-Aufruf, ein eigener
+  Textblock-Zusammenbau oder ein `catch` mit eigenem 500er. Neue Endpunkte kommen als Eintrag in
+  `AI_ENDPOINT_LIMITS`, nicht als neue Konstante — der Schlüssel ist Rate-Limit- und
+  `logUsage`-Name in einem.
+- **`logUsage` läuft nur nach einem geglückten Modellaufruf**, und das Limit wird direkt davor
+  geprüft. Beides steckt in `askModel`; wer es an einer Aufrufstelle wiederholt, kann es nur
+  falsch machen.
 
 ## Styling und Motion
 

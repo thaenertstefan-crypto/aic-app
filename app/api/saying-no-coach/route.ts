@@ -1,4 +1,4 @@
-import { anthropic } from "@/lib/anthropic/client";
+import { type AiRouteContext, withAiRoute } from "@/lib/anthropic/ask-model";
 import {
   readModelJson,
   readText,
@@ -7,18 +7,10 @@ import {
 import { SYSTEM_PROMPT as COACH_PROMPT } from "@/lib/anthropic/prompts/saying-no-coach";
 import { SYSTEM_PROMPT as SCENARIO_PROMPT } from "@/lib/anthropic/prompts/saying-no-scenario";
 import {
-  RATE_LIMIT_MESSAGE,
-  SAYING_NO_LIMIT,
-  checkRateLimit,
-  logUsage,
-} from "@/lib/anthropic/rate-limit";
-import {
   type RightResult,
   rescueMatch,
   resolveMatch,
 } from "@/lib/anthropic/right-match";
-import { SESSION_EXPIRED } from "@/lib/actions/action-result";
-import { createClient } from "@/lib/supabase/server";
 import type { RightItem, SayingNoChecklist } from "@/lib/types/db-json";
 import { TEXT_MAX_LONG, TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
 import {
@@ -179,44 +171,28 @@ function checklistSummary(
  *   serverseitig über den RLS-Client nachgeladen. Das Ergebnis wird zusätzlich
  *   auf den Eintrag persistiert (content-Merge + ai_insights).
  */
-export async function POST(request: Request) {
-  const supabase = await createClient();
+export const POST = withAiRoute(
+  { endpoint: "saying-no-coach", failure: AI_ERROR_MESSAGE },
+  async (ctx, request) => {
+    const body = (await request.json()) as {
+      mode?: "scenario" | "feedback";
+      entryId?: string;
+      exclude?: unknown;
+    };
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    if (body.mode === "scenario") {
+      return handleScenario(ctx, body.exclude);
+    }
+    if (body.mode === "feedback") {
+      return handleFeedback(ctx, body.entryId);
+    }
 
-  if (!user) {
-    return Response.json(
-      { error: SESSION_EXPIRED },
-      { status: 401 },
-    );
-  }
-
-  const body = (await request.json()) as {
-    mode?: "scenario" | "feedback";
-    entryId?: string;
-    exclude?: unknown;
-  };
-
-  if (body.mode === "scenario") {
-    return handleScenario(supabase, user.id, body.exclude);
-  }
-  if (body.mode === "feedback") {
-    return handleFeedback(supabase, user.id, body.entryId);
-  }
-
-  return Response.json(
-    { error: "Unbekannter Modus." },
-    { status: 400 },
-  );
-}
-
-type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+    return Response.json({ error: "Unbekannter Modus." }, { status: 400 });
+  },
+);
 
 async function handleScenario(
-  supabase: SupabaseServerClient,
-  userId: string,
+  { askModel }: AiRouteContext,
   excludeRaw: unknown,
 ) {
   const exclude = (Array.isArray(excludeRaw) ? excludeRaw : [])
@@ -224,55 +200,34 @@ async function handleScenario(
     .slice(0, MAX_EXCLUDE_ITEMS)
     .map((s) => s.trim().slice(0, MAX_EXCLUDE_LEN));
 
-  // Cap hourly AI calls per user (checked after input validation so invalid
-  // requests don't burn quota).
-  if (await checkRateLimit(supabase, userId, "saying-no-coach", SAYING_NO_LIMIT)) {
-    return Response.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
-  }
-
-  try {
-    const userMessage =
+  const answer = await askModel({
+    system: SCENARIO_PROMPT,
+    // 2–4 Sätze Szenario — 250 lässt Luft, damit die Bitte am Ende nie
+    // mitten im Satz abgeschnitten wird.
+    maxTokens: 250,
+    // Dieser Modus hat seine eigene Meldung: das Szenario ist kein Feedback.
+    failure: SCENARIO_ERROR_MESSAGE,
+    message:
       exclude.length > 0
         ? `Bereits gesehene Szenarien (Anfänge):\n${exclude
             .map((s, i) => `${i + 1}. ${s} …`)
             .join("\n")}\n\nErfinde ein deutlich anderes Szenario.`
-        : "Erfinde ein Szenario.";
+        : "Erfinde ein Szenario.",
+  });
+  if (answer.failure !== null) return answer.failure;
 
-    const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
-      // 2–4 Sätze Szenario — 250 lässt Luft, damit die Bitte am Ende nie
-      // mitten im Satz abgeschnitten wird.
-      max_tokens: 250,
-      system: SCENARIO_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    });
+  // Strip any wrapping quotes the model may add despite instructions.
+  const scenario = answer.text.replace(/^["„»]+|["“«]+$/g, "").trim();
 
-    // Only count genuinely successful generations against the quota.
-    await logUsage(supabase, userId, "saying-no-coach");
-
-    const scenario = message.content
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("")
-      .trim()
-      // Strip any wrapping quotes the model may add despite instructions.
-      .replace(/^["„»]+|["“«]+$/g, "")
-      .trim();
-
-    if (!scenario) {
-      return Response.json({ error: SCENARIO_ERROR_MESSAGE }, { status: 502 });
-    }
-
-    return Response.json({ scenario });
-  } catch (error) {
-    console.error("saying-no-coach: scenario call failed", error);
-    return Response.json({ error: SCENARIO_ERROR_MESSAGE }, { status: 500 });
+  if (!scenario) {
+    return Response.json({ error: SCENARIO_ERROR_MESSAGE }, { status: 502 });
   }
+
+  return Response.json({ scenario });
 }
 
 async function handleFeedback(
-  supabase: SupabaseServerClient,
-  userId: string,
+  { supabase, user, askModel }: AiRouteContext,
   entryId: string | undefined,
 ) {
   if (!entryId || typeof entryId !== "string") {
@@ -288,14 +243,14 @@ async function handleFeedback(
       .from("journal_entries")
       .select("id, template_type, content")
       .eq("id", entryId)
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .eq("recipe_slug", "saying-no")
       .eq("template_type", "saying_no")
       .maybeSingle(),
     supabase
       .from("bill_of_rights")
       .select("rights")
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .maybeSingle(),
   ]);
 
@@ -320,27 +275,29 @@ async function handleFeedback(
     );
   }
 
-  const activeRights = (((bor?.rights as RightItem[] | null) ?? [])
+  const activeRights = ((bor?.rights as RightItem[] | null) ?? [])
     .filter((r) => r.active)
-    .slice(0, MAX_RIGHTS_IN_PROMPT))
+    .slice(0, MAX_RIGHTS_IN_PROMPT)
     .map((r) => ({ ...r, text: r.text.slice(0, TEXT_MAX_SHORT) }));
 
-  if (await checkRateLimit(supabase, userId, "saying-no-coach", SAYING_NO_LIMIT)) {
-    return Response.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
-  }
+  const rightsText =
+    activeRights.length > 0
+      ? activeRights
+          .map((r) => `<right id="${r.id}">${r.text}</right>`)
+          .join("\n")
+      : "(noch keine Rechte vorhanden — es kann nur ein neues vorgeschlagen werden oder none)";
 
-  try {
-    const rightsText =
-      activeRights.length > 0
-        ? activeRights.map((r) => `<right id="${r.id}">${r.text}</right>`).join("\n")
-        : "(noch keine Rechte vorhanden — es kann nur ein neues vorgeschlagen werden oder none)";
+  const situationLabel =
+    content.mode === "practice"
+      ? "Das Übungsszenario"
+      : "Die echte Anfrage, zu der die Person Nein sagen will";
 
-    const situationLabel =
-      content.mode === "practice"
-        ? "Das Übungsszenario"
-        : "Die echte Anfrage, zu der die Person Nein sagen will";
-
-    const userMessage = `${situationLabel}:
+  const answer = await askModel({
+    system: COACH_PROMPT,
+    // Kommentar + 4 Checklist-Notizen + verbesserte Version + JSON-Gerüst +
+    // Rechts-Satz — 900 lässt Luft, damit nie mitten im Satz abgeschnitten wird.
+    maxTokens: 900,
+    message: `${situationLabel}:
 <situation>${clampText(content.situation) || "(keine Angabe)"}</situation>
 
 Der Nein-Entwurf der Person:
@@ -349,74 +306,50 @@ Der Nein-Entwurf der Person:
 Die bisherigen Rechte der Person:
 <rights>
 ${rightsText}
-</rights>`;
+</rights>`,
+  });
+  if (answer.failure !== null) return answer.failure;
 
-    const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
-      // Kommentar + 4 Checklist-Notizen + verbesserte Version + JSON-Gerüst +
-      // Rechts-Satz — 900 lässt Luft, damit nie mitten im Satz abgeschnitten wird.
-      max_tokens: 900,
-      system: COACH_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    });
-
-    // Only count genuinely successful generations against the quota.
-    await logUsage(supabase, userId, "saying-no-coach");
-
-    const raw = message.content
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("")
-      .trim();
-
-    if (!raw) {
-      return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
-    }
-
-    const result = parseModelOutput(raw, activeRights);
-    if (!result) {
-      return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
-    }
-    const { comment, checklist, improved, right } = result;
-
-    // Persist onto the entry: die maschinenlesbaren Verdicts wandern ins
-    // content-JSONB (fürs Journal-Rendering), der Lesetext in ai_insights.
-    // WICHTIG: content mergen, nie ersetzen — sonst sind situation/draft weg.
-    const mergedContent = patchJournalContent("saying_no", entry.content, {
-      ai_checklist: checklist
-        ? {
-            complete_sentence: checklist.complete_sentence.pass,
-            no_apology: checklist.no_apology.pass,
-            warmth: checklist.warmth.pass,
-            no_but: checklist.no_but.pass,
-          }
-        : null,
-      ai_improved: improved,
-    });
-
-    const insightParts = [comment];
-    if (checklist) {
-      insightParts.push(checklistSummary(checklist));
-    }
-    if (improved) {
-      insightParts.push(`Vorschlag deines Begleiters: ${improved}`);
-    }
-    if (right?.type === "existing") {
-      insightParts.push(`Passendes Recht aus deinem Bill of Rights: ${right.text}`);
-    } else if (right?.type === "new") {
-      insightParts.push(`Vorschlag für ein neues Recht: ${right.text}`);
-    }
-    await supabase
-      .from("journal_entries")
-      .update({
-        content: mergedContent,
-        ai_insights: insightParts.filter(Boolean).join("\n\n"),
-      })
-      .eq("id", entry.id);
-
-    return Response.json({ comment, checklist, improved, right });
-  } catch (error) {
-    console.error("saying-no-coach: feedback call failed", error);
-    return Response.json({ error: AI_ERROR_MESSAGE }, { status: 500 });
+  const result = parseModelOutput(answer.text, activeRights);
+  if (!result) {
+    return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
   }
+  const { comment, checklist, improved, right } = result;
+
+  // Persist onto the entry: die maschinenlesbaren Verdicts wandern ins
+  // content-JSONB (fürs Journal-Rendering), der Lesetext in ai_insights.
+  // WICHTIG: content mergen, nie ersetzen — sonst sind situation/draft weg.
+  const mergedContent = patchJournalContent("saying_no", entry.content, {
+    ai_checklist: checklist
+      ? {
+          complete_sentence: checklist.complete_sentence.pass,
+          no_apology: checklist.no_apology.pass,
+          warmth: checklist.warmth.pass,
+          no_but: checklist.no_but.pass,
+        }
+      : null,
+    ai_improved: improved,
+  });
+
+  const insightParts = [comment];
+  if (checklist) {
+    insightParts.push(checklistSummary(checklist));
+  }
+  if (improved) {
+    insightParts.push(`Vorschlag deines Begleiters: ${improved}`);
+  }
+  if (right?.type === "existing") {
+    insightParts.push(`Passendes Recht aus deinem Bill of Rights: ${right.text}`);
+  } else if (right?.type === "new") {
+    insightParts.push(`Vorschlag für ein neues Recht: ${right.text}`);
+  }
+  await supabase
+    .from("journal_entries")
+    .update({
+      content: mergedContent,
+      ai_insights: insightParts.filter(Boolean).join("\n\n"),
+    })
+    .eq("id", entry.id);
+
+  return Response.json({ comment, checklist, improved, right });
 }

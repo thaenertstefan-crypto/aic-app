@@ -17,6 +17,26 @@
  * auflösen müsste.
  */
 
+/**
+ * Die erste Stufe: aus den Blöcken einer Modell-Antwort den sichtbaren Text.
+ *
+ * Ein Block ohne `type: "text"` (Thinking, Tool-Use) trägt keinen Text für die
+ * Person und fällt raus. Getrimmt wird das Ergebnis, nicht der einzelne Block —
+ * sonst verschwände das Leerzeichen zwischen zwei Blöcken mitten im Satz.
+ *
+ * Der Parametertyp ist bewusst strukturell statt aus dem SDK importiert: das
+ * hält diese Datei importfrei und damit mit purem Node prüfbar.
+ */
+export function readTextBlocks(
+  content: readonly { type: string; text?: string }[],
+): string {
+  return content
+    .filter((block) => block.type === "text")
+    .map((block) => block.text ?? "")
+    .join("")
+    .trim();
+}
+
 /** Woher `fields` kommt. Der Aufrufer entscheidet daran, ob das für seine
  *  Nutzlast reicht — und `"prose"` ist der einzige Fall, in dem `text`
  *  gefahrlos angezeigt werden darf. */

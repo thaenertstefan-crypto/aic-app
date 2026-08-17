@@ -1,15 +1,7 @@
-import { anthropic } from "@/lib/anthropic/client";
+import { withAiRoute } from "@/lib/anthropic/ask-model";
 import { readModelJson, readText } from "@/lib/anthropic/model-json";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/rights-formulator";
-import {
-  RATE_LIMIT_MESSAGE,
-  RIGHTS_FORMULATOR_LIMIT,
-  checkRateLimit,
-  logUsage,
-} from "@/lib/anthropic/rate-limit";
 import { findRightSentence } from "@/lib/anthropic/right-match";
-import { SESSION_EXPIRED } from "@/lib/actions/action-result";
-import { createClient } from "@/lib/supabase/server";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
 
 // Cap per-field input length so a single allowed call can't drive up input-token
@@ -67,81 +59,41 @@ function parseModelOutput(raw: string): FormulatorResult | null {
  * "Ich habe das Recht, …" statement, plus a short empathetic analysis.
  * Accepts { situation } and returns { analysis, oldRule, newRight }.
  */
-export async function POST(request: Request) {
-  const supabase = await createClient();
+export const POST = withAiRoute(
+  { endpoint: "rights-formulator", failure: AI_ERROR_MESSAGE },
+  async ({ askModel }, request) => {
+    const { situation } = (await request.json()) as { situation?: string };
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    if (!situation?.trim()) {
+      return Response.json(
+        { error: "Bitte beschreib zuerst deine Situation." },
+        { status: 400 },
+      );
+    }
 
-  if (!user) {
-    return Response.json(
-      { error: SESSION_EXPIRED },
-      { status: 401 },
-    );
-  }
+    if (situation.trim().length > MAX_INPUT_LEN) {
+      return Response.json(
+        {
+          error:
+            "Deine Eingabe ist etwas lang geraten. Kürze sie bitte ein wenig und versuch es noch einmal.",
+        },
+        { status: 400 },
+      );
+    }
 
-  const { situation } = (await request.json()) as { situation?: string };
-
-  if (!situation?.trim()) {
-    return Response.json(
-      { error: "Bitte beschreib zuerst deine Situation." },
-      { status: 400 },
-    );
-  }
-
-  if (situation.trim().length > MAX_INPUT_LEN) {
-    return Response.json(
-      {
-        error:
-          "Deine Eingabe ist etwas lang geraten. Kürze sie bitte ein wenig und versuch es noch einmal.",
-      },
-      { status: 400 },
-    );
-  }
-
-  // Cap hourly AI calls per user (checked after input validation so invalid
-  // requests don't burn quota).
-  if (
-    await checkRateLimit(
-      supabase,
-      user.id,
-      "rights-formulator",
-      RIGHTS_FORMULATOR_LIMIT,
-    )
-  ) {
-    return Response.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
-  }
-
-  try {
-    const userMessage = `Situation, in der ich einen inneren Konflikt gespürt habe:
-<situation>${situation.trim()}</situation>`;
-
-    const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
-      max_tokens: 450,
+    const answer = await askModel({
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
+      maxTokens: 450,
+      message: `Situation, in der ich einen inneren Konflikt gespürt habe:
+<situation>${situation.trim()}</situation>`,
     });
+    if (answer.failure !== null) return answer.failure;
 
-    // Only count genuinely successful generations against the quota.
-    await logUsage(supabase, user.id, "rights-formulator");
-
-    const raw = message.content
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("")
-      .trim();
-
-    const result = parseModelOutput(raw);
-
+    const result = parseModelOutput(answer.text);
     if (!result) {
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
 
     return Response.json(result);
-  } catch (error) {
-    console.error("rights-formulator: AI call failed", error);
-    return Response.json({ error: AI_ERROR_MESSAGE }, { status: 500 });
-  }
-}
+  },
+);

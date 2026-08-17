@@ -1,14 +1,6 @@
-import { anthropic } from "@/lib/anthropic/client";
+import { withAiRoute } from "@/lib/anthropic/ask-model";
 import { readModelJson, readText } from "@/lib/anthropic/model-json";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/wants-distiller";
-import {
-  RATE_LIMIT_MESSAGE,
-  WANTS_DISTILLER_LIMIT,
-  checkRateLimit,
-  logUsage,
-} from "@/lib/anthropic/rate-limit";
-import { SESSION_EXPIRED } from "@/lib/actions/action-result";
-import { createClient } from "@/lib/supabase/server";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
 import {
   patchJournalContent,
@@ -113,86 +105,68 @@ function parseModelOutput(
  * Die Sterne werden zusätzlich auf den Eintrag persistiert
  * (content.ai_wants + ai_insights).
  */
-export async function POST(request: Request) {
-  const supabase = await createClient();
+export const POST = withAiRoute(
+  { endpoint: "wants-distiller", failure: AI_ERROR_MESSAGE },
+  async ({ supabase, user, askModel }, request) => {
+    const body = (await request.json().catch(() => ({}))) as {
+      entryId?: unknown;
+    };
+    const entryId = typeof body.entryId === "string" ? body.entryId : "";
+    if (!entryId) {
+      return Response.json(
+        { error: "Es fehlt der Audit-Eintrag." },
+        { status: 400 },
+      );
+    }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    // Die zwei Reads sind unabhängig → parallel laden. Nur die neueste
+    // BESTÄTIGTE Werte-Hypothese wird verlinkt — unbestätigte Vermutungen
+    // aus einem laufenden Werte-Zyklus gehören nicht in die Wants.
+    const [{ data: entry }, { data: hypothesisRow }] = await Promise.all([
+      supabase
+        .from("journal_entries")
+        .select("id, template_type, content")
+        .eq("id", entryId)
+        .eq("user_id", user.id)
+        .eq("recipe_slug", "wants")
+        .eq("template_type", "yin_yang")
+        .maybeSingle(),
+      supabase
+        .from("values_hypothesis")
+        .select("values")
+        .eq("user_id", user.id)
+        .eq("confirmed", true)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
-  if (!user) {
-    return Response.json(
-      { error: SESSION_EXPIRED },
-      { status: 401 },
+    if (!entry) {
+      return Response.json(
+        { error: "Wir konnten dein Audit nicht finden." },
+        { status: 404 },
+      );
+    }
+
+    // Ein content ohne yin/yang verengt gar nicht erst zu einem Audit — für
+    // diese Route derselbe Befund wie leere Felder: noch nicht vollständig.
+    const audit = readJournalContent(entry.template_type, entry.content);
+    const content = audit.template === "yin_yang" ? audit.content : null;
+    const yin = content?.yin.trim();
+    const yang = content?.yang.trim();
+    if (!content || !yin || !yang) {
+      return Response.json(
+        { error: "Dein Audit ist noch nicht vollständig." },
+        { status: 400 },
+      );
+    }
+
+    const values = ((hypothesisRow?.values as string[] | null) ?? []).slice(
+      0,
+      MAX_VALUES_IN_PROMPT,
     );
-  }
+    const valueIds = new Set(values);
 
-  const body = (await request.json().catch(() => ({}))) as { entryId?: unknown };
-  const entryId = typeof body.entryId === "string" ? body.entryId : "";
-  if (!entryId) {
-    return Response.json(
-      { error: "Es fehlt der Audit-Eintrag." },
-      { status: 400 },
-    );
-  }
-
-  // Die zwei Reads sind unabhängig → parallel laden. Nur die neueste
-  // BESTÄTIGTE Werte-Hypothese wird verlinkt — unbestätigte Vermutungen
-  // aus einem laufenden Werte-Zyklus gehören nicht in die Wants.
-  const [{ data: entry }, { data: hypothesisRow }] = await Promise.all([
-    supabase
-      .from("journal_entries")
-      .select("id, template_type, content")
-      .eq("id", entryId)
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "wants")
-      .eq("template_type", "yin_yang")
-      .maybeSingle(),
-    supabase
-      .from("values_hypothesis")
-      .select("values")
-      .eq("user_id", user.id)
-      .eq("confirmed", true)
-      .order("version", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
-
-  if (!entry) {
-    return Response.json(
-      { error: "Wir konnten dein Audit nicht finden." },
-      { status: 404 },
-    );
-  }
-
-  // Ein content ohne yin/yang verengt gar nicht erst zu einem Audit — für
-  // diese Route derselbe Befund wie leere Felder: noch nicht vollständig.
-  const audit = readJournalContent(entry.template_type, entry.content);
-  const content = audit.template === "yin_yang" ? audit.content : null;
-  const yin = content?.yin.trim();
-  const yang = content?.yang.trim();
-  if (!content || !yin || !yang) {
-    return Response.json(
-      { error: "Dein Audit ist noch nicht vollständig." },
-      { status: 400 },
-    );
-  }
-
-  const values = ((hypothesisRow?.values as string[] | null) ?? []).slice(
-    0,
-    MAX_VALUES_IN_PROMPT,
-  );
-  const valueIds = new Set(values);
-
-  // Cap hourly AI calls per user (checked after input validation so invalid
-  // requests don't burn quota).
-  if (
-    await checkRateLimit(supabase, user.id, "wants-distiller", WANTS_DISTILLER_LIMIT)
-  ) {
-    return Response.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
-  }
-
-  try {
     const valuesText =
       values.length > 0
         ? values
@@ -200,7 +174,14 @@ export async function POST(request: Request) {
             .join("\n")
         : "(noch keine bestätigten Werte — gib bei allen Wants value_id null an)";
 
-    const userMessage = `Das Yin-&-Yang-Audit der Person:
+    const answer = await askModel({
+      system: SYSTEM_PROMPT,
+      // Kommentar + bis zu 9 Wants (text/title/value_id/reason/question/
+      // distance) + JSON-Gerüst — 1600 lässt extra Luft für Titel und bis
+      // zu 3 zusätzliche ferne Wants, damit nie mitten im Satz
+      // abgeschnitten wird.
+      maxTokens: 1600,
+      message: `Das Yin-&-Yang-Audit der Person:
 <yin>${clampText(yin)}</yin>
 <yang>${clampText(yang)}</yang>
 <prinzipien>${clampText((content.principles ?? "").trim()) || "(keine Angabe)"}</prinzipien>
@@ -209,33 +190,11 @@ export async function POST(request: Request) {
 Die bestätigten Werte der Person:
 <werte>
 ${valuesText}
-</werte>`;
-
-    const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
-      // Kommentar + bis zu 9 Wants (text/title/value_id/reason/question/
-      // distance) + JSON-Gerüst — 1600 lässt extra Luft für Titel und bis
-      // zu 3 zusätzliche ferne Wants, damit nie mitten im Satz
-      // abgeschnitten wird.
-      max_tokens: 1600,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
+</werte>`,
     });
+    if (answer.failure !== null) return answer.failure;
 
-    // Only count genuinely successful generations against the quota.
-    await logUsage(supabase, user.id, "wants-distiller");
-
-    const raw = message.content
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("")
-      .trim();
-
-    if (!raw) {
-      return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
-    }
-
-    const result = parseModelOutput(raw, valueIds);
+    const result = parseModelOutput(answer.text, valueIds);
     if (!result) {
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
@@ -251,7 +210,9 @@ ${valuesText}
     if (wants.length > 0) {
       insightParts.push(
         wants
-          .map((w) => `• ${w.text}${w.valueLabel ? ` (Wert: ${w.valueLabel})` : ""}`)
+          .map(
+            (w) => `• ${w.text}${w.valueLabel ? ` (Wert: ${w.valueLabel})` : ""}`,
+          )
           .join("\n"),
       );
     }
@@ -264,8 +225,5 @@ ${valuesText}
       .eq("id", entry.id);
 
     return Response.json({ comment, wants });
-  } catch (error) {
-    console.error("wants-distiller: call failed", error);
-    return Response.json({ error: AI_ERROR_MESSAGE }, { status: 500 });
-  }
-}
+  },
+);

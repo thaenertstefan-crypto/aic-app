@@ -1,14 +1,6 @@
-import { anthropic } from "@/lib/anthropic/client";
+import { withAiRoute } from "@/lib/anthropic/ask-model";
 import { parseAnalysisResult } from "@/lib/anthropic/journal-analysis-result";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/journal-analysis";
-import {
-  JOURNAL_ANALYSIS_LIMIT,
-  RATE_LIMIT_MESSAGE,
-  checkRateLimit,
-  logUsage,
-} from "@/lib/anthropic/rate-limit";
-import { SESSION_EXPIRED } from "@/lib/actions/action-result";
-import { createClient } from "@/lib/supabase/server";
 import {
   patchJournalContent,
   readJournalContent,
@@ -32,41 +24,18 @@ function clampEntryText(value: string): string {
  * gentle value-theme observations. The result is persisted onto the
  * value_eval entry (ai_insights + content.ai_confirmed/ai_suggested) and
  * returned as { insights, confirmed, suggested }.
+ *
+ * Die eine Route, die nicht mit einem Fehler antwortet: bleibt der Modellaufruf
+ * aus, bekommt die Person den Fallback-Text und eine leere Auswertung. Nur das
+ * Limit wird hart durchgereicht — sonst wäre die Bremse wirkungslos.
  */
-export async function POST() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json(
-      { error: SESSION_EXPIRED },
-      { status: 401 },
-    );
-  }
-
-  // Cap hourly AI calls per user. Kept above the try/catch below so the 429 is
-  // never swallowed by the fallback handler.
-  if (
-    await checkRateLimit(
-      supabase,
-      user.id,
-      "journal-analysis",
-      JOURNAL_ANALYSIS_LIMIT,
-    )
-  ) {
-    return Response.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
-  }
-
-  // Die drei Reads sind voneinander unabhängig → parallel laden, bevor der
-  // KI-Call startet.
-  const [
-    { data: dailyEntries },
-    { data: hypothesisRow },
-    { data: evalRow },
-  ] = await Promise.all([
+export const POST = withAiRoute(
+  { endpoint: "journal-analysis", failure: FALLBACK_INSIGHTS },
+  async ({ supabase, user, askModel }) => {
+    // Die drei Reads sind voneinander unabhängig → parallel laden, bevor der
+    // KI-Call startet.
+    const [{ data: dailyEntries }, { data: hypothesisRow }, { data: evalRow }] =
+      await Promise.all([
     // Most recent 7 daily_value entries = the current cycle.
     supabase
       .from("journal_entries")
@@ -94,25 +63,24 @@ export async function POST() {
       .maybeSingle(),
   ]);
 
-  // Chronological order reads more naturally in the prompt. Einträge, deren
-  // content kein Tagebuch-Eintrag ist, fallen raus, statt als leerer Tag im
-  // Prompt zu landen — flatMap, weil das Glied die Verengung mitbringt.
-  const entries = (dailyEntries ?? [])
-    .flatMap((row) => {
-      const entry = readJournalContent(row.template_type, row.content);
-      return entry.template === "daily_value" ? [entry.content] : [];
-    })
-    .reverse();
+    // Chronological order reads more naturally in the prompt. Einträge, deren
+    // content kein Tagebuch-Eintrag ist, fallen raus, statt als leerer Tag im
+    // Prompt zu landen — flatMap, weil das Glied die Verengung mitbringt.
+    const entries = (dailyEntries ?? [])
+      .flatMap((row) => {
+        const entry = readJournalContent(row.template_type, row.content);
+        return entry.template === "daily_value" ? [entry.content] : [];
+      })
+      .reverse();
 
-  const values = (hypothesisRow?.values as string[] | undefined) ?? [];
+    const values = (hypothesisRow?.values as string[] | undefined) ?? [];
 
-  const evalEntry = evalRow
-    ? readJournalContent(evalRow.template_type, evalRow.content)
-    : null;
-  const reflection =
-    evalEntry?.template === "value_eval" ? evalEntry.content : null;
+    const evalEntry = evalRow
+      ? readJournalContent(evalRow.template_type, evalRow.content)
+      : null;
+    const reflection =
+      evalEntry?.template === "value_eval" ? evalEntry.content : null;
 
-  try {
     const entriesText = entries
       .map(
         (content, i) =>
@@ -120,11 +88,18 @@ export async function POST() {
       )
       .join("\n\n");
 
-    const userMessage = `Aktuelle Werte der Person: ${
-      values.length > 0
-        ? values.map(getValueLabel).join(", ")
-        : "(noch keine festgelegt)"
-    }
+    const answer = await askModel({
+      system: SYSTEM_PROMPT,
+      // Generous headroom: die ~200–250-Wörter-Prosa TEILT sich das Budget mit
+      // dem JSON-Umschlag, confirmed und bis zu 3 Vorschlägen samt Begründung —
+      // 900 reichte dafür nicht zuverlässig (Schwesterrouten mit JSON-Antwort
+      // fahren 1200/1600).
+      maxTokens: 1400,
+      message: `Aktuelle Werte der Person: ${
+        values.length > 0
+          ? values.map(getValueLabel).join(", ")
+          : "(noch keine festgelegt)"
+      }
 
 Die Tagebucheinträge der letzten Woche:
 <journal_entries>
@@ -135,29 +110,21 @@ Rückblick der Person:
 <rueckblick>
 Positive Momente: ${clampEntryText(reflection?.positive_reflection ?? "") || "(keine Angabe)"}
 Belastende Momente: ${clampEntryText(reflection?.negative_reflection ?? "") || "(keine Angabe)"}
-</rueckblick>`;
-
-    const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
-      // Generous headroom: die ~200–250-Wörter-Prosa TEILT sich das Budget mit
-      // dem JSON-Umschlag, confirmed und bis zu 3 Vorschlägen samt Begründung —
-      // 900 reichte dafür nicht zuverlässig (Schwesterrouten mit JSON-Antwort
-      // fahren 1200/1600).
-      max_tokens: 1400,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
+</rueckblick>`,
     });
 
-    // Only count genuinely successful generations against the quota.
-    await logUsage(supabase, user.id, "journal-analysis");
+    if (answer.text === null) {
+      // Das Limit ist die eine harte Bremse; alles andere fängt der
+      // Fallback-Text auf, damit die Bühne trotzdem etwas zu zeigen hat.
+      if (answer.reason === "rate-limit") return answer.failure;
+      return Response.json({
+        insights: FALLBACK_INSIGHTS,
+        confirmed: [],
+        suggested: [],
+      });
+    }
 
-    const raw = message.content
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("")
-      .trim();
-
-    const result = parseAnalysisResult(raw, {
+    const result = parseAnalysisResult(answer.text, {
       currentValues: values,
       bankIds: VALUES_BANK.map((v) => v.id),
       fallbackInsights: FALLBACK_INSIGHTS,
@@ -180,12 +147,5 @@ Belastende Momente: ${clampEntryText(reflection?.negative_reflection ?? "") || "
     }
 
     return Response.json(result);
-  } catch (error) {
-    console.error("journal-analysis: AI call failed", error);
-    return Response.json({
-      insights: FALLBACK_INSIGHTS,
-      confirmed: [],
-      suggested: [],
-    });
-  }
-}
+  },
+);

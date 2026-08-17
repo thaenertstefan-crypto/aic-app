@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { readModelJson, readText } from "./model-json.ts";
+import { readModelJson, readText, readTextBlocks } from "./model-json.ts";
 
 /** Die Reihenfolge, die der messy-guilt-Prompt vorschreibt. */
 const ORDER = ["analysis", "guilt", "rules", "match"] as const;
@@ -165,5 +165,51 @@ describe("readText", () => {
     assert.equal(readText({ a: "   " }, "a"), null);
     assert.equal(readText({ a: 5 }, "a"), null);
     assert.equal(readText({ a: null }, "a"), null);
+  });
+});
+
+describe("readTextBlocks", () => {
+  it("fügt mehrere Textblöcke ohne Trenner zusammen", () => {
+    assert.equal(
+      readTextBlocks([
+        { type: "text", text: "Erster " },
+        { type: "text", text: "zweiter" },
+      ]),
+      "Erster zweiter",
+    );
+  });
+
+  it("überspringt Blöcke, die kein Text sind", () => {
+    assert.equal(
+      readTextBlocks([
+        { type: "thinking" },
+        { type: "text", text: "sichtbar" },
+        { type: "tool_use" },
+      ]),
+      "sichtbar",
+    );
+  });
+
+  it("trimmt das Ergebnis, nicht die einzelnen Blöcke", () => {
+    assert.equal(
+      readTextBlocks([
+        { type: "text", text: "  außen weg, " },
+        { type: "text", text: "innen bleibt  " },
+      ]),
+      "außen weg, innen bleibt",
+    );
+  });
+
+  it("gibt einen leeren String, wenn nichts Sichtbares übrig bleibt", () => {
+    assert.equal(readTextBlocks([]), "");
+    assert.equal(readTextBlocks([{ type: "thinking" }]), "");
+    assert.equal(readTextBlocks([{ type: "text", text: "   " }]), "");
+  });
+
+  it("verträgt einen text-Block ohne text-Feld", () => {
+    assert.equal(
+      readTextBlocks([{ type: "text" }, { type: "text", text: "da" }]),
+      "da",
+    );
   });
 });

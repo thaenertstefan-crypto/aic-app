@@ -1,14 +1,6 @@
-import { anthropic } from "@/lib/anthropic/client";
+import { withAiRoute } from "@/lib/anthropic/ask-model";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/sternschmiede";
-import {
-  RATE_LIMIT_MESSAGE,
-  STERNSCHMIEDE_LIMIT,
-  checkRateLimit,
-  logUsage,
-} from "@/lib/anthropic/rate-limit";
 import { parseForgeOutput } from "@/lib/anthropic/sternschmiede-result";
-import { SESSION_EXPIRED } from "@/lib/actions/action-result";
-import { createClient } from "@/lib/supabase/server";
 import type { WantItem } from "@/lib/types/db-json";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
 import { getValueLabel } from "@/lib/utils/values-bank";
@@ -64,42 +56,42 @@ function buildForgeSlots(
   return slots;
 }
 
-export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return Response.json({ error: SESSION_EXPIRED }, { status: 401 });
-  }
+export const POST = withAiRoute(
+  { endpoint: "sternschmiede", failure: AI_ERROR_MESSAGE },
+  async ({ supabase, user, askModel }, request) => {
+    const body = (await request.json().catch(() => ({}))) as {
+      childAnswer?: unknown;
+    };
+    const childAnswer =
+      typeof body.childAnswer === "string"
+        ? body.childAnswer.trim().slice(0, MAX_CHILD_LEN)
+        : "";
 
-  const body = (await request.json().catch(() => ({}))) as { childAnswer?: unknown };
-  const childAnswer =
-    typeof body.childAnswer === "string" ? body.childAnswer.trim().slice(0, MAX_CHILD_LEN) : "";
+    // Werte (neueste bestätigte Hypothese) + Sterne parallel laden.
+    const [{ data: hypothesisRow }, { data: wantsRow }] = await Promise.all([
+      supabase
+        .from("values_hypothesis")
+        .select("values")
+        .eq("user_id", user.id)
+        .eq("confirmed", true)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("wants")
+        .select("wants")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]);
 
-  // Werte (neueste bestätigte Hypothese) + Sterne parallel laden.
-  const [{ data: hypothesisRow }, { data: wantsRow }] = await Promise.all([
-    supabase
-      .from("values_hypothesis")
-      .select("values")
-      .eq("user_id", user.id)
-      .eq("confirmed", true)
-      .order("version", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase.from("wants").select("wants").eq("user_id", user.id).maybeSingle(),
-  ]);
+    const values = ((hypothesisRow?.values as string[] | null) ?? []).slice(
+      0,
+      MAX_VALUES_IN_PROMPT,
+    );
+    const sterne = ((wantsRow?.wants as WantItem[] | null) ?? [])
+      .filter((w) => w.active && w.text?.trim())
+      .slice(0, MAX_WANTS_IN_PROMPT);
 
-  const values = ((hypothesisRow?.values as string[] | null) ?? []).slice(0, MAX_VALUES_IN_PROMPT);
-  const sterne = ((wantsRow?.wants as WantItem[] | null) ?? [])
-    .filter((w) => w.active && w.text?.trim())
-    .slice(0, MAX_WANTS_IN_PROMPT);
-
-  if (await checkRateLimit(supabase, user.id, "sternschmiede", STERNSCHMIEDE_LIMIT)) {
-    return Response.json({ error: RATE_LIMIT_MESSAGE }, { status: 429 });
-  }
-
-  try {
     const werteText =
       values.length > 0
         ? values.map((id) => `<wert>${getValueLabel(id)}</wert>`).join("\n")
@@ -124,7 +116,10 @@ export async function POST(request: Request) {
       })
       .join("\n");
 
-    const userMessage = `Die Werte der Person:
+    const answer = await askModel({
+      system: SYSTEM_PROMPT,
+      maxTokens: 1200,
+      message: `Die Werte der Person:
 <werte>
 ${werteText}
 </werte>
@@ -140,37 +135,17 @@ Was der Person als Kind Spaß gemacht hat:
 Dein AUFTRAG — schlage genau ${slots.length} Funken, in dieser Reihenfolge:
 <auftrag>
 ${auftragText}
-</auftrag>`;
-
-    const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
-      max_tokens: 1200,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
+</auftrag>`,
     });
-
-    await logUsage(supabase, user.id, "sternschmiede");
-
-    const rawText = message.content
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("")
-      .trim();
-
-    if (!rawText) {
-      return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
-    }
+    if (answer.failure !== null) return answer.failure;
 
     // Ohne Funken hat die Bühne nichts zu zeigen — dann lieber ein ehrliches
     // 502, damit der Client einen neuen Versuch anbietet.
-    const result = parseForgeOutput(rawText, { maxTextLen: TEXT_MAX_SHORT });
+    const result = parseForgeOutput(answer.text, { maxTextLen: TEXT_MAX_SHORT });
     if (!result) {
       return Response.json({ error: AI_ERROR_MESSAGE }, { status: 502 });
     }
 
     return Response.json(result);
-  } catch (error) {
-    console.error("sternschmiede: call failed", error);
-    return Response.json({ error: AI_ERROR_MESSAGE }, { status: 500 });
-  }
-}
+  },
+);
