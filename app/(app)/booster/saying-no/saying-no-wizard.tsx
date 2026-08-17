@@ -31,6 +31,7 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
+import type { SavedEntryId } from "@/lib/recipes/saved-entry";
 import { readRightSuggestion } from "@/lib/recipes/right-suggestion";
 import {
   advanceSayingNo,
@@ -145,13 +146,14 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
   }
 
   // ── KI-Feedback ─────────────────────────────────────────────────
-  // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert; die Route lädt
-  // Texte + Rechte serverseitig nach — der Client schickt nur die entryId.
+  // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert — das sagt jetzt
+  // der Typ, nicht mehr diese Zeile: eine SavedEntryId gibt es nur aus der
+  // Speicher-Action. Die Route lädt Texte + Rechte serverseitig nach.
   // Die Warte-Bühne setzt „feedbackRequested", die Ziel-Bühne gibt runAiStep
   // zurück: ein KI-Ausfall landet als aiError auf dem Feedback-Screen (Retry
   // möglich), blockiert die Übung aber nicht.
 
-  async function runFeedback(id: string) {
+  async function runFeedback(id: SavedEntryId) {
     dispatch({ type: "feedbackRequested" });
 
     const step = await runAiStep(

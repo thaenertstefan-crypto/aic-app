@@ -19,6 +19,8 @@
  * `phase` hereingereicht.
  */
 
+import type { SavedEntryId } from "../saved-entry.ts";
+
 /** Die Bühnen der Übung. */
 export type Phase =
   | "nudge"
@@ -66,7 +68,8 @@ export type WantsState = {
   principlesOpen: boolean;
   saving: boolean;
   error: string | null;
-  entryId: string | null;
+  /** Der Beleg des gespeicherten Audits — erst er macht das Destillat möglich. */
+  entryId: SavedEntryId | null;
 
   // ── Das Destillat ─────────────────────────────────────────────────
   comment: string;
@@ -100,7 +103,7 @@ export type WantsEvent =
     }
   | { type: "saving" }
   | { type: "savingFailed"; message: string }
-  | { type: "saved"; entryId: string }
+  | { type: "saved"; entryId: SavedEntryId }
   | { type: "distillateRequested" }
   | { type: "distillateReceived"; phase: Phase; distillate: Distillate }
   | { type: "distillateFailed"; phase: Phase; message: string }

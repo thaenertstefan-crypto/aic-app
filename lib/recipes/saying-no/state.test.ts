@@ -7,6 +7,14 @@ import {
   type SayingNoState,
 } from "./state.ts";
 
+/**
+ * Den Beleg eines gespeicherten Eintrags stellt sonst der Server aus
+ * (`lib/recipes/saved-entry.ts`, `server-only`). Der Typ wird hier aus dem
+ * Zustand abgeleitet statt importiert — ein Import würde `node --test` an
+ * `server-only` scheitern lassen.
+ */
+const savedId = (id: string) => id as NonNullable<SayingNoState["entryId"]>;
+
 /** Ein Zustand mitten im ersten Szenario: jedes Feld des Versuchs ist benutzt. */
 function afterOneScenario(): SayingNoState {
   return {
@@ -19,7 +27,7 @@ function afterOneScenario(): SayingNoState {
     scenarioSource: "ai",
     scenarioPending: true,
     rerolls: 2,
-    entryId: "entry-1",
+    entryId: savedId("entry-1"),
     draft: "Nee, das geht bei mir nicht.",
     revisionUsed: true,
     saving: true,
@@ -261,7 +269,10 @@ describe("Speichern und Umformulieren", () => {
     assert.equal(saving.saving, true);
     assert.equal(saving.error, null);
 
-    const saved = advanceSayingNo(saving, { type: "saved", entryId: "entry-9" });
+    const saved = advanceSayingNo(saving, {
+      type: "saved",
+      entryId: savedId("entry-9"),
+    });
 
     assert.equal(saved.entryId, "entry-9");
     assert.equal(saved.saving, false);

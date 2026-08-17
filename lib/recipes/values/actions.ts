@@ -19,6 +19,7 @@ import {
   readJournalContent,
 } from "@/lib/utils/journal-content";
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
+import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
 
 // Werte-Slugs/-Labels sind Kurzstrings; custom Werte sind erlaubt, daher wird
 // nur Typ + Länge geprüft (nicht gegen die values-bank).
@@ -448,7 +449,12 @@ export async function saveJournalEntryAction(
 // ─── Evaluation (Step 3) ───────────────────────────────────────────
 
 export type ValueEvalEntry = {
-  id: string;
+  /**
+   * Der Beleg des Eintrags. Serverseitig gelesen, also genauso gültig wie der
+   * aus einer Speicher-Action — der Wiederbesuch braucht ihn, um die
+   * KI-Auswertung noch einmal anstoßen zu können (s. lib/recipes/saved-entry.ts).
+   */
+  id: SavedEntryId;
   content: ValueEvalContent;
   aiInsights: string | null;
 } | null;
@@ -533,7 +539,7 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
         : null;
       const valueEvalEntry: ValueEvalEntry = evalRow
         ? {
-            id: evalRow.id,
+            id: savedEntryId(evalRow.id),
             content:
               evalContent?.template === "value_eval"
                 ? evalContent.content
@@ -590,14 +596,17 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
  * Save the evaluation reflection (Phase 1 of Step 3).
  * Upserts a journal_entries row with template_type='value_eval'.
  *
- * Die Nutzlast ist „ist gespeichert": die Bühne der Auswertung wird daraus
- * ABGELEITET (s. evaluation-form.tsx), und der Anfangszustand `ok(false)` muss
- * sich von einem erfolgreichen Lauf unterscheiden lassen.
+ * Die Nutzlast ist der Beleg der Zeile — und trägt damit beides: die Bühne der
+ * Auswertung wird daraus ABGELEITET (s. evaluation-form.tsx, `data !== null`
+ * unterscheidet den Anfangszustand `ok(null)` von einem erfolgreichen Lauf),
+ * und /api/journal-analysis bekommt genau darüber seinen Eintrag. Vorher war
+ * die Nutzlast ein nacktes `true`, und die Auswertungs-Route musste die Zeile
+ * selbst suchen — fand sie keine, schrieb sie ihr Ergebnis still nirgendwohin.
  */
 export async function saveEvalReflectionAction(
-  _prevState: ActionResult<boolean>,
+  _prevState: ActionResult<SavedEntryId | null>,
   formData: FormData,
-): Promise<ActionResult<boolean>> {
+): Promise<ActionResult<SavedEntryId | null>> {
   return withUser(async ({ supabase, user }) => {
     // Beide Felder sind FREIWILLIG (Bühne A sagt das auch so). Die Zeile wird
     // trotzdem angelegt: sie trägt die Phase der Auswertung UND ist der
@@ -641,25 +650,29 @@ export async function saveEvalReflectionAction(
       if (updateError) {
         return dbFailed(updateError, "values");
       }
-    } else {
-      const { error: insertError } = await supabase
-        .from("journal_entries")
-        .insert({
-          user_id: user.id,
-          recipe_slug: recipeSlugFor("value_eval"),
-          template_type: "value_eval",
-          content: {
-            positive_reflection: positiveReflection,
-            negative_reflection: negativeReflection,
-          },
-        });
 
-      if (insertError) {
-        return dbFailed(insertError, "values");
-      }
+      return ok(savedEntryId(existing.id));
     }
 
-    return ok(true);
+    const { data: inserted, error: insertError } = await supabase
+      .from("journal_entries")
+      .insert({
+        user_id: user.id,
+        recipe_slug: recipeSlugFor("value_eval"),
+        template_type: "value_eval",
+        content: {
+          positive_reflection: positiveReflection,
+          negative_reflection: negativeReflection,
+        },
+      })
+      .select("id")
+      .single();
+
+    if (insertError || !inserted) {
+      return dbFailed(insertError, "values");
+    }
+
+    return ok(savedEntryId(inserted.id));
   });
 }
 

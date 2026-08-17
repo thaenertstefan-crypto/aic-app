@@ -22,17 +22,37 @@ function clampEntryText(value: string): string {
 
 /**
  * Analyse the user's last 7 daily journal entries (Recipe #1) and surface a few
- * gentle value-theme observations. The result is persisted onto the
- * value_eval entry (ai_insights + content.ai_confirmed/ai_suggested) and
- * returned as { insights, confirmed, suggested }.
+ * gentle value-theme observations. Accepts { entryId } des value_eval-Eintrags
+ * — Rückblick und Werte werden serverseitig über den RLS-Client nachgeladen.
+ * Das Ergebnis wird auf denselben Eintrag persistiert (ai_insights +
+ * content.ai_confirmed/ai_suggested) und als { insights, confirmed, suggested }
+ * zurückgegeben.
  *
- * Die eine Route, die nicht mit einem Fehler antwortet: bleibt der Modellaufruf
- * aus, bekommt die Person den Fallback-Text und eine leere Auswertung. Nur das
- * Limit wird hart durchgereicht — sonst wäre die Bremse wirkungslos.
+ * Die Route suchte die Zeile vorher selbst und übersprang das Speichern still,
+ * wenn es sie noch nicht gab — der Reihenfolge-Zwang war damit unsichtbar UND
+ * folgenlos-aussehend, obwohl die Auswertung dabei verloren ging. Jetzt ist
+ * das ein 404 wie bei den Schwesterrouten; wer den Beleg nicht hat, kommt
+ * schon typseitig nicht hierher (s. lib/recipes/saved-entry.ts).
+ *
+ * Die eine Route, die nicht mit einem Fehler antwortet, wenn das MODELL
+ * ausfällt: dann bekommt die Person den Fallback-Text und eine leere
+ * Auswertung. Nur das Limit wird hart durchgereicht — sonst wäre die Bremse
+ * wirkungslos.
  */
 export const POST = withAiRoute(
   { endpoint: "journal-analysis", failure: FALLBACK_INSIGHTS },
-  async ({ supabase, user, askModel }) => {
+  async ({ supabase, user, askModel }, request) => {
+    const body = (await request.json().catch(() => ({}))) as {
+      entryId?: unknown;
+    };
+    const entryId = typeof body.entryId === "string" ? body.entryId : "";
+    if (!entryId) {
+      return Response.json(
+        { error: "Es fehlt der Eintrag für die Auswertung." },
+        { status: 400 },
+      );
+    }
+
     // Die drei Reads sind voneinander unabhängig → parallel laden, bevor der
     // KI-Call startet.
     const [{ data: dailyEntries }, { data: hypothesisRow }, { data: evalRow }] =
@@ -58,11 +78,19 @@ export const POST = withAiRoute(
     supabase
       .from("journal_entries")
       .select("id, template_type, content")
+      .eq("id", entryId)
       .eq("user_id", user.id)
       .eq("recipe_slug", recipeSlugFor("value_eval"))
       .eq("template_type", "value_eval")
       .maybeSingle(),
   ]);
+
+    if (!evalRow) {
+      return Response.json(
+        { error: "Wir konnten deinen Rückblick nicht finden." },
+        { status: 404 },
+      );
+    }
 
     // Chronological order reads more naturally in the prompt. Einträge, deren
     // content kein Tagebuch-Eintrag ist, fallen raus, statt als leerer Tag im
@@ -76,11 +104,9 @@ export const POST = withAiRoute(
 
     const values = (hypothesisRow?.values as string[] | undefined) ?? [];
 
-    const evalEntry = evalRow
-      ? readJournalContent(evalRow.template_type, evalRow.content)
-      : null;
+    const evalEntry = readJournalContent(evalRow.template_type, evalRow.content);
     const reflection =
-      evalEntry?.template === "value_eval" ? evalEntry.content : null;
+      evalEntry.template === "value_eval" ? evalEntry.content : null;
 
     const entriesText = entries
       .map(
@@ -133,19 +159,18 @@ Belastende Momente: ${clampEntryText(reflection?.negative_reflection ?? "") || "
 
     // Persist onto the value_eval entry so it survives reloads and the later
     // read-only revisit. Das content-Update MERGED — sonst gingen die beiden
-    // Reflexions-Felder der Person verloren.
-    if (evalRow) {
-      await supabase
-        .from("journal_entries")
-        .update({
-          ai_insights: result.insights,
-          content: patchJournalContent("value_eval", evalRow.content, {
-            ai_confirmed: result.confirmed,
-            ai_suggested: result.suggested,
-          }),
-        })
-        .eq("id", evalRow.id);
-    }
+    // Reflexions-Felder der Person verloren. Ohne Bedingung: die Zeile ist
+    // oben nachgewiesen, ein stilles Überspringen kann es nicht mehr geben.
+    await supabase
+      .from("journal_entries")
+      .update({
+        ai_insights: result.insights,
+        content: patchJournalContent("value_eval", evalRow.content, {
+          ai_confirmed: result.confirmed,
+          ai_suggested: result.suggested,
+        }),
+      })
+      .eq("id", evalRow.id);
 
     return Response.json(result);
   },

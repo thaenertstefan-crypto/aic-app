@@ -3,13 +3,21 @@ import { describe, it } from "node:test";
 
 import { advanceMessy, initialMessy, type MessyState } from "./state.ts";
 
+/**
+ * Den Beleg eines gespeicherten Eintrags stellt sonst der Server aus
+ * (`lib/recipes/saved-entry.ts`, `server-only`). Der Typ wird hier aus dem
+ * Zustand abgeleitet statt importiert — ein Import würde `node --test` an
+ * `server-only` scheitern lassen.
+ */
+const savedId = (id: string) => id as NonNullable<MessyState["entryId"]>;
+
 /** Ein ausgewerteter Eintrag: jedes Feld der Auswertung ist gefüllt. */
 function afterAnalysis(): MessyState {
   return {
     ...initialMessy(),
     phase: "result",
     messyWhen: "Ich habe zugesagt, obwohl ich keine Zeit hatte.",
-    entryId: "entry-1",
+    entryId: savedId("entry-1"),
     analysis: "Das klingt nach einem Konflikt zwischen zwei Regeln.",
     guilt: "unhealthy",
     rules: "Hilfsbereitschaft gegen Selbstfürsorge",
@@ -95,7 +103,7 @@ describe("Speichern", () => {
     assert.equal(saving.saving, true);
     assert.equal(saving.error, null);
 
-    const saved = advanceMessy(saving, { type: "saved", entryId: "entry-7" });
+    const saved = advanceMessy(saving, { type: "saved", entryId: savedId("entry-7") });
 
     assert.equal(saved.entryId, "entry-7");
     assert.equal(saved.saving, false);

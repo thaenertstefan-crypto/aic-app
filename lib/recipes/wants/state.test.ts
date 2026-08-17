@@ -10,6 +10,14 @@ import {
   type WantsState,
 } from "./state.ts";
 
+/**
+ * Den Beleg eines gespeicherten Audits stellt sonst der Server aus
+ * (`lib/recipes/saved-entry.ts`, `server-only`). Der Typ wird hier aus dem
+ * Zustand abgeleitet statt importiert — ein Import würde `node --test` an
+ * `server-only` scheitern lassen.
+ */
+const savedId = (id: string) => id as NonNullable<WantsState["entryId"]>;
+
 function star(id: string, patch: Partial<DraftWant> = {}): DraftWant {
   return {
     id,
@@ -37,7 +45,7 @@ function afterDistillate(): WantsState {
     principlesOpen: true,
     saving: true,
     error: "Speichern fehlgeschlagen.",
-    entryId: "entry-1",
+    entryId: savedId("entry-1"),
     comment: "Das lese ich heraus.",
     aiError: "Das Destillieren hat gerade nicht geklappt.",
     manualMode: true,

@@ -25,6 +25,7 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
+import type { SavedEntryId } from "@/lib/recipes/saved-entry";
 import { readRightSuggestion } from "@/lib/recipes/right-suggestion";
 import { advanceMessy, initialMessy } from "@/lib/recipes/things-got-messy/state";
 
@@ -72,13 +73,14 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
   });
 
   // ── KI-Auswertung ───────────────────────────────────────────────
-  // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert; die Route lädt
-  // Texte + Rechte serverseitig nach — der Client schickt nur die entryId.
+  // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert — das sagt jetzt
+  // der Typ, nicht mehr diese Zeile: eine SavedEntryId gibt es nur aus der
+  // Speicher-Action. Die Route lädt Texte + Rechte serverseitig nach.
   // Die Warte-Bühne setzt „analysisRequested", die Ziel-Bühne gibt runAiStep
   // zurück: ein KI-Ausfall landet als aiError auf dem Ergebnis-Screen (Retry
   // möglich), blockiert die Übung aber nicht.
 
-  async function runAnalysis(id: string) {
+  async function runAnalysis(id: SavedEntryId) {
     dispatch({ type: "analysisRequested" });
 
     const step = await runAiStep(AI_STEPS.thingsGotMessy, { entryId: id }, (payload) => {

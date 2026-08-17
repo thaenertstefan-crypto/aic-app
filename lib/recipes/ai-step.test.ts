@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 
-import { AI_STEPS, runAiStep } from "./ai-step.ts";
+import { type AiStepRequest, AI_STEPS, runAiStep } from "./ai-step.ts";
+
+/**
+ * Den Beleg eines gespeicherten Eintrags stellt sonst der Server aus
+ * (`lib/recipes/saved-entry.ts`, `server-only`). Der Typ wird hier aus der
+ * Anfrage abgeleitet statt importiert — ein Import würde `node --test` an
+ * `server-only` scheitern lassen. Dass eine ROHE id nicht durchkommt, hält
+ * `saved-entry.typecheck.ts` fest; hier geht es um das Verhalten.
+ */
+const savedId = (id: string) => id as AiStepRequest["entryId"];
 
 /* ------------------------------------------------------------------ */
 /*  fetch-Attrappe                                                     */
@@ -42,16 +51,16 @@ const steps = Object.entries(AI_STEPS);
 /* ------------------------------------------------------------------ */
 
 describe("runAiStep — Ausfall führt trotzdem in die Ziel-Bühne", () => {
-  // Das ist die Produkt-Invariante hinter allen drei KI-Schritten. Sie stand
+  // Das ist die Produkt-Invariante hinter allen vier KI-Schritten. Sie stand
   // vorher nirgends geschrieben, sondern nur als wiederholtes setPhase im
-  // catch — eine vierte Übung hätte sie mit hoher Wahrscheinlichkeit falsch
+  // catch — eine fünfte Übung hätte sie mit hoher Wahrscheinlichkeit falsch
   // abgeschrieben.
 
   for (const [name, step] of steps) {
     it(`${name}: die Route weist ab, mit eigener Meldung`, async () => {
       answering(429, { error: "Gerade zu viele Anfragen — probier es später." });
 
-      const result = await runAiStep(step, { entryId: "abc" }, () => "nie gelesen");
+      const result = await runAiStep(step, { entryId: savedId("abc") }, () => "nie gelesen");
 
       assert.equal(result.phase, step.target);
       assert.equal(result.error, "Gerade zu viele Anfragen — probier es später.");
@@ -61,7 +70,7 @@ describe("runAiStep — Ausfall führt trotzdem in die Ziel-Bühne", () => {
     it(`${name}: die Route weist ab, ohne eigene Meldung`, async () => {
       answering(500, {});
 
-      const result = await runAiStep(step, { entryId: "abc" }, () => "nie gelesen");
+      const result = await runAiStep(step, { entryId: savedId("abc") }, () => "nie gelesen");
 
       assert.equal(result.phase, step.target);
       assert.equal(result.error, step.fallbackMessage);
@@ -71,7 +80,7 @@ describe("runAiStep — Ausfall führt trotzdem in die Ziel-Bühne", () => {
     it(`${name}: das Netz ist weg`, async () => {
       refusing();
 
-      const result = await runAiStep(step, { entryId: "abc" }, () => "nie gelesen");
+      const result = await runAiStep(step, { entryId: savedId("abc") }, () => "nie gelesen");
 
       assert.equal(result.phase, step.target);
       assert.equal(result.error, step.fallbackMessage);
@@ -81,7 +90,7 @@ describe("runAiStep — Ausfall führt trotzdem in die Ziel-Bühne", () => {
     it(`${name}: die Antwort ist kein JSON`, async () => {
       answeringGarbage();
 
-      const result = await runAiStep(step, { entryId: "abc" }, () => "nie gelesen");
+      const result = await runAiStep(step, { entryId: savedId("abc") }, () => "nie gelesen");
 
       assert.equal(result.phase, step.target);
       assert.equal(result.error, step.fallbackMessage);
@@ -91,7 +100,7 @@ describe("runAiStep — Ausfall führt trotzdem in die Ziel-Bühne", () => {
     it(`${name}: das Lesen der Antwort scheitert`, async () => {
       answering(200, { comment: "alles gut" });
 
-      const result = await runAiStep(step, { entryId: "abc" }, () => {
+      const result = await runAiStep(step, { entryId: savedId("abc") }, () => {
         throw new Error("unerwartetes Shape");
       });
 
@@ -112,7 +121,7 @@ describe("runAiStep — Erfolg", () => {
 
     const result = await runAiStep(
       AI_STEPS.thingsGotMessy,
-      { entryId: "abc" },
+      { entryId: savedId("abc") },
       (payload) => ({ analysis: String(payload.analysis ?? "") }),
     );
 
@@ -128,7 +137,7 @@ describe("runAiStep — Erfolg", () => {
 
     const result = await runAiStep(
       AI_STEPS.wants,
-      {},
+      { entryId: savedId("abc") },
       (payload) => Object.keys(payload).length,
     );
 
@@ -144,10 +153,10 @@ describe("runAiStep — Erfolg", () => {
       return new Response("{}", { status: 200 });
     }) as unknown as typeof fetch;
 
-    await runAiStep(AI_STEPS.sayingNo, { mode: "feedback", entryId: "abc" }, () => null);
+    await runAiStep(AI_STEPS.sayingNo, { mode: "feedback", entryId: savedId("abc") }, () => null);
 
     assert.equal(seen!.url, "/api/saying-no-coach");
     assert.equal(seen!.init?.method, "POST");
-    assert.equal(seen!.init?.body, JSON.stringify({ mode: "feedback", entryId: "abc" }));
+    assert.equal(seen!.init?.body, JSON.stringify({ mode: "feedback", entryId: savedId("abc") }));
   });
 });

@@ -25,6 +25,7 @@
 
 import type { SayingNoChecklist } from "../../types/db-json.ts";
 import type { RightSuggestion } from "../right-suggestion.ts";
+import type { SavedEntryId } from "../saved-entry.ts";
 
 /** Echte Situation oder Übungsszenario. */
 export type Mode = "real" | "practice";
@@ -70,7 +71,8 @@ export type SayingNoState = {
   scenarioSource: "ai" | "static";
   scenarioPending: boolean;
   rerolls: number;
-  entryId: string | null;
+  /** Der Beleg des gespeicherten Eintrags — erst er macht das Feedback möglich. */
+  entryId: SavedEntryId | null;
   draft: string;
   /** true, sobald „Nochmal selbst umformulieren" benutzt wurde (max. 1×). */
   revisionUsed: boolean;
@@ -101,7 +103,7 @@ export type SayingNoEvent =
   | { type: "draftEdited"; text: string }
   | { type: "saving" }
   | { type: "savingFailed"; message: string }
-  | { type: "saved"; entryId: string }
+  | { type: "saved"; entryId: SavedEntryId }
   | { type: "feedbackRequested" }
   | { type: "feedbackReceived"; phase: Phase; feedback: Feedback }
   | { type: "feedbackFailed"; phase: Phase; message: string }

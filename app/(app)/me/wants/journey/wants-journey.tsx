@@ -29,7 +29,8 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
-import { AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
+import { type AiStepRequest, AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
+import type { SavedEntryId } from "@/lib/recipes/saved-entry";
 import {
   advanceWants,
   initialWants,
@@ -209,13 +210,14 @@ export function WantsJourney({
   });
 
   // ── KI-Destillat laden ──────────────────────────────────────────
-  // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert; die Route lädt
-  // Audit + bestätigte Werte serverseitig nach — der Client schickt nur die
-  // entryId. Die Warte-Bühne setzt „distillateRequested", die Ziel-Bühne gibt
+  // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert — das sagt jetzt
+  // der Typ, nicht mehr diese Zeile: eine SavedEntryId gibt es nur aus der
+  // Speicher-Action. Die Route lädt Audit + bestätigte Werte serverseitig
+  // nach. Die Warte-Bühne setzt „distillateRequested", die Ziel-Bühne gibt
   // runAiStep zurück: ein KI-Ausfall landet als aiError auf dem Sterne-Screen,
   // das Rezept bleibt ohne KI vollständig nutzbar (manueller Modus).
 
-  async function runDistiller(id: string) {
+  async function runDistiller(id: SavedEntryId) {
     dispatch({ type: "distillateRequested" });
 
     const step = await runAiStep(AI_STEPS.wants, { entryId: id }, (payload) => {
@@ -336,16 +338,23 @@ export function WantsJourney({
     const answer = (state.refineAnswers[want.id] ?? "").trim();
     if (!answer || !state.entryId) return;
     dispatch({ type: "refineRequested", id: want.id });
+
+    // Kein runAiStep: das Nachschärfen wechselt keine Bühne, sondern trifft
+    // einen einzelnen Stern. Die Anfrage ist trotzdem eine AiStepRequest —
+    // /api/wants-refiner lädt denselben Eintrag nach und antwortet mit 404,
+    // also gilt hier derselbe Zwang.
+    const request: AiStepRequest = {
+      entryId: state.entryId,
+      text: want.text,
+      question: want.question ?? "",
+      answer,
+    };
+
     try {
       const res = await fetch("/api/wants-refiner", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          entryId: state.entryId,
-          text: want.text,
-          question: want.question ?? "",
-          answer,
-        }),
+        body: JSON.stringify(request),
       });
       const data = (await res.json()) as { text?: string; error?: string };
       if (!res.ok || !data.text) {

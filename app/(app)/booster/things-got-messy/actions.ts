@@ -9,6 +9,7 @@ import {
   type ActionResult,
 } from "@/lib/actions/action-result";
 import { withUser } from "@/lib/actions/with-user";
+import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
 import type { MessyMomentContent } from "@/lib/types/db-json";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
@@ -26,12 +27,13 @@ import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
  * Save a new "Things Got Messy" reflection (always inserts a new row),
  * then mark the recipe as completed.
  *
- * Die Nutzlast ist die ID des frischen Eintrags — Input für
- * /api/messy-guilt-coach.
+ * Die Nutzlast ist der Beleg des frischen Eintrags — der einzige Weg zu
+ * /api/messy-guilt-coach, und damit die geschriebene Fassung von „erst
+ * speichern, dann auswerten" (s. lib/recipes/saved-entry.ts).
  */
 export async function saveMessyMomentAction(
   formData: FormData,
-): Promise<ActionResult<string>> {
+): Promise<ActionResult<SavedEntryId>> {
   const messyWhen = formData.get("messy_when") as string | null;
 
   if (!messyWhen?.trim()) {
@@ -107,7 +109,7 @@ export async function saveMessyMomentAction(
       }
     }
 
-    return ok(inserted.id);
+    return ok(savedEntryId(inserted.id));
   });
 }
 

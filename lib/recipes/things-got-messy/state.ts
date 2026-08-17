@@ -19,6 +19,7 @@
  */
 
 import type { RightSuggestion } from "../right-suggestion.ts";
+import type { SavedEntryId } from "../saved-entry.ts";
 
 /** Die Bühnen der Übung. */
 export type Phase = "reflect" | "analyzing" | "result";
@@ -40,7 +41,8 @@ export type MessyState = {
 
   // ── Was eine neue Auswertung überlebt ─────────────────────────────
   messyWhen: string;
-  entryId: string | null;
+  /** Der Beleg des gespeicherten Eintrags — erst er macht die Auswertung möglich. */
+  entryId: SavedEntryId | null;
   saving: boolean;
   error: string | null;
 
@@ -62,7 +64,7 @@ export type MessyEvent =
   | { type: "messyEdited"; text: string }
   | { type: "saving" }
   | { type: "savingFailed"; message: string }
-  | { type: "saved"; entryId: string }
+  | { type: "saved"; entryId: SavedEntryId }
   | { type: "analysisRequested" }
   | { type: "analysisReceived"; phase: Phase; analysis: Analysis }
   | { type: "analysisFailed"; phase: Phase; message: string }

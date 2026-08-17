@@ -9,6 +9,7 @@ import {
   type ActionResult,
 } from "@/lib/actions/action-result";
 import { withUser } from "@/lib/actions/with-user";
+import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
 import type { SayingNoContent } from "@/lib/types/db-json";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
@@ -26,12 +27,13 @@ import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
  * Save a new Nein-Trainer entry (always inserts a new row — im Übungsmodus
  * ist jedes Szenario ein eigener Eintrag), then mark the recipe as completed.
  *
- * Die Nutzlast ist die ID des frischen Eintrags — Input für
- * /api/saying-no-coach.
+ * Die Nutzlast ist der Beleg des frischen Eintrags — der einzige Weg zum
+ * Feedback-Modus von /api/saying-no-coach, und damit die geschriebene Fassung
+ * von „erst speichern, dann auswerten" (s. lib/recipes/saved-entry.ts).
  */
 export async function saveSayingNoEntryAction(
   formData: FormData,
-): Promise<ActionResult<string>> {
+): Promise<ActionResult<SavedEntryId>> {
   const mode = formData.get("mode") as string | null;
   const situation = (formData.get("situation") as string | null)?.trim() ?? "";
   const draft = (formData.get("draft") as string | null)?.trim() ?? "";
@@ -125,7 +127,7 @@ export async function saveSayingNoEntryAction(
       }
     }
 
-    return ok(inserted.id);
+    return ok(savedEntryId(inserted.id));
   });
 }
 

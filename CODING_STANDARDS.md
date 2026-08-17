@@ -72,9 +72,13 @@ verbindlichen Quellen; hier stehen nur die Regeln, die sich am Code festmachen l
   Der Fehlerzustand „nicht angemeldet" ist `SESSION_EXPIRED` — nie ein neu getippter Satz.
 - **Bei `useActionState` trägt die Nutzlast das „ist gelaufen", nicht `error`.** Der Anfangszustand
   eines Formulars hat ebenfalls `error === null`; wer allein darauf prüft, schaltet die Bühne schon
-  beim Mount weiter. Solche Actions geben `ActionResult<boolean>` zurück, starten auf `ok(false)` und
-  melden Erfolg mit `ok(true)`; der Aufrufer prüft `state.error === null && state.data`. Actions,
-  aus deren Ergebnis nur ein `<FormError>` gespeist wird, brauchen das nicht — dort genügt `ok()`.
+  beim Mount weiter. Der Regelfall ist `ActionResult<boolean>`: Start auf `ok(false)`, Erfolg mit
+  `ok(true)`, geprüft über `state.error === null && state.data`. Hat die Action ohnehin eine
+  Nutzlast, die der Aufrufer braucht, trägt **diese** das „ist gelaufen" — dann `ActionResult<T | null>`,
+  Start auf `ok(null)`, geprüft über `data !== null` (so `saveEvalReflectionAction`, deren Nutzlast
+  der Beleg des Eintrags ist). Kein zweites Feld daneben: `boolean` ist die Abkürzung für „es gibt
+  nichts zurückzugeben", nicht die Form selbst. Actions, aus deren Ergebnis nur ein `<FormError>`
+  gespeist wird, brauchen das alles nicht — dort genügt `ok()`.
 - Eine Action, die kein Formular über `useActionState` bedient, hat **kein** `_prevState`-Argument.
 - In **API-Routen** gilt der Wortlaut (`SESSION_EXPIRED`), nicht aber `withUser`/`getCachedUser`:
   eine Route läuft in ihrem eigenen Request-Kontext und fragt einmal ab, dort dedupliziert
@@ -84,6 +88,11 @@ verbindlichen Quellen; hier stehen nur die Regeln, die sich am Code festmachen l
 - **Neue reine Module unter `lib/` bekommen eine `*.test.ts`** — co-located, ausgeführt von
   `node --test` als Teil von `npm run gate`. „Rein" heißt: keine Netzwerk-, DB- oder
   React-Abhängigkeit. Für Komponenten und Server-Actions gilt die Regel bewusst **nicht**.
+  Ein Modul, dessen Aussage im **Typ** steckt statt in der Laufzeit, bekommt statt der `*.test.ts`
+  eine `*.typecheck.ts`: nie ausgeführt, nur von `npx tsc --noEmit` geprüft, und der Bruch wird mit
+  `@ts-expect-error` festgehalten (`lib/actions/with-user.typecheck.ts`,
+  `lib/recipes/saved-entry.typecheck.ts`). Der Dateiname ist Absicht — als `*.test.ts` würde
+  `node --test` sie einsammeln und am `server-only`-Import scheitern.
 - AI-Aufrufe laufen über `lib/anthropic/`, System-Prompts liegen in `lib/anthropic/prompts/`.
   Ein Prompt-String inline in einer Komponente ist ein Befund.
 - Eine **KI-Route** beginnt mit `withAiRoute({ endpoint, failure }, handler)` aus

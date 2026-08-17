@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RichText } from "@/components/ui/rich-text";
 import { ValueChip } from "@/components/recipes/value-chip";
+import { AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
+import type { SavedEntryId } from "@/lib/recipes/saved-entry";
 import { VALUES_BANK, getValueLabel } from "@/lib/utils/values-bank";
 import { cn } from "@/lib/utils";
 
@@ -15,8 +17,27 @@ export type Suggestion = { id: string; reason: string };
 /** Ein vollzogener Tausch: `out` verlässt den Kompass, `in` nimmt seinen Platz. */
 type Trade = { out: string; in: string };
 
-const FALLBACK_INSIGHTS =
-  "Wir konnten diesmal leider keine Beobachtungen für dich erstellen. Schau einfach selbst noch einmal auf deine Woche zurück.";
+/** Die Ersatz-Zeile steht beim Schritt, nicht hier — sie ist dieselbe, die
+ *  runAiStep bei einem Ausfall zurückgibt. */
+const FALLBACK_INSIGHTS = AI_STEPS.valuesEvaluation.fallbackMessage;
+
+/** Liest eine Modell-Liste Glied für Glied; was `read` verwirft, fällt raus. */
+function readList<T>(raw: unknown, read: (item: unknown) => T | null): T[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item) => {
+    const value = read(item);
+    return value === null ? [] : [value];
+  });
+}
+
+/** Ein Vorschlag braucht beides — ohne Begründung ist der Chip nicht erklärbar. */
+function readSuggestion(item: unknown): Suggestion | null {
+  if (!item || typeof item !== "object") return null;
+  const { id, reason } = item as { id?: unknown; reason?: unknown };
+  return typeof id === "string" && typeof reason === "string"
+    ? { id, reason }
+    : null;
+}
 
 /** Der Tausch-Block: erscheint inline unter dem Vorschlag bzw. in der
  *  Werte-Bank, sobald ein neuer Wert hinein soll. Ohne Tausch kein Hinzufügen —
@@ -82,6 +103,7 @@ function SwapPanel({
  * ändern lässt: Tausch. Fünf Werte bleiben fünf Werte.
  */
 export function ErkenntnisseStage({
+  entryId,
   hypothesis,
   seedInsights,
   seedConfirmed,
@@ -89,6 +111,12 @@ export function ErkenntnisseStage({
   pending,
   onSubmit,
 }: {
+  /**
+   * Der value_eval-Eintrag, auf den die Auswertung geschrieben wird — frisch
+   * gespeichert oder aus einem früheren Besuch. Ohne ihn gibt es keinen Ort
+   * für das Ergebnis, also auch keinen KI-Call.
+   */
+  entryId: SavedEntryId | null;
   hypothesis: string[];
   seedInsights: string | null;
   seedConfirmed: string[];
@@ -96,11 +124,16 @@ export function ErkenntnisseStage({
   pending: boolean;
   onSubmit: (values: string[]) => void;
 }) {
-  const [insights, setInsights] = useState<string | null>(seedInsights);
+  // Ohne gespeicherten Eintrag gibt es nichts zu fragen — die Route hätte
+  // keinen Ort für ihr Ergebnis. Dann steht die Ersatz-Zeile von Anfang an da,
+  // statt dass die Karte erst lädt und dann aufgibt.
+  const [insights, setInsights] = useState<string | null>(
+    seedInsights ?? (entryId === null ? FALLBACK_INSIGHTS : null),
+  );
   const [confirmed, setConfirmed] = useState<string[]>(seedConfirmed);
   const [suggested, setSuggested] = useState<Suggestion[]>(seedSuggested);
   // Seed aus einem früheren Besuch → kein zweiter KI-Call.
-  const requested = useRef(seedInsights !== null);
+  const requested = useRef(seedInsights !== null || entryId === null);
 
   const [trades, setTrades] = useState<Trade[]>([]);
   const [incoming, setIncoming] = useState<{
@@ -112,37 +145,37 @@ export function ErkenntnisseStage({
   // Diese Bühne wird nur gemountet, wenn sie sichtbar ist — der Call gehört
   // deshalb an den Mount und braucht keine Phasen-Abfrage.
   useEffect(() => {
-    if (requested.current) return;
+    // Ohne Eintrag steht `requested` schon auf true; die zweite Prüfung ist
+    // für den Typ da, nicht für den Ablauf.
+    if (requested.current || entryId === null) return;
     requested.current = true;
 
     let cancelled = false;
-    fetch("/api/journal-analysis", { method: "POST" })
-      .then(async (res) => {
-        const data = (await res.json()) as {
-          insights?: string;
-          confirmed?: string[];
-          suggested?: Suggestion[];
-          error?: string;
-        };
-        if (cancelled) return;
-        // Bei einem Rate-Limit steht die Server-Meldung in der Karte statt des
-        // generischen Fallbacks.
-        if (!res.ok) {
-          setInsights(data.error ?? FALLBACK_INSIGHTS);
-          return;
-        }
-        setInsights(data.insights ?? FALLBACK_INSIGHTS);
-        setConfirmed(data.confirmed ?? []);
-        setSuggested(data.suggested ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setInsights(FALLBACK_INSIGHTS);
-      });
+    void runAiStep(AI_STEPS.valuesEvaluation, { entryId }, (payload) => ({
+      insights: typeof payload.insights === "string" ? payload.insights : null,
+      // Array.isArray sagt nichts über die Glieder — beide Listen werden als
+      // Werte-IDs weiterbenutzt, ein Nicht-String liefe dort still ins Leere.
+      confirmed: readList(payload.confirmed, (v) =>
+        typeof v === "string" ? v : null,
+      ),
+      suggested: readList(payload.suggested, readSuggestion),
+    })).then((step) => {
+      if (cancelled) return;
+      // Bei einem Rate-Limit steht die Server-Meldung in der Karte statt der
+      // generischen Ersatz-Zeile — genau dafür reicht runAiStep sie durch.
+      if (step.error !== null) {
+        setInsights(step.error);
+        return;
+      }
+      setInsights(step.data.insights ?? FALLBACK_INSIGHTS);
+      setConfirmed(step.data.confirmed);
+      setSuggested(step.data.suggested);
+    });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [entryId]);
 
   // Der Live-Stand: die ursprünglichen fünf, durch die Tausche gemappt. Immer
   // genau fünf, Reihenfolge stabil.

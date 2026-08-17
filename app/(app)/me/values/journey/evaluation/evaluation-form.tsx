@@ -16,6 +16,7 @@ import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { ValueChip } from "@/components/recipes/value-chip";
 
 import { ok, type ActionResult } from "@/lib/actions/action-result";
+import type { SavedEntryId } from "@/lib/recipes/saved-entry";
 import { getValueLabel } from "@/lib/utils/values-bank";
 import { getValueEmoji } from "@/lib/utils/values-emojis";
 import { getValueDescription } from "@/lib/utils/values-descriptions";
@@ -39,6 +40,9 @@ interface EvaluationFormProps {
 
 /** „Noch nicht abgeschickt" — die Nutzlast unterscheidet das vom Erfolg. */
 const INITIAL_STATE: ActionResult<boolean> = ok(false);
+
+/** Dasselbe für den Rückblick, dessen Nutzlast der Beleg des Eintrags ist. */
+const INITIAL_REFLECTION: ActionResult<SavedEntryId | null> = ok(null);
 
 /**
  * Vier Bühnen statt drei Phasen:
@@ -79,7 +83,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
   // zeigen.
   const [reflectionState, reflectionAction, reflectionPending] = useActionState(
     saveEvalReflectionAction,
-    INITIAL_STATE,
+    INITIAL_REFLECTION,
   );
   const [adjustState, adjustAction, adjustPending] = useActionState(
     saveAdjustedHypothesisAction,
@@ -88,9 +92,16 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
 
   // `error === null` allein reicht hier nicht: das wäre schon der
   // Anfangszustand. Erst die Nutzlast sagt „ist wirklich gelaufen".
+  // Der Beleg des Rückblick-Eintrags: frisch aus dem Speichern, sonst der aus
+  // einem früheren Besuch. Er ist zugleich die Bedingung für Bühne B — die
+  // KI-Auswertung schreibt auf genau diese Zeile.
+  const savedReflection =
+    reflectionState.error === null ? reflectionState.data : null;
+  const evalEntryId = savedReflection ?? valueEvalEntry?.id ?? null;
+
   const stage: Stage = adjustState.error === null && adjustState.data
     ? "feier"
-    : reflectionState.error === null && reflectionState.data
+    : savedReflection !== null
       ? "erkenntnisse"
       : phase === "complete"
         ? "rueckblick-erkenntnisse"
@@ -254,6 +265,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
         {/* ── ── ── BÜHNE B: Erkenntnisse ── ── ── */}
         {stage === "erkenntnisse" && (
           <ErkenntnisseStage
+            entryId={evalEntryId}
             hypothesis={hypothesis}
             seedInsights={valueEvalEntry?.aiInsights ?? null}
             seedConfirmed={valueEvalEntry?.content?.ai_confirmed ?? []}

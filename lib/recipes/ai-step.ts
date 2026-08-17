@@ -17,7 +17,16 @@
  *
  * Die Warte-Bühne bleibt bei der Komponente: sie setzt sie, bevor sie hier
  * hineingeht. Was danach kommt, entscheidet dieses Modul.
+ *
+ * **Die zweite Invariante: erst speichern, dann auswerten.** Jede dieser Routen
+ * lädt den Eintrag über seine id nach und antwortet mit 404, wenn es ihn noch
+ * nicht gibt. Deshalb nimmt `runAiStep` keine nackte `string`-id entgegen,
+ * sondern nur eine `SavedEntryId` — den Beleg, den ausschließlich der Server
+ * ausstellt (s. `saved-entry.ts`). Wer zuerst fetcht, bekommt jetzt einen
+ * Typfehler statt eines 404.
  */
+
+import type { SavedEntryId } from "./saved-entry.ts";
 
 /** Ein KI-Schritt: wohin er führt und was er sagt, wenn es schiefgeht. */
 export type AiStep<Phase extends string> = {
@@ -30,6 +39,15 @@ export type AiStep<Phase extends string> = {
 };
 
 /**
+ * Was an die Route geht. Der Eintrag ist Pflicht und trägt den Beleg; alles
+ * Weitere ist routen-eigen (der Nein-Trainer schickt seinen `mode` mit).
+ */
+export type AiStepRequest = {
+  entryId: SavedEntryId;
+  [field: string]: unknown;
+};
+
+/**
  * Das Ergebnis eines KI-Schritts. `phase` ist immer gesetzt — das ist die
  * Invariante. Geprüft wird wie bei `ActionResult` über `error === null`,
  * nicht über `if (!error)`: nur `null` verengt.
@@ -39,7 +57,7 @@ export type AiStepResult<Phase extends string, Data> =
   | { phase: Phase; data: null; error: string };
 
 /**
- * Die drei KI-Schritte der App. Sie stehen zusammen, damit die Invariante an
+ * Die vier KI-Schritte der App. Sie stehen zusammen, damit die Invariante an
  * ihren echten Werten geprüft werden kann statt an im Test erfundenen.
  *
  * Kein Rezept-Modul im Sinne von ADR-0001: hier steht nur, wohin ein
@@ -64,10 +82,22 @@ export const AI_STEPS = {
     fallbackMessage:
       "Das Destillieren hat gerade nicht geklappt. Deine Sternensuche ist gespeichert — du kannst deine Wants auch selbst formulieren.",
   },
+  // Die Werte-Auswertung hat keine Phasen-Maschine, sondern eine Bühne, die
+  // der Schritt nicht verlässt: die Einschätzung erscheint an Ort und Stelle,
+  // im Ausfall steht die Ersatz-Zeile in derselben Karte. Die Ziel-Bühne ist
+  // deshalb die eigene — die Invariante gilt trotzdem, und die Ersatz-Zeile
+  // steht hier statt ein zweites Mal in der Bühne.
+  valuesEvaluation: {
+    endpoint: "/api/journal-analysis",
+    target: "erkenntnisse",
+    fallbackMessage:
+      "Wir konnten diesmal leider keine Beobachtungen für dich erstellen. Schau einfach selbst noch einmal auf deine Woche zurück.",
+  },
 } as const satisfies Record<string, AiStep<string>>;
 
 /**
- * Fragt die KI-Route und gibt die nächste Bühne zurück.
+ * Fragt die KI-Route zu einem **gespeicherten** Eintrag und gibt die nächste
+ * Bühne zurück.
  *
  * `read` verengt die Antwort auf das, was die Übung braucht — jede liest etwas
  * anderes aus ihrer Route, und genau das bleibt bei der Übung. `read` läuft
@@ -76,14 +106,14 @@ export const AI_STEPS = {
  */
 export async function runAiStep<Phase extends string, Data>(
   step: AiStep<Phase>,
-  body: unknown,
+  request: AiStepRequest,
   read: (payload: Record<string, unknown>) => Data,
 ): Promise<AiStepResult<Phase, Data>> {
   try {
     const res = await fetch(step.endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(request),
     });
     const payload = asRecord(await res.json());
 

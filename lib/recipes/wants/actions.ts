@@ -20,6 +20,7 @@ import {
   tooLong,
 } from "@/lib/utils/form-validation";
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
+import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
 
 // ─── Wants-Rezept: kanonische Actions ───────────────────────────────────
 // Alle Schreibzugriffe auf die wants-Tabelle (eine Zeile pro User, zwei
@@ -344,13 +345,13 @@ export async function saveBetsAction(
  * Eintrag — auch beim Re-Run) und setzt den Fortschritt auf in_progress,
  * ohne einen bereits abgeschlossenen Durchlauf zurückzustufen.
  *
- * Die Nutzlast ist die ID des frisch angelegten Eintrags — Input für
- * /api/wants-distiller. Sie ist jetzt nicht mehr optional: gab es kein
- * `error`, gibt es die ID.
+ * Die Nutzlast ist der Beleg des frisch angelegten Eintrags — der einzige Weg
+ * zu /api/wants-distiller und /api/wants-refiner, und damit die geschriebene
+ * Fassung von „erst speichern, dann auswerten" (s. lib/recipes/saved-entry.ts).
  */
 export async function saveYinYangEntryAction(
   formData: FormData,
-): Promise<ActionResult<string>> {
+): Promise<ActionResult<SavedEntryId>> {
   return withUser(async ({ supabase, user }) => {
     const yin = (formData.get("yin") as string | null)?.trim() ?? "";
     const yang = (formData.get("yang") as string | null)?.trim() ?? "";
@@ -432,6 +433,6 @@ export async function saveYinYangEntryAction(
       }
     }
 
-    return ok(inserted.id);
+    return ok(savedEntryId(inserted.id));
   });
 }

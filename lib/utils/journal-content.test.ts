@@ -688,6 +688,75 @@ describe("patchJournalContent — der Bestand bleibt roh", () => {
     });
   });
 
+  // Die vier Zeilen, die von ZWEI Seiten beschrieben werden: die
+  // Speicher-Action legt den Text der Person an, danach trägt die KI-Route
+  // ihre Auswertung nach. Genau das prüfte bisher niemand — der Grund, aus
+  // dem der Reihenfolge-Zwang überhaupt gefährlich war
+  // (s. lib/recipes/saved-entry.ts).
+  const ZWEI_SCHREIBER = [
+    {
+      template: "value_eval" as const,
+      vonDerPerson: {
+        positive_reflection: "Das Mittagessen.",
+        negative_reflection: "Das Meeting.",
+      },
+      vonDerKi: {
+        ai_confirmed: ["verbindung"],
+        ai_suggested: [{ id: "autonomie", reason: "Kam zweimal vor." }],
+      },
+    },
+    {
+      template: "messy_moment" as const,
+      vonDerPerson: { messy_when: "Beim Absagen." },
+      vonDerKi: {
+        ai_guilt_guess: "unhealthy" as const,
+        ai_rules_conflict: "Hilfsbereitschaft gegen Selbstfürsorge.",
+      },
+    },
+    {
+      template: "saying_no" as const,
+      vonDerPerson: {
+        mode: "real" as const,
+        situation: "Die Anfrage.",
+        draft: "Nein, das schaffe ich nicht.",
+      },
+      vonDerKi: {
+        ai_checklist: {
+          complete_sentence: true,
+          no_apology: false,
+          warmth: true,
+          no_but: true,
+        },
+        ai_improved: "Nein. Ich mag dich, aber meine Woche ist voll.",
+      },
+    },
+    {
+      template: "yin_yang" as const,
+      vonDerPerson: {
+        yin: "Für meine Leute.",
+        yang: "Beim Schreiben.",
+        principles: "Tiefe vor Breite.",
+      },
+      vonDerKi: {
+        ai_wants: [{ text: "Etwas bauen", value_id: "kreativitaet" }],
+      },
+    },
+  ];
+
+  for (const { template, vonDerPerson, vonDerKi } of ZWEI_SCHREIBER) {
+    it(`verträgt zwei Schreiber auf einer ${template}-Zeile`, () => {
+      const gespeichert = patchJournalContent(template, {}, vonDerPerson);
+      const ausgewertet = patchJournalContent(template, gespeichert, vonDerKi);
+
+      // Beide Hälften stehen nebeneinander — keine hat die andere verdrängt.
+      assert.deepEqual(ausgewertet, { ...vonDerPerson, ...vonDerKi });
+
+      // Und der zweite Durchgang der Person räumt die Auswertung nicht weg.
+      const nachgetragen = patchJournalContent(template, ausgewertet, vonDerPerson);
+      assert.deepEqual(nachgetragen, { ...vonDerPerson, ...vonDerKi });
+    });
+  }
+
   it("macht aus einem Nicht-Objekt einen leeren Bestand statt zu werfen", () => {
     for (const raw of [null, undefined, 42, "text", ["a"]]) {
       assert.deepEqual(patchJournalContent("free", raw, { body: "Text" }), {
