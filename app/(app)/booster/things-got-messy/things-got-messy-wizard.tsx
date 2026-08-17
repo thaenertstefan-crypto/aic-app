@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useReducer } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
 
@@ -16,6 +16,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { useRecipeIntro } from "@/components/recipes/recipe-intro-gate";
+import { useSuggestedRight } from "@/components/recipes/use-suggested-right";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { Mascot } from "@/components/brand/mascot";
 import { ModuleIcon } from "@/components/booster/module-icon";
@@ -24,12 +25,10 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
+import { readRightSuggestion } from "@/lib/recipes/right-suggestion";
+import { advanceMessy, initialMessy } from "@/lib/recipes/things-got-messy/state";
 
-import {
-  acceptSuggestedRightAction,
-  saveGuiltFeedbackAction,
-  saveMessyMomentAction,
-} from "./actions";
+import { saveGuiltFeedbackAction, saveMessyMomentAction } from "./actions";
 
 const INTRO_CARDS = getRecipeIntro("things-got-messy") ?? [];
 
@@ -38,49 +37,24 @@ type Draft = {
 };
 
 /** Antwort-Shape von /api/messy-guilt-coach. */
-type RightSuggestion =
-  | { type: "existing"; id: string; text: string }
-  | { type: "new"; text: string }
-  | null;
-
 type CoachResponse = {
   analysis?: string;
   guilt?: string;
   rules?: string;
-  right?: RightSuggestion;
+  right?: unknown;
 };
-
-type Phase = "reflect" | "analyzing" | "result";
 
 export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
   const intro = useRecipeIntro("things-got-messy", introSeen);
 
-  const [phase, setPhase] = useState<Phase>("reflect");
-  useScrollTopOnChange(phase);
+  // Der ganze Übungszustand als ein Objekt — was eine neue Auswertung
+  // überlebt, steht in lib/recipes/things-got-messy/state.ts, nicht hier.
+  const [state, dispatch] = useReducer(advanceMessy, undefined, initialMessy);
+  useScrollTopOnChange(state.phase);
 
-  // Reflexions-Feld
-  const [messyWhen, setMessyWhen] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // KI-Ergebnis
-  const [entryId, setEntryId] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState("");
-  const [guilt, setGuilt] = useState<"healthy" | "unhealthy" | null>(null);
-  const [rules, setRules] = useState<string | null>(null);
-  const [right, setRight] = useState<RightSuggestion>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
-
-  // „Fühlt sich das stimmig an?"-Feedback
-  const [feedback, setFeedback] = useState<"agree" | "disagree" | null>(null);
-  const [feedbackPending, setFeedbackPending] = useState(false);
-  const [feedbackError, setFeedbackError] = useState<string | null>(null);
-
-  // Editierbarer Neues-Recht-Vorschlag + Übernahme-Status
-  const [suggestionText, setSuggestionText] = useState("");
-  const [acceptPending, setAcceptPending] = useState(false);
-  const [acceptError, setAcceptError] = useState<string | null>(null);
-  const [accepted, setAccepted] = useState(false);
+  // Der Rechts-Vorschlag samt Übernahme — setzt sich mit jedem neuen
+  // Vorschlag von selbst zurück.
+  const suggestedRight = useSuggestedRight(state.right);
 
   // Offline draft safety net
   const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
@@ -88,148 +62,107 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
 
   const restoreDraft = () => {
     if (pendingDraft) {
-      // Alte Drafts (mit conflicting_rules/guilt_type) restoren kompatibel —
-      // es wird nur noch messy_when gelesen.
-      setMessyWhen(pendingDraft.messy_when ?? "");
+      dispatch({ type: "draftRestored", messyWhen: pendingDraft.messy_when ?? "" });
     }
     dismissPendingDraft();
   };
 
   const currentDraft = (): Draft => ({
-    messy_when: messyWhen,
+    messy_when: state.messyWhen,
   });
 
   // ── KI-Auswertung ───────────────────────────────────────────────
   // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert; die Route lädt
   // Texte + Rechte serverseitig nach — der Client schickt nur die entryId.
-  // Die Warte-Bühne setzen wir hier, die Ziel-Bühne gibt runAiStep zurück:
-  // ein KI-Ausfall landet als aiError auf dem Ergebnis-Screen (Retry möglich),
-  // blockiert die Übung aber nicht.
+  // Die Warte-Bühne setzt „analysisRequested", die Ziel-Bühne gibt runAiStep
+  // zurück: ein KI-Ausfall landet als aiError auf dem Ergebnis-Screen (Retry
+  // möglich), blockiert die Übung aber nicht.
 
   async function runAnalysis(id: string) {
-    setAiError(null);
-    // Retry darf keine Werte des vorherigen Versuchs behalten.
-    setGuilt(null);
-    setRules(null);
-    setPhase("analyzing");
+    dispatch({ type: "analysisRequested" });
 
-    const step = await runAiStep(
-      AI_STEPS.thingsGotMessy,
-      { entryId: id },
-      (payload) => {
-        const data = payload as CoachResponse;
-        return {
-          analysis: typeof data.analysis === "string" ? data.analysis : "",
-          guilt:
-            data.guilt === "healthy"
-              ? ("healthy" as const)
-              : data.guilt === "unhealthy"
-                ? ("unhealthy" as const)
-                : null,
-          rules: typeof data.rules === "string" && data.rules ? data.rules : null,
-          // Die Route ist ungeprüft gecastet — ein Vorschlag ohne Text ist keiner.
-          right:
-            data.right && typeof data.right.text === "string" && data.right.text.trim()
-              ? data.right
+    const step = await runAiStep(AI_STEPS.thingsGotMessy, { entryId: id }, (payload) => {
+      const data = payload as CoachResponse;
+      return {
+        analysis: typeof data.analysis === "string" ? data.analysis : "",
+        guilt:
+          data.guilt === "healthy"
+            ? ("healthy" as const)
+            : data.guilt === "unhealthy"
+              ? ("unhealthy" as const)
               : null,
-        };
-      },
-    );
+        rules: typeof data.rules === "string" && data.rules ? data.rules : null,
+        right: readRightSuggestion(data.right),
+      };
+    });
 
     if (step.error !== null) {
-      setAiError(step.error);
-      setPhase(step.phase);
+      dispatch({ type: "analysisFailed", phase: step.phase, message: step.error });
       return;
     }
 
-    setAnalysis(step.data.analysis);
-    setGuilt(step.data.guilt);
-    setRules(step.data.rules);
-    setRight(step.data.right);
-    if (step.data.right?.type === "new") {
-      setSuggestionText(step.data.right.text);
-    }
-    setPhase(step.phase);
+    dispatch({ type: "analysisReceived", phase: step.phase, analysis: step.data });
   }
 
   // ── Speichern → Auswertung ──────────────────────────────────────
 
   async function handleSubmit() {
-    setSubmitting(true);
-    setError(null);
+    dispatch({ type: "saving" });
 
     const formData = new FormData();
-    formData.set("messy_when", messyWhen);
+    formData.set("messy_when", state.messyWhen);
 
     // No connection — keep the entry as a local draft instead of losing it.
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       saveDraft(currentDraft());
-      setSubmitting(false);
-      setError(
-        "Du bist offline – dein Eintrag wurde als Entwurf gesichert. Sobald du wieder online bist, kannst du ihn abschließen.",
-      );
+      dispatch({
+        type: "savingFailed",
+        message:
+          "Du bist offline – dein Eintrag wurde als Entwurf gesichert. Sobald du wieder online bist, kannst du ihn abschließen.",
+      });
       return;
     }
 
     try {
       const result = await saveMessyMomentAction(formData);
-      setSubmitting(false);
 
       if (result.error !== null) {
-        setError(result.error);
+        dispatch({ type: "savingFailed", message: result.error });
         return;
       }
 
       clearDraft();
-      setEntryId(result.data);
+      dispatch({ type: "saved", entryId: result.data });
       void runAnalysis(result.data);
     } catch {
       // Network error mid-request — preserve the entry as a draft.
       saveDraft(currentDraft());
-      setSubmitting(false);
-      setError(
-        "Speichern fehlgeschlagen – dein Eintrag wurde als Entwurf gesichert. Versuch es später noch einmal.",
-      );
-    }
-  }
-
-  async function acceptRight() {
-    setAcceptPending(true);
-    setAcceptError(null);
-    try {
-      const fd = new FormData();
-      fd.set("text", suggestionText);
-      const res = await acceptSuggestedRightAction(fd);
-      if (res.error !== null) {
-        setAcceptError(res.error);
-      } else {
-        setAccepted(true);
-      }
-    } catch {
-      setAcceptError("Das hat gerade nicht geklappt. Versuch es noch einmal.");
-    } finally {
-      setAcceptPending(false);
+      dispatch({
+        type: "savingFailed",
+        message:
+          "Speichern fehlgeschlagen – dein Eintrag wurde als Entwurf gesichert. Versuch es später noch einmal.",
+      });
     }
   }
 
   async function sendFeedback(value: "agree" | "disagree") {
-    if (!entryId) return;
-    setFeedbackPending(true);
-    setFeedbackError(null);
+    if (!state.entryId) return;
+    dispatch({ type: "feedbackSending" });
     try {
       const fd = new FormData();
-      fd.set("entryId", entryId);
+      fd.set("entryId", state.entryId);
       fd.set("feedback", value);
       const res = await saveGuiltFeedbackAction(fd);
       if (res.error !== null) {
-        setFeedbackError(res.error);
+        dispatch({ type: "feedbackFailed", message: res.error });
       } else {
-        setFeedback(value);
+        dispatch({ type: "feedbackSent", value });
       }
     } catch {
-      setFeedbackError("Das hat gerade nicht geklappt. Versuch es noch einmal.");
-    } finally {
-      setFeedbackPending(false);
+      dispatch({
+        type: "feedbackFailed",
+        message: "Das hat gerade nicht geklappt. Versuch es noch einmal.",
+      });
     }
   }
 
@@ -243,7 +176,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Auswertung läuft ────────────────────────────────────
 
-  if (phase === "analyzing") {
+  if (state.phase === "analyzing") {
     return (
       <div className="flex min-h-svh flex-col">
         <SubPageHeader backHref="/booster" title={PAGE_TITLES.thingsGotMessy} />
@@ -264,7 +197,8 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Ergebnis ────────────────────────────────────────────
 
-  if (phase === "result") {
+  if (state.phase === "result") {
+    const { entryId } = state;
     return (
       <div className="flex min-h-svh flex-col items-center px-4 py-10">
         <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -284,11 +218,11 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
             Auch wenn das Wetter sie manchmal versteckt: Deine Sterne leuchten weiter.
           </p>
 
-          {aiError ? (
+          {state.aiError ? (
             <Card className="w-full">
               <CardContent className="space-y-3 pt-(--card-spacing)">
                 <p className="text-left text-base leading-relaxed text-muted-foreground">
-                  {aiError}
+                  {state.aiError}
                 </p>
                 {entryId && (
                   <Button
@@ -303,7 +237,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
             </Card>
           ) : (
             <>
-              {analysis && (
+              {state.analysis && (
                 <Reveal delay={0.4} className="w-full">
                   <Card className="w-full">
                     <CardContent className="space-y-3 pt-(--card-spacing)">
@@ -312,23 +246,23 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
                       </p>
 
                       <p className="whitespace-pre-wrap text-left text-base leading-relaxed text-foreground">
-                        {analysis}
+                        {state.analysis}
                       </p>
 
-                      {rules && (
+                      {state.rules && (
                         <p className="text-left text-base leading-relaxed text-muted-foreground">
                           <span className="font-medium text-foreground">
                             Die zwei Regeln, die da gerungen haben:
                           </span>{" "}
-                          {rules}
+                          {state.rules}
                         </p>
                       )}
 
-                      {guilt && entryId && (
+                      {state.guilt && entryId && (
                         <div className="space-y-2 border-t pt-3">
-                          {feedback ? (
+                          {state.feedback ? (
                             <p className="text-left text-sm leading-relaxed text-muted-foreground">
-                              {feedback === "agree" ? (
+                              {state.feedback === "agree" ? (
                                 <>
                                   <Check className="mr-1 inline size-4 text-primary" />
                                   Danke dir — gut, wenn es sich stimmig anfühlt.
@@ -351,7 +285,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
                                 <Button
                                   variant="outline"
                                   className="flex-1"
-                                  disabled={feedbackPending}
+                                  disabled={state.feedbackPending}
                                   onClick={() => void sendFeedback("agree")}
                                 >
                                   Ja, passt
@@ -359,13 +293,13 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
                                 <Button
                                   variant="outline"
                                   className="flex-1"
-                                  disabled={feedbackPending}
+                                  disabled={state.feedbackPending}
                                   onClick={() => void sendFeedback("disagree")}
                                 >
                                   Eher nicht
                                 </Button>
                               </div>
-                              <FormError message={feedbackError} />
+                              <FormError message={state.feedbackError} />
                             </>
                           )}
                         </div>
@@ -375,7 +309,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
                 </Reveal>
               )}
 
-              {right?.type === "existing" && (
+              {state.right?.type === "existing" && (
                 <Reveal delay={0.7} className="w-full">
                   <Card className="w-full border-primary/30">
                     <CardContent className="space-y-2 pt-(--card-spacing)">
@@ -383,7 +317,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
                       <div className="flex items-start gap-2 text-left">
                         <Check className="mt-1 size-4 shrink-0 text-primary" />
                         <p className="text-base leading-relaxed text-foreground">
-                          {right.text}
+                          {state.right.text}
                         </p>
                       </div>
                       <p className="text-left text-sm text-muted-foreground">
@@ -394,17 +328,17 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
                 </Reveal>
               )}
 
-              {right?.type === "new" && (
+              {state.right?.type === "new" && (
                 <Reveal delay={0.7} className="w-full">
                   <Card className="w-full border-primary/30">
                     <CardContent className="space-y-3 pt-(--card-spacing)">
-                      {accepted ? (
+                      {suggestedRight.accepted ? (
                         <>
                           <SectionLabel>Zu deinen Rechten hinzugefügt</SectionLabel>
                           <div className="flex items-start gap-2 text-left">
                             <Check className="mt-1 size-4 shrink-0 text-primary" />
                             <p className="text-base leading-relaxed text-foreground">
-                              {suggestionText}
+                              {suggestedRight.text}
                             </p>
                           </div>
                         </>
@@ -415,20 +349,22 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
                             Du kannst es noch anpassen, bevor du es übernimmst:
                           </p>
                           <Textarea
-                            value={suggestionText}
-                            onChange={(e) => setSuggestionText(e.target.value)}
+                            value={suggestedRight.text}
+                            onChange={(e) => suggestedRight.setText(e.target.value)}
                             maxLength={300}
-                            disabled={acceptPending}
+                            disabled={suggestedRight.pending}
                             className="min-h-[100px] resize-y"
                           />
-                          <FormError message={acceptError} />
+                          <FormError message={suggestedRight.error} />
                           <Button
                             variant="outline"
                             className="w-full"
-                            disabled={acceptPending || !suggestionText.trim()}
-                            onClick={() => void acceptRight()}
+                            disabled={
+                              suggestedRight.pending || !suggestedRight.text.trim()
+                            }
+                            onClick={() => void suggestedRight.accept()}
                           >
-                            {acceptPending
+                            {suggestedRight.pending
                               ? "Wird hinzugefügt …"
                               : "Zu meinem Bill of Rights hinzufügen"}
                           </Button>
@@ -469,7 +405,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
         // Nur der Einstiegs-Screen blendet ein — er steht am Ende des
         // Kopfwetter-Zooms. An die Phase gehängt, damit die Animation bei einem
         // späteren Branch-Wechsel nicht erneut anläuft.
-        enterFade={phase === "reflect"}
+        enterFade={state.phase === "reflect"}
         action={
           INTRO_CARDS.length > 0 ? (
             <IntroInfoButton cards={INTRO_CARDS} />
@@ -500,7 +436,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
         )}
 
         {/* Error banner */}
-        <FormError message={error} />
+        <FormError message={state.error} />
 
         {/* ── Form ────────────────────────────────────────────────── */}
         <form className="space-y-5">
@@ -511,12 +447,14 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
             <Textarea
               id="messy_when"
               name="messy_when"
-              value={messyWhen}
-              onChange={(e) => setMessyWhen(e.target.value)}
+              value={state.messyWhen}
+              onChange={(e) =>
+                dispatch({ type: "messyEdited", text: e.target.value })
+              }
               placeholder="Zum Beispiel: Ich habe meiner Kollegin zugesagt auszuhelfen, obwohl ich eigentlich keine Zeit hatte. Auf dem Heimweg kam dann dieses nagende Gefühl …"
               rows={5}
               required
-              disabled={submitting}
+              disabled={state.saving}
               className="min-h-[160px] resize-y"
             />
           </div>
@@ -525,10 +463,10 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
             type="button"
             className="w-full gap-2"
             size="lg"
-            disabled={submitting || !messyWhen.trim()}
+            disabled={state.saving || !state.messyWhen.trim()}
             onClick={() => void handleSubmit()}
           >
-            {submitting ? "Wird gespeichert …" : "Speichern & auswerten"}
+            {state.saving ? "Wird gespeichert …" : "Speichern & auswerten"}
           </Button>
         </form>
 

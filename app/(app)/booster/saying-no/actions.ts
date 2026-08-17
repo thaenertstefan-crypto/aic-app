@@ -9,14 +9,9 @@ import {
   type ActionResult,
 } from "@/lib/actions/action-result";
 import { withUser } from "@/lib/actions/with-user";
-import type { RightItem, SayingNoContent } from "@/lib/types/db-json";
+import type { SayingNoContent } from "@/lib/types/db-json";
 import { serverTodayKey } from "@/lib/server/timezone";
-import { saveRightsAction } from "@/lib/recipes/bill-of-rights/actions";
-import {
-  TEXT_MAX_LONG,
-  TEXT_MAX_SHORT,
-  tooLong,
-} from "@/lib/utils/form-validation";
+import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
 import { patchJournalContent } from "@/lib/utils/journal-content";
 
 // ─── Nein-Trainer ───────────────────────────────────────────────────────
@@ -197,44 +192,5 @@ export async function saveFinalNoAction(
   if (result.error !== null) return result;
 
   revalidatePath("/journal");
-  return result;
-}
-
-/**
- * KI-Vorschlag aus dem Abschluss-Screen übernehmen: hängt das (ggf. vom User
- * editierte) Recht ans Bill of Rights an. Läuft über die kanonische
- * saveRightsAction (Validierung, MAX_RIGHTS, Merge, BoR-Progress) — bewusst
- * ohne Redirect, damit der Wizard auf seinem Abschluss-Screen bleibt.
- */
-export async function acceptSuggestedRightAction(
-  formData: FormData,
-): Promise<ActionResult> {
-  const text = (formData.get("text") as string | null)?.trim() ?? "";
-  if (!text) return failed("Der Vorschlag ist leer.");
-  const lengthError = tooLong(text, TEXT_MAX_SHORT);
-  if (lengthError) return failed(lengthError);
-
-  const result = await withUser(async ({ supabase, user }) => {
-    const { data: bor } = await supabase
-      .from("bill_of_rights")
-      .select("rights")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    const rights = (bor?.rights as RightItem[] | null) ?? [];
-
-    const updated: RightItem[] = [
-      ...rights,
-      { id: crypto.randomUUID(), text, active: true },
-    ];
-
-    const fd = new FormData();
-    fd.set("rights", JSON.stringify(updated));
-    const res = await saveRightsAction(fd);
-    return res.error !== null ? failed(res.error) : ok();
-  });
-
-  if (result.error !== null) return result;
-
-  revalidatePath("/me/bill-of-rights");
   return result;
 }

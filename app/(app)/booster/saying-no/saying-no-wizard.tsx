@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useReducer } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -22,6 +22,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { useRecipeIntro } from "@/components/recipes/recipe-intro-gate";
+import { useSuggestedRight } from "@/components/recipes/use-suggested-right";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { Mascot } from "@/components/brand/mascot";
 import { ModuleIcon } from "@/components/booster/module-icon";
@@ -30,22 +31,22 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
-import type { SayingNoChecklist } from "@/lib/types/db-json";
+import { readRightSuggestion } from "@/lib/recipes/right-suggestion";
+import {
+  advanceSayingNo,
+  initialSayingNo,
+  type FeedbackChecklist,
+  type Mode,
+} from "@/lib/recipes/saying-no/state";
 import { cn } from "@/lib/utils";
 
 import { SAYING_NO_LAYERS, STATIC_SCENARIOS } from "./blueprint";
-import {
-  acceptSuggestedRightAction,
-  saveFinalNoAction,
-  saveSayingNoEntryAction,
-} from "./actions";
+import { saveFinalNoAction, saveSayingNoEntryAction } from "./actions";
 
 const INTRO_CARDS = getRecipeIntro("saying-no") ?? [];
 
 /** Client-Cap fürs „Anderes Szenario“-Reroll, schützt das Stunden-Kontingent. */
 const MAX_REROLLS = 3;
-
-type Mode = "real" | "practice";
 
 type Draft = {
   mode: Mode | null;
@@ -54,28 +55,12 @@ type Draft = {
 };
 
 /** Antwort-Shape von /api/saying-no-coach (mode "feedback"). */
-type ChecklistItem = { pass: boolean; note: string };
-type FeedbackChecklist = Record<keyof SayingNoChecklist, ChecklistItem>;
-type RightSuggestion =
-  | { type: "existing"; id: string; text: string }
-  | { type: "new"; text: string }
-  | null;
 type FeedbackResponse = {
   comment?: string;
   checklist?: unknown;
   improved?: string;
-  right?: RightSuggestion;
+  right?: unknown;
 };
-
-type Phase =
-  | "mode"
-  | "situation"
-  | "hellyes"
-  | "scenario"
-  | "draft"
-  | "analyzing"
-  | "feedback"
-  | "final";
 
 /** Reihenfolge der Checklist-Zeilen = Reihenfolge der Blueprint-Schichten. */
 const CHECKLIST_KEYS = SAYING_NO_LAYERS.map((l) => l.key);
@@ -83,45 +68,14 @@ const CHECKLIST_KEYS = SAYING_NO_LAYERS.map((l) => l.key);
 export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
   const intro = useRecipeIntro("saying-no", introSeen);
 
-  const [phase, setPhase] = useState<Phase>("mode");
-  useScrollTopOnChange(phase);
+  // Der ganze Übungszustand als ein Objekt — was ein Szenario-Wechsel
+  // überlebt, steht in lib/recipes/saying-no/state.ts, nicht hier.
+  const [state, dispatch] = useReducer(advanceSayingNo, undefined, initialSayingNo);
+  useScrollTopOnChange(state.phase);
 
-  const [mode, setMode] = useState<Mode | null>(null);
-
-  // Echte Situation bzw. Übungsszenario
-  const [situation, setSituation] = useState("");
-  const [hellYesAnswered, setHellYesAnswered] = useState<"yes" | null>(null);
-  const [scenarioSource, setScenarioSource] = useState<"ai" | "static">("static");
-  const [scenarioLoading, setScenarioLoading] = useState(false);
-  const [seenScenarios, setSeenScenarios] = useState<string[]>([]);
-  const [rerollCount, setRerollCount] = useState(0);
-
-  // Nein-Entwurf
-  const [draftText, setDraftText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  /** true, sobald „Nochmal selbst umformulieren“ benutzt wurde (max. 1×). */
-  const [revisionUsed, setRevisionUsed] = useState(false);
-
-  // KI-Feedback
-  const [entryId, setEntryId] = useState<string | null>(null);
-  const [comment, setComment] = useState("");
-  const [checklist, setChecklist] = useState<FeedbackChecklist | null>(null);
-  const [improvedText, setImprovedText] = useState("");
-  const [improvedOriginal, setImprovedOriginal] = useState<string | null>(null);
-  const [right, setRight] = useState<RightSuggestion>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
-
-  // Finales Nein + Copy-Button
-  const [finalNo, setFinalNo] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [copyError, setCopyError] = useState<string | null>(null);
-
-  // Editierbarer Neues-Recht-Vorschlag + Übernahme-Status
-  const [suggestionText, setSuggestionText] = useState("");
-  const [acceptPending, setAcceptPending] = useState(false);
-  const [acceptError, setAcceptError] = useState<string | null>(null);
-  const [accepted, setAccepted] = useState(false);
+  // Der Rechts-Vorschlag samt Übernahme — setzt sich mit jedem neuen
+  // Vorschlag von selbst zurück.
+  const suggestedRight = useSuggestedRight(state.right);
 
   // Offline draft safety net
   const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
@@ -129,24 +83,23 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
 
   const restoreDraft = () => {
     if (pendingDraft) {
-      const restoredMode =
-        pendingDraft.mode === "real" || pendingDraft.mode === "practice"
-          ? pendingDraft.mode
-          : null;
-      setMode(restoredMode);
-      setSituation(pendingDraft.situation ?? "");
-      setDraftText(pendingDraft.draft ?? "");
-      if (restoredMode && pendingDraft.situation) {
-        setPhase("draft");
-      }
+      dispatch({
+        type: "draftRestored",
+        mode:
+          pendingDraft.mode === "real" || pendingDraft.mode === "practice"
+            ? pendingDraft.mode
+            : null,
+        situation: pendingDraft.situation ?? "",
+        draft: pendingDraft.draft ?? "",
+      });
     }
     dismissPendingDraft();
   };
 
   const currentDraft = (): Draft => ({
-    mode,
-    situation,
-    draft: draftText,
+    mode: state.mode,
+    situation: state.situation,
+    draft: state.draft,
   });
 
   // ── Übungsszenario laden ────────────────────────────────────────
@@ -160,9 +113,9 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
+  // Die Warte-Bühne setzt der Übergang, der hierher führt (Modus-Wahl,
+  // „Anderes Szenario", „Nächstes Szenario") — hier wird nur geholt.
   async function loadScenario(seen: string[]) {
-    setScenarioLoading(true);
-    setPhase("scenario");
     try {
       const res = await fetch("/api/saying-no-coach", {
         method: "POST",
@@ -174,38 +127,32 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
       });
       const data = await res.json();
       if (res.ok && typeof data.scenario === "string" && data.scenario.trim()) {
-        setSituation(data.scenario.trim());
-        setScenarioSource("ai");
-        setSeenScenarios([...seen, data.scenario.trim()]);
+        dispatch({ type: "scenarioLoaded", text: data.scenario.trim(), source: "ai" });
       } else {
-        const fallback = pickStaticScenario(seen);
-        setSituation(fallback);
-        setScenarioSource("static");
-        setSeenScenarios([...seen, fallback]);
+        dispatch({
+          type: "scenarioLoaded",
+          text: pickStaticScenario(seen),
+          source: "static",
+        });
       }
     } catch {
-      const fallback = pickStaticScenario(seen);
-      setSituation(fallback);
-      setScenarioSource("static");
-      setSeenScenarios([...seen, fallback]);
-    } finally {
-      setScenarioLoading(false);
+      dispatch({
+        type: "scenarioLoaded",
+        text: pickStaticScenario(seen),
+        source: "static",
+      });
     }
   }
 
   // ── KI-Feedback ─────────────────────────────────────────────────
   // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert; die Route lädt
   // Texte + Rechte serverseitig nach — der Client schickt nur die entryId.
-  // Die Warte-Bühne setzen wir hier, die Ziel-Bühne gibt runAiStep zurück:
-  // ein KI-Ausfall landet als aiError auf dem Feedback-Screen (Retry möglich),
-  // blockiert die Übung aber nicht.
+  // Die Warte-Bühne setzt „feedbackRequested", die Ziel-Bühne gibt runAiStep
+  // zurück: ein KI-Ausfall landet als aiError auf dem Feedback-Screen (Retry
+  // möglich), blockiert die Übung aber nicht.
 
   async function runFeedback(id: string) {
-    setAiError(null);
-    setChecklist(null);
-    setComment("");
-    setImprovedOriginal(null);
-    setPhase("analyzing");
+    dispatch({ type: "feedbackRequested" });
 
     const step = await runAiStep(
       AI_STEPS.sayingNo,
@@ -219,30 +166,17 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
             typeof data.improved === "string" && data.improved.trim()
               ? data.improved.trim()
               : null,
-          // Die Route ist ungeprüft gecastet — ein Vorschlag ohne Text ist keiner.
-          right:
-            data.right && typeof data.right.text === "string" && data.right.text.trim()
-              ? data.right
-              : null,
+          right: readRightSuggestion(data.right),
         };
       },
     );
 
     if (step.error !== null) {
-      setAiError(step.error);
-      setPhase(step.phase);
+      dispatch({ type: "feedbackFailed", phase: step.phase, message: step.error });
       return;
     }
 
-    setComment(step.data.comment);
-    setChecklist(step.data.checklist);
-    setImprovedOriginal(step.data.improved);
-    setImprovedText(step.data.improved ?? "");
-    setRight(step.data.right);
-    if (step.data.right?.type === "new") {
-      setSuggestionText(step.data.right.text);
-    }
-    setPhase(step.phase);
+    dispatch({ type: "feedbackReceived", phase: step.phase, feedback: step.data });
   }
 
   function isValidChecklist(value: unknown): value is FeedbackChecklist {
@@ -260,70 +194,73 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
   // ── Speichern → Feedback ────────────────────────────────────────
 
   async function handleDraftSubmit() {
-    setSubmitting(true);
-    setError(null);
+    dispatch({ type: "saving" });
 
     // No connection — keep the entry as a local draft instead of losing it.
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       saveDraft(currentDraft());
-      setSubmitting(false);
-      setError(
-        "Du bist offline – dein Nein wurde als Entwurf gesichert. Sobald du wieder online bist, kannst du es abschließen.",
-      );
+      dispatch({
+        type: "savingFailed",
+        message:
+          "Du bist offline – dein Nein wurde als Entwurf gesichert. Sobald du wieder online bist, kannst du es abschließen.",
+      });
       return;
     }
 
     // Zweitversuch: der Eintrag existiert schon → nur draft2 nachtragen,
     // dann die zweite (und letzte) Feedback-Runde starten.
-    if (entryId) {
+    if (state.entryId) {
+      const entryId = state.entryId;
       try {
         const fd = new FormData();
         fd.set("entryId", entryId);
-        fd.set("draft2", draftText);
+        fd.set("draft2", state.draft);
         const result = await saveFinalNoAction(fd);
-        setSubmitting(false);
         if (result.error !== null) {
-          setError(result.error);
+          dispatch({ type: "savingFailed", message: result.error });
           return;
         }
+        dispatch({ type: "saved", entryId });
         void runFeedback(entryId);
       } catch {
-        setSubmitting(false);
-        setError("Speichern fehlgeschlagen. Versuch es noch einmal.");
+        dispatch({
+          type: "savingFailed",
+          message: "Speichern fehlgeschlagen. Versuch es noch einmal.",
+        });
       }
       return;
     }
 
     const formData = new FormData();
-    formData.set("mode", mode ?? "");
-    formData.set("situation", situation);
-    formData.set("draft", draftText);
-    if (mode === "practice") {
-      formData.set("scenario_source", scenarioSource);
+    formData.set("mode", state.mode ?? "");
+    formData.set("situation", state.situation);
+    formData.set("draft", state.draft);
+    if (state.mode === "practice") {
+      formData.set("scenario_source", state.scenarioSource);
     }
-    if (mode === "real") {
-      formData.set("hell_yes", hellYesAnswered === "yes" ? "true" : "false");
+    if (state.mode === "real") {
+      formData.set("hell_yes", state.hellYes ? "true" : "false");
     }
 
     try {
       const result = await saveSayingNoEntryAction(formData);
-      setSubmitting(false);
 
       if (result.error !== null) {
-        setError(result.error);
+        dispatch({ type: "savingFailed", message: result.error });
         return;
       }
 
       clearDraft();
-      setEntryId(result.data);
+      dispatch({ type: "saved", entryId: result.data });
       void runFeedback(result.data);
     } catch {
       // Network error mid-request — preserve the entry as a draft.
       saveDraft(currentDraft());
-      setSubmitting(false);
-      setError(
-        "Speichern fehlgeschlagen – dein Nein wurde als Entwurf gesichert. Versuch es später noch einmal.",
-      );
+      dispatch({
+        type: "savingFailed",
+        message:
+          "Speichern fehlgeschlagen – dein Nein wurde als Entwurf gesichert. Versuch es später noch einmal.",
+      });
     }
   }
 
@@ -332,15 +269,12 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
   function goFinal(text: string, source: "own" | "ai" | "edited") {
     const chosen = text.trim();
     if (!chosen) return;
-    setFinalNo(chosen);
-    setCopied(false);
-    setCopyError(null);
-    setPhase("final");
+    dispatch({ type: "finished", text: chosen });
 
     // Persistieren im Hintergrund — der Abschluss-Screen wartet nicht darauf.
-    if (entryId) {
+    if (state.entryId) {
       const fd = new FormData();
-      fd.set("entryId", entryId);
+      fd.set("entryId", state.entryId);
       fd.set("final_no", chosen);
       fd.set("final_source", source);
       void saveFinalNoAction(fd).catch(() => {
@@ -350,59 +284,26 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
   }
 
   async function copyFinalNo() {
-    setCopyError(null);
     try {
       if (!navigator.clipboard || !window.isSecureContext) {
         throw new Error("clipboard unavailable");
       }
-      await navigator.clipboard.writeText(finalNo);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(state.finalNo);
+      dispatch({ type: "copied" });
+      window.setTimeout(() => dispatch({ type: "copyReset" }), 2000);
     } catch {
-      setCopyError("Kopieren klappt hier nicht — markiere den Text einfach selbst.");
-    }
-  }
-
-  async function acceptRight() {
-    setAcceptPending(true);
-    setAcceptError(null);
-    try {
-      const fd = new FormData();
-      fd.set("text", suggestionText);
-      const res = await acceptSuggestedRightAction(fd);
-      if (res.error !== null) {
-        setAcceptError(res.error);
-      } else {
-        setAccepted(true);
-      }
-    } catch {
-      setAcceptError("Das hat gerade nicht geklappt. Versuch es noch einmal.");
-    } finally {
-      setAcceptPending(false);
+      dispatch({
+        type: "copyFailed",
+        message: "Kopieren klappt hier nicht — markiere den Text einfach selbst.",
+      });
     }
   }
 
   // ── Übungsmodus: nächstes Szenario ──────────────────────────────
 
   function nextScenario() {
-    setEntryId(null);
-    setDraftText("");
-    setRevisionUsed(false);
-    setComment("");
-    setChecklist(null);
-    setImprovedText("");
-    setImprovedOriginal(null);
-    setRight(null);
-    setAiError(null);
-    setFinalNo("");
-    setCopied(false);
-    setCopyError(null);
-    setSuggestionText("");
-    setAccepted(false);
-    setAcceptError(null);
-    setError(null);
-    setRerollCount(0);
-    void loadScenario(seenScenarios);
+    dispatch({ type: "nextScenario" });
+    void loadScenario(state.seenScenarios);
   }
 
   // ── Render: Intro-Sequenz (erster Besuch) ───────────────────────
@@ -420,7 +321,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
       // Nur der Einstiegs-Screen blendet ein — er steht am Ende des
       // Kopfwetter-Zooms. An die Phase gehängt, damit die Animation bei einem
       // späteren Branch-Wechsel nicht erneut anläuft.
-      enterFade={phase === "mode"}
+      enterFade={state.phase === "mode"}
       action={
         INTRO_CARDS.length > 0 ? <IntroInfoButton cards={INTRO_CARDS} /> : undefined
       }
@@ -429,7 +330,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Feedback läuft ──────────────────────────────────────
 
-  if (phase === "analyzing") {
+  if (state.phase === "analyzing") {
     return (
       <div className="flex min-h-svh flex-col">
         {header}
@@ -450,13 +351,14 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Blueprint-Check (Feedback) ──────────────────────────
 
-  if (phase === "feedback") {
-    const ownDraft = draftText.trim();
+  if (state.phase === "feedback") {
+    const ownDraft = state.draft.trim();
+    const { entryId, checklist } = state;
     return (
       <div className="flex min-h-svh flex-col">
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {aiError ? (
+          {state.aiError ? (
             <>
               <div className="flex flex-col items-center gap-3 text-center">
                 <Mascot expression="sorrowMild" size="md" />
@@ -464,7 +366,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
               <Card className="w-full">
                 <CardContent className="space-y-3 pt-(--card-spacing)">
                   <p className="text-base leading-relaxed text-muted-foreground">
-                    {aiError}
+                    {state.aiError}
                   </p>
                   {entryId && (
                     <Button
@@ -497,12 +399,12 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                 </h1>
               </div>
 
-              {comment && (
+              {state.comment && (
                 <Reveal delay={0.15} className="w-full">
                   <Card className="w-full">
                     <CardContent className="pt-(--card-spacing)">
                       <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                        {comment}
+                        {state.comment}
                       </p>
                     </CardContent>
                   </Card>
@@ -549,7 +451,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                 </Reveal>
               )}
 
-              {improvedOriginal !== null && (
+              {state.improved !== null && (
                 <Reveal delay={0.55} className="w-full">
                   <Card className="w-full border-primary/30">
                     <CardContent className="space-y-3 pt-(--card-spacing)">
@@ -559,19 +461,23 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                         übernimmst:
                       </p>
                       <Textarea
-                        value={improvedText}
-                        onChange={(e) => setImprovedText(e.target.value)}
+                        value={state.improvedDraft}
+                        onChange={(e) =>
+                          dispatch({ type: "improvedEdited", text: e.target.value })
+                        }
                         maxLength={5000}
                         rows={4}
                         className="min-h-[120px] resize-y"
                       />
                       <Button
                         className="w-full"
-                        disabled={!improvedText.trim()}
+                        disabled={!state.improvedDraft.trim()}
                         onClick={() =>
                           goFinal(
-                            improvedText,
-                            improvedText.trim() === improvedOriginal ? "ai" : "edited",
+                            state.improvedDraft,
+                            state.improvedDraft.trim() === state.improved
+                              ? "ai"
+                              : "edited",
                           )
                         }
                       >
@@ -591,15 +497,11 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                 >
                   Meine Version behalten
                 </Button>
-                {!revisionUsed && (
+                {!state.revisionUsed && (
                   <Button
                     variant="ghost"
                     className="w-full"
-                    onClick={() => {
-                      setRevisionUsed(true);
-                      setError(null);
-                      setPhase("draft");
-                    }}
+                    onClick={() => dispatch({ type: "revisionStarted" })}
                   >
                     Nochmal selbst umformulieren
                   </Button>
@@ -615,7 +517,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Abschluss ───────────────────────────────────────────
 
-  if (phase === "final") {
+  if (state.phase === "final") {
     return (
       <div className="flex min-h-svh flex-col items-center px-4 py-10">
         <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -626,7 +528,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
               Dein Nein steht.
             </h1>
             <p className="text-muted-foreground">
-              {mode === "real"
+              {state.mode === "real"
                 ? "Jetzt musst du es nur noch aussprechen — oder abschicken."
                 : "Mit jedem geübten Nein wird das echte leichter."}
             </p>
@@ -635,14 +537,14 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
           <Card className="w-full border-primary/30">
             <CardContent className="space-y-3 pt-(--card-spacing)">
               <p className="whitespace-pre-wrap text-left text-base leading-relaxed text-foreground">
-                {finalNo}
+                {state.finalNo}
               </p>
               <Button
                 variant="outline"
                 className="w-full gap-2"
                 onClick={() => void copyFinalNo()}
               >
-                {copied ? (
+                {state.copied ? (
                   <>
                     <Check className="size-4 text-primary" /> Kopiert!
                   </>
@@ -652,13 +554,15 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                   </>
                 )}
               </Button>
-              {copyError && (
-                <p className="text-left text-sm text-muted-foreground">{copyError}</p>
+              {state.copyError && (
+                <p className="text-left text-sm text-muted-foreground">
+                  {state.copyError}
+                </p>
               )}
             </CardContent>
           </Card>
 
-          {right?.type === "existing" && (
+          {state.right?.type === "existing" && (
             <Reveal delay={0.5} className="w-full">
               <Card className="w-full border-primary/30">
                 <CardContent className="space-y-2 pt-(--card-spacing)">
@@ -666,7 +570,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                   <div className="flex items-start gap-2 text-left">
                     <Check className="mt-1 size-4 shrink-0 text-primary" />
                     <p className="text-base leading-relaxed text-foreground">
-                      {right.text}
+                      {state.right.text}
                     </p>
                   </div>
                   <p className="text-left text-sm text-muted-foreground">
@@ -677,17 +581,17 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
             </Reveal>
           )}
 
-          {right?.type === "new" && (
+          {state.right?.type === "new" && (
             <Reveal delay={0.5} className="w-full">
               <Card className="w-full border-primary/30">
                 <CardContent className="space-y-3 pt-(--card-spacing)">
-                  {accepted ? (
+                  {suggestedRight.accepted ? (
                     <>
                       <SectionLabel>Zu deinen Rechten hinzugefügt</SectionLabel>
                       <div className="flex items-start gap-2 text-left">
                         <Check className="mt-1 size-4 shrink-0 text-primary" />
                         <p className="text-base leading-relaxed text-foreground">
-                          {suggestionText}
+                          {suggestedRight.text}
                         </p>
                       </div>
                     </>
@@ -699,20 +603,20 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                         geben kannst. Du kannst den Satz noch anpassen:
                       </p>
                       <Textarea
-                        value={suggestionText}
-                        onChange={(e) => setSuggestionText(e.target.value)}
+                        value={suggestedRight.text}
+                        onChange={(e) => suggestedRight.setText(e.target.value)}
                         maxLength={300}
-                        disabled={acceptPending}
+                        disabled={suggestedRight.pending}
                         className="min-h-[100px] resize-y"
                       />
-                      <FormError message={acceptError} />
+                      <FormError message={suggestedRight.error} />
                       <Button
                         variant="outline"
                         className="w-full"
-                        disabled={acceptPending || !suggestionText.trim()}
-                        onClick={() => void acceptRight()}
+                        disabled={suggestedRight.pending || !suggestedRight.text.trim()}
+                        onClick={() => void suggestedRight.accept()}
                       >
-                        {acceptPending
+                        {suggestedRight.pending
                           ? "Wird hinzugefügt …"
                           : "Zu meinem Bill of Rights hinzufügen"}
                       </Button>
@@ -724,20 +628,20 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
           )}
 
           <div className="flex w-full flex-col gap-3 pt-4">
-            {mode === "practice" && (
+            {state.mode === "practice" && (
               <Button className="w-full gap-2" size="lg" onClick={nextScenario}>
                 <RefreshCw className="size-4" /> Nächstes Szenario
               </Button>
             )}
             <Button
-              variant={mode === "practice" ? "outline" : "default"}
+              variant={state.mode === "practice" ? "outline" : "default"}
               className="w-full"
               size="lg"
               render={<Link href="/booster" />}
             >
               Zurück zur {PAGE_TITLES.booster}
             </Button>
-            {accepted && (
+            {suggestedRight.accepted && (
               <Button
                 variant="outline"
                 className="w-full"
@@ -755,7 +659,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Hell-yes-Check (nur echte Situation) ────────────────
 
-  if (phase === "hellyes") {
+  if (state.phase === "hellyes") {
     return (
       <div className="flex min-h-svh flex-col">
         {header}
@@ -774,12 +678,12 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
           <Card className="w-full">
             <CardContent className="pt-(--card-spacing)">
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-                {situation}
+                {state.situation}
               </p>
             </CardContent>
           </Card>
 
-          {hellYesAnswered === "yes" ? (
+          {state.hellYes ? (
             <Card className="w-full border-primary/30">
               <CardContent className="space-y-4 pt-(--card-spacing)">
                 <p className="text-base leading-relaxed text-foreground">
@@ -794,7 +698,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                   <Button
                     variant="ghost"
                     className="w-full"
-                    onClick={() => setPhase("draft")}
+                    onClick={() => dispatch({ type: "draftStarted" })}
                   >
                     Trotzdem ein Nein formulieren
                   </Button>
@@ -806,7 +710,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={() => setPhase("draft")}
+                onClick={() => dispatch({ type: "draftStarted" })}
               >
                 Nein — also ist es ein Nein
               </Button>
@@ -814,7 +718,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                 variant="outline"
                 className="w-full"
                 size="lg"
-                onClick={() => setHellYesAnswered("yes")}
+                onClick={() => dispatch({ type: "hellYesConfirmed" })}
               >
                 Ja, eigentlich schon
               </Button>
@@ -828,13 +732,13 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Übungsszenario ──────────────────────────────────────
 
-  if (phase === "scenario") {
+  if (state.phase === "scenario") {
     return (
       <div className="flex min-h-svh flex-col">
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex flex-col items-center gap-3 text-center">
-            <Mascot expression={scenarioLoading ? "curious" : "smile"} size="md" />
+            <Mascot expression={state.scenarioPending ? "curious" : "smile"} size="md" />
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
               Dein Übungsszenario
             </h1>
@@ -846,7 +750,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
 
           <Card className="w-full">
             <CardContent className="pt-(--card-spacing)">
-              {scenarioLoading ? (
+              {state.scenarioPending ? (
                 <div className="flex flex-col items-center gap-4 py-4 text-center">
                   <p className="text-base text-muted-foreground motion-safe:animate-pulse">
                     Ich denk mir gerade eine Situation für dich aus …
@@ -859,7 +763,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
                 </div>
               ) : (
                 <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                  {situation}
+                  {state.situation}
                 </p>
               )}
             </CardContent>
@@ -869,19 +773,19 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
             <Button
               className="w-full"
               size="lg"
-              disabled={scenarioLoading || !situation}
-              onClick={() => setPhase("draft")}
+              disabled={state.scenarioPending || !state.situation}
+              onClick={() => dispatch({ type: "draftStarted" })}
             >
               Mein Nein formulieren
             </Button>
-            {rerollCount < MAX_REROLLS && (
+            {state.rerolls < MAX_REROLLS && (
               <Button
                 variant="outline"
                 className="w-full gap-2"
-                disabled={scenarioLoading}
+                disabled={state.scenarioPending}
                 onClick={() => {
-                  setRerollCount((c) => c + 1);
-                  void loadScenario(seenScenarios);
+                  dispatch({ type: "rerolled" });
+                  void loadScenario(state.seenScenarios);
                 }}
               >
                 <RefreshCw className="size-4" /> Anderes Szenario
@@ -896,7 +800,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Nein-Entwurf ────────────────────────────────────────
 
-  if (phase === "draft") {
+  if (state.phase === "draft") {
     return (
       <div className="flex min-h-svh flex-col">
         {header}
@@ -904,7 +808,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
           <div className="flex flex-col items-center gap-3 text-center">
             <Mascot expression="smile" size="md" />
             <p className="text-base leading-relaxed text-muted-foreground">
-              {revisionUsed
+              {state.revisionUsed
                 ? "Noch ein Anlauf — nimm dir aus dem Feedback mit, was für dich passt."
                 : "Schreib dein Nein so, wie du es wirklich sagen oder abschicken würdest. Danach schauen wir gemeinsam drauf."}
             </p>
@@ -914,16 +818,16 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
           <Card className="w-full">
             <CardContent className="pt-(--card-spacing)">
               <SectionLabel className="mb-1">
-                {mode === "real" ? "Darum geht es" : "Das Szenario"}
+                {state.mode === "real" ? "Darum geht es" : "Das Szenario"}
               </SectionLabel>
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-                {situation}
+                {state.situation}
               </p>
             </CardContent>
           </Card>
 
           {/* Error banner */}
-          <FormError message={error} />
+          <FormError message={state.error} />
 
           {/* ── Form ────────────────────────────────────────────── */}
           <form className="space-y-5">
@@ -934,17 +838,19 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
               <Textarea
                 id="draft"
                 name="draft"
-                value={draftText}
-                onChange={(e) => setDraftText(e.target.value)}
+                value={state.draft}
+                onChange={(e) =>
+                  dispatch({ type: "draftEdited", text: e.target.value })
+                }
                 placeholder={
-                  mode === "real"
+                  state.mode === "real"
                     ? "Zum Beispiel: Danke, dass du an mich denkst — das freut mich wirklich. Leider passt es diesmal nicht bei mir."
                     : undefined
                 }
                 rows={5}
                 required
                 maxLength={5000}
-                disabled={submitting}
+                disabled={state.saving}
                 className="min-h-[140px] resize-y"
               />
             </div>
@@ -953,12 +859,12 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
               type="button"
               className="w-full gap-2"
               size="lg"
-              disabled={submitting || !draftText.trim()}
+              disabled={state.saving || !state.draft.trim()}
               onClick={() => void handleDraftSubmit()}
             >
-              {submitting
+              {state.saving
                 ? "Wird gespeichert …"
-                : revisionUsed && entryId
+                : state.revisionUsed && state.entryId
                   ? "Nochmal checken lassen"
                   : "Auf den Blueprint legen"}
             </Button>
@@ -971,7 +877,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Situation beschreiben (echter Modus) ────────────────
 
-  if (phase === "situation") {
+  if (state.phase === "situation") {
     return (
       <div className="flex min-h-svh flex-col">
         {header}
@@ -1007,8 +913,10 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
               <Textarea
                 id="situation"
                 name="situation"
-                value={situation}
-                onChange={(e) => setSituation(e.target.value)}
+                value={state.situation}
+                onChange={(e) =>
+                  dispatch({ type: "situationEdited", text: e.target.value })
+                }
                 placeholder="Zum Beispiel: Meine Kollegin fragt, ob ich am Samstag ihre Schicht übernehme. Ich hatte mir das Wochenende eigentlich freigehalten …"
                 rows={5}
                 required
@@ -1021,11 +929,8 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
               type="button"
               className="w-full gap-2"
               size="lg"
-              disabled={!situation.trim()}
-              onClick={() => {
-                setHellYesAnswered(null);
-                setPhase("hellyes");
-              }}
+              disabled={!state.situation.trim()}
+              onClick={() => dispatch({ type: "situationDone" })}
             >
               Weiter
             </Button>
@@ -1066,11 +971,7 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
         <button
           type="button"
           className="w-full text-left"
-          onClick={() => {
-            setMode("real");
-            setSituation("");
-            setPhase("situation");
-          }}
+          onClick={() => dispatch({ type: "modeChosen", mode: "real" })}
         >
           <Card className="w-full transition-colors hover:bg-muted/40">
             <CardContent className="space-y-1 pt-(--card-spacing)">
@@ -1090,10 +991,8 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
           type="button"
           className="w-full text-left"
           onClick={() => {
-            setMode("practice");
-            setSituation("");
-            setRerollCount(0);
-            void loadScenario(seenScenarios);
+            dispatch({ type: "modeChosen", mode: "practice" });
+            void loadScenario(state.seenScenarios);
           }}
         >
           <Card className="w-full transition-colors hover:bg-muted/40">

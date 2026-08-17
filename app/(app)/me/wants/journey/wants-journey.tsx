@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useReducer } from "react";
 import Link from "next/link";
 import {
   ChevronDown,
@@ -30,6 +30,14 @@ import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
+import {
+  advanceWants,
+  initialWants,
+  joinAnswers,
+  keptWants,
+  type AuditField,
+  type DraftWant,
+} from "@/lib/recipes/wants/state";
 import type { WantItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
 
@@ -71,26 +79,11 @@ function buildDonePath(points: { x: number; y: number }[]): string {
   return d;
 }
 
-type Phase = "nudge" | "yin" | "yang" | "tagtraum" | "analyzing" | "sterne" | "done";
-
 type AuditDraft = {
   yin: string[];
   yang: string[];
   tagtraum: string[];
   principles: string;
-};
-
-/** Ein Stern-Entwurf im Client-State — die id wird beim Bestätigen zur WantItem-id. */
-type DraftWant = {
-  id: string;
-  text: string;
-  title: string | null;
-  distance: "nah" | "fern";
-  valueId: string | null;
-  valueLabel: string | null;
-  reason: string | null;
-  question: string | null;
-  source: "ai" | "own";
 };
 
 /** Antwort-Shape von /api/wants-distiller. */
@@ -107,16 +100,11 @@ type DistillerResponse = {
   }[];
 };
 
-// Multi-Antwort-Audit: 3 Boxen vorgeschlagen (1 Pflicht), bis zu 6 möglich.
-const START_BOXES = 3;
+// Multi-Antwort-Audit: bis zu 6 Boxen möglich (Startanzahl siehe START_BOXES
+// im Zustands-Modul).
 const MAX_ANSWER_BOXES = 6;
 // Pro Box gecappt, damit die zusammengefügten Antworten unter TEXT_MAX_LONG (5000) bleiben.
 const ANSWER_MAX = 800;
-
-/** Nicht-leere Antworten zeilenweise zu einem String zusammenfügen (für die Action). */
-function joinAnswers(answers: string[]): string {
-  return answers.map((a) => a.trim()).filter(Boolean).join("\n");
-}
 
 function AnswerBoxes({
   answers,
@@ -183,45 +171,18 @@ export function WantsJourney({
 }) {
   const intro = useRecipeIntro("wants", introSeen);
 
-  const [phase, setPhase] = useState<Phase>(hasValuesHypothesis ? "yin" : "nudge");
-  useScrollTopOnChange(phase);
+  // Der ganze Übungszustand als ein Objekt — was ein neues Destillat
+  // überlebt, steht in lib/recipes/wants/state.ts, nicht hier.
+  const [state, dispatch] = useReducer(
+    advanceWants,
+    hasValuesHypothesis,
+    initialWants,
+  );
+  useScrollTopOnChange(state.phase);
   const reduced = useReducedMotion();
 
-  // Audit
-  const [yin, setYin] = useState<string[]>(Array(START_BOXES).fill(""));
-  const [yang, setYang] = useState<string[]>(Array(START_BOXES).fill(""));
-  const [tagtraum, setTagtraum] = useState<string[]>(Array(START_BOXES).fill(""));
-  const [principles, setPrinciples] = useState("");
-  const [principlesOpen, setPrinciplesOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // KI-Destillat
-  const [entryId, setEntryId] = useState<string | null>(null);
-  const [comment, setComment] = useState("");
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [manualMode, setManualMode] = useState(false);
-
-  // Sterne-Karten
-  const [draftWants, setDraftWants] = useState<DraftWant[]>([]);
-  const [newWantText, setNewWantText] = useState("");
-  const [savingWants, setSavingWants] = useState(false);
-  const [wantsError, setWantsError] = useState<string | null>(null);
-
-  // Inline-Refine: pro Want die eingetippte Antwort + laufender/fehlerhafter Zustand.
-  const [refineAnswers, setRefineAnswers] = useState<Record<string, string>>({});
-  const [refiningId, setRefiningId] = useState<string | null>(null);
-  const [refineError, setRefineError] = useState<Record<string, string | null>>({});
-
-  // Welche Vorschlags-Sterne sind aufgeklappt (Tap-to-Edit). Unabhängig togglebar.
-  const [openIds, setOpenIds] = useState<Set<string>>(new Set());
-  const toggleOpen = (id: string) =>
-    setOpenIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const setAnswers = (field: AuditField) => (answers: string[]) =>
+    dispatch({ type: "answersEdited", field, answers });
 
   // Offline draft safety net
   const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
@@ -229,40 +190,33 @@ export function WantsJourney({
 
   const restoreDraft = () => {
     if (pendingDraft) {
-      setYin(
-        Array.isArray(pendingDraft.yin) && pendingDraft.yin.length
-          ? pendingDraft.yin
-          : Array(START_BOXES).fill(""),
-      );
-      setYang(
-        Array.isArray(pendingDraft.yang) && pendingDraft.yang.length
-          ? pendingDraft.yang
-          : Array(START_BOXES).fill(""),
-      );
-      setTagtraum(
-        Array.isArray(pendingDraft.tagtraum) && pendingDraft.tagtraum.length
-          ? pendingDraft.tagtraum
-          : Array(START_BOXES).fill(""),
-      );
-      setPrinciples(pendingDraft.principles ?? "");
-      if (pendingDraft.principles) setPrinciplesOpen(true);
+      dispatch({
+        type: "draftRestored",
+        yin: Array.isArray(pendingDraft.yin) ? pendingDraft.yin : [],
+        yang: Array.isArray(pendingDraft.yang) ? pendingDraft.yang : [],
+        tagtraum: Array.isArray(pendingDraft.tagtraum) ? pendingDraft.tagtraum : [],
+        principles: pendingDraft.principles ?? "",
+      });
     }
     dismissPendingDraft();
   };
 
-  const currentDraft = (): AuditDraft => ({ yin, yang, tagtraum, principles });
+  const currentDraft = (): AuditDraft => ({
+    yin: state.yin,
+    yang: state.yang,
+    tagtraum: state.tagtraum,
+    principles: state.principles,
+  });
 
   // ── KI-Destillat laden ──────────────────────────────────────────
   // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert; die Route lädt
   // Audit + bestätigte Werte serverseitig nach — der Client schickt nur die
-  // entryId. Die Warte-Bühne setzen wir hier, die Ziel-Bühne gibt runAiStep
-  // zurück: ein KI-Ausfall landet als aiError auf dem Sterne-Screen, das
-  // Rezept bleibt ohne KI vollständig nutzbar (manueller Modus).
+  // entryId. Die Warte-Bühne setzt „distillateRequested", die Ziel-Bühne gibt
+  // runAiStep zurück: ein KI-Ausfall landet als aiError auf dem Sterne-Screen,
+  // das Rezept bleibt ohne KI vollständig nutzbar (manueller Modus).
 
   async function runDistiller(id: string) {
-    setAiError(null);
-    setComment("");
-    setPhase("analyzing");
+    dispatch({ type: "distillateRequested" });
 
     const step = await runAiStep(AI_STEPS.wants, { entryId: id }, (payload) => {
       const data = payload as DistillerResponse;
@@ -286,91 +240,64 @@ export function WantsJourney({
     });
 
     if (step.error !== null) {
-      setAiError(step.error);
-      setPhase(step.phase);
+      dispatch({ type: "distillateFailed", phase: step.phase, message: step.error });
       return;
     }
 
-    setComment(step.data.comment);
-    setDraftWants(step.data.wants);
-    setManualMode(step.data.wants.length === 0);
-    setPhase(step.phase);
+    dispatch({ type: "distillateReceived", phase: step.phase, distillate: step.data });
   }
 
   // ── Audit speichern → Destillat ─────────────────────────────────
 
   async function handleAuditSubmit() {
-    setSubmitting(true);
-    setError(null);
+    dispatch({ type: "saving" });
 
     // No connection — keep the audit as a local draft instead of losing it.
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       saveDraft(currentDraft());
-      setSubmitting(false);
-      setError(
-        "Du bist offline – deine Sternensuche wurde als Entwurf gesichert. Sobald du wieder online bist, kannst du es abschließen.",
-      );
+      dispatch({
+        type: "savingFailed",
+        message:
+          "Du bist offline – deine Sternensuche wurde als Entwurf gesichert. Sobald du wieder online bist, kannst du es abschließen.",
+      });
       return;
     }
 
     const formData = new FormData();
-    formData.set("yin", joinAnswers(yin));
-    formData.set("yang", joinAnswers(yang));
-    formData.set("tagtraum", joinAnswers(tagtraum));
-    formData.set("principles", principles);
+    formData.set("yin", joinAnswers(state.yin));
+    formData.set("yang", joinAnswers(state.yang));
+    formData.set("tagtraum", joinAnswers(state.tagtraum));
+    formData.set("principles", state.principles);
 
     try {
       const result = await saveYinYangEntryAction(formData);
-      setSubmitting(false);
 
       if (result.error !== null) {
-        setError(result.error);
+        dispatch({ type: "savingFailed", message: result.error });
         return;
       }
 
       clearDraft();
-      setEntryId(result.data);
+      dispatch({ type: "saved", entryId: result.data });
       void runDistiller(result.data);
     } catch {
       // Network error mid-request — preserve the audit as a draft.
       saveDraft(currentDraft());
-      setSubmitting(false);
-      setError(
-        "Speichern fehlgeschlagen – deine Sternensuche wurde als Entwurf gesichert. Versuch es später noch einmal.",
-      );
+      dispatch({
+        type: "savingFailed",
+        message:
+          "Speichern fehlgeschlagen – deine Sternensuche wurde als Entwurf gesichert. Versuch es später noch einmal.",
+      });
     }
   }
 
   // ── Wants bestätigen ────────────────────────────────────────────
 
-  function addOwnWant() {
-    const text = newWantText.trim();
-    if (!text) return;
-    const id = crypto.randomUUID();
-    setDraftWants((prev) => [
-      ...prev,
-      {
-        id,
-        text,
-        title: null,
-        distance: "nah",
-        valueId: null,
-        valueLabel: null,
-        reason: null,
-        question: null,
-        source: "own",
-      },
-    ]);
-    setOpenIds((prev) => new Set(prev).add(id));
-    setNewWantText("");
-  }
-
   async function confirmWants() {
-    const kept = draftWants.filter((w) => w.text.trim());
+    const kept = keptWants(state);
     if (kept.length === 0) return;
 
-    setSavingWants(true);
-    setWantsError(null);
+    dispatch({ type: "wantsSaving" });
 
     const items: WantItem[] = kept.map((w) => ({
       id: w.id,
@@ -390,31 +317,31 @@ export function WantsJourney({
 
     try {
       const result = await saveWantsAction(fd);
-      setSavingWants(false);
       if (result.error !== null) {
-        setWantsError(result.error);
+        dispatch({ type: "wantsSaveFailed", message: result.error });
         return;
       }
-      setPhase("done");
+      dispatch({ type: "wantsSaved" });
     } catch {
-      setSavingWants(false);
-      setWantsError("Speichern fehlgeschlagen. Versuch es noch einmal.");
+      dispatch({
+        type: "wantsSaveFailed",
+        message: "Speichern fehlgeschlagen. Versuch es noch einmal.",
+      });
     }
   }
 
   // ── Want per Rückfrage nachschärfen ─────────────────────────────
 
   async function refineWant(want: DraftWant) {
-    const answer = (refineAnswers[want.id] ?? "").trim();
-    if (!answer || !entryId) return;
-    setRefiningId(want.id);
-    setRefineError((e) => ({ ...e, [want.id]: null }));
+    const answer = (state.refineAnswers[want.id] ?? "").trim();
+    if (!answer || !state.entryId) return;
+    dispatch({ type: "refineRequested", id: want.id });
     try {
       const res = await fetch("/api/wants-refiner", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          entryId,
+          entryId: state.entryId,
           text: want.text,
           question: want.question ?? "",
           answer,
@@ -422,25 +349,20 @@ export function WantsJourney({
       });
       const data = (await res.json()) as { text?: string; error?: string };
       if (!res.ok || !data.text) {
-        setRefineError((e) => ({
-          ...e,
-          [want.id]: data.error ?? "Nachschärfen fehlgeschlagen.",
-        }));
+        dispatch({
+          type: "refineFailed",
+          id: want.id,
+          message: data.error ?? "Nachschärfen fehlgeschlagen.",
+        });
         return;
       }
-      // Text ersetzen und die Rückfrage schließen.
-      setDraftWants((prev) =>
-        prev.map((w) => (w.id === want.id ? { ...w, text: data.text!, question: null } : w)),
-      );
-      setRefineAnswers((a) => {
-        const next = { ...a };
-        delete next[want.id];
-        return next;
-      });
+      dispatch({ type: "refineSucceeded", id: want.id, text: data.text });
     } catch {
-      setRefineError((e) => ({ ...e, [want.id]: "Nachschärfen fehlgeschlagen." }));
-    } finally {
-      setRefiningId(null);
+      dispatch({
+        type: "refineFailed",
+        id: want.id,
+        message: "Nachschärfen fehlgeschlagen.",
+      });
     }
   }
 
@@ -457,17 +379,17 @@ export function WantsJourney({
 
   // Fortschritt nur auf den drei Eingabeschritten (nutzt die leere Untertitelzeile).
   const stepSubtitle =
-    phase === "yin"
+    state.phase === "yin"
       ? "Schritt 1 von 3"
-      : phase === "yang"
+      : state.phase === "yang"
         ? "Schritt 2 von 3"
-        : phase === "tagtraum"
+        : state.phase === "tagtraum"
           ? "Schritt 3 von 3"
           : undefined;
 
   // ── Render: Werte-Nudge ──────────────────────────────────────────
 
-  if (phase === "nudge") {
+  if (state.phase === "nudge") {
     return (
       <JourneyStage
         backHref="/me/wants"
@@ -495,7 +417,7 @@ export function WantsJourney({
             <Button
               variant="ghost"
               className="w-full"
-              onClick={() => setPhase("yin")}
+              onClick={() => dispatch({ type: "stageChanged", phase: "yin" })}
             >
               Trotzdem mit den Wants starten
             </Button>
@@ -507,7 +429,7 @@ export function WantsJourney({
 
   // ── Render: Destillat läuft ─────────────────────────────────────
 
-  if (phase === "analyzing") {
+  if (state.phase === "analyzing") {
     return (
       <JourneyStage
         backHref="/me/wants"
@@ -543,8 +465,9 @@ export function WantsJourney({
 
   // ── Render: Sterne ───────────────────────────────────────────────
 
-  if (phase === "sterne") {
-    const keptCount = draftWants.filter((w) => w.text.trim()).length;
+  if (state.phase === "sterne") {
+    const keptCount = keptWants(state).length;
+    const { entryId } = state;
 
     return (
       <JourneyStage
@@ -554,7 +477,7 @@ export function WantsJourney({
         mascot={null}
         stepKey="sterne"
       >
-        {aiError ? (
+        {state.aiError ? (
           <>
             <div className="flex flex-col items-center gap-3 text-center">
               <Mascot expression="sorrowMild" size="md" />
@@ -562,7 +485,7 @@ export function WantsJourney({
             <Card className="w-full">
               <CardContent className="space-y-3 pt-(--card-spacing)">
                 <p className="text-base leading-relaxed text-muted-foreground">
-                  {aiError}
+                  {state.aiError}
                 </p>
                 {entryId && (
                   <Button
@@ -575,10 +498,7 @@ export function WantsJourney({
                 )}
                 <Button
                   className="w-full"
-                  onClick={() => {
-                    setAiError(null);
-                    setManualMode(true);
-                  }}
+                  onClick={() => dispatch({ type: "manualStarted" })}
                 >
                   Meine Wants selbst formulieren
                 </Button>
@@ -591,19 +511,19 @@ export function WantsJourney({
             <div className="flex flex-col items-center gap-3 text-center">
               <StarGlyph sizeClass="size-14" glow={18} />
               <p className="text-base leading-relaxed text-muted-foreground">
-                {manualMode
+                {state.manualMode
                   ? "Formuliere 3–6 Sätze dazu, was dich antreibt — so, wie es sich für dich richtig anfühlt."
                   : "Das lese ich aus deiner Sternensuche heraus. Tipp einen Stern an, um ihn zu taufen oder zu ändern — und verwirf, was nicht stimmt."}
               </p>
             </div>
 
             {/* KI-Einschätzung als Glass-Karte */}
-            {comment && (
+            {state.comment && (
               <Reveal delay={0.15} className="w-full">
                 <Card variant="glass" className="w-full">
                   <CardContent className="pt-(--card-spacing)">
                     <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                      {comment}
+                      {state.comment}
                     </p>
                   </CardContent>
                 </Card>
@@ -612,8 +532,8 @@ export function WantsJourney({
 
             {/* Vorschläge als kompakte Stern-Zeilen (Tap-to-Edit) */}
             <div className="flex w-full flex-col">
-              {draftWants.map((want) => {
-                const open = openIds.has(want.id);
+              {state.wants.map((want) => {
+                const open = state.openIds.includes(want.id);
                 const displayName = want.title?.trim() ? want.title.trim() : want.text.trim();
                 return (
                   <div key={want.id} className="border-b border-foreground/10 last:border-b-0">
@@ -622,7 +542,7 @@ export function WantsJourney({
                       type="button"
                       className="flex w-full items-center gap-3 py-3 text-left"
                       aria-expanded={open}
-                      onClick={() => toggleOpen(want.id)}
+                      onClick={() => dispatch({ type: "wantToggled", id: want.id })}
                     >
                       <StarGlyph
                         sizeClass={want.distance === "fern" ? "size-4" : "size-5"}
@@ -660,11 +580,11 @@ export function WantsJourney({
                           <Input
                             value={want.title ?? ""}
                             onChange={(e) =>
-                              setDraftWants((prev) =>
-                                prev.map((w) =>
-                                  w.id === want.id ? { ...w, title: e.target.value } : w,
-                                ),
-                              )
+                              dispatch({
+                                type: "wantEdited",
+                                id: want.id,
+                                patch: { title: e.target.value },
+                              })
                             }
                             maxLength={60}
                             placeholder="Name des Sterns (2–3 Worte)"
@@ -681,11 +601,11 @@ export function WantsJourney({
                           <Textarea
                             value={want.text}
                             onChange={(e) =>
-                              setDraftWants((prev) =>
-                                prev.map((w) =>
-                                  w.id === want.id ? { ...w, text: e.target.value } : w,
-                                ),
-                              )
+                              dispatch({
+                                type: "wantEdited",
+                                id: want.id,
+                                patch: { text: e.target.value },
+                              })
                             }
                             maxLength={300}
                             rows={2}
@@ -696,14 +616,7 @@ export function WantsJourney({
                             type="button"
                             className="mt-1 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                             aria-label="Want verwerfen"
-                            onClick={() => {
-                              setDraftWants((prev) => prev.filter((w) => w.id !== want.id));
-                              setOpenIds((prev) => {
-                                const next = new Set(prev);
-                                next.delete(want.id);
-                                return next;
-                              });
-                            }}
+                            onClick={() => dispatch({ type: "wantDiscarded", id: want.id })}
                           >
                             <X className="size-4" />
                           </button>
@@ -725,9 +638,13 @@ export function WantsJourney({
                               {want.question}
                             </p>
                             <Textarea
-                              value={refineAnswers[want.id] ?? ""}
+                              value={state.refineAnswers[want.id] ?? ""}
                               onChange={(e) =>
-                                setRefineAnswers((a) => ({ ...a, [want.id]: e.target.value }))
+                                dispatch({
+                                  type: "refineAnswerEdited",
+                                  id: want.id,
+                                  text: e.target.value,
+                                })
                               }
                               rows={2}
                               maxLength={300}
@@ -735,19 +652,22 @@ export function WantsJourney({
                               className="min-h-[52px] resize-y bg-background text-sm"
                               aria-label="Antwort zum Konkretisieren"
                             />
-                            {refineError[want.id] && (
-                              <p className="text-xs text-destructive">{refineError[want.id]}</p>
+                            {state.refineErrors[want.id] && (
+                              <p className="text-xs text-destructive">
+                                {state.refineErrors[want.id]}
+                              </p>
                             )}
                             <Button
                               type="button"
                               size="sm"
                               variant="outline"
                               disabled={
-                                refiningId === want.id || !(refineAnswers[want.id] ?? "").trim()
+                                state.refiningId === want.id ||
+                                !(state.refineAnswers[want.id] ?? "").trim()
                               }
                               onClick={() => void refineWant(want)}
                             >
-                              {refiningId === want.id ? "Schärfe …" : "Konkreter machen"}
+                              {state.refiningId === want.id ? "Schärfe …" : "Konkreter machen"}
                             </Button>
                           </div>
                         )}
@@ -762,8 +682,10 @@ export function WantsJourney({
             {/* Eigenen Stern hinzufügen */}
             <div className="flex w-full items-start gap-2">
               <Textarea
-                value={newWantText}
-                onChange={(e) => setNewWantText(e.target.value)}
+                value={state.newWantText}
+                onChange={(e) =>
+                  dispatch({ type: "newWantEdited", text: e.target.value })
+                }
                 placeholder="Was zieht dich an? Z. B. „Mir macht … Spaß“ oder „Ich will …“"
                 maxLength={300}
                 rows={2}
@@ -776,23 +698,29 @@ export function WantsJourney({
                 size="icon"
                 className="mt-1 shrink-0"
                 aria-label="Want hinzufügen"
-                disabled={!newWantText.trim()}
-                onClick={addOwnWant}
+                disabled={!state.newWantText.trim()}
+                onClick={() =>
+                  dispatch({
+                    type: "ownWantAdded",
+                    id: crypto.randomUUID(),
+                    text: state.newWantText,
+                  })
+                }
               >
                 <Plus className="size-4" />
               </Button>
             </div>
 
-            <FormError message={wantsError} />
+            <FormError message={state.wantsError} />
 
             <Button
               className="w-full gap-2"
               size="lg"
-              disabled={savingWants || keptCount === 0}
+              disabled={state.savingWants || keptCount === 0}
               onClick={() => void confirmWants()}
             >
               <StarGlyph sizeClass="size-4" glow={0} fill="var(--primary-foreground)" />
-              {savingWants
+              {state.savingWants
                 ? "Wird gespeichert …"
                 : keptCount === 1
                   ? "Diesen Stern behalten"
@@ -806,8 +734,8 @@ export function WantsJourney({
 
   // ── Render: Abschluss ───────────────────────────────────────────
 
-  if (phase === "done") {
-    const keptStarCount = draftWants.filter((w) => w.text.trim()).length;
+  if (state.phase === "done") {
+    const keptStarCount = keptWants(state).length;
     const n = Math.min(keptStarCount, DONE_POINTS.length);
     const pts = DONE_POINTS.slice(0, Math.max(n, 1));
     const path = buildDonePath(pts);
@@ -886,7 +814,7 @@ export function WantsJourney({
 
   // ── Render: Tagträume (überspringbar) ───────────────────────────
 
-  if (phase === "tagtraum") {
+  if (state.phase === "tagtraum") {
     return (
       <JourneyStage
         backHref="/me/wants"
@@ -908,12 +836,12 @@ export function WantsJourney({
           </p>
         </div>
 
-        <FormError message={error} />
+        <FormError message={state.error} />
 
         <form className="space-y-5">
           <AnswerBoxes
-            answers={tagtraum}
-            onChange={setTagtraum}
+            answers={state.tagtraum}
+            onChange={setAnswers("tagtraum")}
             idPrefix="tagtraum"
             optional
             placeholders={[
@@ -921,7 +849,7 @@ export function WantsJourney({
               "Noch ein Tagtraum …",
               "Und noch einer …",
             ]}
-            disabled={submitting}
+            disabled={state.saving}
           />
 
           <div className="flex flex-col gap-2">
@@ -929,17 +857,17 @@ export function WantsJourney({
               type="button"
               className="w-full gap-2"
               size="lg"
-              disabled={submitting}
+              disabled={state.saving}
               onClick={() => void handleAuditSubmit()}
             >
-              {submitting ? "Wird gespeichert …" : "Meine Sterne finden"}
+              {state.saving ? "Wird gespeichert …" : "Meine Sterne finden"}
             </Button>
             <Button
               type="button"
               variant="ghost"
               className="w-full"
-              disabled={submitting}
-              onClick={() => setPhase("yang")}
+              disabled={state.saving}
+              onClick={() => dispatch({ type: "stageChanged", phase: "yang" })}
             >
               Zurück
             </Button>
@@ -951,7 +879,7 @@ export function WantsJourney({
 
   // ── Render: Yang (Flow) ─────────────────────────────────────────
 
-  if (phase === "yang") {
+  if (state.phase === "yang") {
     return (
       <JourneyStage
         backHref="/me/wants"
@@ -972,7 +900,7 @@ export function WantsJourney({
           </p>
         </div>
 
-        <FormError message={error} />
+        <FormError message={state.error} />
 
         <form className="space-y-5">
           <div className="space-y-2">
@@ -981,15 +909,15 @@ export function WantsJourney({
               sind ideal.
             </Label>
             <AnswerBoxes
-              answers={yang}
-              onChange={setYang}
+              answers={state.yang}
+              onChange={setAnswers("yang")}
               idPrefix="yang"
               placeholders={[
                 "Zum Beispiel: Wenn ich an einem Design tüftle, sind plötzlich drei Stunden weg …",
                 "Noch etwas, das dich in Flow bringt …",
                 "Und noch etwas …",
               ]}
-              disabled={submitting}
+              disabled={state.saving}
             />
           </div>
 
@@ -999,8 +927,8 @@ export function WantsJourney({
               <button
                 type="button"
                 className="flex w-full items-center justify-between gap-2 text-left"
-                onClick={() => setPrinciplesOpen((o) => !o)}
-                aria-expanded={principlesOpen}
+                onClick={() => dispatch({ type: "principlesToggled" })}
+                aria-expanded={state.principlesOpen}
               >
                 <span className="flex items-center gap-2 text-sm font-medium text-foreground">
                   <Sparkles className="size-4 text-primary" />
@@ -1009,7 +937,7 @@ export function WantsJourney({
                 <ChevronDown
                   className={cn(
                     "size-4 shrink-0 text-muted-foreground transition-transform",
-                    principlesOpen && "rotate-180",
+                    state.principlesOpen && "rotate-180",
                   )}
                 />
               </button>
@@ -1017,7 +945,7 @@ export function WantsJourney({
               <div
                 className={cn(
                   "grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none",
-                  principlesOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                  state.principlesOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
                 )}
               >
                 <div className="overflow-hidden">
@@ -1032,12 +960,14 @@ export function WantsJourney({
                     <Textarea
                       id="principles"
                       name="principles"
-                      value={principles}
-                      onChange={(e) => setPrinciples(e.target.value)}
+                      value={state.principles}
+                      onChange={(e) =>
+                        dispatch({ type: "principlesEdited", text: e.target.value })
+                      }
                       placeholder="Zum Beispiel: Ich glaube, es geht mir ums Erschaffen — etwas, das vorher nicht da war …"
                       rows={3}
                       maxLength={5000}
-                      disabled={submitting}
+                      disabled={state.saving}
                       className="min-h-[80px] resize-y"
                     />
                   </div>
@@ -1051,8 +981,8 @@ export function WantsJourney({
               type="button"
               className="w-full gap-2"
               size="lg"
-              disabled={submitting || !yang[0]?.trim()}
-              onClick={() => setPhase("tagtraum")}
+              disabled={state.saving || !state.yang[0]?.trim()}
+              onClick={() => dispatch({ type: "stageChanged", phase: "tagtraum" })}
             >
               Weiter
             </Button>
@@ -1060,8 +990,8 @@ export function WantsJourney({
               type="button"
               variant="ghost"
               className="w-full"
-              disabled={submitting}
-              onClick={() => setPhase("yin")}
+              disabled={state.saving}
+              onClick={() => dispatch({ type: "stageChanged", phase: "yin" })}
             >
               Zurück
             </Button>
@@ -1097,7 +1027,7 @@ export function WantsJourney({
         </p>
       </div>
 
-      <FormError message={error} />
+      <FormError message={state.error} />
 
       <form className="space-y-5">
         <div className="space-y-2">
@@ -1107,8 +1037,8 @@ export function WantsJourney({
             Eine reicht, drei sind ideal.
           </Label>
           <AnswerBoxes
-            answers={yin}
-            onChange={setYin}
+            answers={state.yin}
+            onChange={setAnswers("yin")}
             idPrefix="yin"
             placeholders={[
               "Zum Beispiel: die durchgemachten Nächte vor der Abgabe …",
@@ -1122,8 +1052,8 @@ export function WantsJourney({
           type="button"
           className="w-full"
           size="lg"
-          disabled={!yin[0]?.trim()}
-          onClick={() => setPhase("yang")}
+          disabled={!state.yin[0]?.trim()}
+          onClick={() => dispatch({ type: "stageChanged", phase: "yang" })}
         >
           Weiter
         </Button>

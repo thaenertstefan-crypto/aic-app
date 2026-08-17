@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import {
   dbFailed,
   failed,
@@ -208,4 +210,49 @@ export async function saveRightsAction(
 
     return ok(merged);
   });
+}
+
+// ─── Ein KI-Vorschlag wird ein Recht ────────────────────────────────────
+
+/**
+ * Nimmt das (ggf. editierte) Recht aus dem Abschluss-Screen einer Übung ins
+ * Bill of Rights auf. Läuft über die kanonische `saveRightsAction`
+ * (Validierung, MAX_RIGHTS, Merge, BoR-Fortschritt) — bewusst ohne Redirect,
+ * damit der Wizard auf seinem Abschluss-Screen stehen bleibt.
+ *
+ * Stand hier vorher zweimal, byteidentisch: einmal bei „Nein sagen", einmal
+ * bei „Things got messy". Beide bedienten dieselbe `saveRightsAction`, also
+ * gehört die Übernahme neben sie und nicht neben die Übungen.
+ */
+export async function acceptSuggestedRightAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const text = (formData.get("text") as string | null)?.trim() ?? "";
+  if (!text) return failed("Der Vorschlag ist leer.");
+  const lengthError = tooLong(text, TEXT_MAX_SHORT);
+  if (lengthError) return failed(lengthError);
+
+  const result = await withUser(async ({ supabase, user }) => {
+    const { data: bor } = await supabase
+      .from("bill_of_rights")
+      .select("rights")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const rights = (bor?.rights as RightItem[] | null) ?? [];
+
+    const updated: RightItem[] = [
+      ...rights,
+      { id: crypto.randomUUID(), text, active: true },
+    ];
+
+    const fd = new FormData();
+    fd.set("rights", JSON.stringify(updated));
+    const res = await saveRightsAction(fd);
+    return res.error !== null ? failed(res.error) : ok();
+  });
+
+  if (result.error !== null) return result;
+
+  revalidatePath("/me/bill-of-rights");
+  return result;
 }

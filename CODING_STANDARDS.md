@@ -43,8 +43,24 @@ verbindlichen Quellen; hier stehen nur die Regeln, die sich am Code festmachen l
 ## Struktur
 
 - Übungen liegen unter `app/(app)/me/*` (durable: Werte, Wants, Bill of Rights) und
-  `app/(app)/booster/*` (akut). Die **Bühnen** einer Übung sind eine Phasen-State-Machine in der
-  jeweiligen Client-Komponente. Begriffe siehe [CONTEXT.md](CONTEXT.md).
+  `app/(app)/booster/*` (akut). Begriffe siehe [CONTEXT.md](CONTEXT.md).
+- **Der Übungszustand ist ein Objekt mit benannten Übergängen**, nicht eine Reihe von `useState`.
+  Er liegt als reines Modul in `lib/recipes/<übung>/state.ts` (`initialX`, `advanceX(state, event)`,
+  Test daneben); die Client-Komponente ruft `useReducer` und rendert. Ein Übergang darf die Felder
+  setzen, die er meint — die Regel greift dort, wo ein **ganzer Durchgang** endet oder neu beginnt
+  (nächstes Szenario, zweiter KI-Anlauf):
+  - Diese Stelle steht **im Modul**, einmal, und heißt so wie das, was passiert. Eine Feldliste an
+    der Aufrufstelle — mehrere Setter hintereinander in der Komponente — ist ein Befund.
+  - Sie sagt, *was den Wechsel überlebt*, und baut den Rest aus `initialX()` frisch; wo stattdessen
+    ein Block geleert wird, ist der geleerte Stand ein **benannter, vollständiger** Wert
+    (`noFeedback()`), keine Auswahl.
+  - Dazu gehört ein Test, der über `Object.keys` des Zustands läuft und für jedes nicht
+    überlebende Feld beides prüft: dass die Testdaten es verschmutzen und dass der Übergang es
+    zurücksetzt. Ohne ihn leckt ein später hinzugefügtes Feld still in den nächsten Durchgang —
+    und genau das ist der Defekt, den diese Regel verhindert.
+  - Eine Bühne, in die mehrere Wege führen, wird von **jedem** dieser Wege im Modul gesetzt. Ein
+    Übergang, der die Bühne offenlässt, weil die Komponente sie gleich nachreicht, ist ein Befund:
+    dann hängt der Zustand wieder an der Aufrufreihenfolge.
 - Server-Actions und Backend-Logik der Übungen liegen in `lib/recipes/**/actions.ts` — nicht im
   Routenbaum; geteilte Bausteine in `components/recipes/`, Journal-Formatierung in
   `lib/utils/journal.ts`.
