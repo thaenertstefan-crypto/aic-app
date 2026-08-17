@@ -14,13 +14,18 @@ import type {
 } from "@/lib/supabase/database.types";
 import type { BetItem, WantItem, YinYangContent } from "@/lib/types/db-json";
 import { serverTodayKey } from "@/lib/server/timezone";
-import {
-  TEXT_MAX_LONG,
-  TEXT_MAX_SHORT,
-  tooLong,
-} from "@/lib/utils/form-validation";
+import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
+import {
+  MAX_BETS,
+  MAX_WANTS,
+  isBetItem,
+  isWantItem,
+  mergeItems,
+  parseItems,
+  parsePreviousIds,
+} from "@/lib/recipes/wants/items";
 
 // ─── Wants-Rezept: kanonische Actions ───────────────────────────────────
 // Alle Schreibzugriffe auf die wants-Tabelle (eine Zeile pro User, zwei
@@ -28,83 +33,11 @@ import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
 // Das Yin-&-Yang-Audit landet als journal_entries-Zeile (template_type
 // "yin_yang"); die KI-Hypothesen trägt /api/wants-distiller dort nach.
 
-// Obergrenzen für die JSONB-Arrays: schützt vor manipulierten
-// FormData-Payloads (beliebige Objekte / Riesen-Texte).
-const MAX_WANTS = 100;
-const MAX_BETS = 100;
-
-/** Prüft ein einzelnes Element auf die WantItem-Shape (inkl. Text-Cap). */
-function isWantItem(value: unknown): value is WantItem {
-  if (typeof value !== "object" || value === null) return false;
-  const v = value as Record<string, unknown>;
-  return (
-    typeof v.id === "string" &&
-    typeof v.text === "string" &&
-    tooLong(v.text, TEXT_MAX_SHORT) === null &&
-    typeof v.active === "boolean" &&
-    (v.title === undefined ||
-      v.title === null ||
-      (typeof v.title === "string" && tooLong(v.title, TEXT_MAX_SHORT) === null)) &&
-    (v.distance === undefined || v.distance === "nah" || v.distance === "fern") &&
-    (v.valueId === undefined || v.valueId === null || typeof v.valueId === "string") &&
-    (v.source === undefined || v.source === "ai" || v.source === "own")
-  );
-}
-
-/** Prüft ein einzelnes Element auf die BetItem-Shape (inkl. Text-Cap). */
-function isBetItem(value: unknown): value is BetItem {
-  if (typeof value !== "object" || value === null) return false;
-  const v = value as Record<string, unknown>;
-  return (
-    typeof v.id === "string" &&
-    typeof v.text === "string" &&
-    tooLong(v.text, TEXT_MAX_SHORT) === null &&
-    (v.status === "open" || v.status === "tried") &&
-    (v.wantId === undefined || v.wantId === null || typeof v.wantId === "string") &&
-    (v.journalEntryId === undefined ||
-      v.journalEntryId === null ||
-      typeof v.journalEntryId === "string") &&
-    (v.source === undefined || v.source === "ai" || v.source === "own")
-  );
-}
-
-/** FormData-Feld als JSON-Array parsen und elementweise validieren. */
-function parseItems<T>(
-  raw: FormDataEntryValue | null,
-  max: number,
-  guard: (value: unknown) => value is T,
-): T[] | null {
-  if (typeof raw !== "string" || !raw) return null;
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return null;
-  }
-  if (!Array.isArray(parsed) || parsed.length > max || !parsed.every(guard)) {
-    return null;
-  }
-  return parsed;
-}
-
-/** Optionale Baseline-IDs (Löschungen vs. parallele Adds — s. mergeIntoColumn). */
-function parsePreviousIds(raw: FormDataEntryValue | null): string[] {
-  if (typeof raw !== "string" || !raw) return [];
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed)
-      ? parsed.filter((x): x is string => typeof x === "string")
-      : [];
-  } catch {
-    return [];
-  }
-}
-
 /**
- * Reload-vor-Write-Merge auf eine der beiden JSONB-Spalten: DB-Elemente, die
- * der Client weder kannte (previousIds) noch mitschickt, wurden parallel
- * angelegt und bleiben erhalten; Elemente aus previousIds, die jetzt fehlen,
- * sind echte Löschungen.
+ * Lesen, mergen, schreiben — die eine Spalte auf einmal.
+ *
+ * Die Regel selbst steht in `mergeItems` (lib/recipes/wants/items.ts) und ist
+ * dort getestet; hier bleibt nur der Datenzugriff drumherum.
  *
  * Die Nutzlast ist das gemergte Array — genau das, was beide Aufrufer
  * anschließend an den Client zurückgeben.
@@ -128,12 +61,7 @@ async function mergeIntoColumn<
     .maybeSingle<{ id: string } & Record<"wants" | "bets", unknown>>();
 
   const dbItems = ((existing?.[column] as T[] | null) ?? []) as T[];
-  const incomingIds = new Set(incoming.map((item) => item.id));
-  const previousIdSet = new Set(previousIds);
-  const concurrentAdds = dbItems.filter(
-    (item) => !incomingIds.has(item.id) && !previousIdSet.has(item.id),
-  );
-  const merged: T[] = [...incoming, ...concurrentAdds];
+  const merged = mergeItems(dbItems, incoming, previousIds);
   const jsonMerged: Json = merged;
 
   if (existing) {
