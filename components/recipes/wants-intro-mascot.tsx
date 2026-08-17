@@ -2,6 +2,7 @@
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { Mascot } from "@/components/brand/mascot";
+import { mascotPerCard } from "@/components/recipes/intro-mascot";
 
 // Die Overlays liegen im selben 0 0 64 64-Koordinatenraum wie das Mascot-Gesicht:
 // Augen bei (22,27) & (42,27) mit Sklera-Radius 7, Mund um (32,42).
@@ -22,14 +23,14 @@ function InboundArrow({
   y,
   angle,
   delay,
-  reduced,
 }: {
   x: number;
   y: number;
   angle: number;
   delay: number;
-  reduced: boolean;
 }) {
+  const reduced = useReducedMotion();
+
   // Pfeil zeigt Richtung Blob-Zentrum; gezeichnet als Linie + Spitze.
   return (
     <g
@@ -54,26 +55,26 @@ function InboundArrow({
   );
 }
 
-function NoiseArrowsOverlay({ reduced }: { reduced: boolean }) {
+function NoiseArrowsOverlay() {
   return (
     <>
-      <InboundArrow x={6} y={14} angle={35} delay={0} reduced={reduced} />
-      <InboundArrow x={58} y={12} angle={150} delay={0.6} reduced={reduced} />
-      <InboundArrow x={3} y={40} angle={0} delay={1.2} reduced={reduced} />
-      <InboundArrow x={61} y={44} angle={185} delay={0.3} reduced={reduced} />
-      <InboundArrow x={14} y={5} angle={65} delay={0.9} reduced={reduced} />
-      <InboundArrow x={50} y={3} angle={115} delay={1.5} reduced={reduced} />
+      <InboundArrow x={6} y={14} angle={35} delay={0} />
+      <InboundArrow x={58} y={12} angle={150} delay={0.6} />
+      <InboundArrow x={3} y={40} angle={0} delay={1.2} />
+      <InboundArrow x={61} y={44} angle={185} delay={0.3} />
+      <InboundArrow x={14} y={5} angle={65} delay={0.9} />
+      <InboundArrow x={50} y={3} angle={115} delay={1.5} />
     </>
   );
 }
 
-function Card0Mascot({ reduced }: { reduced: boolean }) {
+function Card0Mascot() {
   return (
     <Mascot
       expression="sorrowMild"
       size="md"
       gazeX={-1.5}
-      overlay={<NoiseArrowsOverlay reduced={reduced} />}
+      overlay={<NoiseArrowsOverlay />}
     />
   );
 }
@@ -83,7 +84,9 @@ function Card0Mascot({ reduced }: { reduced: boolean }) {
 // da, sie liegen nur verschüttet. Blick nach unten auf den Funken.
 // Reduced: statischer Funke ohne Puls.
 
-function SparkOverlay({ reduced }: { reduced: boolean }) {
+function SparkOverlay() {
+  const reduced = useReducedMotion();
+
   // Vierstrahliger Funke (Rauten-Stern) im Bauch.
   const r = 3.6;
   const inner = 1.1;
@@ -127,13 +130,13 @@ function SparkOverlay({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card1Mascot({ reduced }: { reduced: boolean }) {
+function Card1Mascot() {
   return (
     <Mascot
       expression="curious"
       size="md"
       gazeY={2.5}
-      overlay={<SparkOverlay reduced={reduced} />}
+      overlay={<SparkOverlay />}
     />
   );
 }
@@ -142,11 +145,18 @@ function Card1Mascot({ reduced }: { reduced: boolean }) {
 // Klassisches Yin-Yang-Zeichen, das sich ganz langsam dreht — die zwei
 // Seiten derselben Wahrheit (Mühsal & Flow). Reduced: statisch.
 
-function YinYangOverlay({ reduced }: { reduced: boolean }) {
+function YinYangOverlay() {
+  const reduced = useReducedMotion();
   const R = 5.5;
   const half = R / 2;
 
   return (
+    // Bleibt von Hand hier statt in useMascotMotion: kein CSS-Keyframe,
+    // sondern der Bezugsrahmen der SMIL-Rotation unten. Und der ist nicht
+    // wirkungslos — gemessen (Chromium, SMIL auf 90° eingefroren) dreht die
+    // Gruppe damit um (2·cx, 2·cy) statt um (cx, cy), das Zeichen wandert also
+    // aus dem Sichtfeld. Unverändert übernommen, weil KAN-13 keine Bildwelt
+    // ändert; der Defekt gehört in ein eigenes Ticket.
     <g
       style={
         reduced
@@ -192,13 +202,13 @@ function YinYangOverlay({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card2Mascot({ reduced }: { reduced: boolean }) {
+function Card2Mascot() {
   return (
     <Mascot
       expression="smile"
       size="md"
       gazeY={2.5}
-      overlay={<YinYangOverlay reduced={reduced} />}
+      overlay={<YinYangOverlay />}
     />
   );
 }
@@ -207,7 +217,8 @@ function Card2Mascot({ reduced }: { reduced: boolean }) {
 // Ein Erlenmeyerkolben im Bauch, in dem es golden blubbert: kleine Wetten,
 // echte Daten. Zuversichtlicher Blick. Reduced: Bläschen statisch.
 
-function FlaskOverlay({ reduced }: { reduced: boolean }) {
+function FlaskOverlay() {
+  const reduced = useReducedMotion();
   const cx = BELLY_CX;
   const topY = BELLY_CY - 5;
   const bottomY = BELLY_CY + 4;
@@ -273,13 +284,9 @@ function FlaskOverlay({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card3Mascot({ reduced }: { reduced: boolean }) {
+function Card3Mascot() {
   return (
-    <Mascot
-      expression="happy"
-      size="md"
-      overlay={<FlaskOverlay reduced={reduced} />}
-    />
+    <Mascot expression="happy" size="md" overlay={<FlaskOverlay />} />
   );
 }
 
@@ -290,11 +297,9 @@ function Card3Mascot({ reduced }: { reduced: boolean }) {
  * Mascot für das Wants-Rezept (fremde Ziele → eigener Funke → Yin & Yang →
  * Little-Bets-Kolben). Wird als renderMascot-Prop an <RecipeIntro> übergeben.
  */
-export function WantsIntroMascot({ index }: { index: number }) {
-  const reduced = useReducedMotion();
-
-  if (index === 0) return <Card0Mascot reduced={reduced} />;
-  if (index === 1) return <Card1Mascot reduced={reduced} />;
-  if (index === 2) return <Card2Mascot reduced={reduced} />;
-  return <Card3Mascot reduced={reduced} />;
-}
+export const WantsIntroMascot = mascotPerCard([
+  Card0Mascot,
+  Card1Mascot,
+  Card2Mascot,
+  Card3Mascot,
+]);

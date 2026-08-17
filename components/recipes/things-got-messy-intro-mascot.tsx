@@ -1,7 +1,12 @@
 "use client";
 
-import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { Mascot } from "@/components/brand/mascot";
+import {
+  mascotPerCard,
+  SwayingMascot,
+  UNEASE_SWAY,
+  useMascotMotion,
+} from "@/components/recipes/intro-mascot";
 
 // Die Overlays liegen im selben 0 0 64 64-Koordinatenraum wie das Mascot-Gesicht:
 // Augen bei (22,27) & (42,27) mit Sklera-Radius 7, Mund um (32,42).
@@ -10,12 +15,14 @@ import { Mascot } from "@/components/brand/mascot";
 // das Bill of Rights, das um ein Recht wächst (Karte 2).
 
 // ─── Karte 0: „Es ist passiert." — Gedanken-Knäuel + Schweißtropfen ──
-// Sorgenvolles Gesicht, der Blob schwankt unruhig (tgm-sway). Über dem Kopf
-// zeichnet sich in einer Schleife ein verworrenes Gedanken-Knäuel, an der
-// Schläfe perlt ein Schweißtropfen herab. Reduced: statisches Knäuel, kein
-// Schwanken, Tropfen statisch.
+// Sorgenvolles Gesicht, der Blob schwankt unruhig. Über dem Kopf zeichnet sich
+// in einer Schleife ein verworrenes Gedanken-Knäuel, an der Schläfe perlt ein
+// Schweißtropfen herab. Reduced: statisches Knäuel, kein Schwanken, Tropfen
+// statisch.
 
-function MessOverlay({ reduced }: { reduced: boolean }) {
+function MessOverlay() {
+  const motionStyle = useMascotMotion();
+
   return (
     <>
       {/* Gedanken-Knäuel über dem Kopf: verworrene Schleifen, die sich in
@@ -30,7 +37,10 @@ function MessOverlay({ reduced }: { reduced: boolean }) {
         strokeLinejoin="round"
         strokeDasharray={30}
         opacity={0.55}
-        style={reduced ? { strokeDashoffset: 0 } : { animation: "tgm-scribble 3s ease-in-out infinite" }}
+        style={motionStyle({
+          animation: "tgm-scribble 3s ease-in-out infinite",
+          still: { strokeDashoffset: 0 },
+        })}
       />
 
       {/* Schweißtropfen an der Schläfe, perlt leicht herab */}
@@ -40,40 +50,25 @@ function MessOverlay({ reduced }: { reduced: boolean }) {
         stroke="var(--primary-foreground)"
         strokeWidth={0.5}
         opacity={0.9}
-        style={
-          reduced
-            ? undefined
-            : {
-                transformBox: "view-box",
-                transformOrigin: "49.5px 19px",
-                animation: "tgm-drop 3s ease-in-out infinite",
-              }
-        }
+        style={motionStyle({
+          origin: [49.5, 19],
+          animation: "tgm-drop 3s ease-in-out infinite",
+        })}
       />
     </>
   );
 }
 
-function Card0Mascot({ reduced }: { reduced: boolean }) {
+function Card0Mascot() {
   return (
-    <div
-      style={
-        reduced
-          ? { display: "inline-block" }
-          : {
-              display: "inline-block",
-              transformOrigin: "center",
-              animation: "tgm-sway 3.2s ease-in-out infinite",
-            }
-      }
-    >
+    <SwayingMascot animation={UNEASE_SWAY}>
       <Mascot
         expression="sorrowMild"
         size="md"
         gazeY={-1}
-        overlay={<MessOverlay reduced={reduced} />}
+        overlay={<MessOverlay />}
       />
-    </div>
+    </SwayingMascot>
   );
 }
 
@@ -89,7 +84,9 @@ const COMPASS_CY = 54;
 const RING_R = 5.5;
 const NEEDLE_LEN = 4.6;
 
-function GuiltCompassOverlay({ reduced }: { reduced: boolean }) {
+function GuiltCompassOverlay() {
+  const motionStyle = useMascotMotion();
+
   return (
     <>
       {/* Ziffernblatt */}
@@ -112,29 +109,21 @@ function GuiltCompassOverlay({ reduced }: { reduced: boolean }) {
         cy={COMPASS_CY - NEEDLE_LEN}
         r={2.2}
         fill="#E7B65E"
-        style={
-          reduced
-            ? { transformBox: "view-box", transformOrigin: `${COMPASS_CX}px ${COMPASS_CY - NEEDLE_LEN}px`, opacity: 0.85 }
-            : {
-                transformBox: "view-box",
-                transformOrigin: `${COMPASS_CX}px ${COMPASS_CY - NEEDLE_LEN}px`,
-                opacity: 0,
-                animation: "tgm-pole-pulse 3.6s ease-out infinite",
-              }
-        }
+        style={motionStyle({
+          origin: [COMPASS_CX, COMPASS_CY - NEEDLE_LEN],
+          animation: "tgm-pole-pulse 3.6s ease-out infinite",
+          running: { opacity: 0 },
+          still: { opacity: 0.85 },
+        })}
       />
 
       {/* Nadel: pendelt zwischen den Polen, rastet oben ein */}
       <g
-        style={
-          reduced
-            ? { transformBox: "view-box", transformOrigin: `${COMPASS_CX}px ${COMPASS_CY}px`, transform: "rotate(0deg)" }
-            : {
-                transformBox: "view-box",
-                transformOrigin: `${COMPASS_CX}px ${COMPASS_CY}px`,
-                animation: "tgm-needle-decide 3.6s ease-in-out infinite",
-              }
-        }
+        style={motionStyle({
+          origin: [COMPASS_CX, COMPASS_CY],
+          animation: "tgm-needle-decide 3.6s ease-in-out infinite",
+          still: { transform: "rotate(0deg)" },
+        })}
       >
         <path d={`M${COMPASS_CX},${COMPASS_CY - NEEDLE_LEN} L${COMPASS_CX - 1.8},${COMPASS_CY} L${COMPASS_CX + 1.8},${COMPASS_CY} Z`} fill="#E7B65E" />
         <path d={`M${COMPASS_CX},${COMPASS_CY + NEEDLE_LEN} L${COMPASS_CX - 1.8},${COMPASS_CY} L${COMPASS_CX + 1.8},${COMPASS_CY} Z`} fill="#FBF6EA" stroke="var(--primary-foreground)" strokeWidth={0.4} />
@@ -144,14 +133,14 @@ function GuiltCompassOverlay({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card1Mascot({ reduced }: { reduced: boolean }) {
+function Card1Mascot() {
   return (
     <Mascot
       expression="thinking"
       size="md"
       gazeX={0}
       gazeY={2.8}
-      overlay={<GuiltCompassOverlay reduced={reduced} />}
+      overlay={<GuiltCompassOverlay />}
     />
   );
 }
@@ -202,10 +191,8 @@ function Card2Mascot() {
  * → wachsendes Bill of Rights).
  * Wird als renderMascot-Prop an <RecipeIntro> übergeben.
  */
-export function ThingsGotMessyIntroMascot({ index }: { index: number }) {
-  const reduced = useReducedMotion();
-
-  if (index === 0) return <Card0Mascot reduced={reduced} />;
-  if (index === 1) return <Card1Mascot reduced={reduced} />;
-  return <Card2Mascot />;
-}
+export const ThingsGotMessyIntroMascot = mascotPerCard([
+  Card0Mascot,
+  Card1Mascot,
+  Card2Mascot,
+]);

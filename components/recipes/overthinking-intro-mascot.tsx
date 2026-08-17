@@ -2,8 +2,12 @@
 
 import { useId } from "react";
 
-import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { Mascot } from "@/components/brand/mascot";
+import {
+  mascotPerCard,
+  SwayingMascot,
+  useMascotMotion,
+} from "@/components/recipes/intro-mascot";
 
 // Archimedische Spirale (~1,5 Windungen) um (0,0), als Pfad relativ zum
 // Augenzentrum — wird über cx/cy an die jeweilige Augenposition verschoben.
@@ -30,7 +34,9 @@ function spiralPath(cx: number, cy: number): string {
 // rechts spin-ccw – desync) und offenem „O"-Mund. Der ganze Blob taumelt sanft
 // (ot-sway). Reduced-motion: statische Spirale, kein Taumeln.
 
-function SpiralFace({ reduced }: { reduced: boolean }) {
+function SpiralFace() {
+  const motionStyle = useMascotMotion();
+
   return (
     <>
       {/* Sklera (das Standardgesicht ist via hideFace ausgeblendet) */}
@@ -39,15 +45,10 @@ function SpiralFace({ reduced }: { reduced: boolean }) {
 
       {/* Linkes Auge: Spirale im Uhrzeigersinn, Drehung um exaktes Augenzentrum */}
       <g
-        style={
-          reduced
-            ? undefined
-            : {
-                transformBox: "view-box",
-                transformOrigin: "22px 27px",
-                animation: "spin-cw 2s linear infinite",
-              }
-        }
+        style={motionStyle({
+          origin: [22, 27],
+          animation: "spin-cw 2s linear infinite",
+        })}
       >
         <path d={spiralPath(22, 27)} fill="none" stroke="var(--primary-foreground)" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />
         <circle cx={22} cy={27} r={1.3} fill="var(--primary-foreground)" />
@@ -55,15 +56,10 @@ function SpiralFace({ reduced }: { reduced: boolean }) {
 
       {/* Rechtes Auge: Spirale gegen den Uhrzeigersinn */}
       <g
-        style={
-          reduced
-            ? undefined
-            : {
-                transformBox: "view-box",
-                transformOrigin: "42px 27px",
-                animation: "spin-ccw 2.5s linear infinite",
-              }
-        }
+        style={motionStyle({
+          origin: [42, 27],
+          animation: "spin-ccw 2.5s linear infinite",
+        })}
       >
         <path d={spiralPath(42, 27)} fill="none" stroke="var(--primary-foreground)" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />
         <circle cx={42} cy={27} r={1.3} fill="var(--primary-foreground)" />
@@ -75,26 +71,11 @@ function SpiralFace({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card0Mascot({ reduced }: { reduced: boolean }) {
+function Card0Mascot() {
   return (
-    <div
-      style={
-        reduced
-          ? { display: "inline-block" }
-          : {
-              display: "inline-block",
-              transformOrigin: "center",
-              animation: "ot-sway 2.8s ease-in-out infinite",
-            }
-      }
-    >
-      <Mascot
-        expression="smile"
-        size="md"
-        hideFace
-        overlay={<SpiralFace reduced={reduced} />}
-      />
-    </div>
+    <SwayingMascot animation="ot-sway 2.8s ease-in-out infinite">
+      <Mascot expression="smile" size="md" hideFace overlay={<SpiralFace />} />
+    </SwayingMascot>
   );
 }
 
@@ -103,7 +84,8 @@ function Card0Mascot({ reduced }: { reduced: boolean }) {
 // kleinen Fenster im Stirnbereich: der Unterbewusstseins-Schatten malt ein
 // „Horrorszenario" auf eine Mini-Leinwand. Reduced-motion: statische Szene.
 
-function MindWindow({ reduced }: { reduced: boolean }) {
+function MindWindow() {
+  const motionStyle = useMascotMotion();
   const uid = useId();
   const softId = `ot-mind-soft-${uid}`;
 
@@ -132,25 +114,21 @@ function MindWindow({ reduced }: { reduced: boolean }) {
       <path
         d="M37,10.5 Q38.5,9 40,10.5 Q41.5,12 41,13"
         fill="none" stroke="var(--destructive)" strokeWidth={0.8} strokeDasharray="26"
-        style={reduced ? undefined : { animation: "scribble-a 2.2s ease-in-out infinite" }}
+        style={motionStyle({ animation: "scribble-a 2.2s ease-in-out infinite" })}
       />
       <path
         d="M37,13.8 Q39,12.4 41,13.8"
         fill="none" stroke="var(--destructive)" strokeWidth={0.8} strokeDasharray="18"
-        style={reduced ? undefined : { animation: "scribble-b 2.2s ease-in-out 0.55s infinite" }}
+        style={motionStyle({ animation: "scribble-b 2.2s ease-in-out 0.55s infinite" })}
       />
 
-      {/* Kleiner Maler (Schatten-Self), bobbt auf/ab */}
+      {/* Kleiner Maler (Schatten-Self), bobbt auf/ab. fill-box statt der
+          üblichen view-box-Koordinate: der Bezug ist der Maler selbst. */}
       <g
-        style={
-          reduced
-            ? undefined
-            : {
-                transformBox: "fill-box",
-                transformOrigin: "center",
-                animation: "painter-bob 2s ease-in-out infinite",
-              }
-        }
+        style={motionStyle({
+          animation: "painter-bob 2s ease-in-out infinite",
+          running: { transformBox: "fill-box", transformOrigin: "center" },
+        })}
       >
         <ellipse cx={27} cy={13} rx={3} ry={2.8} fill="#4A2B8A" />
         <circle cx={25.9} cy={12.4} r={0.6} fill="#FBF6EA" />
@@ -159,15 +137,10 @@ function MindWindow({ reduced }: { reduced: boolean }) {
 
         {/* Pinselarm: Pivot am Schultergelenk (29,13.5) */}
         <g
-          style={
-            reduced
-              ? undefined
-              : {
-                  transformBox: "fill-box",
-                  transformOrigin: "0% 100%",
-                  animation: "paint-arm 1.1s ease-in-out infinite",
-                }
-          }
+          style={motionStyle({
+            animation: "paint-arm 1.1s ease-in-out infinite",
+            running: { transformBox: "fill-box", transformOrigin: "0% 100%" },
+          })}
         >
           <line x1={29} y1={13.5} x2={34} y2={11.5} stroke="#4A2B8A" strokeWidth={1.3} strokeLinecap="round" />
           <line x1={34} y1={11.5} x2={35.6} y2={10.4} stroke="#6B4C1A" strokeWidth={0.9} strokeLinecap="round" />
@@ -178,13 +151,13 @@ function MindWindow({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card1Mascot({ reduced }: { reduced: boolean }) {
+function Card1Mascot() {
   return (
     <Mascot
       expression="sorrowMild"
       size="md"
       gazeY={-1.5}
-      overlay={<MindWindow reduced={reduced} />}
+      overlay={<MindWindow />}
     />
   );
 }
@@ -213,10 +186,8 @@ function Card2Mascot() {
  * Mascot für das Overthinking-Rezept.
  * Wird als renderMascot-Prop an <RecipeIntro> übergeben.
  */
-export function OverthinkingIntroMascot({ index }: { index: number }) {
-  const reduced = useReducedMotion();
-
-  if (index === 0) return <Card0Mascot reduced={reduced} />;
-  if (index === 1) return <Card1Mascot reduced={reduced} />;
-  return <Card2Mascot />;
-}
+export const OverthinkingIntroMascot = mascotPerCard([
+  Card0Mascot,
+  Card1Mascot,
+  Card2Mascot,
+]);

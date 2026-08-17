@@ -1,7 +1,12 @@
 "use client";
 
-import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { Mascot } from "@/components/brand/mascot";
+import {
+  mascotPerCard,
+  SwayingMascot,
+  UNEASE_SWAY,
+  useMascotMotion,
+} from "@/components/recipes/intro-mascot";
 
 // Die Overlays liegen im selben 0 0 64 64-Koordinatenraum wie das Mascot-Gesicht:
 // Augen bei (22,27) & (42,27) mit Sklera-Radius 7, Mund um (32,42).
@@ -13,18 +18,16 @@ import { Mascot } from "@/components/brand/mascot";
 // Aufgesetztes Lächeln, aber über dem Kopf verdichtet sich pulsierend eine
 // dunkle Wolke — der runtergeschluckte Groll. Reduced: Wolke statisch.
 
-function StormCloudOverlay({ reduced }: { reduced: boolean }) {
+function StormCloudOverlay() {
+  const motionStyle = useMascotMotion();
+
   return (
     <g
-      style={
-        reduced
-          ? { transformBox: "view-box", transformOrigin: "32px 10px", opacity: 0.5 }
-          : {
-              transformBox: "view-box",
-              transformOrigin: "32px 10px",
-              animation: "sh-cloud 3.6s ease-in-out infinite",
-            }
-      }
+      style={motionStyle({
+        origin: [32, 10],
+        animation: "sh-cloud 3.6s ease-in-out infinite",
+        still: { opacity: 0.5 },
+      })}
     >
       {/* Wolke aus drei überlappenden Bögen */}
       <path
@@ -42,26 +45,16 @@ function StormCloudOverlay({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card0Mascot({ reduced }: { reduced: boolean }) {
+function Card0Mascot() {
   return (
-    <div
-      style={
-        reduced
-          ? { display: "inline-block" }
-          : {
-              display: "inline-block",
-              transformOrigin: "center",
-              animation: "tgm-sway 3.2s ease-in-out infinite",
-            }
-      }
-    >
+    <SwayingMascot animation={UNEASE_SWAY}>
       <Mascot
         expression="sorrowMild"
         size="md"
         gazeY={-1}
-        overlay={<StormCloudOverlay reduced={reduced} />}
+        overlay={<StormCloudOverlay />}
       />
-    </div>
+    </SwayingMascot>
   );
 }
 
@@ -69,18 +62,15 @@ function Card0Mascot({ reduced }: { reduced: boolean }) {
 // Neugieriger Blick zur Seite: neben dem Mascot lugt ein kleiner dunkler
 // Schatten-Blob hervor — nicht bedrohlich, eher ein vergessener Begleiter.
 
-function ShadowBuddyOverlay({ reduced }: { reduced: boolean }) {
+function ShadowBuddyOverlay() {
+  const motionStyle = useMascotMotion();
+
   return (
     <g
-      style={
-        reduced
-          ? { transformBox: "view-box", transformOrigin: "54px 52px" }
-          : {
-              transformBox: "view-box",
-              transformOrigin: "54px 52px",
-              animation: "sh-peek 3.4s ease-in-out infinite",
-            }
-      }
+      style={motionStyle({
+        origin: [54, 52],
+        animation: "sh-peek 3.4s ease-in-out infinite",
+      })}
     >
       {/* Kleiner Schatten-Blob rechts unten */}
       <ellipse cx={54} cy={54} rx={6.5} ry={5.5} fill="var(--primary-foreground)" opacity={0.5} />
@@ -93,14 +83,14 @@ function ShadowBuddyOverlay({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card1Mascot({ reduced }: { reduced: boolean }) {
+function Card1Mascot() {
   return (
     <Mascot
       expression="curious"
       size="md"
       gazeX={3}
       gazeY={2}
-      overlay={<ShadowBuddyOverlay reduced={reduced} />}
+      overlay={<ShadowBuddyOverlay />}
     />
   );
 }
@@ -159,18 +149,15 @@ function Card2Mascot() {
 // Zuversichtliches Gesicht; im Bauch eine sanft flackernde Flamme:
 // verbrennen als Befreiung, nicht als Zerstörung. Reduced: statisch.
 
-function FlameOverlay({ reduced }: { reduced: boolean }) {
+function FlameOverlay() {
+  const motionStyle = useMascotMotion();
+
   return (
     <g
-      style={
-        reduced
-          ? { transformBox: "view-box", transformOrigin: "32px 53px" }
-          : {
-              transformBox: "view-box",
-              transformOrigin: "32px 53px",
-              animation: "sh-flicker 1.8s ease-in-out infinite",
-            }
-      }
+      style={motionStyle({
+        origin: [32, 53],
+        animation: "sh-flicker 1.8s ease-in-out infinite",
+      })}
     >
       <path
         d="M32,45 Q35.5,49 35.5,52.5 A3.5,3.5 0 1 1 28.5,52.5 Q28.5,49 32,45 Z"
@@ -188,13 +175,13 @@ function FlameOverlay({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card3Mascot({ reduced }: { reduced: boolean }) {
+function Card3Mascot() {
   return (
     <Mascot
       expression="happy"
       size="md"
       gazeY={1.5}
-      overlay={<FlameOverlay reduced={reduced} />}
+      overlay={<FlameOverlay />}
     />
   );
 }
@@ -206,11 +193,9 @@ function Card3Mascot({ reduced }: { reduced: boolean }) {
  * Mascot für die Schattenseite (dunkle Wolke → Schatten-Begleiter →
  * Schloss → Flamme). Wird als renderMascot-Prop an <RecipeIntro> übergeben.
  */
-export function ShadowIntroMascot({ index }: { index: number }) {
-  const reduced = useReducedMotion();
-
-  if (index === 0) return <Card0Mascot reduced={reduced} />;
-  if (index === 1) return <Card1Mascot reduced={reduced} />;
-  if (index === 2) return <Card2Mascot />;
-  return <Card3Mascot reduced={reduced} />;
-}
+export const ShadowIntroMascot = mascotPerCard([
+  Card0Mascot,
+  Card1Mascot,
+  Card2Mascot,
+  Card3Mascot,
+]);

@@ -1,9 +1,13 @@
 "use client";
 
-import { useId, type CSSProperties } from "react";
+import { useId } from "react";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { Mascot } from "@/components/brand/mascot";
+import {
+  mascotPerCard,
+  useMascotMotion,
+} from "@/components/recipes/intro-mascot";
 
 // Leitmotiv über alle 4 Karten:
 //   geschlucktes „Nein" → „ja" (Karte 0) → alte Regeln (Karte 1) → altes Regelwerk
@@ -21,7 +25,8 @@ import { Mascot } from "@/components/brand/mascot";
 // Buchstabe herein, wird kurz vor dem letzten „n" durchgestrichen, dann steht
 // „ja" da. Reduced: durchgestrichenes „Nein", statisch (kein „ja").
 
-function SpeechBubbleOverlay({ reduced }: { reduced: boolean }) {
+function SpeechBubbleOverlay() {
+  const reduced = useReducedMotion();
   const uid = useId();
   const typeClip = `bor-type-${uid}`;
 
@@ -106,12 +111,12 @@ function SpeechBubbleOverlay({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card0Mascot({ reduced }: { reduced: boolean }) {
+function Card0Mascot() {
   return (
     <Mascot
       expression="sorrowMild"
       size="md"
-      overlay={<SpeechBubbleOverlay reduced={reduced} />}
+      overlay={<SpeechBubbleOverlay />}
     />
   );
 }
@@ -125,13 +130,12 @@ function Scroll({
   width,
   lines,
   mode,
-  reduced,
 }: {
   width: number;
   lines: number;
   mode: "none" | "strike" | "write";
-  reduced: boolean;
 }) {
+  const reduced = useReducedMotion();
   const uid = useId();
   const writeClip = `bor-scroll-write-${uid}`;
   const parchGrad = `bor-parch-${uid}`;
@@ -233,27 +237,45 @@ function GoldArrow() {
   );
 }
 
+/**
+ * Trägt die Rollen der Karten 1–3 über dem Kopf und lässt sie mit dem Blob
+ * atmen: derselbe Keyframe, den der Blob selbst nutzt (mood-breathe, 3s),
+ * unten am Kopf verankert — sonst löst sich die Rolle beim Einatmen vom
+ * Maskottchen. Das Layout bleibt beim Aufrufer: eine Rolle steht anders als
+ * zwei plus Zeichen dazwischen.
+ */
+function BreathingScrolls({
+  className,
+  children,
+}: {
+  className: string;
+  children: React.ReactNode;
+}) {
+  const motionStyle = useMascotMotion();
+
+  return (
+    <div
+      className={className}
+      style={motionStyle({
+        animation: "mood-breathe 3s ease-in-out infinite",
+        running: { transformOrigin: "center bottom" },
+      })}
+    >
+      {children}
+    </div>
+  );
+}
+
 // ─── Karte 1: „Deine inneren Regeln." — eine Schriftrolle ────────────
 // Gesicht wie Karte 0 (sorrowMild). Eine Schriftrolle ragt unter dem Blob
 // hervor; jede Zeile mit „§". Statisch (keine Durchstreichung).
 
-// Atmet synchron mit dem Blob (gleiche Keyframe/Dauer wie mood-breathe), unten
-// am Kopf verankert. Bei reduced keine Bewegung.
-function breathingStyle(reduced: boolean): CSSProperties | undefined {
-  return reduced
-    ? undefined
-    : {
-        transformOrigin: "center bottom",
-        animation: "mood-breathe 3s ease-in-out infinite",
-      };
-}
-
-function Card1Mascot({ reduced }: { reduced: boolean }) {
+function Card1Mascot() {
   return (
     <div className="flex flex-col items-center">
-      <div className="relative z-10" style={breathingStyle(reduced)}>
-        <Scroll width={62} lines={3} mode="none" reduced={reduced} />
-      </div>
+      <BreathingScrolls className="relative z-10">
+        <Scroll width={62} lines={3} mode="none" />
+      </BreathingScrolls>
       <Mascot expression="sorrowMild" size="md" className="-mt-8" />
     </div>
   );
@@ -264,14 +286,14 @@ function Card1Mascot({ reduced }: { reduced: boolean }) {
 // links wird das alte Regelwerk durchgestrichen, rechts werden neue Regeln
 // nach und nach geschrieben.
 
-function Card2Mascot({ reduced }: { reduced: boolean }) {
+function Card2Mascot() {
   return (
     <div className="flex flex-col items-center">
-      <div className="relative z-10 flex items-center gap-1" style={breathingStyle(reduced)}>
-        <Scroll width={50} lines={2} mode="strike" reduced={reduced} />
+      <BreathingScrolls className="relative z-10 flex items-center gap-1">
+        <Scroll width={50} lines={2} mode="strike" />
         <GoldArrow />
-        <Scroll width={50} lines={2} mode="write" reduced={reduced} />
-      </div>
+        <Scroll width={50} lines={2} mode="write" />
+      </BreathingScrolls>
       <Mascot expression="smile" size="md" className="-mt-8" />
     </div>
   );
@@ -281,7 +303,9 @@ function Card2Mascot({ reduced }: { reduced: boolean }) {
 // Zwei Schriftrollen stehen sich gegenüber, dazwischen blitzt ein Konflikt-
 // Blitz auf: zwei innere Regeln kämpfen gegeneinander. Besorgtes Gesicht.
 
-function ConflictBolt({ reduced }: { reduced: boolean }) {
+function ConflictBolt() {
+  const reduced = useReducedMotion();
+
   return (
     <svg width={18} height={18} viewBox="0 0 18 18" fill="none" aria-hidden="true">
       <path
@@ -305,14 +329,14 @@ function ConflictBolt({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card3Mascot({ reduced }: { reduced: boolean }) {
+function Card3Mascot() {
   return (
     <div className="flex flex-col items-center">
-      <div className="relative z-10 flex items-center gap-1" style={breathingStyle(reduced)}>
-        <Scroll width={50} lines={2} mode="none" reduced={reduced} />
-        <ConflictBolt reduced={reduced} />
-        <Scroll width={50} lines={2} mode="none" reduced={reduced} />
-      </div>
+      <BreathingScrolls className="relative z-10 flex items-center gap-1">
+        <Scroll width={50} lines={2} mode="none" />
+        <ConflictBolt />
+        <Scroll width={50} lines={2} mode="none" />
+      </BreathingScrolls>
       <Mascot expression="sorrowMild" size="md" className="-mt-8" />
     </div>
   );
@@ -326,11 +350,9 @@ function Card3Mascot({ reduced }: { reduced: boolean }) {
  * durchstreichen & neues schreiben → Regel-Duell). Wird als renderMascot-Prop
  * an <RecipeIntro> übergeben.
  */
-export function BillOfRightsIntroMascot({ index }: { index: number }) {
-  const reduced = useReducedMotion();
-
-  if (index === 0) return <Card0Mascot reduced={reduced} />;
-  if (index === 1) return <Card1Mascot reduced={reduced} />;
-  if (index === 2) return <Card2Mascot reduced={reduced} />;
-  return <Card3Mascot reduced={reduced} />;
-}
+export const BillOfRightsIntroMascot = mascotPerCard([
+  Card0Mascot,
+  Card1Mascot,
+  Card2Mascot,
+  Card3Mascot,
+]);

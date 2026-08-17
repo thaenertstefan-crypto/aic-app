@@ -2,6 +2,11 @@
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { Mascot } from "@/components/brand/mascot";
+import {
+  mascotPerCard,
+  SwayingMascot,
+  useMascotMotion,
+} from "@/components/recipes/intro-mascot";
 
 // Die Overlays liegen im selben 0 0 64 64-Koordinatenraum wie das Mascot-Gesicht:
 // Augen bei (22,27) & (42,27) mit Sklera-Radius 7, Mund um (32,42).
@@ -56,7 +61,8 @@ function spiralPath(cx: number, cy: number): string {
 // Blob schwankt unruhig. = „ein komisches Gefühl im Bauch".
 // Reduced: statische wellige Linie, kein Morph, kein Schwanken.
 
-function BellyChurnOverlay({ reduced }: { reduced: boolean }) {
+function BellyChurnOverlay() {
+  const reduced = useReducedMotion();
   const wavy = wavyPath(BELLY_CX, BELLY_CY);
   const spiral = spiralPath(BELLY_CX, BELLY_CY);
 
@@ -85,26 +91,16 @@ function BellyChurnOverlay({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card0Mascot({ reduced }: { reduced: boolean }) {
+function Card0Mascot() {
   return (
-    <div
-      style={
-        reduced
-          ? { display: "inline-block" }
-          : {
-              display: "inline-block",
-              transformOrigin: "center",
-              animation: "val-unease-sway 4s ease-in-out infinite",
-            }
-      }
-    >
+    <SwayingMascot animation="val-unease-sway 4s ease-in-out infinite">
       <Mascot
         expression="sorrowMild"
         size="md"
         gazeY={1.2}
-        overlay={<BellyChurnOverlay reduced={reduced} />}
+        overlay={<BellyChurnOverlay />}
       />
-    </div>
+    </SwayingMascot>
   );
 }
 
@@ -143,7 +139,9 @@ function CompassNeedle() {
   );
 }
 
-function CompassOverlay1({ reduced }: { reduced: boolean }) {
+function CompassOverlay1() {
+  const motionStyle = useMascotMotion();
+
   return (
     <>
       <CompassRing />
@@ -154,29 +152,21 @@ function CompassOverlay1({ reduced }: { reduced: boolean }) {
         cy={COMPASS_CY - NEEDLE_LEN}
         r={2.2}
         fill="#E7B65E"
-        style={
-          reduced
-            ? { transformBox: "view-box", transformOrigin: `${COMPASS_CX}px ${COMPASS_CY - NEEDLE_LEN}px`, opacity: 0.85 }
-            : {
-                transformBox: "view-box",
-                transformOrigin: `${COMPASS_CX}px ${COMPASS_CY - NEEDLE_LEN}px`,
-                opacity: 0,
-                animation: "val-north-pulse 3.2s ease-out infinite",
-              }
-        }
+        style={motionStyle({
+          origin: [COMPASS_CX, COMPASS_CY - NEEDLE_LEN],
+          animation: "val-north-pulse 3.2s ease-out infinite",
+          running: { opacity: 0 },
+          still: { opacity: 0.85 },
+        })}
       />
 
       {/* Nadel: rastet auf Norden ein */}
       <g
-        style={
-          reduced
-            ? { transformBox: "view-box", transformOrigin: `${COMPASS_CX}px ${COMPASS_CY}px`, transform: "rotate(0deg)" }
-            : {
-                transformBox: "view-box",
-                transformOrigin: `${COMPASS_CX}px ${COMPASS_CY}px`,
-                animation: "val-needle-settle 3.2s ease-in-out infinite",
-              }
-        }
+        style={motionStyle({
+          origin: [COMPASS_CX, COMPASS_CY],
+          animation: "val-needle-settle 3.2s ease-in-out infinite",
+          still: { transform: "rotate(0deg)" },
+        })}
       >
         <CompassNeedle />
       </g>
@@ -184,14 +174,14 @@ function CompassOverlay1({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card1Mascot({ reduced }: { reduced: boolean }) {
+function Card1Mascot() {
   return (
     <Mascot
       expression="curious"
       size="md"
       gazeX={0}
       gazeY={2.8}
-      overlay={<CompassOverlay1 reduced={reduced} />}
+      overlay={<CompassOverlay1 />}
     />
   );
 }
@@ -247,10 +237,8 @@ function Card2Mascot() {
  * Mascot für das Werte-Rezept (mulmiges Bauchgefühl → innerer Kompass → Lupe).
  * Wird als renderMascot-Prop an <RecipeIntro> übergeben.
  */
-export function ValuesIntroMascot({ index }: { index: number }) {
-  const reduced = useReducedMotion();
-
-  if (index === 0) return <Card0Mascot reduced={reduced} />;
-  if (index === 1) return <Card1Mascot reduced={reduced} />;
-  return <Card2Mascot />;
-}
+export const ValuesIntroMascot = mascotPerCard([
+  Card0Mascot,
+  Card1Mascot,
+  Card2Mascot,
+]);

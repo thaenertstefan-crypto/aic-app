@@ -1,7 +1,12 @@
 "use client";
 
-import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { Mascot } from "@/components/brand/mascot";
+import {
+  mascotPerCard,
+  SwayingMascot,
+  UNEASE_SWAY,
+  useMascotMotion,
+} from "@/components/recipes/intro-mascot";
 
 // Die Overlays liegen im selben 0 0 64 64-Koordinatenraum wie das Mascot-Gesicht:
 // Augen bei (22,27) & (42,27) mit Sklera-Radius 7, Mund um (32,42).
@@ -10,22 +15,20 @@ import { Mascot } from "@/components/brand/mascot";
 // Schicht aufbaut (Karte 2) → das fertige Schild mit Häkchen (Karte 3).
 
 // ─── Karte 0: „Kennst du das?" — das „Ja", das schon draußen ist ─────
-// Sorgenvolles Gesicht, der Blob schwankt unruhig (tgm-sway, generische
-// Rotation). Neben dem Mund ploppt immer wieder eine kleine Sprechblase auf —
-// das Ja war schneller als das Nachdenken. Reduced: Blase statisch.
+// Sorgenvolles Gesicht, der Blob schwankt unruhig. Neben dem Mund ploppt immer
+// wieder eine kleine Sprechblase auf — das Ja war schneller als das
+// Nachdenken. Reduced: Blase statisch.
 
-function BlurtOverlay({ reduced }: { reduced: boolean }) {
+function BlurtOverlay() {
+  const motionStyle = useMascotMotion();
+
   return (
     <g
-      style={
-        reduced
-          ? { transformBox: "view-box", transformOrigin: "46px 44px", opacity: 0.9 }
-          : {
-              transformBox: "view-box",
-              transformOrigin: "46px 44px",
-              animation: "sn-blurt 3s ease-out infinite",
-            }
-      }
+      style={motionStyle({
+        origin: [46, 44],
+        animation: "sn-blurt 3s ease-out infinite",
+        still: { opacity: 0.9 },
+      })}
     >
       {/* Sprechblase rechts neben dem Mund */}
       <ellipse
@@ -64,26 +67,16 @@ function BlurtOverlay({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card0Mascot({ reduced }: { reduced: boolean }) {
+function Card0Mascot() {
   return (
-    <div
-      style={
-        reduced
-          ? { display: "inline-block" }
-          : {
-              display: "inline-block",
-              transformOrigin: "center",
-              animation: "tgm-sway 3.2s ease-in-out infinite",
-            }
-      }
-    >
+    <SwayingMascot animation={UNEASE_SWAY}>
       <Mascot
         expression="sorrowMild"
         size="md"
         gazeX={2}
-        overlay={<BlurtOverlay reduced={reduced} />}
+        overlay={<BlurtOverlay />}
       />
-    </div>
+    </SwayingMascot>
   );
 }
 
@@ -91,18 +84,15 @@ function Card0Mascot({ reduced }: { reduced: boolean }) {
 // Nachdenkliches Gesicht, Blick nach oben zu einem goldenen Stern, der sanft
 // anschwillt: Nur was so strahlt, verdient ein Ja. Reduced: Stern statisch.
 
-function HellYesStarOverlay({ reduced }: { reduced: boolean }) {
+function HellYesStarOverlay() {
+  const motionStyle = useMascotMotion();
+
   return (
     <g
-      style={
-        reduced
-          ? { transformBox: "view-box", transformOrigin: "32px 9px" }
-          : {
-              transformBox: "view-box",
-              transformOrigin: "32px 9px",
-              animation: "sn-star-swell 2.4s ease-in-out infinite",
-            }
-      }
+      style={motionStyle({
+        origin: [32, 9],
+        animation: "sn-star-swell 2.4s ease-in-out infinite",
+      })}
     >
       <path
         d="M32,4 L33.6,7.4 L37.4,7.9 L34.7,10.5 L35.3,14.2 L32,12.4 L28.7,14.2 L29.3,10.5 L26.6,7.9 L30.4,7.4 Z"
@@ -118,14 +108,14 @@ function HellYesStarOverlay({ reduced }: { reduced: boolean }) {
   );
 }
 
-function Card1Mascot({ reduced }: { reduced: boolean }) {
+function Card1Mascot() {
   return (
     <Mascot
       expression="thinking"
       size="md"
       gazeX={0}
       gazeY={-2.5}
-      overlay={<HellYesStarOverlay reduced={reduced} />}
+      overlay={<HellYesStarOverlay />}
     />
   );
 }
@@ -138,7 +128,8 @@ function Card1Mascot({ reduced }: { reduced: boolean }) {
 const SHIELD_CX = 32;
 const SHIELD_TOP = 45;
 
-function LayerShieldOverlay({ reduced }: { reduced: boolean }) {
+function LayerShieldOverlay() {
+  const motionStyle = useMascotMotion();
   const layerYs = [48.2, 51, 53.8, 56.6];
   const layerWidths = [9, 8.2, 6.6, 4.2];
 
@@ -163,29 +154,25 @@ function LayerShieldOverlay({ reduced }: { reduced: boolean }) {
           stroke={i === 3 ? "#E7B65E" : "var(--primary-foreground)"}
           strokeWidth={1.2}
           strokeLinecap="round"
-          opacity={reduced ? 0.75 : undefined}
-          style={
-            reduced
-              ? undefined
-              : {
-                  opacity: 0,
-                  animation: `sn-layer-in 4s ease-out ${0.4 + i * 0.55}s infinite`,
-                }
-          }
+          style={motionStyle({
+            animation: `sn-layer-in 4s ease-out ${0.4 + i * 0.55}s infinite`,
+            running: { opacity: 0 },
+            still: { opacity: 0.75 },
+          })}
         />
       ))}
     </>
   );
 }
 
-function Card2Mascot({ reduced }: { reduced: boolean }) {
+function Card2Mascot() {
   return (
     <Mascot
       expression="curious"
       size="md"
       gazeX={0}
       gazeY={2.8}
-      overlay={<LayerShieldOverlay reduced={reduced} />}
+      overlay={<LayerShieldOverlay />}
     />
   );
 }
@@ -230,11 +217,9 @@ function Card3Mascot() {
  * Schichten-Schild → fertiges Schild).
  * Wird als renderMascot-Prop an <RecipeIntro> übergeben.
  */
-export function SayingNoIntroMascot({ index }: { index: number }) {
-  const reduced = useReducedMotion();
-
-  if (index === 0) return <Card0Mascot reduced={reduced} />;
-  if (index === 1) return <Card1Mascot reduced={reduced} />;
-  if (index === 2) return <Card2Mascot reduced={reduced} />;
-  return <Card3Mascot />;
-}
+export const SayingNoIntroMascot = mascotPerCard([
+  Card0Mascot,
+  Card1Mascot,
+  Card2Mascot,
+  Card3Mascot,
+]);

@@ -236,6 +236,16 @@ body[data-zone="schmiede"] {
     }
   }
 
+  /* Unruhiges Schwanken des ganzen Blobs — die Karte-0-Geste für „aus dem
+     Gleichgewicht". Geteilt von things-got-messy, shadow und saying-no; der
+     Aufrufer ist UNEASE_SWAY in components/recipes/intro-mascot.tsx. */
+  @keyframes mascot-sway {
+    0%, 100% { transform: rotate(-1.6deg); }
+    30%       { transform: rotate(1.2deg);  }
+    60%       { transform: rotate(-0.6deg); }
+    82%       { transform: rotate(0.9deg);  }
+  }
+
   /* ── Overthinking-Intro Animationen (Phase 8) ─────────────────────── */
 
   /* Karte 1: sanftes Schwanken des überwältigten Kopfes */
@@ -319,13 +329,8 @@ body[data-zone="schmiede"] {
 
   /* ── Things-Got-Messy-Intro Animationen (Knäuel → Schuld-Kompass) ──── */
 
-  /* Karte 0: unruhiges Schwanken nach dem messy Moment */
-  @keyframes tgm-sway {
-    0%, 100% { transform: rotate(-1.6deg); }
-    30%       { transform: rotate(1.2deg);  }
-    60%       { transform: rotate(-0.6deg); }
-    82%       { transform: rotate(0.9deg);  }
-  }
+  /* Karte 0 schwankt unruhig — der Keyframe dafür heißt mascot-sway und steht
+     oben bei den Mascot-Animationen, weil ihn drei Übungen benutzen. */
 
   /* Karte 0: Gedanken-Knäuel zeichnet sich verworren über dem Kopf */
   @keyframes tgm-scribble {
