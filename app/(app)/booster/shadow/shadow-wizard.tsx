@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Flame, Footprints, Lock, NotebookPen } from "lucide-react";
 
@@ -19,13 +19,11 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
+import { BURN_MS, burnDuration, burnRitual } from "@/lib/recipes/shadow/burn";
 
 import { markShadowDoneAction, saveShadowEntryAction } from "./actions";
 
 const INTRO_CARDS = getRecipeIntro("shadow") ?? [];
-
-/** Dauer der Verbrenn-Animation (muss zur sh-burn-Keyframe-Dauer passen). */
-const BURN_MS = 1600;
 
 /** Rage-Walk-Prompts, rotieren alle 45 Sekunden. */
 const WALK_PROMPTS = [
@@ -85,11 +83,19 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
     return () => clearInterval(id);
   }, [phase, walkStarted]);
 
-  // „Verbrennen?"-Nachfrage nach kurzer Zeit zurücksetzen.
-  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (confirmTimer.current) clearTimeout(confirmTimer.current);
-  }, []);
+  // ── Der eine Weg von der Verbrenn-Bühne nach „done" ─────────────
+  // Die Motion-Präferenz entscheidet nur über die Dauer (burnDuration), nicht
+  // über den Weg — vorher lief „Bewegung reduzieren" über einen ganz eigenen
+  // Zweig in burnEntry, der nur am Gerät mit gesetzter Präferenz sichtbar war.
+
+  useEffect(() => {
+    if (phase !== "burning") return;
+    const id = window.setTimeout(() => {
+      setBody("");
+      setPhase("done");
+    }, burnDuration(reduced));
+    return () => window.clearTimeout(id);
+  }, [phase, reduced]);
 
   // ── Aktionen ────────────────────────────────────────────────────
 
@@ -131,27 +137,17 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
   }
 
   function burnEntry() {
-    if (!confirmBurn) {
-      setConfirmBurn(true);
-      confirmTimer.current = setTimeout(() => setConfirmBurn(false), 3500);
-      return;
-    }
-    if (confirmTimer.current) clearTimeout(confirmTimer.current);
-    clearDraft();
-    setOutcome("burned");
-    // Fortschritt abschließen — gespeichert wird bewusst NICHTS.
-    void markShadowDoneAction().catch(() => {});
+    const next = burnRitual(confirmBurn, "tap");
+    setConfirmBurn(next.confirming);
 
-    if (reduced) {
-      setBody("");
-      setPhase("done");
-      return;
+    // Die Persistenz-Entscheidung hängt am Übergang, nicht an der Regel:
+    // gespeichert wird bewusst NICHTS, nur der Fortschritt wird abgeschlossen.
+    if (next.phase === "burning") {
+      clearDraft();
+      setOutcome("burned");
+      void markShadowDoneAction().catch(() => {});
     }
-    setPhase("burning");
-    window.setTimeout(() => {
-      setBody("");
-      setPhase("done");
-    }, BURN_MS);
+    setPhase(next.phase);
   }
 
   function finishWalkWithoutNote() {
@@ -264,12 +260,19 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
           {/* Bewusst dunkle Fläche in beiden Themes: der Schatten-Raum. */}
           <Card
             className="border-zinc-700 bg-zinc-900"
-            style={burning ? { animation: `sh-burn ${BURN_MS}ms ease-in forwards` } : undefined}
+            style={
+              burning && !reduced
+                ? { animation: `sh-burn ${BURN_MS}ms ease-in forwards` }
+                : undefined
+            }
           >
             <CardContent className="py-2">
               <Textarea
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
+                onChange={(e) => {
+                  setBody(e.target.value);
+                  setConfirmBurn(burnRitual(confirmBurn, "edit").confirming);
+                }}
                 placeholder="Lass alles raus. So hässlich, unfair und unfertig, wie es sich anfühlt — hier darf es genau so sein."
                 maxLength={5000}
                 disabled={saving || burning}

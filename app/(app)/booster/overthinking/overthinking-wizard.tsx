@@ -27,34 +27,20 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
+import {
+  EMPTY_ANSWERS,
+  TOTAL_STEPS,
+  answerKeyForStep,
+  dropQuestionsFrom,
+  isQuestionPending,
+  nextStep,
+  type Answers,
+  type StepQuestions,
+} from "@/lib/recipes/overthinking/steps";
 
 import { saveOverthinkingAction } from "./actions";
 
 const INTRO_CARDS = getRecipeIntro("overthinking") ?? [];
-
-// ─── Types ────────────────────────────────────────────────────────────
-
-type Answers = {
-  step2: string;
-  step3: string;
-  step4: string;
-  step5: string;
-  whatIfWrong: string;
-  reframedProblem: string;
-  decision: string;
-};
-
-const EMPTY_ANSWERS: Answers = {
-  step2: "",
-  step3: "",
-  step4: "",
-  step5: "",
-  whatIfWrong: "",
-  reframedProblem: "",
-  decision: "",
-};
-
-const TOTAL_STEPS = 8;
 
 // Fixe Einleitung vor der KI-Challenger-Frage in Schritt 6 (Perspektivwechsel).
 const CHALLENGE_INTRO =
@@ -220,9 +206,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState<Answers>(EMPTY_ANSWERS);
   const [countdownDone, setCountdownDone] = useState(false);
-  // KI-formulierte "Warum?"-Fragen für Schritte 3–5 (statischer Fallback: getStepLabel).
-  const [generatedQuestions, setGeneratedQuestions] = useState<Record<number, string>>({});
-  const [questionLoading, setQuestionLoading] = useState(false);
+  // KI-formulierte Fragen der Schritte 3–6 (statischer Fallback: getStepLabel).
+  const [questions, setQuestions] = useState<StepQuestions>({});
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -232,11 +217,12 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
   const intro = useRecipeIntro("overthinking", introSeen);
 
-  // Laufende Nummer der KI-Frage-Requests: Bei überlappenden Fetches (schnelles
-  // Weiterklicken durch Schritte 3–6) darf nur der NEUESTE Request den
-  // Ladezustand beenden — sonst räumt das finally des älteren den Schimmer weg,
-  // während der neuere noch läuft (Fallback-Frage blitzt auf, KI-Frage ploppt nach).
-  const questionRequestRef = useRef(0);
+  // Der Effekt unten braucht die Antworten so, wie sie beim Bühnenwechsel
+  // dastehen — läge `answers` in seinen Deps, liefe pro Tastendruck ein Request.
+  const answersRef = useRef(answers);
+  useEffect(() => {
+    answersRef.current = answers;
+  });
 
   // Offline draft safety net
   const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
@@ -256,16 +242,9 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
   const updateAnswer = (key: keyof Answers, value: string) => {
     setAnswers((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const getStepAnswerKey = (s: number): keyof Answers | null => {
-    switch (s) {
-      case 2: return "step2";
-      case 3: return "step3";
-      case 4: return "step4";
-      case 5: return "step5";
-      default: return null;
-    }
+    // Die KI-Fragen der Bühnen darunter sind aus dem alten Warum-Verlauf
+    // gebaut — eine geänderte Antwort macht sie ungültig.
+    dropQuestions(step + 1);
   };
 
   const getStepLabel = (s: number): string => {
@@ -287,49 +266,72 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   };
 
   // ── Navigation ──────────────────────────────────────────────────
+  // Zwei getrennte Fragen: Ist die Bühne beantwortet (nextStep)? Und wartet sie
+  // noch auf ihre KI-Frage (questionPending)? Vorher steckte beides in
+  // canGoNext — die fachliche Regel war ohne Netz nicht mehr prüfbar.
 
-  const canGoNext = (): boolean => {
-    if (step === 1) return countdownDone;
-    // Während die KI-Frage für diesen Schritt noch lädt, kein Weiter
-    // (verhindert u. a. das Überspringen des Schimmers in Schritt 6).
-    if (questionLoading && step >= 3 && step <= 6 && !generatedQuestions[step]) {
-      return false;
-    }
-    const key = getStepAnswerKey(step);
-    return key ? answers[key].trim().length > 0 : true;
+  const nextTarget = nextStep(step, answers, countdownDone);
+  const questionPending = isQuestionPending(questions, step);
+
+  const goNext = () => {
+    if (nextTarget === null) return;
+    setError(null);
+    setStep(nextTarget);
   };
 
-  // Lässt die KI die maßgeschneiderte Frage für einen Schritt formulieren:
-  // Schritte 3–5 → nächste, tiefere "Warum?"-Frage; Schritt 6 → positive
-  // Challenger-Frage. Fehler/Offline werden still verschluckt — dann greift der
-  // statische Fallback in renderStepContent.
-  const generateForStep = async (target: number) => {
-    const problem = answers.step2.trim();
-    if (!problem) return;
-    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+  const goBack = () => {
+    setError(null);
+    if (step > 1) setStep((s) => s - 1);
+  };
 
-    const isChallenger = target === 6;
-    const whyChain: string[] = [];
-    if (isChallenger) {
-      // Challenger nutzt den vollständigen Warum-Verlauf.
-      if (answers.step3.trim()) whyChain.push(answers.step3.trim());
-      if (answers.step4.trim()) whyChain.push(answers.step4.trim());
-      if (answers.step5.trim()) whyChain.push(answers.step5.trim());
-    } else {
-      if (target >= 4 && answers.step3.trim()) whyChain.push(answers.step3.trim());
-      if (target >= 5 && answers.step4.trim()) whyChain.push(answers.step4.trim());
+  // ── Die KI-Frage der Bühne ──────────────────────────────────────
+  // Bühnen 3–5 bekommen die nächste, tiefere "Warum?"-Frage, Bühne 6 die
+  // Challenger-Frage. Bleibt sie aus (offline, Ausfall, noch kein Problem),
+  // merkt sich die Bühne ein null und nimmt die statische Frage.
+
+  // Laufende Nummer je Bühne. Eine verworfene Frage macht den Request, der
+  // noch unterwegs ist, ungültig: sonst schriebe er nach dem Zurückgehen und
+  // Umformulieren die aus der ALTEN Antwort gebaute Frage nach — und die Bühne
+  // gälte damit als versorgt, hielte also dauerhaft die veraltete Frage.
+  const questionRun = useRef<Record<number, number>>({});
+
+  /** Verwirft die Fragen ab `from` — samt der Requests, die noch laufen. */
+  const dropQuestions = useCallback((from: number) => {
+    setQuestions((prev) => dropQuestionsFrom(prev, from));
+    for (const target of Object.keys(questionRun.current).map(Number)) {
+      if (target >= from) questionRun.current[target] += 1;
     }
+  }, []);
 
-    const requestId = ++questionRequestRef.current;
-    setQuestionLoading(true);
-    // Veraltete Frage für diesen Schritt verwerfen, damit der Schimmer greift.
-    setGeneratedQuestions((prev) => {
-      const next = { ...prev };
-      delete next[target];
-      return next;
-    });
+  const requestQuestion = useCallback(async (target: number, current: Answers) => {
+    const run = (questionRun.current[target] ?? 0) + 1;
+    questionRun.current[target] = run;
+
+    const settle = (question: string | null) => {
+      // Zwischenzeitlich verworfen? Dann gehört diese Antwort niemandem mehr.
+      if (questionRun.current[target] !== run) return;
+      setQuestions((prev) => ({ ...prev, [target]: question }));
+    };
 
     try {
+      const problem = current.step2.trim();
+      if (!problem || (typeof navigator !== "undefined" && !navigator.onLine)) {
+        settle(null);
+        return;
+      }
+
+      const isChallenger = target === 6;
+      const whyChain: string[] = [];
+      if (isChallenger) {
+        // Challenger nutzt den vollständigen Warum-Verlauf.
+        for (const answer of [current.step3, current.step4, current.step5]) {
+          if (answer.trim()) whyChain.push(answer.trim());
+        }
+      } else {
+        if (target >= 4 && current.step3.trim()) whyChain.push(current.step3.trim());
+        if (target >= 5 && current.step4.trim()) whyChain.push(current.step4.trim());
+      }
+
       const res = await fetch("/api/overthinking-question", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -339,38 +341,26 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
           mode: isChallenger ? "challenger" : "why",
         }),
       });
-      const data = await res.json();
-      if (res.ok && data.question) {
-        // Pro Schritt gekeyt — auch eine "veraltete" Antwort landet beim
-        // richtigen target und ist damit harmlos.
-        setGeneratedQuestions((prev) => ({ ...prev, [target]: data.question }));
-      }
+      const data = (await res.json()) as { question?: unknown };
+      settle(
+        res.ok && typeof data.question === "string" && data.question.trim()
+          ? data.question.trim()
+          : null,
+      );
     } catch {
       // Stiller Fallback auf die statische Frage.
-    } finally {
-      if (requestId === questionRequestRef.current) {
-        setQuestionLoading(false);
-      }
+      settle(null);
     }
-  };
+  }, []);
 
-  const goNext = () => {
-    if (!canGoNext()) return;
-    setError(null);
-    if (step < TOTAL_STEPS) {
-      const target = step + 1;
-      // Schritte 3–5: "Warum?"-Leiter; Schritt 6: Challenger-Frage.
-      if (target >= 3 && target <= 6) {
-        void generateForStep(target);
-      }
-      setStep(target);
-    }
-  };
-
-  const goBack = () => {
-    setError(null);
-    if (step > 1) setStep((s) => s - 1);
-  };
+  // Die Frage gehört zur Bühne, nicht zum Klick: wer auf 3–6 landet — über
+  // „Weiter", über „Zurück" oder nachdem eine geänderte Antwort die alte Frage
+  // verworfen hat —, holt sie sich hier. Vorher hing der Fetch als
+  // Nebenwirkung an goNext.
+  useEffect(() => {
+    if (!isQuestionPending(questions, step)) return;
+    void requestQuestion(step, answersRef.current);
+  }, [step, questions, requestQuestion]);
 
   // ── Submit ──────────────────────────────────────────────────────
 
@@ -388,7 +378,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
     formData.set("why_levels", JSON.stringify([answers.step3, answers.step4, answers.step5]));
     // Die in Schritt 6 angezeigte KI-Frage wandert mit ins Journal; nach
     // Draft-Restore oder KI-Ausfall ggf. leer — dann ohne diese Sektion.
-    formData.set("challenger_question", generatedQuestions[6] ?? "");
+    formData.set("challenger_question", questions[6] ?? "");
     formData.set("what_if_wrong", answers.whatIfWrong);
     formData.set("reframed_problem", answers.reframedProblem);
     formData.set("decision", answers.decision);
@@ -461,10 +451,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
       case 5: {
         const ancestors = getLadderAncestors(step);
         // Schritt 2 bleibt statisch; ab Schritt 3 die KI-Frage (Fallback: statisch).
-        const label = step >= 3 ? generatedQuestions[step] ?? getStepLabel(step) : getStepLabel(step);
-        const key = getStepAnswerKey(step)!;
-        // Während die KI-Frage noch lädt, einen Schimmer statt Frage + Textfeld zeigen.
-        const showQuestionLoading = step >= 3 && questionLoading && !generatedQuestions[step];
+        const label = questions[step] ?? getStepLabel(step);
+        const key = answerKeyForStep(step)!;
 
         return (
           <div className="flex w-full flex-col gap-5">
@@ -477,7 +465,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
               </Card>
             )}
 
-            {showQuestionLoading ? (
+            {/* Während die KI-Frage noch unterwegs ist: Schimmer statt Frage. */}
+            {questionPending ? (
               <div className="space-y-3" aria-busy="true">
                 <div className="space-y-2">
                   <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
@@ -517,10 +506,9 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
       case 6: {
         // Schritt 6 – Perspektivwechsel: fixe Einleitung + KI-Challenger-Frage.
-        const showChallengerLoading = questionLoading && !generatedQuestions[6];
-        const challenger = generatedQuestions[6];
+        const challenger = questions[6];
 
-        if (showChallengerLoading) {
+        if (questionPending) {
           return (
             <div className="flex w-full flex-col gap-3" aria-busy="true">
               <div className="space-y-2">
@@ -689,8 +677,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
                 setStep(1);
                 setAnswers(EMPTY_ANSWERS);
                 setCountdownDone(false);
-                setGeneratedQuestions({});
-                setQuestionLoading(false);
+                setQuestions({});
                 setSaved(false);
                 setError(null);
               }}
@@ -805,7 +792,13 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
           )}
 
           {step < TOTAL_STEPS ? (
-            <Button onClick={goNext} disabled={!canGoNext()} className="ml-auto gap-1">
+            <Button
+              onClick={goNext}
+              // Zwei Gründe, zwei Ausdrücke: die Bühne ist noch nicht
+              // beantwortet — oder ihre KI-Frage ist noch unterwegs.
+              disabled={nextTarget === null || questionPending}
+              className="ml-auto gap-1"
+            >
               Weiter
               <ChevronRight className="size-4" />
             </Button>

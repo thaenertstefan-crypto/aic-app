@@ -23,6 +23,7 @@ import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
+import { AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
 
 import {
   acceptSuggestedRightAction,
@@ -31,9 +32,6 @@ import {
 } from "./actions";
 
 const INTRO_CARDS = getRecipeIntro("things-got-messy") ?? [];
-
-const AI_FALLBACK_MESSAGE =
-  "Die Auswertung hat gerade nicht geklappt. Dein Eintrag ist gespeichert — versuch es gleich noch einmal.";
 
 type Draft = {
   messy_when: string;
@@ -44,6 +42,13 @@ type RightSuggestion =
   | { type: "existing"; id: string; text: string }
   | { type: "new"; text: string }
   | null;
+
+type CoachResponse = {
+  analysis?: string;
+  guilt?: string;
+  rules?: string;
+  right?: RightSuggestion;
+};
 
 type Phase = "reflect" | "analyzing" | "result";
 
@@ -97,7 +102,9 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
   // ── KI-Auswertung ───────────────────────────────────────────────
   // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert; die Route lädt
   // Texte + Rechte serverseitig nach — der Client schickt nur die entryId.
-  // Fehler landen als aiError auf dem Ergebnis-Screen (Retry möglich).
+  // Die Warte-Bühne setzen wir hier, die Ziel-Bühne gibt runAiStep zurück:
+  // ein KI-Ausfall landet als aiError auf dem Ergebnis-Screen (Retry möglich),
+  // blockiert die Übung aber nicht.
 
   async function runAnalysis(id: string) {
     setAiError(null);
@@ -105,30 +112,44 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
     setGuilt(null);
     setRules(null);
     setPhase("analyzing");
-    try {
-      const res = await fetch("/api/messy-guilt-coach", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entryId: id }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setAiError(data.error ?? AI_FALLBACK_MESSAGE);
-        setPhase("result");
-        return;
-      }
-      setAnalysis(data.analysis ?? "");
-      setGuilt(data.guilt === "healthy" || data.guilt === "unhealthy" ? data.guilt : null);
-      setRules(typeof data.rules === "string" && data.rules ? data.rules : null);
-      setRight(data.right ?? null);
-      if (data.right?.type === "new") {
-        setSuggestionText(data.right.text ?? "");
-      }
-      setPhase("result");
-    } catch {
-      setAiError(AI_FALLBACK_MESSAGE);
-      setPhase("result");
+
+    const step = await runAiStep(
+      AI_STEPS.thingsGotMessy,
+      { entryId: id },
+      (payload) => {
+        const data = payload as CoachResponse;
+        return {
+          analysis: typeof data.analysis === "string" ? data.analysis : "",
+          guilt:
+            data.guilt === "healthy"
+              ? ("healthy" as const)
+              : data.guilt === "unhealthy"
+                ? ("unhealthy" as const)
+                : null,
+          rules: typeof data.rules === "string" && data.rules ? data.rules : null,
+          // Die Route ist ungeprüft gecastet — ein Vorschlag ohne Text ist keiner.
+          right:
+            data.right && typeof data.right.text === "string" && data.right.text.trim()
+              ? data.right
+              : null,
+        };
+      },
+    );
+
+    if (step.error !== null) {
+      setAiError(step.error);
+      setPhase(step.phase);
+      return;
     }
+
+    setAnalysis(step.data.analysis);
+    setGuilt(step.data.guilt);
+    setRules(step.data.rules);
+    setRight(step.data.right);
+    if (step.data.right?.type === "new") {
+      setSuggestionText(step.data.right.text);
+    }
+    setPhase(step.phase);
   }
 
   // ── Speichern → Auswertung ──────────────────────────────────────

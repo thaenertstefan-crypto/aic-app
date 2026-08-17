@@ -29,6 +29,7 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
+import { AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
 import type { WantItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
 
@@ -38,9 +39,6 @@ import {
 } from "@/lib/recipes/wants/actions";
 
 const INTRO_CARDS = getRecipeIntro("wants") ?? [];
-
-const AI_FALLBACK_MESSAGE =
-  "Das Destillieren hat gerade nicht geklappt. Deine Sternensuche ist gespeichert — du kannst deine Wants auch selbst formulieren.";
 
 // Warte-Screen: Sterne funkeln gestaffelt auf (der Himmel „entsteht").
 const ANALYZING_STARS: { x: number; y: number; delay: number; big?: boolean }[] = [
@@ -257,26 +255,17 @@ export function WantsJourney({
   // ── KI-Destillat laden ──────────────────────────────────────────
   // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert; die Route lädt
   // Audit + bestätigte Werte serverseitig nach — der Client schickt nur die
-  // entryId. Fehler landen als aiError auf dem Sterne-Screen; das Rezept
-  // bleibt ohne KI vollständig nutzbar (manueller Modus).
+  // entryId. Die Warte-Bühne setzen wir hier, die Ziel-Bühne gibt runAiStep
+  // zurück: ein KI-Ausfall landet als aiError auf dem Sterne-Screen, das
+  // Rezept bleibt ohne KI vollständig nutzbar (manueller Modus).
 
   async function runDistiller(id: string) {
     setAiError(null);
     setComment("");
     setPhase("analyzing");
-    try {
-      const res = await fetch("/api/wants-distiller", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entryId: id }),
-      });
-      const data = (await res.json()) as DistillerResponse & { error?: string };
-      if (!res.ok) {
-        setAiError(data.error ?? AI_FALLBACK_MESSAGE);
-        setPhase("sterne");
-        return;
-      }
 
+    const step = await runAiStep(AI_STEPS.wants, { entryId: id }, (payload) => {
+      const data = payload as DistillerResponse;
       const wants: DraftWant[] = (data.wants ?? [])
         .filter((w) => typeof w.text === "string" && w.text.trim())
         .map((w) => ({
@@ -290,15 +279,22 @@ export function WantsJourney({
           question: typeof w.question === "string" ? w.question : null,
           source: "ai",
         }));
+      return {
+        comment: typeof data.comment === "string" ? data.comment : "",
+        wants,
+      };
+    });
 
-      setComment(typeof data.comment === "string" ? data.comment : "");
-      setDraftWants(wants);
-      setManualMode(wants.length === 0);
-      setPhase("sterne");
-    } catch {
-      setAiError(AI_FALLBACK_MESSAGE);
-      setPhase("sterne");
+    if (step.error !== null) {
+      setAiError(step.error);
+      setPhase(step.phase);
+      return;
     }
+
+    setComment(step.data.comment);
+    setDraftWants(step.data.wants);
+    setManualMode(step.data.wants.length === 0);
+    setPhase(step.phase);
   }
 
   // ── Audit speichern → Destillat ─────────────────────────────────

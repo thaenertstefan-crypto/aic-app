@@ -29,6 +29,7 @@ import { PAGE_TITLES } from "@/lib/content/labels";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
+import { AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
 import type { SayingNoChecklist } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
 
@@ -40,9 +41,6 @@ import {
 } from "./actions";
 
 const INTRO_CARDS = getRecipeIntro("saying-no") ?? [];
-
-const AI_FALLBACK_MESSAGE =
-  "Das Feedback hat gerade nicht geklappt. Dein Nein ist gespeichert — versuch es gleich noch einmal.";
 
 /** Client-Cap fürs „Anderes Szenario“-Reroll, schützt das Stunden-Kontingent. */
 const MAX_REROLLS = 3;
@@ -62,6 +60,12 @@ type RightSuggestion =
   | { type: "existing"; id: string; text: string }
   | { type: "new"; text: string }
   | null;
+type FeedbackResponse = {
+  comment?: string;
+  checklist?: unknown;
+  improved?: string;
+  right?: RightSuggestion;
+};
 
 type Phase =
   | "mode"
@@ -192,7 +196,9 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
   // ── KI-Feedback ─────────────────────────────────────────────────
   // Der Eintrag ist zu diesem Zeitpunkt bereits gespeichert; die Route lädt
   // Texte + Rechte serverseitig nach — der Client schickt nur die entryId.
-  // Fehler landen als aiError auf dem Feedback-Screen (Retry möglich).
+  // Die Warte-Bühne setzen wir hier, die Ziel-Bühne gibt runAiStep zurück:
+  // ein KI-Ausfall landet als aiError auf dem Feedback-Screen (Retry möglich),
+  // blockiert die Übung aber nicht.
 
   async function runFeedback(id: string) {
     setAiError(null);
@@ -200,35 +206,43 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
     setComment("");
     setImprovedOriginal(null);
     setPhase("analyzing");
-    try {
-      const res = await fetch("/api/saying-no-coach", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "feedback", entryId: id }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setAiError(data.error ?? AI_FALLBACK_MESSAGE);
-        setPhase("feedback");
-        return;
-      }
-      setComment(typeof data.comment === "string" ? data.comment : "");
-      setChecklist(isValidChecklist(data.checklist) ? data.checklist : null);
-      const improved =
-        typeof data.improved === "string" && data.improved.trim()
-          ? data.improved.trim()
-          : null;
-      setImprovedOriginal(improved);
-      setImprovedText(improved ?? "");
-      setRight(data.right ?? null);
-      if (data.right?.type === "new") {
-        setSuggestionText(data.right.text ?? "");
-      }
-      setPhase("feedback");
-    } catch {
-      setAiError(AI_FALLBACK_MESSAGE);
-      setPhase("feedback");
+
+    const step = await runAiStep(
+      AI_STEPS.sayingNo,
+      { mode: "feedback", entryId: id },
+      (payload) => {
+        const data = payload as FeedbackResponse;
+        return {
+          comment: typeof data.comment === "string" ? data.comment : "",
+          checklist: isValidChecklist(data.checklist) ? data.checklist : null,
+          improved:
+            typeof data.improved === "string" && data.improved.trim()
+              ? data.improved.trim()
+              : null,
+          // Die Route ist ungeprüft gecastet — ein Vorschlag ohne Text ist keiner.
+          right:
+            data.right && typeof data.right.text === "string" && data.right.text.trim()
+              ? data.right
+              : null,
+        };
+      },
+    );
+
+    if (step.error !== null) {
+      setAiError(step.error);
+      setPhase(step.phase);
+      return;
     }
+
+    setComment(step.data.comment);
+    setChecklist(step.data.checklist);
+    setImprovedOriginal(step.data.improved);
+    setImprovedText(step.data.improved ?? "");
+    setRight(step.data.right);
+    if (step.data.right?.type === "new") {
+      setSuggestionText(step.data.right.text);
+    }
+    setPhase(step.phase);
   }
 
   function isValidChecklist(value: unknown): value is FeedbackChecklist {
