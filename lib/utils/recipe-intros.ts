@@ -14,7 +14,7 @@
 
 export type IntroCard = { title: string; body: string };
 
-export const RECIPE_INTROS: Record<string, IntroCard[]> = {
+export const RECIPE_INTROS = {
   values: [
     {
       title: "Schon mal das Gefühl gehabt?",
@@ -133,12 +133,25 @@ export const RECIPE_INTROS: Record<string, IntroCard[]> = {
       body: "Die folgende Übung ist im Prinzip ganz einfach. Du erzählst kurz von einer Situation, in der du dich schuldig gefühlt hast — mehr musst du nicht tun. Und ich schaue dann gemeinsam mit dir drauf: Welche Art von Schuld hat sich da vermutlich gemeldet? Welche zwei Regeln haben in dir miteinander gerungen? Und wie passt deine Bill of Rights dazu? Vielleicht hast du in der von dir beschriebenen Situation eins deiner Rechte verteidigt (Super!), und musst dich nur daran erinnern, dass du etwas getan hast, dass du dir erlauben darfst, ohne dich dafür entschuldigen zu müssen — vielleicht zeigt die Situation, dass dir noch etwas anderes wichtig ist und wir formulieren zusammen ein neues Recht, das dir zukünftig hilft noch mehr entlang deiner Werte zu leben. Das Ganze dauert 2–3 Minuten. Bist du dabei?",
     },
   ],
-};
+} satisfies Record<string, IntroCard[]>;
+
+/**
+ * Die Slugs, für die eine Intro hinterlegt ist — aus der Tabelle abgeleitet,
+ * nicht daneben gepflegt. Wer hier oben eine Übung ergänzt, bekommt vom
+ * Compiler gesagt, wo sie sonst noch fehlt (z. B. in der Maskottchen-Tabelle
+ * in components/recipes/recipe-intro-gate.tsx).
+ */
+export type RecipeIntroSlug = keyof typeof RECIPE_INTROS;
 
 /**
  * Liefert die Intro-Karten für ein Rezept anhand seines Slugs.
  * Gibt null zurück, wenn für den Slug keine Intro hinterlegt ist.
  */
 export function getRecipeIntro(slug: string): IntroCard[] | null {
-  return RECIPE_INTROS[slug] ?? null;
+  // Der Parameter bleibt `string`, damit dieser Zugriff auch einen Slug
+  // verträgt, der gar keine Intro hat; die getypte Naht ist `RecipeIntroSlug`.
+  // `hasOwn` statt eines bloßen Lookups, damit ein Slug wie "toString" nicht
+  // die geerbte Prototyp-Funktion als Kartenliste zurückgibt.
+  if (!Object.hasOwn(RECIPE_INTROS, slug)) return null;
+  return RECIPE_INTROS[slug as RecipeIntroSlug];
 }

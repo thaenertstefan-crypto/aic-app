@@ -75,7 +75,7 @@ export default async function MeValuesPage() {
         title="Meine Werte"
         action={introCards ? <IntroInfoButton cards={introCards} /> : undefined}
       />
-      <RecipeIntroGate slug="values" cards={introCards} introSeen={introSeen}>
+      <RecipeIntroGate slug="values" introSeen={introSeen}>
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
           <p className="text-center text-base leading-relaxed text-foreground">
             Deine Werte sind dein innerer Kompass – sie zeigen dir, was dir

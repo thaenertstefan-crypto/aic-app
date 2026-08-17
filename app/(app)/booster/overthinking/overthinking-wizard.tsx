@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
-import { RecipeIntro } from "@/components/recipes/recipe-intro";
+import { useRecipeIntro } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { ReframeAnimation } from "@/components/auth/reframe-animation";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
@@ -20,7 +20,6 @@ import {
   OverthinkingCompanion,
   OverthinkingPeekCompanion,
 } from "@/components/recipes/overthinking-companion";
-import { OverthinkingIntroMascot } from "@/components/recipes/overthinking-intro-mascot";
 import { ModuleIcon } from "@/components/booster/module-icon";
 import type { MascotExpression } from "@/components/brand/mascot";
 import { Reveal } from "@/components/ui/reveal";
@@ -29,7 +28,6 @@ import { PAGE_TITLES } from "@/lib/content/labels";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 
-import { markRecipeIntroSeenAction } from "@/lib/recipes/actions";
 import { saveOverthinkingAction } from "./actions";
 
 const INTRO_CARDS = getRecipeIntro("overthinking") ?? [];
@@ -232,8 +230,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   // Bei jedem Schritt- und beim Wechsel auf den Abschluss-Screen nach oben.
   useScrollTopOnChange(saved ? "complete" : step);
 
-  // Hybrid-Intro (Schritt 6.10)
-  const [introDismissed, setIntroDismissed] = useState(false);
+  const intro = useRecipeIntro("overthinking", introSeen);
 
   // Laufende Nummer der KI-Frage-Requests: Bei überlappenden Fetches (schnelles
   // Weiterklicken durch Schritte 3–6) darf nur der NEUESTE Request den
@@ -628,25 +625,8 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Intro-Sequenz (erster Besuch) ───────────────────────
 
-  const handleIntroSeen = () => {
-    setIntroDismissed(true);
-    void markRecipeIntroSeenAction("overthinking");
-  };
-
-  if (!introSeen && !introDismissed && INTRO_CARDS.length > 0) {
-    return (
-      <div className="flex min-h-svh flex-col">
-        <SubPageHeader backHref="/booster" title="Overthinking" />
-        <div className="flex flex-1 flex-col justify-center">
-          <RecipeIntro
-            cards={INTRO_CARDS}
-            onComplete={handleIntroSeen}
-            onSkip={handleIntroSeen}
-            renderMascot={(index) => <OverthinkingIntroMascot index={index} />}
-          />
-        </div>
-      </div>
-    );
+  if (intro.pending) {
+    return intro.page(<SubPageHeader backHref="/booster" title="Overthinking" />);
   }
 
   // ── Render: Completion screen ───────────────────────────────────

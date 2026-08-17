@@ -165,7 +165,7 @@ export function WantsMe({
         }
       />
 
-      <RecipeIntroGate slug="wants" cards={INTRO_CARDS} introSeen={introSeen}>
+      <RecipeIntroGate slug="wants" introSeen={introSeen}>
         <ViewTransition
           enter={{ "forge-down": "forge-in-up", "forge-up": "forge-in-down", default: "none" }}
           exit={{ "forge-down": "forge-out-up", "forge-up": "forge-out-down", default: "none" }}

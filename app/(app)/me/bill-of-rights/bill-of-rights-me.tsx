@@ -224,7 +224,6 @@ export function BillOfRightsMe({
 
       <RecipeIntroGate
         slug="bill-of-rights"
-        cards={INTRO_CARDS}
         introSeen={introSeen}
         onSeen={() => setIntroDone(true)}
       >

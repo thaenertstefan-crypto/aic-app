@@ -18,9 +18,8 @@ import { FormError } from "@/components/ui/form-error";
 import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
-import { RecipeIntro } from "@/components/recipes/recipe-intro";
+import { useRecipeIntro } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
-import { WantsIntroMascot } from "@/components/recipes/wants-intro-mascot";
 import { Mascot } from "@/components/brand/mascot";
 import { StarGlyph } from "@/components/brand/star-glyph";
 import { JourneyStage } from "./journey-stage";
@@ -30,7 +29,6 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
-import { markRecipeIntroSeenAction } from "@/lib/recipes/actions";
 import type { WantItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
 
@@ -185,8 +183,7 @@ export function WantsJourney({
   introSeen: boolean;
   hasValuesHypothesis: boolean;
 }) {
-  // Hybrid-Intro (Muster Saying-No-Wizard)
-  const [introDismissed, setIntroDismissed] = useState(false);
+  const intro = useRecipeIntro("wants", introSeen);
 
   const [phase, setPhase] = useState<Phase>(hasValuesHypothesis ? "yin" : "nudge");
   useScrollTopOnChange(phase);
@@ -453,24 +450,9 @@ export function WantsJourney({
 
   // ── Render: Intro-Sequenz (erster Besuch) ───────────────────────
 
-  const handleIntroSeen = () => {
-    setIntroDismissed(true);
-    void markRecipeIntroSeenAction("wants");
-  };
-
-  if (!introSeen && !introDismissed && INTRO_CARDS.length > 0) {
-    return (
-      <div className="flex min-h-lvh flex-col">
-        <SubPageHeader backHref="/me/wants" title={PAGE_TITLES.wants} />
-        <div className="flex flex-1 flex-col justify-center">
-          <RecipeIntro
-            cards={INTRO_CARDS}
-            onComplete={handleIntroSeen}
-            onSkip={handleIntroSeen}
-            renderMascot={(index) => <WantsIntroMascot index={index} />}
-          />
-        </div>
-      </div>
+  if (intro.pending) {
+    return intro.page(
+      <SubPageHeader backHref="/me/wants" title={PAGE_TITLES.wants} />,
     );
   }
 

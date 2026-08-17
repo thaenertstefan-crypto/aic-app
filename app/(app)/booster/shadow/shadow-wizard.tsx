@@ -10,9 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
-import { RecipeIntro } from "@/components/recipes/recipe-intro";
+import { useRecipeIntro } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
-import { ShadowIntroMascot } from "@/components/recipes/shadow-intro-mascot";
 import { Mascot } from "@/components/brand/mascot";
 import { ModuleIcon } from "@/components/booster/module-icon";
 import { PAGE_TITLES } from "@/lib/content/labels";
@@ -20,7 +19,6 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
-import { markRecipeIntroSeenAction } from "@/lib/recipes/actions";
 
 import { markShadowDoneAction, saveShadowEntryAction } from "./actions";
 
@@ -45,8 +43,7 @@ type Phase = "mode" | "journal" | "walk" | "walkEnd" | "burning" | "done";
 type Outcome = "kept" | "burned" | "walked";
 
 export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
-  // Hybrid-Intro (Muster Things-Got-Messy-Wizard)
-  const [introDismissed, setIntroDismissed] = useState(false);
+  const intro = useRecipeIntro("shadow", introSeen);
 
   const [phase, setPhase] = useState<Phase>("mode");
   useScrollTopOnChange(phase);
@@ -165,24 +162,9 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
 
   // ── Render: Intro-Sequenz (erster Besuch) ───────────────────────
 
-  const handleIntroSeen = () => {
-    setIntroDismissed(true);
-    void markRecipeIntroSeenAction("shadow");
-  };
-
-  if (!introSeen && !introDismissed && INTRO_CARDS.length > 0) {
-    return (
-      <div className="flex min-h-svh flex-col">
-        <SubPageHeader backHref="/booster" title={PAGE_TITLES.shadow} />
-        <div className="flex flex-1 flex-col justify-center">
-          <RecipeIntro
-            cards={INTRO_CARDS}
-            onComplete={handleIntroSeen}
-            onSkip={handleIntroSeen}
-            renderMascot={(index) => <ShadowIntroMascot index={index} />}
-          />
-        </div>
-      </div>
+  if (intro.pending) {
+    return intro.page(
+      <SubPageHeader backHref="/booster" title={PAGE_TITLES.shadow} />,
     );
   }
 
