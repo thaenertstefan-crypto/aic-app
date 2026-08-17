@@ -12,6 +12,7 @@ import { withUser, type ActionContext } from "@/lib/actions/with-user";
 import type { ShadowContent } from "@/lib/types/db-json";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 // ─── Schattenseite ──────────────────────────────────────────────────────
 // Ventil-Rezept im Kopfwetter (Shadow Journal / Rage Walk).
@@ -89,7 +90,7 @@ export async function saveShadowEntryAction(
       .from("journal_entries")
       .insert({
         user_id: ctx.user.id,
-        recipe_slug: "shadow",
+        recipe_slug: recipeSlugFor("shadow"),
         template_type: "shadow",
         content,
         entry_date: await serverTodayKey(),

@@ -17,6 +17,7 @@ import {
   TEXT_MAX_SHORT,
   tooLong,
 } from "@/lib/utils/form-validation";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 /**
  * Reflexion zu einem Little Bet speichern: legt einen Journal-Eintrag
@@ -81,7 +82,7 @@ export async function saveBetReflectionAction(
       .from("journal_entries")
       .insert({
         user_id: user.id,
-        recipe_slug: "wants",
+        recipe_slug: recipeSlugFor("little_bet"),
         template_type: "little_bet",
         content,
         entry_date: await serverTodayKey(),

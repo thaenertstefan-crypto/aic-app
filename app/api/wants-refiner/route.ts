@@ -3,6 +3,7 @@ import { readModelJson, readText } from "@/lib/anthropic/model-json";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/wants-refiner";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
 import { readJournalContent } from "@/lib/utils/journal-content";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 const MAX_ENTRY_LEN = 2000;
 const MAX_FIELD_LEN = 500;
@@ -49,7 +50,7 @@ export const POST = withAiRoute(
       .select("id, template_type, content")
       .eq("id", entryId)
       .eq("user_id", user.id)
-      .eq("recipe_slug", "wants")
+      .eq("recipe_slug", recipeSlugFor("yin_yang"))
       .eq("template_type", "yin_yang")
       .maybeSingle();
 

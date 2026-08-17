@@ -6,6 +6,7 @@ import {
   patchJournalContent,
   readJournalContent,
 } from "@/lib/utils/journal-content";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 import { getValueLabel } from "@/lib/utils/values-bank";
 
 // Audit texts come from the user's own DB (length-capped at save time), so
@@ -128,7 +129,7 @@ export const POST = withAiRoute(
         .select("id, template_type, content")
         .eq("id", entryId)
         .eq("user_id", user.id)
-        .eq("recipe_slug", "wants")
+        .eq("recipe_slug", recipeSlugFor("yin_yang"))
         .eq("template_type", "yin_yang")
         .maybeSingle(),
       supabase

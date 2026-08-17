@@ -13,6 +13,7 @@ import {
   patchJournalContent,
   readJournalContent,
 } from "@/lib/utils/journal-content";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 // Entry texts come from the user's own DB (already length-capped at save time),
 // so defensively truncate instead of 400ing — max_tokens only bounds the OUTPUT.
@@ -116,7 +117,7 @@ export const POST = withAiRoute(
         .select("id, template_type, content")
         .eq("id", entryId)
         .eq("user_id", user.id)
-        .eq("recipe_slug", "things-got-messy")
+        .eq("recipe_slug", recipeSlugFor("messy_moment"))
         .eq("template_type", "messy_moment")
         .maybeSingle(),
       supabase

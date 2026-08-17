@@ -19,6 +19,7 @@ import {
   TEXT_MAX_SHORT,
   tooLong,
 } from "@/lib/utils/form-validation";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 // ─── Wants-Rezept: kanonische Actions ───────────────────────────────────
 // Alle Schreibzugriffe auf die wants-Tabelle (eine Zeile pro User, zwei
@@ -384,7 +385,7 @@ export async function saveYinYangEntryAction(
       .from("journal_entries")
       .insert({
         user_id: user.id,
-        recipe_slug: "wants",
+        recipe_slug: recipeSlugFor("yin_yang"),
         template_type: "yin_yang",
         content,
         entry_date: await serverTodayKey(),

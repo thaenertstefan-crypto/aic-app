@@ -18,6 +18,7 @@ import {
   patchJournalContent,
   readJournalContent,
 } from "@/lib/utils/journal-content";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 // Werte-Slugs/-Labels sind Kurzstrings; custom Werte sind erlaubt, daher wird
 // nur Typ + Länge geprüft (nicht gegen die values-bank).
@@ -246,7 +247,7 @@ export async function getJournalData(
       .from("journal_entries")
       .select(JOURNAL_ENTRY_SELECT)
       .eq("user_id", user.id)
-      .eq("recipe_slug", "values")
+      .eq("recipe_slug", recipeSlugFor("daily_value"))
       .eq("template_type", "daily_value")
       .order("entry_date", { ascending: true });
 
@@ -343,7 +344,7 @@ export async function saveJournalEntryAction(
         .select("id, content")
         .eq("id", entryIdRaw)
         .eq("user_id", user.id)
-        .eq("recipe_slug", "values")
+        .eq("recipe_slug", recipeSlugFor("daily_value"))
         .eq("template_type", "daily_value")
         .maybeSingle();
 
@@ -399,7 +400,7 @@ export async function saveJournalEntryAction(
         .from("journal_entries")
         .insert({
           user_id: user.id,
-          recipe_slug: "values",
+          recipe_slug: recipeSlugFor("daily_value"),
           template_type: "daily_value",
           entry_date: entryDate,
           content: { happenings },
@@ -415,7 +416,7 @@ export async function saveJournalEntryAction(
       .from("journal_entries")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
-      .eq("recipe_slug", "values")
+      .eq("recipe_slug", recipeSlugFor("daily_value"))
       .eq("template_type", "daily_value");
 
     if (count !== null && count >= 7) {
@@ -505,7 +506,7 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
           .from("journal_entries")
           .select(JOURNAL_ENTRY_SELECT)
           .eq("user_id", user.id)
-          .eq("recipe_slug", "values")
+          .eq("recipe_slug", recipeSlugFor("daily_value"))
           .eq("template_type", "daily_value")
           .order("created_at", { ascending: false })
           .limit(7),
@@ -513,7 +514,7 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
           .from("journal_entries")
           .select("id, template_type, content, ai_insights")
           .eq("user_id", user.id)
-          .eq("recipe_slug", "values")
+          .eq("recipe_slug", recipeSlugFor("value_eval"))
           .eq("template_type", "value_eval")
           .maybeSingle(),
       ]);
@@ -620,7 +621,7 @@ export async function saveEvalReflectionAction(
       .from("journal_entries")
       .select("id, content")
       .eq("user_id", user.id)
-      .eq("recipe_slug", "values")
+      .eq("recipe_slug", recipeSlugFor("value_eval"))
       .eq("template_type", "value_eval")
       .maybeSingle();
 
@@ -645,7 +646,7 @@ export async function saveEvalReflectionAction(
         .from("journal_entries")
         .insert({
           user_id: user.id,
-          recipe_slug: "values",
+          recipe_slug: recipeSlugFor("value_eval"),
           template_type: "value_eval",
           content: {
             positive_reflection: positiveReflection,

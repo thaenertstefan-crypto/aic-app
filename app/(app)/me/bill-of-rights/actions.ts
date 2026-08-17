@@ -18,6 +18,7 @@ import {
   TEXT_MAX_SHORT,
   tooLong,
 } from "@/lib/utils/form-validation";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 /** Schreibt das KOMPLETTE Array über die kanonische saveRightsAction zurück
  *  (upsert + BoR-Progress). */
@@ -99,7 +100,7 @@ export async function saveGeneratedRightAction(
       .from("journal_entries")
       .select("id")
       .eq("user_id", user.id)
-      .eq("recipe_slug", "bill-of-rights")
+      .eq("recipe_slug", recipeSlugFor("bill_of_rights"))
       .eq("template_type", "bill_of_rights")
       .maybeSingle();
 
@@ -112,7 +113,7 @@ export async function saveGeneratedRightAction(
     } else {
       const { error } = await supabase.from("journal_entries").insert({
         user_id: user.id,
-        recipe_slug: "bill-of-rights",
+        recipe_slug: recipeSlugFor("bill_of_rights"),
         template_type: "bill_of_rights",
         content,
         ai_insights: text,

@@ -17,6 +17,7 @@ import {
   patchJournalContent,
   readJournalContent,
 } from "@/lib/utils/journal-content";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 // Entry texts come from the user's own DB (already length-capped at save time),
 // so defensively truncate instead of 400ing — max_tokens only bounds the OUTPUT.
@@ -244,7 +245,7 @@ async function handleFeedback(
       .select("id, template_type, content")
       .eq("id", entryId)
       .eq("user_id", user.id)
-      .eq("recipe_slug", "saying-no")
+      .eq("recipe_slug", recipeSlugFor("saying_no"))
       .eq("template_type", "saying_no")
       .maybeSingle(),
     supabase

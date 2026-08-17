@@ -13,6 +13,7 @@ import type { SayingNoContent } from "@/lib/types/db-json";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
 import { patchJournalContent } from "@/lib/utils/journal-content";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 // ─── Nein-Trainer ───────────────────────────────────────────────────────
 // Geführtes Mini-Rezept im Kopfwetter (Saying 'No' Blueprint).
@@ -71,7 +72,7 @@ export async function saveSayingNoEntryAction(
       .from("journal_entries")
       .insert({
         user_id: user.id,
-        recipe_slug: "saying-no",
+        recipe_slug: recipeSlugFor("saying_no"),
         template_type: "saying_no",
         content,
         entry_date: await serverTodayKey(),
@@ -159,7 +160,7 @@ export async function saveFinalNoAction(
       .select("content")
       .eq("id", entryId)
       .eq("user_id", user.id)
-      .eq("recipe_slug", "saying-no")
+      .eq("recipe_slug", recipeSlugFor("saying_no"))
       .eq("template_type", "saying_no")
       .maybeSingle();
 

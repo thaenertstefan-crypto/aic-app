@@ -13,6 +13,7 @@ import type { MessyMomentContent } from "@/lib/types/db-json";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
 import { patchJournalContent } from "@/lib/utils/journal-content";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 // ─── Things Got Messy ───────────────────────────────────────────────────
 // Geführtes Mini-Rezept im Kopfwetter. Einträge werden als
@@ -53,7 +54,7 @@ export async function saveMessyMomentAction(
       .from("journal_entries")
       .insert({
         user_id: user.id,
-        recipe_slug: "things-got-messy",
+        recipe_slug: recipeSlugFor("messy_moment"),
         template_type: "messy_moment",
         content,
         entry_date: await serverTodayKey(),
@@ -131,7 +132,7 @@ export async function saveGuiltFeedbackAction(
       .select("content")
       .eq("id", entryId)
       .eq("user_id", user.id)
-      .eq("recipe_slug", "things-got-messy")
+      .eq("recipe_slug", recipeSlugFor("messy_moment"))
       .eq("template_type", "messy_moment")
       .maybeSingle();
 

@@ -9,6 +9,7 @@ import {
 import { withUser } from "@/lib/actions/with-user";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 import type { OverthinkingContent } from "@/lib/types/db-json";
 
 // Die Warum-Leiter hat im Wizard max. 3 Ebenen; 10 lässt Luft für Formate von
@@ -74,7 +75,7 @@ export async function saveOverthinkingAction(
       .from("journal_entries")
       .select("id")
       .eq("user_id", user.id)
-      .eq("recipe_slug", "overthinking")
+      .eq("recipe_slug", recipeSlugFor("overthinking"))
       .eq("template_type", "overthinking")
       .maybeSingle();
 
@@ -92,7 +93,7 @@ export async function saveOverthinkingAction(
         .from("journal_entries")
         .insert({
           user_id: user.id,
-          recipe_slug: "overthinking",
+          recipe_slug: recipeSlugFor("overthinking"),
           template_type: "overthinking",
           content,
           entry_date: await serverTodayKey(),

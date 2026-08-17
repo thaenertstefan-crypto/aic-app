@@ -5,6 +5,7 @@ import {
   patchJournalContent,
   readJournalContent,
 } from "@/lib/utils/journal-content";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 import { VALUES_BANK, getValueLabel } from "@/lib/utils/values-bank";
 
 // Warm German fallback shown when the AI call fails for any reason.
@@ -41,7 +42,7 @@ export const POST = withAiRoute(
       .from("journal_entries")
       .select("template_type, content")
       .eq("user_id", user.id)
-      .eq("recipe_slug", "values")
+      .eq("recipe_slug", recipeSlugFor("daily_value"))
       .eq("template_type", "daily_value")
       .order("created_at", { ascending: false })
       .limit(7),
@@ -58,7 +59,7 @@ export const POST = withAiRoute(
       .from("journal_entries")
       .select("id, template_type, content")
       .eq("user_id", user.id)
-      .eq("recipe_slug", "values")
+      .eq("recipe_slug", recipeSlugFor("value_eval"))
       .eq("template_type", "value_eval")
       .maybeSingle(),
   ]);

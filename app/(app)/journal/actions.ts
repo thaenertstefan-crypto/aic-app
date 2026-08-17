@@ -22,6 +22,7 @@ import {
   TEXT_MAX_SHORT,
   tooLong,
 } from "@/lib/utils/form-validation";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 /** Spalten für die schlanke Listenansicht. content wird nur zur serverseitigen
  *  Vorschau-Berechnung gelesen und verlässt den Server nicht (ai_insights gar nicht). */
@@ -136,7 +137,7 @@ export async function createFreeEntryAction(
   const result = await withUser(async ({ supabase, user }) => {
     const { error } = await supabase.from("journal_entries").insert({
       user_id: user.id,
-      recipe_slug: null,
+      recipe_slug: recipeSlugFor("free"),
       template_type: "free",
       content,
       entry_date: await serverTodayKey(),

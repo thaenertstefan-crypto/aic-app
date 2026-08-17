@@ -14,6 +14,7 @@ import {
 
 import { PAGE_TITLES } from "@/lib/content/labels";
 import type { Json } from "@/lib/supabase/database.types";
+import { RECIPE_SLUG_BY_TEMPLATE } from "@/lib/utils/journal-recipe-slug";
 import type {
   BillOfRightsContent,
   DailyValueContent,
@@ -100,57 +101,64 @@ type TemplateConfig = {
   recipeSlug: string;
 };
 
+/** `RECIPE_SLUG_BY_TEMPLATE` trägt `null` für `free` (die DB-Wahrheit) — hier
+ *  wird daraus `""`, weil `recipeSlug` ein Anzeige-/Filter-Tab-Wert ist und
+ *  kein Filter-Tab je auf `""` matcht (siehe journal-recipe-slug.ts). */
+function displaySlug(templateType: keyof typeof RECIPE_SLUG_BY_TEMPLATE) {
+  return RECIPE_SLUG_BY_TEMPLATE[templateType] ?? "";
+}
+
 export const JOURNAL_TEMPLATE_MAP: Record<string, TemplateConfig> = {
   daily_value: {
     icon: Heart,
     label: "Werte-Tagebuch",
-    recipeSlug: "values",
+    recipeSlug: displaySlug("daily_value"),
   },
   value_eval: {
     icon: Notebook,
     label: "Werte-Auswertung",
-    recipeSlug: "values",
+    recipeSlug: displaySlug("value_eval"),
   },
   yin_yang: {
     icon: Compass,
     label: "Yin-&-Yang-Audit",
-    recipeSlug: "wants",
+    recipeSlug: displaySlug("yin_yang"),
   },
   little_bet: {
     icon: FlaskConical,
     label: "Little-Bet-Reflexion",
-    recipeSlug: "wants",
+    recipeSlug: displaySlug("little_bet"),
   },
   bill_of_rights: {
     icon: Shield,
     label: "Bill of Rights Reflexion",
-    recipeSlug: "bill-of-rights",
+    recipeSlug: displaySlug("bill_of_rights"),
   },
   messy_moment: {
     icon: AlertTriangle,
     label: PAGE_TITLES.thingsGotMessy,
-    recipeSlug: "things-got-messy",
+    recipeSlug: displaySlug("messy_moment"),
   },
   overthinking: {
     icon: Brain,
     label: "Grübelspirale durchbrochen",
-    recipeSlug: "overthinking",
+    recipeSlug: displaySlug("overthinking"),
   },
   saying_no: {
     icon: ShieldOff,
     label: PAGE_TITLES.sayingNo,
-    recipeSlug: "saying-no",
+    recipeSlug: displaySlug("saying_no"),
   },
   shadow: {
     // Schloss statt Rezept-Icon: signalisiert in der Liste "privat".
     icon: Lock,
     label: PAGE_TITLES.shadow,
-    recipeSlug: "shadow",
+    recipeSlug: displaySlug("shadow"),
   },
   free: {
     icon: NotebookPen,
     label: "Freier Eintrag",
-    recipeSlug: "",
+    recipeSlug: displaySlug("free"),
   },
 };
 
