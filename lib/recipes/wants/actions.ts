@@ -26,6 +26,12 @@ import {
   parseItems,
   parsePreviousIds,
 } from "@/lib/recipes/wants/items";
+import {
+  nextAuditProgress,
+  nextWantsProgress,
+  type WantsProgressRow,
+  type WantsProgressWrite,
+} from "@/lib/recipes/wants/progress";
 
 // ─── Wants-Rezept: kanonische Actions ───────────────────────────────────
 // Alle Schreibzugriffe auf die wants-Tabelle (eine Zeile pro User, zwei
@@ -86,6 +92,42 @@ async function mergeIntoColumn<
   }
 
   return ok(merged);
+}
+
+/**
+ * Fortschritt lesen, den Übergang rechnen lassen, schreiben.
+ *
+ * Die beiden Regeln stehen in `lib/recipes/wants/progress.ts` und sind dort
+ * getestet; hier bleibt nur der Datenzugriff drumherum. Ob die Nutzlast in ein
+ * `update` oder in ein `insert` geht, hängt allein daran, ob es die Zeile
+ * schon gibt — das ist Datenzugriff, deshalb steht es hier und nicht im Modul.
+ */
+async function writeProgress(
+  { supabase, user }: ActionContext,
+  next: (progress: WantsProgressRow, now: string) => WantsProgressWrite,
+): Promise<ActionResult> {
+  const { data: progress } = await supabase
+    .from("user_recipe_progress")
+    .select("id, status")
+    .eq("user_id", user.id)
+    .eq("recipe_slug", "wants")
+    .order("cycle_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const write = next(progress, new Date().toISOString());
+  if (write === null) return ok();
+
+  const { error } = progress
+    ? await supabase
+        .from("user_recipe_progress")
+        .update(write)
+        .eq("id", progress.id)
+    : await supabase
+        .from("user_recipe_progress")
+        .insert({ user_id: user.id, recipe_slug: "wants", ...write });
+
+  return error ? dbFailed(error, "wants") : ok();
 }
 
 // ─── Get all data for the page ─────────────────────────────────────────
@@ -185,56 +227,13 @@ export async function saveWantsAction(
     if (mergeResult.error !== null) return mergeResult;
     const merged = mergeResult.data;
 
-    const { supabase, user } = ctx;
-
-    // Fortschritt: abgeschlossen, sobald mindestens ein Want existiert. Seit dem
-    // Wegfall von „loslassen" kann kein Want mehr erlöschen (active bleibt immer
-    // true), darum ist das Gate schlicht „gibt es Sterne". Little Bets gaten nicht.
-    const completed = merged.length > 0;
-
-    const { data: progress } = await supabase
-      .from("user_recipe_progress")
-      .select("id, status")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "wants")
-      .order("cycle_number", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (progress) {
-      const update: TablesUpdate<"user_recipe_progress"> = { current_step: 2 };
-      if (completed && progress.status !== "completed") {
-        update.status = "completed";
-        update.completed_at = new Date().toISOString();
-      } else if (!completed && progress.status === "not_started") {
-        update.status = "in_progress";
-      }
-      const { error: progressError } = await supabase
-        .from("user_recipe_progress")
-        .update(update)
-        .eq("id", progress.id);
-      if (progressError) {
-        return dbFailed(progressError, "wants");
-      }
-    } else {
-      const insert: TablesInsert<"user_recipe_progress"> = {
-        user_id: user.id,
-        recipe_slug: "wants",
-        current_step: 2,
-        status: completed ? "completed" : "in_progress",
-        started_at: new Date().toISOString(),
-        cycle_number: 1,
-      };
-      if (completed) {
-        insert.completed_at = new Date().toISOString();
-      }
-      const { error: progressError } = await supabase
-        .from("user_recipe_progress")
-        .insert(insert);
-      if (progressError) {
-        return dbFailed(progressError, "wants");
-      }
-    }
+    // Abgeschlossen, sobald mindestens ein Want existiert. Seit dem Wegfall von
+    // „loslassen" kann kein Want mehr erlöschen (active bleibt immer true),
+    // darum ist das Gate schlicht „gibt es Sterne". Little Bets gaten nicht.
+    const progressResult = await writeProgress(ctx, (progress, now) =>
+      nextWantsProgress(progress, merged.length > 0, now),
+    );
+    if (progressResult.error !== null) return progressResult;
 
     return ok(merged);
   });
@@ -280,7 +279,8 @@ export async function saveBetsAction(
 export async function saveYinYangEntryAction(
   formData: FormData,
 ): Promise<ActionResult<SavedEntryId>> {
-  return withUser(async ({ supabase, user }) => {
+  return withUser(async (ctx) => {
+    const { supabase, user } = ctx;
     const yin = (formData.get("yin") as string | null)?.trim() ?? "";
     const yang = (formData.get("yang") as string | null)?.trim() ?? "";
     const principles =
@@ -326,40 +326,8 @@ export async function saveYinYangEntryAction(
       return dbFailed(insertError, "wants");
     }
 
-    const { data: progress } = await supabase
-      .from("user_recipe_progress")
-      .select("id, status")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "wants")
-      .order("cycle_number", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (progress) {
-      if (progress.status !== "completed") {
-        const { error: updateError } = await supabase
-          .from("user_recipe_progress")
-          .update({ current_step: 1, status: "in_progress" })
-          .eq("id", progress.id);
-        if (updateError) {
-          return dbFailed(updateError, "wants");
-        }
-      }
-    } else {
-      const { error: progressError } = await supabase
-        .from("user_recipe_progress")
-        .insert({
-          user_id: user.id,
-          recipe_slug: "wants",
-          current_step: 1,
-          status: "in_progress",
-          started_at: new Date().toISOString(),
-          cycle_number: 1,
-        });
-      if (progressError) {
-        return dbFailed(progressError, "wants");
-      }
-    }
+    const progressResult = await writeProgress(ctx, nextAuditProgress);
+    if (progressResult.error !== null) return progressResult;
 
     return ok(savedEntryId(inserted.id));
   });

@@ -20,19 +20,14 @@ import {
 } from "@/lib/utils/journal-content";
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
-
-// Werte-Slugs/-Labels sind Kurzstrings; custom Werte sind erlaubt, daher wird
-// nur Typ + Länge geprüft (nicht gegen die values-bank).
-const MAX_VALUE_LEN = 100;
-
-/** Prüft, dass ein geparstes Werte-Array nur Kurzstrings enthält (max. 20). */
-function isValueList(values: unknown): values is string[] {
-  return (
-    Array.isArray(values) &&
-    values.length <= 20 &&
-    values.every((v) => typeof v === "string" && v.length <= MAX_VALUE_LEN)
-  );
-}
+import {
+  evaluationPhase,
+  type EvaluationPhase,
+} from "@/lib/recipes/values/evaluation-phase";
+import {
+  readValueSelection,
+  type ValueSelectionProblem,
+} from "@/lib/recipes/values/value-selection";
 
 /**
  * Save the values hypothesis (Step 1 of Recipe #1).
@@ -49,24 +44,21 @@ export async function saveHypothesisAction(
   formData: FormData,
 ): Promise<ActionResult<boolean>> {
   return withUser(async ({ supabase, user }) => {
-    const valuesRaw = formData.get("values");
-    if (!valuesRaw || typeof valuesRaw !== "string") {
-      return failed("Keine Werte ausgewählt.");
+    // Schritt 1 prüft nur die Anzahl: Duplikate verhindert hier allein die
+    // Auswahl im Client (hypothesis-form.tsx). Schritt 3 prüft strenger —
+    // die Asymmetrie steht als Parameter da, sie ist keine Nachlässigkeit.
+    const selection = readValueSelection(formData.get("values"), {
+      requireDistinct: false,
+    });
+    if (selection.problem !== null) {
+      const message: Record<ValueSelectionProblem, string> = {
+        missing: "Keine Werte ausgewählt.",
+        malformed: "Ungültiges Format der ausgewählten Werte.",
+        count: "Bitte genau 5 Werte auswählen.",
+      };
+      return failed(message[selection.problem]);
     }
-
-    let values: unknown;
-    try {
-      values = JSON.parse(valuesRaw);
-    } catch {
-      return failed("Ungültiges Format der ausgewählten Werte.");
-    }
-
-    if (!isValueList(values)) {
-      return failed("Ungültiges Format der ausgewählten Werte.");
-    }
-    if (values.length !== 5) {
-      return failed("Bitte genau 5 Werte auswählen.");
-    }
+    const values = selection.values;
 
     // --- Save to values_hypothesis (upsert by user_id + version 1) ---
     const { data: existingHypothesis } = await supabase
@@ -470,13 +462,16 @@ export type EvaluationPageData = {
     startedAt: string | null;
     status: string | null;
   } | null;
-  phase: "reflection" | "adjust" | "complete";
+  phase: EvaluationPhase;
 };
 
 /**
  * Fetch all data needed for the evaluation page (Step 3 of Recipe #1).
- * - Computes which phase the user should see (reflection / adjust / complete)
- * - Redirects to journal if fewer than 7 entries exist
+ *
+ * Die Bühne rechnet `evaluationPhase` aus (lib/recipes/values/evaluation-phase.ts);
+ * hier steht nur, was dafür gelesen wird. Der Zugang zur Auswertung hängt am
+ * Journal-Schritt, der „Zur Auswertung“ ab 7 Einträgen freischaltet — diese
+ * Funktion leitet nirgendwohin um.
  */
 export async function getEvaluationData(): Promise<EvaluationPageData> {
   const result = await withUser<EvaluationPageData>(
@@ -548,17 +543,11 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
           }
         : null;
 
-      // Compute phase
-      const status = progress?.status ?? "not_started";
-      let phase: "reflection" | "adjust" | "complete";
-
-      if (status === "completed" || hypothesisVersion > 1) {
-        phase = "complete";
-      } else if (valueEvalEntry) {
-        phase = "adjust";
-      } else {
-        phase = "reflection";
-      }
+      const phase = evaluationPhase({
+        status: progress?.status ?? null,
+        hypothesisVersion,
+        hasEvalEntry: valueEvalEntry !== null,
+      });
 
       return ok({
         hypothesis,
@@ -689,29 +678,22 @@ export async function saveAdjustedHypothesisAction(
   formData: FormData,
 ): Promise<ActionResult<boolean>> {
   return withUser(async ({ supabase, user }) => {
-    const valuesRaw = formData.get("values");
-    if (!valuesRaw || typeof valuesRaw !== "string") {
-      return failed("Keine Werte angegeben.");
+    // Anders als Schritt 1 traut diese Action dem Client ausdrücklich nicht:
+    // die Tausch-Kette in Bühne B (Wert raus, ein anderer rein für ihn, der
+    // erste per „Rückgängig“ zurück) kann clientseitig ein Duplikat erzeugen,
+    // das die Anzahl-Prüfung allein nicht fängt.
+    const selection = readValueSelection(formData.get("values"), {
+      requireDistinct: true,
+    });
+    if (selection.problem !== null) {
+      const message: Record<ValueSelectionProblem, string> = {
+        missing: "Keine Werte angegeben.",
+        malformed: "Ungültiges Format der Werte.",
+        count: "Bitte genau 5 unterschiedliche Werte auswählen.",
+      };
+      return failed(message[selection.problem]);
     }
-
-    let values: unknown;
-    try {
-      values = JSON.parse(valuesRaw);
-    } catch {
-      return failed("Ungültiges Format der Werte.");
-    }
-
-    if (!isValueList(values)) {
-      return failed("Ungültiges Format der Werte.");
-    }
-    // Der Kompass trägt genau fünf Werte — die Tausch-Mechanik in Bühne B hält
-    // die Anzahl clientseitig konstant, hier steht das Gegenstück dazu. Zusätzlich
-    // auf fünf UNTERSCHIEDLICHE Werte prüfen: die Tausch-Kette (Wert raus, ein
-    // anderer rein für ihn, der erste per "Rückgängig" zurück) kann clientseitig
-    // ein Duplikat erzeugen, das die Längenprüfung allein nicht fängt.
-    if (values.length !== 5 || new Set(values).size !== 5) {
-      return failed("Bitte genau 5 unterschiedliche Werte auswählen.");
-    }
+    const values = selection.values;
 
     const originalVersionRaw = formData.get("original_version");
     const originalVersion = parseInt(
