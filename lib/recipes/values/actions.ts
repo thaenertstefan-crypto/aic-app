@@ -27,6 +27,7 @@ import {
   type CycleStand,
   type EvaluationPhase,
 } from "@/lib/recipes/values/evaluation-phase";
+import type { JourneyStand } from "@/lib/recipes/values/journey-steps";
 import {
   readValueSelection,
   type ValueSelectionProblem,
@@ -248,6 +249,80 @@ export async function getHypothesisData(): Promise<HypothesisStand> {
   // Nicht angemeldet oder DB-Fehler: leer und offen — dieselbe Vorsicht wie
   // bisher, die Action prüft die Sperre ohnehin noch einmal selbst.
   return result.error === null ? result.data : { values: null, locked: false };
+}
+
+// ─── Journey-Übersicht ───────────────────────────────────────────────
+
+/**
+ * Was die Sternenkarte der Werte-Reise braucht — **gefiltert auf den laufenden
+ * Durchlauf**.
+ *
+ * Die Übersicht las das früher selbst und dabei ungefiltert: sie zählte alle
+ * `daily_value`-Einträge und meldete im zweiten Durchlauf die sieben Tage des
+ * ersten als erledigt, während Journal und Auswertung daneben schon
+ * zyklus-scharf lasen (KAN-21). Deshalb steht der Read jetzt hier bei den
+ * anderen — und die Regel darüber in `journey-steps.ts`.
+ */
+export async function getJourneyStand(): Promise<JourneyStand> {
+  const result = await withUser<JourneyStand>(async ({ supabase, user }) => {
+    // Der Fortschritt zuerst und allein: an seiner `cycle_number` hängt der
+    // Filter des Eintrags-Reads darunter.
+    const { data: progress } = await supabase
+      .from("user_recipe_progress")
+      .select("status, cycle_number")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "values")
+      .order("cycle_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const cycleNumber = progress?.cycle_number ?? 1;
+
+    const [{ data: hypothesisRow }, { data: dailyEntries }, today] =
+      await Promise.all([
+        supabase
+          .from("values_hypothesis")
+          .select("version")
+          .eq("user_id", user.id)
+          .order("version", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("journal_entries")
+          .select("entry_date")
+          .eq("user_id", user.id)
+          .eq("recipe_slug", recipeSlugFor("daily_value"))
+          .eq("template_type", "daily_value")
+          .eq("cycle_number", cycleNumber),
+        serverTodayKey(),
+      ]);
+
+    return ok({
+      status: progress?.status ?? null,
+      cycleNumber,
+      hypothesisVersion: hypothesisRow?.version ?? 1,
+      hasHypothesisRow: hypothesisRow !== null,
+      // `entry_date` ist nullable. Ein Eintrag ohne Datum ist kein
+      // Reflexionstag — er fällt raus, statt per Cast als einer zu gelten.
+      entryDates: (dailyEntries ?? [])
+        .map((e) => e.entry_date)
+        .filter((d): d is string => d !== null),
+      today,
+    });
+  });
+
+  if (result.error === null) return result.data;
+
+  // Nicht angemeldet oder DB-Fehler: eine leere Karte. Kein Stern leuchtet,
+  // nichts wird fälschlich als erledigt gemeldet.
+  return {
+    status: null,
+    cycleNumber: 1,
+    hypothesisVersion: 1,
+    hasHypothesisRow: false,
+    entryDates: [],
+    today: await serverTodayKey(),
+  };
 }
 
 // ─── Journal (Step 2) ────────────────────────────────────────────────
@@ -865,10 +940,9 @@ export async function saveAdjustedHypothesisAction(
  * Creates a new user_recipe_progress row with cycle_number+1,
  * current_step=2 (skip hypothesis), then redirects to the journal.
  *
- * HINWEIS (Phase 13.12): Der zugehörige CTA ist in der UI vorerst deaktiviert,
- * weil Journal-Einträge noch nicht pro Zyklus abgegrenzt sind (F-CYCLE). Diese
- * Action bleibt als Export erhalten und wird mit der sauberen Zyklus-Logik in
- * einer eigenen Session reaktiviert.
+ * Der CTA dazu sitzt auf der Rückkehr-Bühne der Auswertung — bewusst nicht im
+ * Feier-Moment. Seit KAN-20 sind Journal-Einträge über `cycle_number` pro
+ * Durchlauf abgegrenzt; vorher wäre der neue Durchlauf sofort auf 7/7 gestanden.
  */
 export async function startNewCycleAction(): Promise<ActionResult> {
   return withUser(async ({ supabase, user }) => {
