@@ -26,11 +26,10 @@ import {
   parseItems,
   parsePreviousIds,
 } from "@/lib/recipes/wants/items";
+import { writeProgress } from "@/lib/recipes/progress";
 import {
   nextAuditProgress,
   nextWantsProgress,
-  type WantsProgressRow,
-  type WantsProgressWrite,
 } from "@/lib/recipes/wants/progress";
 
 // ─── Wants-Rezept: kanonische Actions ───────────────────────────────────
@@ -92,42 +91,6 @@ async function mergeIntoColumn<
   }
 
   return ok(merged);
-}
-
-/**
- * Fortschritt lesen, den Übergang rechnen lassen, schreiben.
- *
- * Die beiden Regeln stehen in `lib/recipes/wants/progress.ts` und sind dort
- * getestet; hier bleibt nur der Datenzugriff drumherum. Ob die Nutzlast in ein
- * `update` oder in ein `insert` geht, hängt allein daran, ob es die Zeile
- * schon gibt — das ist Datenzugriff, deshalb steht es hier und nicht im Modul.
- */
-async function writeProgress(
-  { supabase, user }: ActionContext,
-  next: (progress: WantsProgressRow, now: string) => WantsProgressWrite,
-): Promise<ActionResult> {
-  const { data: progress } = await supabase
-    .from("user_recipe_progress")
-    .select("id, status")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "wants")
-    .order("cycle_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const write = next(progress, new Date().toISOString());
-  if (write === null) return ok();
-
-  const { error } = progress
-    ? await supabase
-        .from("user_recipe_progress")
-        .update(write)
-        .eq("id", progress.id)
-    : await supabase
-        .from("user_recipe_progress")
-        .insert({ user_id: user.id, recipe_slug: "wants", ...write });
-
-  return error ? dbFailed(error, "wants") : ok();
 }
 
 // ─── Get all data for the page ─────────────────────────────────────────
@@ -230,7 +193,7 @@ export async function saveWantsAction(
     // Abgeschlossen, sobald mindestens ein Want existiert. Seit dem Wegfall von
     // „loslassen" kann kein Want mehr erlöschen (active bleibt immer true),
     // darum ist das Gate schlicht „gibt es Sterne". Little Bets gaten nicht.
-    const progressResult = await writeProgress(ctx, (progress, now) =>
+    const progressResult = await writeProgress(ctx, "wants", (progress, now) =>
       nextWantsProgress(progress, merged.length > 0, now),
     );
     if (progressResult.error !== null) return progressResult;
@@ -326,7 +289,7 @@ export async function saveYinYangEntryAction(
       return dbFailed(insertError, "wants");
     }
 
-    const progressResult = await writeProgress(ctx, nextAuditProgress);
+    const progressResult = await writeProgress(ctx, "wants", nextAuditProgress);
     if (progressResult.error !== null) return progressResult;
 
     return ok(savedEntryId(inserted.id));

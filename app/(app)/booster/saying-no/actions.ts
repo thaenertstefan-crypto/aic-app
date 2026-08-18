@@ -9,6 +9,7 @@ import {
   type ActionResult,
 } from "@/lib/actions/action-result";
 import { withUser } from "@/lib/actions/with-user";
+import { writeProgress } from "@/lib/recipes/progress";
 import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
 import type { SayingNoContent } from "@/lib/types/db-json";
 import { serverTodayKey } from "@/lib/server/timezone";
@@ -69,7 +70,8 @@ export async function saveSayingNoEntryAction(
     content.hell_yes = hellYes === "true";
   }
 
-  return withUser(async ({ supabase, user }) => {
+  return withUser(async (ctx) => {
+    const { supabase, user } = ctx;
     const { data: inserted, error: insertError } = await supabase
       .from("journal_entries")
       .insert({
@@ -86,46 +88,17 @@ export async function saveSayingNoEntryAction(
       return dbFailed(insertError, "saying-no");
     }
 
-    // Rezept-Fortschritt auf "completed" setzen (höchster Zyklus).
-    const { data: progress } = await supabase
-      .from("user_recipe_progress")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "saying-no")
-      .order("cycle_number", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (progress) {
-      const { error: updateError } = await supabase
-        .from("user_recipe_progress")
-        .update({
-          current_step: 1,
-          status: "completed",
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", progress.id);
-
-      if (updateError) {
-        return dbFailed(updateError, "saying-no");
-      }
-    } else {
-      const { error: progressInsertError } = await supabase
-        .from("user_recipe_progress")
-        .insert({
-          user_id: user.id,
-          recipe_slug: "saying-no",
-          current_step: 1,
-          status: "completed",
-          started_at: new Date().toISOString(),
-          completed_at: new Date().toISOString(),
-          cycle_number: 1,
-        });
-
-      if (progressInsertError) {
-        return dbFailed(progressInsertError, "saying-no");
-      }
-    }
+    // Die Übung hat nur eine Bühne — abgeschlossen heißt Schritt 1.
+    const progressResult = await writeProgress(ctx, "saying-no", (row, now) => ({
+      current_step: 1,
+      status: "completed",
+      completed_at: now,
+      // Nur auf einer neuen Zeile: hier beginnt der Durchlauf. Eine bestehende
+      // behält ihr `started_at` — auch die vom Intro-Gate, die bewusst keins
+      // trägt, weil die Intro anzusehen kein Start ist.
+      ...(row ? {} : { started_at: now }),
+    }));
+    if (progressResult.error !== null) return progressResult;
 
     return ok(savedEntryId(inserted.id));
   });

@@ -9,10 +9,7 @@ import {
   type ActionResult,
 } from "@/lib/actions/action-result";
 import { withUser } from "@/lib/actions/with-user";
-import type {
-  TablesInsert,
-  TablesUpdate,
-} from "@/lib/supabase/database.types";
+import { writeProgress, type ProgressWrite } from "@/lib/recipes/progress";
 import type { RightItem } from "@/lib/types/db-json";
 import { TEXT_MAX_SHORT, tooLong } from "@/lib/utils/form-validation";
 
@@ -73,7 +70,8 @@ export async function getBillOfRightsData(): Promise<ActionResult<RightsData>> {
 export async function saveRightsAction(
   formData: FormData,
 ): Promise<ActionResult<RightItem[]>> {
-  return withUser(async ({ supabase, user }) => {
+  return withUser(async (ctx) => {
+    const { supabase, user } = ctx;
     const rightsRaw = formData.get("rights");
     if (typeof rightsRaw !== "string" || !rightsRaw) {
       return failed("Keine Rechte zum Speichern erhalten.");
@@ -161,52 +159,29 @@ export async function saveRightsAction(
       }
     }
 
-    // Update progress: mark completed if 3+ rights
+    // Abgeschlossen, sobald drei Rechte aktiv sind — und ein abgeschlossener
+    // Durchlauf wird nie zurückgestuft. Schritt 2 ist die Sammlung; dorthin
+    // schiebt jedes Speichern, auch das eines abgeschlossenen Durchlaufs.
     const completed = merged.filter((r) => r.active).length >= 3;
 
-    const { data: progress } = await supabase
-      .from("user_recipe_progress")
-      .select("id, status")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "bill-of-rights")
-      .order("cycle_number", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (progress) {
-      const update: TablesUpdate<"user_recipe_progress"> = { current_step: 2 };
-      if (completed && progress.status !== "completed") {
-        update.status = "completed";
-        update.completed_at = new Date().toISOString();
-      } else if (!completed && progress.status === "not_started") {
-        update.status = "in_progress";
-      }
-      const { error: progressError } = await supabase
-        .from("user_recipe_progress")
-        .update(update)
-        .eq("id", progress.id);
-      if (progressError) {
-        return dbFailed(progressError, "bill-of-rights");
-      }
-    } else {
-      const insert: TablesInsert<"user_recipe_progress"> = {
-        user_id: user.id,
-        recipe_slug: "bill-of-rights",
-        current_step: 2,
-        status: completed ? "completed" : "in_progress",
-        started_at: new Date().toISOString(),
-        cycle_number: 1,
-      };
-      if (completed) {
-        insert.completed_at = new Date().toISOString();
-      }
-      const { error: progressError } = await supabase
-        .from("user_recipe_progress")
-        .insert(insert);
-      if (progressError) {
-        return dbFailed(progressError, "bill-of-rights");
-      }
-    }
+    const progressResult = await writeProgress(
+      ctx,
+      "bill-of-rights",
+      (row, now) => {
+        const write: NonNullable<ProgressWrite> = { current_step: 2 };
+        if (completed && row?.status !== "completed") {
+          write.status = "completed";
+          write.completed_at = now;
+        } else if (!completed && (!row || row.status === "not_started")) {
+          write.status = "in_progress";
+        }
+        // Neue Zeile heißt: hier beginnt der Durchlauf. Eine bestehende behält
+        // ihr `started_at`.
+        if (!row) write.started_at = now;
+        return write;
+      },
+    );
+    if (progressResult.error !== null) return progressResult;
 
     return ok(merged);
   });

@@ -3,10 +3,10 @@
 import {
   dbFailed,
   failed,
-  ok,
   type ActionResult,
 } from "@/lib/actions/action-result";
 import { withUser } from "@/lib/actions/with-user";
+import { writeProgress } from "@/lib/recipes/progress";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
@@ -69,7 +69,8 @@ export async function saveOverthinkingAction(
     decision,
   };
 
-  return withUser(async ({ supabase, user }) => {
+  return withUser(async (ctx) => {
+    const { supabase, user } = ctx;
     // Upsert journal_entries for this user + recipe + template_type
     const { data: existingEntry } = await supabase
       .from("journal_entries")
@@ -104,48 +105,16 @@ export async function saveOverthinkingAction(
       }
     }
 
-    // Mark progress as completed with current_step = 8
-    const { data: progress } = await supabase
-      .from("user_recipe_progress")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "overthinking")
-      .order("cycle_number", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (progress) {
-      const { error: updateError } = await supabase
-        .from("user_recipe_progress")
-        .update({
-          current_step: 8,
-          status: "completed",
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", progress.id);
-
-      if (updateError) {
-        return dbFailed(updateError, "overthinking");
-      }
-    } else {
-      // Shouldn't happen (recipe was started via startRecipeAction), but handle gracefully
-      const { error: insertError } = await supabase
-        .from("user_recipe_progress")
-        .insert({
-          user_id: user.id,
-          recipe_slug: "overthinking",
-          current_step: 8,
-          status: "completed",
-          started_at: new Date().toISOString(),
-          completed_at: new Date().toISOString(),
-          cycle_number: 1,
-        });
-
-      if (insertError) {
-        return dbFailed(insertError, "overthinking");
-      }
-    }
-
-    return ok();
+    // Abgeschlossen heißt hier: Schritt 8, die letzte Bühne der Übung. Welcher
+    // Schritt das ist, weiß nur die Übung — der Rest steht in writeProgress.
+    return writeProgress(ctx, "overthinking", (row, now) => ({
+      current_step: 8,
+      status: "completed",
+      completed_at: now,
+      // Nur auf einer neuen Zeile: hier beginnt der Durchlauf. Eine bestehende
+      // behält ihr `started_at` — auch die vom Intro-Gate, die bewusst keins
+      // trägt, weil die Intro anzusehen kein Start ist.
+      ...(row ? {} : { started_at: now }),
+    }));
   });
 }

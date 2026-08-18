@@ -19,6 +19,11 @@ import {
   readJournalContent,
 } from "@/lib/utils/journal-content";
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
+import {
+  readProgress,
+  writeProgress,
+  type ProgressRow,
+} from "@/lib/recipes/progress";
 import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
 import {
   evaluationPhase,
@@ -41,19 +46,11 @@ import {
  * Gelesen von Schritt 1 (Sperre) und der Auswertung (Bühne). Was daraus folgt,
  * entscheidet `cycleIsComplete` — hier steht nur, was dafür gelesen wird.
  */
-async function readCycleStand({
-  supabase,
-  user,
-}: ActionContext): Promise<CycleStand> {
-  const [{ data: progress }, { data: hypothesisRow }] = await Promise.all([
-    supabase
-      .from("user_recipe_progress")
-      .select("status, cycle_number")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "values")
-      .order("cycle_number", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+async function readCycleStand(ctx: ActionContext): Promise<CycleStand> {
+  const { supabase, user } = ctx;
+
+  const [progress, { data: hypothesisRow }] = await Promise.all([
+    readProgress(ctx, "values"),
     supabase
       .from("values_hypothesis")
       .select("version")
@@ -72,16 +69,7 @@ async function readCycleStand({
 
 /** Die Nummer des laufenden Durchlaufs — der Filterwert jedes Werte-Reads. */
 async function readCycleNumber(ctx: ActionContext): Promise<number> {
-  const { data } = await ctx.supabase
-    .from("user_recipe_progress")
-    .select("cycle_number")
-    .eq("user_id", ctx.user.id)
-    .eq("recipe_slug", "values")
-    .order("cycle_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  return data?.cycle_number ?? 1;
+  return (await readProgress(ctx, "values"))?.cycle_number ?? 1;
 }
 
 /**
@@ -160,47 +148,16 @@ export async function saveHypothesisAction(
       }
     }
 
-    // --- Advance user_recipe_progress to step 2 ---
-    const { data: existingProgress } = await supabase
-      .from("user_recipe_progress")
-      .select("started_at, id")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "values")
-      .order("cycle_number", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (existingProgress) {
-      const { error: updateError } = await supabase
-        .from("user_recipe_progress")
-        .update({
-          current_step: 2,
-          status: "in_progress",
-          started_at: existingProgress.started_at ?? new Date().toISOString(),
-        })
-        .eq("id", existingProgress.id);
-
-      if (updateError) {
-        return dbFailed(updateError, "values");
-      }
-    } else {
-      // Shouldn't happen normally (user would have started the recipe first),
-      // but handle gracefully by creating progress row.
-      const { error: insertError } = await supabase
-        .from("user_recipe_progress")
-        .insert({
-          user_id: user.id,
-          recipe_slug: "values",
-          current_step: 2,
-          status: "in_progress",
-          started_at: new Date().toISOString(),
-          cycle_number: 1,
-        });
-
-      if (insertError) {
-        return dbFailed(insertError, "values");
-      }
-    }
+    // --- Weiter auf Schritt 2, das Journal ---
+    // `started_at` bleibt stehen, wo es steht: der Durchlauf begann bei seinem
+    // Start, nicht bei diesem Speichern. Fehlt es (Zeile vom Intro-Gate), ist
+    // jetzt der Anfang.
+    const progressResult = await writeProgress(ctx, "values", (row, now) => ({
+      current_step: 2,
+      status: "in_progress",
+      started_at: row?.started_at ?? now,
+    }));
+    if (progressResult.error !== null) return progressResult;
 
     // Kein Redirect mehr — die Form zeigt nach Erfolg einen Completion-Screen
     // (grüner Haken + Werte-Liste) und verlinkt von dort auf die Journey-Übersicht.
@@ -269,17 +226,12 @@ export async function getHypothesisData(): Promise<HypothesisStand> {
  * anderen — und die Regel darüber in `journey-steps.ts`.
  */
 export async function getJourneyStand(): Promise<JourneyStand> {
-  const result = await withUser<JourneyStand>(async ({ supabase, user }) => {
+  const result = await withUser<JourneyStand>(async (ctx) => {
+    const { supabase, user } = ctx;
+
     // Der Fortschritt zuerst und allein: an seiner `cycle_number` hängt der
     // Filter des Eintrags-Reads darunter.
-    const { data: progress } = await supabase
-      .from("user_recipe_progress")
-      .select("status, cycle_number")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "values")
-      .order("cycle_number", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const progress = await readProgress(ctx, "values");
 
     const cycleNumber = progress?.cycle_number ?? 1;
 
@@ -389,7 +341,7 @@ export type JournalPageData = {
  * Journal-Einträge frisch; progress/hypothesis stammen aus dem Aufrufer.
  */
 type JournalDataPreload = {
-  progress: { started_at: string | null; current_step: number | null } | null;
+  progress: ProgressRow;
   hypothesisValues: string[] | null;
 };
 
@@ -407,10 +359,16 @@ export async function getJournalData(
   const result = await withUser<JournalPageData>(async (ctx) => {
     const { supabase, user } = ctx;
 
-    // Nur die Einträge des laufenden Durchlaufs: ohne diesen Filter fand ein
-    // zweiter Durchlauf die sieben Tage des ersten vor und stand sofort auf
-    // 7/7 (KAN-20).
-    const cycleNumber = await readCycleNumber(ctx);
+    // Der Fortschritt zuerst und allein — er trägt beides, was diese Seite von
+    // ihm braucht: den Durchlauf, nach dem die Einträge gefiltert werden (ohne
+    // diesen Filter fand ein zweiter Durchlauf die sieben Tage des ersten vor
+    // und stand sofort auf 7/7, KAN-20), und `started_at`/`current_step` für
+    // die Bühne. Vorher stand er zweimal da: einmal als `readCycleNumber`,
+    // einmal im `Promise.all` darunter.
+    const progress = preloaded
+      ? preloaded.progress
+      : await readProgress(ctx, "values");
+    const cycleNumber = progress?.cycle_number ?? 1;
 
     // Journal-Einträge werden immer frisch gelesen.
     const entriesQuery = supabase
@@ -433,16 +391,15 @@ export async function getJournalData(
       return ok({
         hypothesis: preloaded.hypothesisValues,
         entries: toJournalEntries(entries),
-        startedAt: preloaded.progress?.started_at ?? null,
-        currentStep: preloaded.progress?.current_step ?? 1,
+        startedAt: progress?.started_at ?? null,
+        currentStep: progress?.current_step ?? 1,
       });
     }
 
-    // Standalone: die drei unabhängigen Reads parallel statt seriell.
+    // Standalone: die beiden übrigen Reads parallel statt seriell.
     const [
       { data: hypothesisRow, error: hypothesisError },
       { data: entries, error: entriesError },
-      { data: progress, error: progressError },
     ] = await Promise.all([
       supabase
         .from("values_hypothesis")
@@ -452,18 +409,10 @@ export async function getJournalData(
         .limit(1)
         .maybeSingle(),
       entriesQuery,
-      supabase
-        .from("user_recipe_progress")
-        .select("started_at, current_step")
-        .eq("user_id", user.id)
-        .eq("recipe_slug", "values")
-        .order("cycle_number", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
     ]);
 
     // Echte Lesefehler an die Segment-Error-Boundary geben statt als Leerzustand.
-    const readError = hypothesisError ?? entriesError ?? progressError;
+    const readError = hypothesisError ?? entriesError;
     if (readError) {
       throw new Error(
         `getJournalData: read failed (${readError.code ?? "unknown"})`,
@@ -597,24 +546,12 @@ export async function saveJournalEntryAction(
       .eq("cycle_number", cycleNumber);
 
     if (count !== null && count >= 7) {
-      const { data: progress } = await supabase
-        .from("user_recipe_progress")
-        .select("id, current_step")
-        .eq("user_id", user.id)
-        .eq("recipe_slug", "values")
-        .order("cycle_number", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (progress && (progress.current_step ?? 1) < 3) {
-        const { error: advanceError } = await supabase
-          .from("user_recipe_progress")
-          .update({ current_step: 3 })
-          .eq("id", progress.id);
-        if (advanceError) {
-          return dbFailed(advanceError, "values");
-        }
-      }
+      // Nur vorwärts, und nur auf einer Zeile, die es schon gibt: wer schon
+      // weiter ist, wird von einem nachgetragenen Eintrag nicht zurückgezogen.
+      const advanceResult = await writeProgress(ctx, "values", (row) =>
+        row && (row.current_step ?? 1) < 3 ? { current_step: 3 } : null,
+      );
+      if (advanceResult.error !== null) return advanceResult;
     }
 
     revalidatePath("/me/values/journey/journal");
@@ -658,18 +595,13 @@ export type EvaluationPageData = {
  */
 export async function getEvaluationData(): Promise<EvaluationPageData> {
   const result = await withUser<EvaluationPageData>(
-    async ({ supabase, user }) => {
+    async (ctx) => {
+      const { supabase, user } = ctx;
+
       // Der Fortschritt zuerst und allein: an seiner `cycle_number` hängen die
       // Filter der drei folgenden Reads. Vor KAN-20 liefen alle vier parallel,
       // weil keiner den Durchlauf kannte — und genau das war der Defekt.
-      const { data: progress } = await supabase
-        .from("user_recipe_progress")
-        .select("id, cycle_number, started_at, status")
-        .eq("user_id", user.id)
-        .eq("recipe_slug", "values")
-        .order("cycle_number", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const progress = await readProgress(ctx, "values");
 
       const cycleNumber = progress?.cycle_number ?? 1;
 
@@ -911,29 +843,12 @@ export async function saveAdjustedHypothesisAction(
       return dbFailed(insertError, "values");
     }
 
-    // Mark recipe progress as completed
-    const { data: progress } = await supabase
-      .from("user_recipe_progress")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "values")
-      .order("cycle_number", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (progress) {
-      const { error: updateError } = await supabase
-        .from("user_recipe_progress")
-        .update({
-          status: "completed",
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", progress.id);
-
-      if (updateError) {
-        return dbFailed(updateError, "values");
-      }
-    }
+    // Den Durchlauf abschließen. Gibt es keine Zeile, gibt es auch keinen
+    // Durchlauf zum Abschließen — dann bleibt es beim Nichtstun, wie bisher.
+    const progressResult = await writeProgress(ctx, "values", (row, now) =>
+      row ? { status: "completed", completed_at: now } : null,
+    );
+    if (progressResult.error !== null) return progressResult;
 
     revalidatePath("/me/values/journey/evaluation");
     return ok(true);
@@ -955,20 +870,14 @@ export async function saveAdjustedHypothesisAction(
  * 2; die Seite zeigt den Kompass nur, ändern lässt er sich dort nicht (KAN-19).
  */
 export async function startNewCycleAction(): Promise<ActionResult> {
-  return withUser(async ({ supabase, user }) => {
-    // Get current highest cycle_number
-    const { data: latestProgress } = await supabase
-      .from("user_recipe_progress")
-      .select("cycle_number")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "values")
-      .order("cycle_number", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  return withUser(async (ctx) => {
+    const { supabase, user } = ctx;
+    const latest = await readProgress(ctx, "values");
+    const newCycleNumber = (latest?.cycle_number ?? 0) + 1;
 
-    const newCycleNumber = (latestProgress?.cycle_number ?? 0) + 1;
-
-    // Create new progress row for the new cycle
+    // Bewusst ein nacktes `insert` statt `writeProgress`: dieser eine Vorgang
+    // legt IMMER eine neue Zeile an, auch wenn es schon eine gibt — genau das
+    // ist ein neuer Durchlauf. `writeProgress` würde die bestehende updaten.
     const { error: insertError } = await supabase
       .from("user_recipe_progress")
       .insert({

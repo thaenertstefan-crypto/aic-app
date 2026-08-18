@@ -1,12 +1,8 @@
 "use server";
 
-import {
-  dbFailed,
-  failed,
-  ok,
-  type ActionResult,
-} from "@/lib/actions/action-result";
+import { failed, ok, type ActionResult } from "@/lib/actions/action-result";
 import { withUser } from "@/lib/actions/with-user";
+import { writeProgress } from "@/lib/recipes/progress";
 import { getRecipeBySlug } from "@/lib/utils/recipes";
 
 // ─── Rezept-Intro "schon gesehen?"-Status (Schritt 6.10) ────────────────
@@ -48,40 +44,19 @@ export async function hasSeenRecipeIntro(slug: string): Promise<boolean> {
 export async function markRecipeIntroSeenAction(
   slug: string,
 ): Promise<ActionResult> {
-  return withUser(async ({ supabase, user }) => {
+  return withUser(async (ctx) => {
     // Slug kommt aus Client-Komponenten — nur bekannte Rezepte zulassen.
     if (!getRecipeBySlug(slug)) {
       return failed("Unbekanntes Rezept.");
     }
 
-    // Höchste cycle_number-Zeile für (user, slug) holen
-    const { data: existing } = await supabase
-      .from("user_recipe_progress")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", slug)
-      .order("cycle_number", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (existing) {
-      const { error } = await supabase
-        .from("user_recipe_progress")
-        .update({ intro_seen: true })
-        .eq("id", existing.id);
-      return error ? dbFailed(error, "user_recipe_progress") : ok();
-    }
-
-    // Noch keine Zeile — anlegen, ohne das Rezept als gestartet zu markieren.
-    const { error } = await supabase.from("user_recipe_progress").insert({
-      user_id: user.id,
-      recipe_slug: slug,
-      current_step: 1,
-      status: "not_started",
-      cycle_number: 1,
-      intro_seen: true,
-    });
-
-    return error ? dbFailed(error, "user_recipe_progress") : ok();
+    return writeProgress(ctx, slug, (row) =>
+      row
+        ? { intro_seen: true }
+        : // Noch keine Zeile — anlegen, ohne das Rezept als gestartet zu
+          // markieren. Kein `started_at`: die Intro anzusehen ist kein Start,
+          // und `writeProgress` setzt von sich aus nur `cycle_number`.
+          { current_step: 1, status: "not_started", intro_seen: true },
+    );
   });
 }

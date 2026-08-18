@@ -5,10 +5,10 @@ import { revalidatePath } from "next/cache";
 import {
   dbFailed,
   failed,
-  ok,
   type ActionResult,
 } from "@/lib/actions/action-result";
 import { withUser, type ActionContext } from "@/lib/actions/with-user";
+import { writeProgress } from "@/lib/recipes/progress";
 import type { ShadowContent } from "@/lib/types/db-json";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
@@ -21,43 +21,19 @@ import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 // in der Journal-Liste). Beim „Verbrennen" wird gar nichts gespeichert —
 // dann markiert nur markShadowDoneAction das Rezept als abgeschlossen.
 
-/** Rezept-Fortschritt auf "completed" setzen (höchster Zyklus) — geteilt
- *  zwischen Behalten, Verbrennen und Rage Walk ohne Notiz. */
-async function completeShadowProgress({
-  supabase,
-  user,
-}: ActionContext): Promise<ActionResult> {
-  const { data: progress } = await supabase
-    .from("user_recipe_progress")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("recipe_slug", "shadow")
-    .order("cycle_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (progress) {
-    const { error } = await supabase
-      .from("user_recipe_progress")
-      .update({
-        current_step: 1,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", progress.id);
-    return error ? dbFailed(error, "shadow") : ok();
-  }
-
-  const { error } = await supabase.from("user_recipe_progress").insert({
-    user_id: user.id,
-    recipe_slug: "shadow",
+/** Rezept-Fortschritt auf "completed" setzen — geteilt zwischen Behalten,
+ *  Verbrennen und Rage Walk ohne Notiz. Die Übung hat nur eine Bühne, darum
+ *  heißt abgeschlossen hier Schritt 1. */
+function completeShadowProgress(ctx: ActionContext): Promise<ActionResult> {
+  return writeProgress(ctx, "shadow", (row, now) => ({
     current_step: 1,
     status: "completed",
-    started_at: new Date().toISOString(),
-    completed_at: new Date().toISOString(),
-    cycle_number: 1,
-  });
-  return error ? dbFailed(error, "shadow") : ok();
+    completed_at: now,
+    // Nur auf einer neuen Zeile: hier beginnt der Durchlauf. Eine bestehende
+    // behält ihr `started_at` — auch die vom Intro-Gate, die bewusst keins
+    // trägt, weil die Intro anzusehen kein Start ist.
+    ...(row ? {} : { started_at: now }),
+  }));
 }
 
 /**

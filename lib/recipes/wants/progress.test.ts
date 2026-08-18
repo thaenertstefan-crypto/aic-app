@@ -1,16 +1,33 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import {
-  nextAuditProgress,
-  nextWantsProgress,
-  type WantsProgressWrite,
-} from "./progress.ts";
+import type { Enums } from "../../supabase/database.types.ts";
+import type { ProgressWrite } from "../progress.ts";
+import { nextAuditProgress, nextWantsProgress } from "./progress.ts";
 
 const NOW = "2026-08-18T10:00:00.000Z";
 
+/**
+ * Eine bestehende Fortschritts-Zeile. Beide Regeln lesen nur `status`, aber der
+ * gemeinsame `ProgressRow` ist seit KAN-24 die ganze Zeile — der Rest steht
+ * hier einmal, damit die Tests von den Spalten reden, um die es geht.
+ */
+function row(status: Enums<"recipe_status">) {
+  return {
+    id: "00000000-0000-0000-0000-000000000001",
+    user_id: "00000000-0000-0000-0000-0000000000aa",
+    recipe_slug: "wants",
+    cycle_number: 1,
+    current_step: 1,
+    status,
+    intro_seen: true,
+    started_at: NOW,
+    completed_at: null,
+  };
+}
+
 /** Die Nutzlast eines Schreibvorgangs — schlägt fehl, wenn keiner ansteht. */
-function payloadOf(write: WantsProgressWrite) {
+function payloadOf(write: ProgressWrite) {
   assert.notEqual(write, null, "es sollte geschrieben werden");
   return write ?? {};
 }
@@ -22,8 +39,10 @@ describe("nextWantsProgress — die erste Fortschritts-Zeile", () => {
     assert.equal(row.current_step, 2);
     assert.equal(row.status, "in_progress");
     assert.equal(row.started_at, NOW);
-    assert.equal(row.cycle_number, 1);
     assert.equal(row.completed_at, undefined);
+    // `cycle_number` steht bewusst NICHT hier: seit KAN-24 setzt es
+    // `writeProgress` beim Anlegen selbst.
+    assert.equal(row.cycle_number, undefined);
   });
 
   it("legt sie mit Sternen sofort als abgeschlossen an", () => {
@@ -37,7 +56,7 @@ describe("nextWantsProgress — die erste Fortschritts-Zeile", () => {
 describe("nextWantsProgress — Sterne schließen ab", () => {
   it("schließt einen laufenden Durchlauf ab, sobald ein Stern steht", () => {
     const changes = payloadOf(
-      nextWantsProgress({ status: "in_progress" }, true, NOW),
+      nextWantsProgress(row("in_progress"), true, NOW),
     );
 
     assert.equal(changes.status, "completed");
@@ -47,7 +66,7 @@ describe("nextWantsProgress — Sterne schließen ab", () => {
 
   it("holt einen unberührten Durchlauf ohne Sterne auf in_progress", () => {
     const changes = payloadOf(
-      nextWantsProgress({ status: "not_started" }, false, NOW),
+      nextWantsProgress(row("not_started"), false, NOW),
     );
 
     assert.equal(changes.status, "in_progress");
@@ -56,7 +75,7 @@ describe("nextWantsProgress — Sterne schließen ab", () => {
 
   it("rührt einen laufenden Durchlauf ohne Sterne im Status nicht an", () => {
     const changes = payloadOf(
-      nextWantsProgress({ status: "in_progress" }, false, NOW),
+      nextWantsProgress(row("in_progress"), false, NOW),
     );
 
     assert.equal(changes.status, undefined);
@@ -70,7 +89,7 @@ describe("nextWantsProgress — Sterne schließen ab", () => {
     for (const status of ["not_started", "in_progress", "completed"] as const) {
       for (const completed of [true, false]) {
         assert.equal(
-          payloadOf(nextWantsProgress({ status }, completed, NOW)).current_step,
+          payloadOf(nextWantsProgress(row(status), completed, NOW)).current_step,
           2,
         );
       }
@@ -82,7 +101,7 @@ describe("nextWantsProgress — stuft einen abgeschlossenen Durchlauf nicht zur�
   it("schreibt bei erneutem Speichern mit Sternen kein zweites completed_at", () => {
     // Sonst wanderte der Abschluss-Zeitpunkt bei jedem Speichern nach vorn.
     const changes = payloadOf(
-      nextWantsProgress({ status: "completed" }, true, NOW),
+      nextWantsProgress(row("completed"), true, NOW),
     );
 
     assert.equal(changes.status, undefined);
@@ -91,7 +110,7 @@ describe("nextWantsProgress — stuft einen abgeschlossenen Durchlauf nicht zur�
 
   it("setzt ihn auch dann nicht auf in_progress, wenn kein Stern mehr steht", () => {
     const changes = payloadOf(
-      nextWantsProgress({ status: "completed" }, false, NOW),
+      nextWantsProgress(row("completed"), false, NOW),
     );
 
     assert.equal(changes.status, undefined);
@@ -105,11 +124,11 @@ describe("nextAuditProgress — dieselbe Regel, andere Bühne", () => {
     assert.equal(row.current_step, 1);
     assert.equal(row.status, "in_progress");
     assert.equal(row.started_at, NOW);
-    assert.equal(row.cycle_number, 1);
+    assert.equal(row.cycle_number, undefined);
   });
 
   it("setzt einen unberührten Durchlauf auf in_progress", () => {
-    const changes = payloadOf(nextAuditProgress({ status: "not_started" }, NOW));
+    const changes = payloadOf(nextAuditProgress(row("not_started"), NOW));
 
     assert.equal(changes.status, "in_progress");
     assert.equal(changes.current_step, 1);
@@ -118,7 +137,7 @@ describe("nextAuditProgress — dieselbe Regel, andere Bühne", () => {
   it("setzt auch einen laufenden Durchlauf auf in_progress", () => {
     // Anders als bei den Sternen: das Audit fragt nur nach „abgeschlossen",
     // nicht nach „unberührt". Die Asymmetrie ist gewollt und benannt.
-    const changes = payloadOf(nextAuditProgress({ status: "in_progress" }, NOW));
+    const changes = payloadOf(nextAuditProgress(row("in_progress"), NOW));
 
     assert.equal(changes.status, "in_progress");
   });
@@ -127,6 +146,6 @@ describe("nextAuditProgress — dieselbe Regel, andere Bühne", () => {
     // Und fasst ihn gar nicht erst an: `current_step` darf ein
     // Wiederholungs-Audit nicht auf 1 zurückziehen, sonst zeigte der
     // Weiter-Link des Dashboards wieder auf die Sternenschmiede.
-    assert.equal(nextAuditProgress({ status: "completed" }, NOW), null);
+    assert.equal(nextAuditProgress(row("completed"), NOW), null);
   });
 });

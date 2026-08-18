@@ -3,6 +3,7 @@ import { LogOut } from "lucide-react";
 import { signoutAction } from "@/app/(auth)/auth.actions";
 import { createClient } from "@/lib/supabase/server";
 import { getCachedUser } from "@/lib/supabase/get-user";
+import { everCompletedSlugs, readAllProgress } from "@/lib/recipes/progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/brand/page-header";
@@ -22,17 +23,14 @@ export default async function SettingsPage() {
   if (user) {
     const [
       { count: journalEntriesCount },
-      { data: progressRows },
+      progressRows,
       { data: billOfRights },
     ] = await Promise.all([
       supabase
         .from("journal_entries")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id),
-      supabase
-        .from("user_recipe_progress")
-        .select("recipe_slug, status")
-        .eq("user_id", user.id),
+      readAllProgress({ supabase, user }),
       supabase
         .from("bill_of_rights")
         .select("rights")
@@ -42,11 +40,10 @@ export default async function SettingsPage() {
 
     journalCount = journalEntriesCount ?? 0;
 
-    recipesCompleted = new Set(
-      (progressRows ?? [])
-        .filter((p) => p.status === "completed")
-        .map((p) => p.recipe_slug),
-    ).size;
+    // „Wie viele Übungen hast du geschafft" — ausdrücklich über alle
+    // Durchläufe: wer einen zweiten Werte-Durchlauf begonnen hat, hat den
+    // ersten trotzdem geschafft.
+    recipesCompleted = everCompletedSlugs(progressRows).size;
 
     const rights = (billOfRights?.rights as RightItem[] | null) ?? [];
     activeRightsCount = rights.filter((r) => r.active).length;

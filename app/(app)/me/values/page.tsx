@@ -10,6 +10,7 @@ import { getValueEmoji } from "@/lib/utils/values-emojis";
 import { getValueDescription } from "@/lib/utils/values-descriptions";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { hasSeenRecipeIntro } from "@/lib/recipes/actions";
+import { readProgress } from "@/lib/recipes/progress";
 import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { ValuesCompass, type CompassValue } from "./values-compass";
@@ -23,7 +24,7 @@ export default async function MeValuesPage() {
   let valuesStatus = "not_started";
 
   if (user) {
-    const [{ data: hypothesis }, { data: progress }] = await Promise.all([
+    const [{ data: hypothesis }, progress] = await Promise.all([
       supabase
         .from("values_hypothesis")
         .select("values")
@@ -31,14 +32,7 @@ export default async function MeValuesPage() {
         .order("version", { ascending: false })
         .limit(1)
         .maybeSingle(),
-      supabase
-        .from("user_recipe_progress")
-        .select("status")
-        .eq("user_id", user.id)
-        .eq("recipe_slug", "values")
-        .order("cycle_number", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+      readProgress({ supabase, user }, "values"),
     ]);
     values = (hypothesis?.values as string[] | null) ?? [];
     valuesStatus = progress?.status ?? "not_started";

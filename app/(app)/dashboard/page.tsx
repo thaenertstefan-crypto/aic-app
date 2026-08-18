@@ -3,6 +3,11 @@ import { Quote } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getCachedUser } from "@/lib/supabase/get-user";
+import {
+  everCompletedSlugs,
+  latestPerSlug,
+  readAllProgress,
+} from "@/lib/recipes/progress";
 import { RECIPES, getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
 import { getUserTimeZone, serverTodayKey } from "@/lib/server/timezone";
 import { Button } from "@/components/ui/button";
@@ -16,6 +21,7 @@ import type {
   Destination,
   PrimaryRecommendation,
 } from "@/components/dashboard/daily-focus";
+import type { Tables } from "@/lib/supabase/database.types";
 import type { RightItem } from "@/lib/types/db-json";
 
 /**
@@ -60,18 +66,15 @@ export default async function DashboardPage() {
   let name: string | null = null;
   let activeRecipeId: string | null = null;
   let todayMood: number | null = null;
-  let progressRows: {
-    recipe_slug: string;
-    current_step: number | null;
-    status: string | null;
-  }[] = [];
+  let latestProgress = new Map<string, Tables<"user_recipe_progress">>();
+  let completedSlugs = new Set<string>();
   let rights: RightItem[] = [];
 
   if (user) {
     const [
       { data: profile, error: profileError },
       { data: moodRow, error: moodError },
-      { data: progress, error: progressError },
+      progressRows,
       { data: billOfRights, error: rightsError },
     ] = await Promise.all([
       supabase
@@ -85,10 +88,8 @@ export default async function DashboardPage() {
         .eq("user_id", user.id)
         .eq("date", today)
         .maybeSingle(),
-      supabase
-        .from("user_recipe_progress")
-        .select("recipe_slug, current_step, status")
-        .eq("user_id", user.id),
+      // Wirft von sich aus bei einem echten Lesefehler — siehe readAllProgress.
+      readAllProgress({ supabase, user }),
       supabase
         .from("bill_of_rights")
         .select("rights")
@@ -98,7 +99,7 @@ export default async function DashboardPage() {
 
     // Echte Lesefehler dürfen nicht zu einem Leerzustand coalescen ("Daten weg"),
     // sondern sollen die Segment-Error-Boundary (app/(app)/error.tsx) auslösen.
-    const readError = profileError ?? moodError ?? progressError ?? rightsError;
+    const readError = profileError ?? moodError ?? rightsError;
     if (readError) {
       throw new Error(`dashboard: read failed (${readError.code ?? "unknown"})`);
     }
@@ -106,24 +107,26 @@ export default async function DashboardPage() {
     name = profile?.name ?? null;
     activeRecipeId = profile?.active_recipe_id ?? null;
     todayMood = moodRow?.mood_score ?? null;
-    progressRows = progress ?? [];
+    // Zwei benannte Fragen an dieselbe gelesene Liste: „wo stehst du gerade"
+    // und „was hast du geschafft". Vorher griff hier ein `.find()` irgendeine
+    // Zeile des Slugs — seit `startNewCycleAction` eine zweite anlegt, konnte
+    // das der abgeschlossene erste Durchlauf sein.
+    latestProgress = latestPerSlug(progressRows);
+    completedSlugs = everCompletedSlugs(progressRows);
     rights = (billOfRights?.rights as RightItem[] | null) ?? [];
   }
 
   // --- Aktuelles Recipe ---
   const activeRecipe = activeRecipeId ? getRecipeBySlug(activeRecipeId) : undefined;
-  const activeProgress = progressRows.find(
-    (p) => p.recipe_slug === activeRecipeId,
-  );
+  const activeProgress = activeRecipeId
+    ? latestProgress.get(activeRecipeId)
+    : undefined;
   const hasActiveRecipe =
     !!activeRecipe &&
     activeRecipe.available &&
     !!activeProgress &&
     activeProgress.status !== "completed";
 
-  const completedSlugs = new Set(
-    progressRows.filter((p) => p.status === "completed").map((p) => p.recipe_slug),
-  );
   // Suggest the onboarding recipe first; otherwise the first unfinished one.
   const suggestedRecipe = hasActiveRecipe
     ? undefined
@@ -146,9 +149,7 @@ export default async function DashboardPage() {
 
   // Werte-Status (not_started | in_progress | completed) für die dreistufige CTA
   // und die Verlinkung.
-  const valuesStatus =
-    progressRows.find((p) => p.recipe_slug === "values")?.status ??
-    "not_started";
+  const valuesStatus = latestProgress.get("values")?.status ?? "not_started";
   const valuesCompleted = valuesStatus === "completed";
 
   // Laufende Entdeckung führt direkt zurück in die Journey (Wiederaufnahme, kein
@@ -159,8 +160,7 @@ export default async function DashboardPage() {
 
   // Wants-Status analog: abgeschlossen (Wants bestätigt) → lebende Wants-Seite
   // mit den Little Bets; sonst der Rezept-Hub, der die Intro gated.
-  const wantsCompleted =
-    progressRows.find((p) => p.recipe_slug === "wants")?.status === "completed";
+  const wantsCompleted = latestProgress.get("wants")?.status === "completed";
 
   // "Normale" Empfehlung (recipe-basiert, mood-unabhängig). Der low-Tier-Fall
   // (Mantra-Pause) und die Frage werden client-seitig in DashboardFocus aus der
