@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { evaluationPhase, type EvaluationStand } from "./evaluation-phase.ts";
+import {
+  cycleIsComplete,
+  evaluationPhase,
+  type EvaluationStand,
+} from "./evaluation-phase.ts";
 
 /** Ein frisch begonnener Zyklus: nichts abgeschlossen, keine Reflexion. */
 function stand(patch: Partial<EvaluationStand> = {}): EvaluationStand {
@@ -61,6 +65,51 @@ describe("evaluationPhase — die zweite Hypothesen-Version schließt ab", () =>
   it("schließt bei jeder höheren Version ab, nicht nur bei genau 2", () => {
     for (const hypothesisVersion of [2, 3, 7]) {
       assert.equal(evaluationPhase(stand({ hypothesisVersion })), "complete");
+    }
+  });
+});
+
+describe("cycleIsComplete — die Sperre und die Bühne lesen dieselbe Regel", () => {
+  it("hält einen frischen Durchlauf offen", () => {
+    assert.equal(
+      cycleIsComplete({ status: "in_progress", hypothesisVersion: 1 }),
+      false,
+    );
+  });
+
+  it("hält auch ohne Fortschritts-Zeile offen", () => {
+    assert.equal(cycleIsComplete({ status: null, hypothesisVersion: 1 }), false);
+  });
+
+  it("schließt ab, wenn der Fortschritt es sagt", () => {
+    assert.equal(
+      cycleIsComplete({ status: "completed", hypothesisVersion: 1 }),
+      true,
+    );
+  });
+
+  it("schließt ab bei einer zweiten Hypothesen-Version, auch ohne Fortschritt", () => {
+    // Der Weg, über den KAN-19 sichtbar wurde: Schritt 1 stand offen, obwohl
+    // der Kompass längst angepasst war.
+    assert.equal(
+      cycleIsComplete({ status: "in_progress", hypothesisVersion: 2 }),
+      true,
+    );
+  });
+
+  it("stimmt in jedem Fall mit der Feier-Bühne überein", () => {
+    // Die eigentliche Zusicherung: eine Sperre, die anders urteilt als die
+    // Bühne, wäre genau die Doppelung, die dieses Prädikat verhindern soll.
+    for (const status of ["in_progress", "completed", "not_started", null]) {
+      for (const hypothesisVersion of [1, 2, 3]) {
+        for (const hasEvalEntry of [false, true]) {
+          assert.equal(
+            cycleIsComplete({ status, hypothesisVersion }),
+            evaluationPhase({ status, hypothesisVersion, hasEvalEntry }) ===
+              "complete",
+          );
+        }
+      }
     }
   });
 });

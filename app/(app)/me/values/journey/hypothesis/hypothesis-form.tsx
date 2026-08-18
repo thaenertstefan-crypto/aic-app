@@ -25,9 +25,15 @@ const INITIAL_STATE: ActionResult<boolean> = ok(false);
 type Props = {
   /** Previously selected values, used to pre-fill the form on revisit. */
   initialValues?: string[] | null;
+  /**
+   * Der Durchlauf ist abgeschlossen: den Kompass nur noch zeigen, nicht mehr
+   * zur Auswahl stellen. Schritt 1 trifft immer die erste Hypothesen-Version —
+   * ein Speichern von hier aus liefe ins Leere (KAN-19).
+   */
+  locked?: boolean;
 };
 
-export function HypothesisForm({ initialValues }: Props) {
+export function HypothesisForm({ initialValues, locked = false }: Props) {
   const [selectedValues, setSelectedValues] = useState<string[]>(
     initialValues ?? [],
   );
@@ -79,6 +85,34 @@ export function HypothesisForm({ initialValues }: Props) {
   const isFull = selectedValues.length === MAX_VALUES;
   const remaining = MAX_VALUES - selectedValues.length;
 
+  // ── Gesperrt: der Durchlauf ist durch, der Kompass steht ──
+  if (locked) {
+    return (
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-8">
+        <p className="max-w-prose text-base leading-relaxed text-foreground">
+          Das sind die fünf Werte, mit denen du gerade unterwegs bist.
+        </p>
+
+        <CompassCards ids={selectedValues} />
+
+        <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+          Dieser Durchlauf ist abgeschlossen — deine Hypothese bleibt so stehen,
+          damit dein Weg nachvollziehbar bleibt.
+        </p>
+
+        <Button
+          className="w-full gap-2"
+          size="lg"
+          variant="outline"
+          render={<Link href="/me/values/journey" />}
+        >
+          Zurück zur Übersicht
+          <ArrowRight className="size-4" />
+        </Button>
+      </div>
+    );
+  }
+
   // ── Completion-Screen nach erfolgreichem Speichern ──
   if (state.error === null && state.data) {
     return (
@@ -89,30 +123,7 @@ export function HypothesisForm({ initialValues }: Props) {
           Beginne deine erste Reflexion.
         </p>
 
-        <div className="w-full space-y-3 text-left">
-          {selectedValues.map((id) => {
-            const isCustom = id.startsWith(CUSTOM_PREFIX);
-            return (
-              <Card key={id}>
-                <CardContent className="flex items-start gap-3">
-                  <span className="text-2xl leading-none" aria-hidden="true">
-                    {getValueEmoji(id)}
-                  </span>
-                  <div className="min-w-0 space-y-1">
-                    <p className="font-heading text-base font-semibold text-foreground">
-                      {getValueLabel(id)}
-                    </p>
-                    {!isCustom && (
-                      <p className="text-base leading-relaxed text-foreground/90">
-                        Dir ist wichtig, dass {getValueDescription(id)}.
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        <CompassCards ids={selectedValues} />
 
         <Button
           className="mt-2 w-full gap-2"
@@ -263,6 +274,39 @@ export function HypothesisForm({ initialValues }: Props) {
           </Button>
         </div>
       </form>
+    </div>
+  );
+}
+
+/**
+ * Der Kompass als Karten — die Feier-Bühne und die gesperrte Ansicht zeigen
+ * dieselben fünf Werte, also steht das Markup einmal.
+ */
+function CompassCards({ ids }: { ids: string[] }) {
+  return (
+    <div className="w-full space-y-3 text-left">
+      {ids.map((id) => {
+        const isCustom = id.startsWith(CUSTOM_PREFIX);
+        return (
+          <Card key={id}>
+            <CardContent className="flex items-start gap-3">
+              <span className="text-2xl leading-none" aria-hidden="true">
+                {getValueEmoji(id)}
+              </span>
+              <div className="min-w-0 space-y-1">
+                <p className="font-heading text-base font-semibold text-foreground">
+                  {getValueLabel(id)}
+                </p>
+                {!isCustom && (
+                  <p className="text-base leading-relaxed text-foreground/90">
+                    Dir ist wichtig, dass {getValueDescription(id)}.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

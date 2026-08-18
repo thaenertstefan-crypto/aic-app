@@ -9,7 +9,7 @@ import {
   ok,
   type ActionResult,
 } from "@/lib/actions/action-result";
-import { withUser } from "@/lib/actions/with-user";
+import { withUser, type ActionContext } from "@/lib/actions/with-user";
 import type { DailyValueContent, ValueEvalContent } from "@/lib/types/db-json";
 import { serverTodayKey } from "@/lib/server/timezone";
 import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
@@ -21,7 +21,10 @@ import {
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
 import {
+  cycleIsComplete,
   evaluationPhase,
+  HYPOTHESIS_LOCKED,
+  type CycleStand,
   type EvaluationPhase,
 } from "@/lib/recipes/values/evaluation-phase";
 import {
@@ -30,9 +33,50 @@ import {
 } from "@/lib/recipes/values/value-selection";
 
 /**
+ * Woran ein Durchlauf hängt: jüngster Fortschritt, jüngste Hypothesen-Version.
+ *
+ * Gelesen von Schritt 1 (Sperre) und der Auswertung (Bühne). Was daraus folgt,
+ * entscheidet `cycleIsComplete` — hier steht nur, was dafür gelesen wird.
+ */
+async function readCycleStand({
+  supabase,
+  user,
+}: ActionContext): Promise<CycleStand> {
+  const [{ data: progress }, { data: hypothesisRow }] = await Promise.all([
+    supabase
+      .from("user_recipe_progress")
+      .select("status")
+      .eq("user_id", user.id)
+      .eq("recipe_slug", "values")
+      .order("cycle_number", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("values_hypothesis")
+      .select("version")
+      .eq("user_id", user.id)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  return {
+    status: progress?.status ?? null,
+    hypothesisVersion: hypothesisRow?.version ?? 1,
+  };
+}
+
+/**
  * Save the values hypothesis (Step 1 of Recipe #1).
  * - Upserts into values_hypothesis (version 1)
  * - Advances user_recipe_progress to step 2
+ *
+ * **Nur im laufenden Durchlauf.** Ist der Durchlauf abgeschlossen, weist die
+ * Action ab, statt zu schreiben: sie trifft immer `version = 1`, während der
+ * Kompass ab der Anpassung aus einer höheren Version gelesen wird — ein
+ * Schreibvorgang landete also in einer Zeile, die niemand mehr anzeigt (KAN-19).
+ * Das Formular sperrt schon vorher; diese Prüfung ist das serverseitige
+ * Gegenstück für einen veralteten Client.
  *
  * Die Nutzlast ist „ist gespeichert": die Form läuft über `useActionState` und
  * zeigt danach einen Completion-Screen. Deren Anfangszustand ist `ok(false)` —
@@ -43,7 +87,13 @@ export async function saveHypothesisAction(
   _prevState: ActionResult<boolean>,
   formData: FormData,
 ): Promise<ActionResult<boolean>> {
-  return withUser(async ({ supabase, user }) => {
+  return withUser(async (ctx) => {
+    const { supabase, user } = ctx;
+
+    if (cycleIsComplete(await readCycleStand(ctx))) {
+      return failed(HYPOTHESIS_LOCKED);
+    }
+
     // Schritt 1 prüft nur die Anzahl: Duplikate verhindert hier allein die
     // Auswahl im Client (hypothesis-form.tsx). Schritt 3 prüft strenger —
     // die Asymmetrie steht als Parameter da, sie ist keine Nachlässigkeit.
@@ -140,24 +190,49 @@ export async function saveHypothesisAction(
   });
 }
 
+/** Was Schritt 1 beim Öffnen vorfindet. */
+export type HypothesisStand = {
+  /** Der aktuelle Kompass, oder `null`, wenn noch keiner gewählt wurde. */
+  values: string[] | null;
+  /**
+   * Nur noch anzeigen, nicht mehr ändern. Schritt 1 ist einmalig — ein neuer
+   * Durchlauf beginnt über `startNewCycleAction` beim Journal, nicht hier.
+   */
+  locked: boolean;
+};
+
 /**
  * Fetch the user's previously selected values (Step 1), if any.
  * Used to pre-fill the hypothesis form when revisiting the step.
+ *
+ * Liefert zusätzlich den Sperr-Zustand, damit die Seite nach einem
+ * abgeschlossenen Durchlauf keinen Speichern-Weg mehr anbietet, der ins Leere
+ * schreiben würde (KAN-19).
  */
-export async function getHypothesisData(): Promise<string[] | null> {
-  const result = await withUser(async ({ supabase, user }) => {
-    const { data: hypothesisRow } = await supabase
-      .from("values_hypothesis")
-      .select("values")
-      .eq("user_id", user.id)
-      .order("version", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+export async function getHypothesisData(): Promise<HypothesisStand> {
+  const result = await withUser(async (ctx) => {
+    const { supabase, user } = ctx;
 
-    return ok((hypothesisRow?.values as string[]) ?? null);
+    const [{ data: hypothesisRow }, stand] = await Promise.all([
+      supabase
+        .from("values_hypothesis")
+        .select("values")
+        .eq("user_id", user.id)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      readCycleStand(ctx),
+    ]);
+
+    return ok({
+      values: (hypothesisRow?.values as string[]) ?? null,
+      locked: cycleIsComplete(stand),
+    });
   });
 
-  return result.error === null ? result.data : null;
+  // Nicht angemeldet oder DB-Fehler: leer und offen — dieselbe Vorsicht wie
+  // bisher, die Action prüft die Sperre ohnehin noch einmal selbst.
+  return result.error === null ? result.data : { values: null, locked: false };
 }
 
 // ─── Journal (Step 2) ────────────────────────────────────────────────

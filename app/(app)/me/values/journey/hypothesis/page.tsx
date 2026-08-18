@@ -3,11 +3,11 @@ import { getHypothesisData } from "@/lib/recipes/values/actions";
 import { HypothesisForm } from "./hypothesis-form";
 
 export default async function ValuesHypothesisPage() {
-  const initialValues = await getHypothesisData();
+  const { values, locked } = await getHypothesisData();
   return (
     <div className="flex min-h-svh flex-col">
       <SubPageHeader backHref="/me/values/journey" title="Werte" />
-      <HypothesisForm initialValues={initialValues} />
+      <HypothesisForm initialValues={values} locked={locked} />
     </div>
   );
 }
