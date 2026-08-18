@@ -5,6 +5,7 @@ import {
   cycleIsComplete,
   evaluationPhase,
   hypothesisIsLocked,
+  hypothesisStage,
   type EvaluationStand,
 } from "./evaluation-phase.ts";
 
@@ -166,6 +167,52 @@ describe("hypothesisIsLocked — die Hypothese steht, auch wenn der Durchlauf ne
       for (const hypothesisVersion of [1, 2, 3]) {
         const s = { status, hypothesisVersion, cycleNumber: 1 };
         assert.equal(hypothesisIsLocked(s), cycleIsComplete(s));
+      }
+    }
+  });
+});
+
+describe("hypothesisStage — gesperrt ist nicht dasselbe wie vorbei", () => {
+  it("zeigt im ersten Durchlauf die Auswahl", () => {
+    assert.equal(hypothesisStage(stand()), "select");
+  });
+
+  it("zeigt im frisch gestarteten zweiten Durchlauf den laufenden Kompass", () => {
+    // Der Fall, für den es diese Funktion gibt: `startNewCycleAction` leitet
+    // hierher, und mit nur einem Sperr-Flag stand am Anfang des neuen
+    // Durchlaufs „Dieser Durchlauf ist abgeschlossen“.
+    const zweiter = stand({ hypothesisVersion: 2, cycleNumber: 2 });
+    assert.equal(hypothesisIsLocked(zweiter), true);
+    assert.equal(hypothesisStage(zweiter), "current");
+  });
+
+  it("zeigt den Rückblick, sobald der Durchlauf abgeschlossen ist", () => {
+    assert.equal(hypothesisStage(stand({ status: "completed" })), "archive");
+  });
+
+  it("zeigt den Rückblick auch, wenn nur die neue Version davon weiß", () => {
+    assert.equal(
+      hypothesisStage(stand({ status: "in_progress", hypothesisVersion: 2 })),
+      "archive",
+    );
+  });
+
+  it("zeigt den laufenden Kompass auch ohne Anpassung des Vorgängers", () => {
+    // Durchlauf 2 ohne neue Hypothesen-Version — dieselbe Sackgasse, die auch
+    // die Sternenkarte umgeht (s. journey-steps.ts).
+    assert.equal(
+      hypothesisStage(stand({ hypothesisVersion: 1, cycleNumber: 2 })),
+      "current",
+    );
+  });
+
+  it("bietet nur in der Auswahl einen Speichern-Weg an", () => {
+    for (const status of ["in_progress", "completed", null]) {
+      for (const hypothesisVersion of [1, 2, 3]) {
+        for (const cycleNumber of [1, 2, 3]) {
+          const s = { status, hypothesisVersion, cycleNumber };
+          assert.equal(hypothesisStage(s) === "select", !hypothesisIsLocked(s));
+        }
       }
     }
   });

@@ -23,9 +23,11 @@ import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
 import {
   evaluationPhase,
   hypothesisIsLocked,
+  hypothesisStage,
   HYPOTHESIS_LOCKED,
   type CycleStand,
   type EvaluationPhase,
+  type HypothesisStage,
 } from "@/lib/recipes/values/evaluation-phase";
 import type { JourneyStand } from "@/lib/recipes/values/journey-steps";
 import {
@@ -211,19 +213,20 @@ export type HypothesisStand = {
   /** Der aktuelle Kompass, oder `null`, wenn noch keiner gewählt wurde. */
   values: string[] | null;
   /**
-   * Nur noch anzeigen, nicht mehr ändern. Schritt 1 ist einmalig — ein neuer
-   * Durchlauf beginnt über `startNewCycleAction` beim Journal, nicht hier.
+   * Auswahl, laufender Kompass oder Rückblick. Schritt 1 ist einmalig — ein
+   * neuer Durchlauf landet hier, ändern lässt sich der Kompass aber nur im
+   * ersten (`hypothesisStage`).
    */
-  locked: boolean;
+  stage: HypothesisStage;
 };
 
 /**
  * Fetch the user's previously selected values (Step 1), if any.
  * Used to pre-fill the hypothesis form when revisiting the step.
  *
- * Liefert zusätzlich den Sperr-Zustand, damit die Seite nach einem
- * abgeschlossenen Durchlauf keinen Speichern-Weg mehr anbietet, der ins Leere
- * schreiben würde (KAN-19).
+ * Liefert zusätzlich die Ansicht, damit die Seite nach einem abgeschlossenen
+ * Durchlauf keinen Speichern-Weg mehr anbietet, der ins Leere schreiben würde
+ * (KAN-19) — und einen frisch begonnenen Durchlauf nicht als beendet begrüßt.
  */
 export async function getHypothesisData(): Promise<HypothesisStand> {
   const result = await withUser(async (ctx) => {
@@ -242,13 +245,15 @@ export async function getHypothesisData(): Promise<HypothesisStand> {
 
     return ok({
       values: (hypothesisRow?.values as string[]) ?? null,
-      locked: hypothesisIsLocked(stand),
+      stage: hypothesisStage(stand),
     });
   });
 
   // Nicht angemeldet oder DB-Fehler: leer und offen — dieselbe Vorsicht wie
   // bisher, die Action prüft die Sperre ohnehin noch einmal selbst.
-  return result.error === null ? result.data : { values: null, locked: false };
+  return result.error === null
+    ? result.data
+    : { values: null, stage: "select" };
 }
 
 // ─── Journey-Übersicht ───────────────────────────────────────────────
@@ -937,12 +942,17 @@ export async function saveAdjustedHypothesisAction(
 
 /**
  * Start a new 7-day journal cycle (Phase 3 CTA).
- * Creates a new user_recipe_progress row with cycle_number+1,
- * current_step=2 (skip hypothesis), then redirects to the journal.
+ * Creates a new user_recipe_progress row with cycle_number+1, current_step=2
+ * (skip hypothesis), then redirects to step 1 — read-only.
  *
  * Der CTA dazu sitzt auf der Rückkehr-Bühne der Auswertung — bewusst nicht im
  * Feier-Moment. Seit KAN-20 sind Journal-Einträge über `cycle_number` pro
  * Durchlauf abgegrenzt; vorher wäre der neue Durchlauf sofort auf 7/7 gestanden.
+ *
+ * Das Ziel ist die Hypothese, nicht das Journal: Der neue Durchlauf testet den
+ * Kompass, der aus der Anpassung des vorigen entstanden ist — wer direkt in
+ * Tag 1 landet, hat ihn nie zu sehen bekommen (KAN-22). `current_step` bleibt
+ * 2; die Seite zeigt den Kompass nur, ändern lässt er sich dort nicht (KAN-19).
  */
 export async function startNewCycleAction(): Promise<ActionResult> {
   return withUser(async ({ supabase, user }) => {
@@ -976,6 +986,6 @@ export async function startNewCycleAction(): Promise<ActionResult> {
 
     // Wirft einen Kontroll-Fehler statt zurückzukehren — withUser fängt
     // bewusst nichts, damit genau das durchkommt.
-    redirect("/me/values/journey/journal");
+    redirect("/me/values/journey/hypothesis");
   });
 }

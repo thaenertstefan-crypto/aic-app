@@ -77,6 +77,30 @@ export function hypothesisIsLocked({
   return status === "completed" || hypothesisVersion > 1 || cycleNumber > 1;
 }
 
+/** Was Schritt 1 zeigt, wenn man ihn öffnet. */
+export type HypothesisStage =
+  /** Die Auswahl — der Kompass wird gerade erst gesetzt. */
+  | "select"
+  /** Der Kompass des **laufenden** Durchlaufs: steht fest, gilt aber noch. */
+  | "current"
+  /** Der Kompass eines abgeschlossenen Durchlaufs: nur noch Rückblick. */
+  | "archive";
+
+/**
+ * Welche der drei Ansichten Schritt 1 zeigt.
+ *
+ * „Gesperrt" allein reicht der Seite nicht mehr, seit ein neuer Durchlauf hier
+ * **beginnt** statt beim Journal: `hypothesisIsLocked` ist ab Durchlauf 2 wahr,
+ * und mit nur einer gesperrten Ansicht begrüßte die App den frisch gestarteten
+ * Durchlauf mit dem Satz „Dieser Durchlauf ist abgeschlossen". Gesperrt und
+ * vorbei sind zwei verschiedene Aussagen — `cycleIsComplete` trennt sie
+ * (KAN-22).
+ */
+export function hypothesisStage(cycle: CycleStand): HypothesisStage {
+  if (!hypothesisIsLocked(cycle)) return "select";
+  return cycleIsComplete(cycle) ? "archive" : "current";
+}
+
 /**
  * Der eine Wortlaut für „Schritt 1 ist für diesen Durchlauf vorbei".
  *

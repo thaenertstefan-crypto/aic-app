@@ -16,6 +16,7 @@ import { SELECTABLE_VALUES, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/val
 import { getValueEmoji } from "@/lib/utils/values-emojis";
 import { getValueDescription } from "@/lib/utils/values-descriptions";
 import { saveHypothesisAction } from "@/lib/recipes/values/actions";
+import type { HypothesisStage } from "@/lib/recipes/values/evaluation-phase";
 
 const MAX_VALUES = 5;
 
@@ -26,14 +27,15 @@ type Props = {
   /** Previously selected values, used to pre-fill the form on revisit. */
   initialValues?: string[] | null;
   /**
-   * Der Durchlauf ist abgeschlossen: den Kompass nur noch zeigen, nicht mehr
-   * zur Auswahl stellen. Schritt 1 trifft immer die erste Hypothesen-Version —
-   * ein Speichern von hier aus liefe ins Leere (KAN-19).
+   * Auswahl, laufender Kompass oder Rückblick. Ab Durchlauf 2 ist Schritt 1
+   * nur noch Anzeige — ein Speichern von hier aus liefe ins Leere (KAN-19) —,
+   * aber „gesperrt" heißt nicht „vorbei": ein frisch gestarteter Durchlauf
+   * landet auf genau dieser Seite und darf nicht als beendet begrüßt werden.
    */
-  locked?: boolean;
+  stage?: HypothesisStage;
 };
 
-export function HypothesisForm({ initialValues, locked = false }: Props) {
+export function HypothesisForm({ initialValues, stage = "select" }: Props) {
   const [selectedValues, setSelectedValues] = useState<string[]>(
     initialValues ?? [],
   );
@@ -85,28 +87,34 @@ export function HypothesisForm({ initialValues, locked = false }: Props) {
   const isFull = selectedValues.length === MAX_VALUES;
   const remaining = MAX_VALUES - selectedValues.length;
 
-  // ── Gesperrt: der Durchlauf ist durch, der Kompass steht ──
-  if (locked) {
+  // ── Der Kompass steht — zwei Lesarten, die nicht dasselbe sagen dürfen ──
+  // „current": der Durchlauf läuft gerade (jeder neue startet hier). „archive":
+  // er ist vorbei. Beide zeigen nur, keiner speichert.
+  if (stage !== "select") {
+    const running = stage === "current";
     return (
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-8">
         <p className="max-w-prose text-base leading-relaxed text-foreground">
-          Das sind die fünf Werte, mit denen du gerade unterwegs bist.
+          {running
+            ? "Das ist dein Kompass für die nächsten sieben Tage."
+            : "Das sind die fünf Werte, mit denen du unterwegs warst."}
         </p>
 
         <CompassCards ids={selectedValues} />
 
         <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-          Dieser Durchlauf ist abgeschlossen — deine Hypothese bleibt so stehen,
-          damit dein Weg nachvollziehbar bleibt.
+          {running
+            ? "Er steht für diesen Durchlauf fest. Sieben Tage lang schaust du, ob er zu deinem Alltag passt — anpassen kannst du ihn danach in der Auswertung."
+            : "Dieser Durchlauf ist abgeschlossen — deine Hypothese bleibt so stehen, damit dein Weg nachvollziehbar bleibt."}
         </p>
 
         <Button
           className="w-full gap-2"
           size="lg"
-          variant="outline"
+          variant={running ? "default" : "outline"}
           render={<Link href="/me/values/journey" />}
         >
-          Zurück zur Übersicht
+          {running ? "Los geht's" : "Zurück zur Übersicht"}
           <ArrowRight className="size-4" />
         </Button>
       </div>
