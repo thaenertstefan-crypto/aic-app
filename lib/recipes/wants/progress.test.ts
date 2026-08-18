@@ -64,7 +64,10 @@ describe("nextWantsProgress — Sterne schließen ab", () => {
   });
 
   it("schiebt immer auf die Sternenkarte, egal was der Status sagt", () => {
-    for (const status of ["not_started", "in_progress", "completed", null]) {
+    // Seit KAN-23 ist `status` ein Enum und NOT NULL — „gar kein Status" ist
+    // kein Fall mehr, den eine Zeile haben kann. Die fehlende Zeile bleibt
+    // geprüft, aber als `null` statt als Zeile mit `status: null`.
+    for (const status of ["not_started", "in_progress", "completed"] as const) {
       for (const completed of [true, false]) {
         assert.equal(
           payloadOf(nextWantsProgress({ status }, completed, NOW)).current_step,

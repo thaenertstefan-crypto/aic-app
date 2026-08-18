@@ -15,7 +15,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
@@ -361,34 +361,34 @@ export type Database = {
         Row: {
           completed_at: string | null
           current_step: number | null
-          cycle_number: number | null
+          cycle_number: number
           id: string
           intro_seen: boolean
           recipe_slug: string
           started_at: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["recipe_status"]
           user_id: string | null
         }
         Insert: {
           completed_at?: string | null
           current_step?: number | null
-          cycle_number?: number | null
+          cycle_number?: number
           id?: string
           intro_seen?: boolean
           recipe_slug: string
           started_at?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["recipe_status"]
           user_id?: string | null
         }
         Update: {
           completed_at?: string | null
           current_step?: number | null
-          cycle_number?: number | null
+          cycle_number?: number
           id?: string
           intro_seen?: boolean
           recipe_slug?: string
           started_at?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["recipe_status"]
           user_id?: string | null
         }
         Relationships: [
@@ -408,7 +408,7 @@ export type Database = {
           id: string
           user_id: string | null
           values: Json
-          version: number | null
+          version: number
         }
         Insert: {
           confirmed?: boolean | null
@@ -416,7 +416,7 @@ export type Database = {
           id?: string
           user_id?: string | null
           values: Json
-          version?: number | null
+          version?: number
         }
         Update: {
           confirmed?: boolean | null
@@ -424,7 +424,7 @@ export type Database = {
           id?: string
           user_id?: string | null
           values?: Json
-          version?: number | null
+          version?: number
         }
         Relationships: [
           {
@@ -479,7 +479,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      recipe_status: "not_started" | "in_progress" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -606,6 +606,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      recipe_status: ["not_started", "in_progress", "completed"],
+    },
   },
 } as const
