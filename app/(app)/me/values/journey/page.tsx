@@ -1,6 +1,7 @@
 import { getCachedUser } from "@/lib/supabase/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { serverTodayKey } from "@/lib/server/timezone";
+import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 
 import { ValuesJourneyClient } from "./values-journey-client";
 
@@ -27,7 +28,7 @@ export default async function ValuesJourneyPage() {
           .from("journal_entries")
           .select("entry_date")
           .eq("user_id", user.id)
-          .eq("recipe_slug", "values")
+          .eq("recipe_slug", recipeSlugFor("daily_value"))
           .eq("template_type", "daily_value"),
         supabase
           .from("user_recipe_progress")
