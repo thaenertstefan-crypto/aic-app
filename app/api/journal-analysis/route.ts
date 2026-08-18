@@ -53,37 +53,18 @@ export const POST = withAiRoute(
       );
     }
 
-    // Die drei Reads sind voneinander unabhängig → parallel laden, bevor der
-    // KI-Call startet.
-    const [{ data: dailyEntries }, { data: hypothesisRow }, { data: evalRow }] =
-      await Promise.all([
-    // Most recent 7 daily_value entries = the current cycle.
-    supabase
+    // Die value_eval-Zeile zuerst: sie sagt, welcher Durchlauf ausgewertet
+    // wird, und ohne sie gibt es ohnehin nichts zu tun (404 unten). Vor KAN-20
+    // liefen alle drei Reads parallel und die Tagebuch-Einträge wurden als
+    // „die letzten 7" genommen — im zweiten Durchlauf waren das die des ersten.
+    const { data: evalRow } = await supabase
       .from("journal_entries")
-      .select("template_type, content")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", recipeSlugFor("daily_value"))
-      .eq("template_type", "daily_value")
-      .order("created_at", { ascending: false })
-      .limit(7),
-    // Latest values hypothesis.
-    supabase
-      .from("values_hypothesis")
-      .select("values")
-      .eq("user_id", user.id)
-      .order("version", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    // The value_eval entry holds the user's reflection and is where we save insights.
-    supabase
-      .from("journal_entries")
-      .select("id, template_type, content")
+      .select("id, template_type, content, cycle_number")
       .eq("id", entryId)
       .eq("user_id", user.id)
       .eq("recipe_slug", recipeSlugFor("value_eval"))
       .eq("template_type", "value_eval")
-      .maybeSingle(),
-  ]);
+      .maybeSingle();
 
     if (!evalRow) {
       return Response.json(
@@ -91,6 +72,29 @@ export const POST = withAiRoute(
         { status: 404 },
       );
     }
+
+    // Jetzt die beiden Reads, die vom Durchlauf der eval-Zeile abhängen bzw.
+    // unabhängig sind — parallel, bevor der KI-Call startet.
+    const [{ data: dailyEntries }, { data: hypothesisRow }] = await Promise.all([
+      // Die 7 Tagebuch-Einträge DIESES Durchlaufs.
+      supabase
+        .from("journal_entries")
+        .select("template_type, content")
+        .eq("user_id", user.id)
+        .eq("recipe_slug", recipeSlugFor("daily_value"))
+        .eq("template_type", "daily_value")
+        .eq("cycle_number", evalRow.cycle_number)
+        .order("created_at", { ascending: false })
+        .limit(7),
+      // Latest values hypothesis.
+      supabase
+        .from("values_hypothesis")
+        .select("values")
+        .eq("user_id", user.id)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
     // Chronological order reads more naturally in the prompt. Einträge, deren
     // content kein Tagebuch-Eintrag ist, fallen raus, statt als leerer Tag im

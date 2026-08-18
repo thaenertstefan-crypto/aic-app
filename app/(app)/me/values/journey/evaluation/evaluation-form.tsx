@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import { CompassRose, type CompassValue } from "@/app/(app)/me/values/compass-ro
 import {
   saveEvalReflectionAction,
   saveAdjustedHypothesisAction,
+  startNewCycleAction,
   type EvaluationPageData,
 } from "@/lib/recipes/values/actions";
 
@@ -72,7 +73,7 @@ const STAGE_SUBTITLE: Record<Stage, string> = {
 // ─── Component ──────────────────────────────────────────────────────
 
 export function EvaluationForm({ initialData }: EvaluationFormProps) {
-  const { hypothesis, hypothesisVersion, entries, valueEvalEntry, phase } =
+  const { hypothesis, entries, valueEvalEntry, phase } =
     initialData;
 
   // Die beiden Server-Action-States stehen hier oben, weil die Bühne aus ihnen
@@ -119,9 +120,23 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
     setSubmittedValues(values);
     const fd = new FormData();
     fd.set("values", JSON.stringify(values));
-    fd.set("original_version", String(hypothesisVersion));
     adjustAction(fd);
   };
+
+  // Der Einstieg in den nächsten Durchlauf. `startNewCycleAction` gab es schon,
+  // aber keine UI rief es auf — ein zweiter Durchlauf war schlicht nicht
+  // erreichbar (KAN-20). Kein <form action>: die Action nimmt keine FormData.
+  const [cycleError, setCycleError] = useState<string | null>(null);
+  const [startingCycle, startCycle] = useTransition();
+
+  function beginNewCycle() {
+    setCycleError(null);
+    startCycle(async () => {
+      // Bei Erfolg leitet die Action um und kehrt nie zurück.
+      const result = await startNewCycleAction();
+      if (result.error !== null) setCycleError(result.error);
+    });
+  }
 
   const existingPositive = valueEvalEntry?.content?.positive_reflection ?? "";
   const existingNegative = valueEvalEntry?.content?.negative_reflection ?? "";
@@ -142,7 +157,7 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
       />
       <div data-e2e="evaluation" className="flex flex-1 flex-col px-4 py-6">
         <FormError
-          message={reflectionState.error || adjustState.error}
+          message={reflectionState.error || adjustState.error || cycleError}
           className="mb-6"
         />
 
@@ -343,6 +358,24 @@ export function EvaluationForm({ initialData }: EvaluationFormProps) {
             <Button className="w-full" size="lg" render={<Link href="/me/values" />}>
               Zu meinem Kompass
             </Button>
+
+            <div className="space-y-2 pt-2">
+              <p className="text-center text-sm leading-relaxed text-muted-foreground">
+                Werte verschieben sich. Wenn du magst, schau in sieben neuen
+                Tagen nach, ob deine fünf noch stimmen.
+              </p>
+              <Button
+                className="w-full"
+                size="lg"
+                variant="outline"
+                onClick={beginNewCycle}
+                disabled={startingCycle}
+              >
+                {startingCycle
+                  ? "Wird gestartet …"
+                  : "Neuen Durchlauf starten"}
+              </Button>
+            </div>
           </div>
         )}
       </div>

@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   cycleIsComplete,
   evaluationPhase,
+  hypothesisIsLocked,
   type EvaluationStand,
 } from "./evaluation-phase.ts";
 
@@ -12,6 +13,7 @@ function stand(patch: Partial<EvaluationStand> = {}): EvaluationStand {
   return {
     status: "in_progress",
     hypothesisVersion: 1,
+    cycleNumber: 1,
     hasEvalEntry: false,
     ...patch,
   };
@@ -69,46 +71,101 @@ describe("evaluationPhase — die zweite Hypothesen-Version schließt ab", () =>
   });
 });
 
-describe("cycleIsComplete — die Sperre und die Bühne lesen dieselbe Regel", () => {
+describe("cycleIsComplete — gilt je Durchlauf, nicht ein für alle Mal", () => {
   it("hält einen frischen Durchlauf offen", () => {
+    assert.equal(cycleIsComplete(stand()), false);
+  });
+
+  it("hält auch ohne Fortschritts-Zeile offen", () => {
+    assert.equal(cycleIsComplete(stand({ status: null })), false);
+  });
+
+  it("schließt ab, wenn der Fortschritt es sagt", () => {
+    assert.equal(cycleIsComplete(stand({ status: "completed" })), true);
+  });
+
+  it("schließt Durchlauf 1 ab, sobald Version 2 existiert", () => {
+    assert.equal(cycleIsComplete(stand({ hypothesisVersion: 2 })), true);
+  });
+
+  it("hält Durchlauf 2 offen, solange nur Version 2 existiert", () => {
+    // Der Kern von KAN-20: Version 2 ist der Kompass, den Durchlauf 2 GERADE
+    // TESTET — kein Beleg dafür, dass Durchlauf 2 vorbei wäre. Die alte Regel
+    // `hypothesisVersion > 1` meldete hier sofort „abgeschlossen" und ließ
+    // sieben Tage Journal ins Leere laufen.
     assert.equal(
-      cycleIsComplete({ status: "in_progress", hypothesisVersion: 1 }),
+      cycleIsComplete(stand({ hypothesisVersion: 2, cycleNumber: 2 })),
       false,
     );
   });
 
-  it("hält auch ohne Fortschritts-Zeile offen", () => {
-    assert.equal(cycleIsComplete({ status: null, hypothesisVersion: 1 }), false);
-  });
-
-  it("schließt ab, wenn der Fortschritt es sagt", () => {
+  it("schließt Durchlauf 2 ab, sobald Version 3 existiert", () => {
     assert.equal(
-      cycleIsComplete({ status: "completed", hypothesisVersion: 1 }),
+      cycleIsComplete(stand({ hypothesisVersion: 3, cycleNumber: 2 })),
       true,
     );
   });
 
-  it("schließt ab bei einer zweiten Hypothesen-Version, auch ohne Fortschritt", () => {
-    // Der Weg, über den KAN-19 sichtbar wurde: Schritt 1 stand offen, obwohl
-    // der Kompass längst angepasst war.
-    assert.equal(
-      cycleIsComplete({ status: "in_progress", hypothesisVersion: 2 }),
-      true,
-    );
+  it("bleibt über beliebig viele Durchläufe dieselbe Regel", () => {
+    for (const cycleNumber of [1, 2, 3, 7]) {
+      assert.equal(
+        cycleIsComplete(stand({ hypothesisVersion: cycleNumber, cycleNumber })),
+        false,
+      );
+      assert.equal(
+        cycleIsComplete(
+          stand({ hypothesisVersion: cycleNumber + 1, cycleNumber }),
+        ),
+        true,
+      );
+    }
   });
 
-  it("stimmt in jedem Fall mit der Feier-Bühne überein", () => {
-    // Die eigentliche Zusicherung: eine Sperre, die anders urteilt als die
-    // Bühne, wäre genau die Doppelung, die dieses Prädikat verhindern soll.
+  it("stimmt mit der Feier-Bühne überein — in jedem Durchlauf", () => {
+    for (const status of ["in_progress", "completed", "not_started", null]) {
+      for (const cycleNumber of [1, 2, 3]) {
+        for (const hypothesisVersion of [1, 2, 3, 4]) {
+          for (const hasEvalEntry of [false, true]) {
+            const s = { status, hypothesisVersion, cycleNumber, hasEvalEntry };
+            assert.equal(
+              cycleIsComplete(s),
+              evaluationPhase(s) === "complete",
+              JSON.stringify(s),
+            );
+          }
+        }
+      }
+    }
+  });
+});
+
+describe("hypothesisIsLocked — die Hypothese steht, auch wenn der Durchlauf neu ist", () => {
+  it("lässt Schritt 1 im ersten Durchlauf offen", () => {
+    assert.equal(hypothesisIsLocked(stand()), false);
+  });
+
+  it("sperrt, sobald der erste Durchlauf abgeschlossen ist", () => {
+    assert.equal(hypothesisIsLocked(stand({ status: "completed" })), true);
+  });
+
+  it("sperrt, sobald eine angepasste Version existiert", () => {
+    assert.equal(hypothesisIsLocked(stand({ hypothesisVersion: 2 })), true);
+  });
+
+  it("bleibt im zweiten Durchlauf gesperrt, obwohl der offen ist", () => {
+    // Genau hier laufen die beiden Prädikate auseinander: der Durchlauf ist
+    // NICHT vorbei, die Hypothese steht trotzdem fest. Mit cycleIsComplete an
+    // dieser Stelle stünde Schritt 1 wieder offen — und schriebe auf Version 1.
+    const zweiter = stand({ hypothesisVersion: 2, cycleNumber: 2 });
+    assert.equal(cycleIsComplete(zweiter), false);
+    assert.equal(hypothesisIsLocked(zweiter), true);
+  });
+
+  it("ist im ersten Durchlauf deckungsgleich mit „Durchlauf vorbei“", () => {
     for (const status of ["in_progress", "completed", "not_started", null]) {
       for (const hypothesisVersion of [1, 2, 3]) {
-        for (const hasEvalEntry of [false, true]) {
-          assert.equal(
-            cycleIsComplete({ status, hypothesisVersion }),
-            evaluationPhase({ status, hypothesisVersion, hasEvalEntry }) ===
-              "complete",
-          );
-        }
+        const s = { status, hypothesisVersion, cycleNumber: 1 };
+        assert.equal(hypothesisIsLocked(s), cycleIsComplete(s));
       }
     }
   });

@@ -21,8 +21,8 @@ import {
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
 import {
-  cycleIsComplete,
   evaluationPhase,
+  hypothesisIsLocked,
   HYPOTHESIS_LOCKED,
   type CycleStand,
   type EvaluationPhase,
@@ -45,7 +45,7 @@ async function readCycleStand({
   const [{ data: progress }, { data: hypothesisRow }] = await Promise.all([
     supabase
       .from("user_recipe_progress")
-      .select("status")
+      .select("status, cycle_number")
       .eq("user_id", user.id)
       .eq("recipe_slug", "values")
       .order("cycle_number", { ascending: false })
@@ -63,7 +63,22 @@ async function readCycleStand({
   return {
     status: progress?.status ?? null,
     hypothesisVersion: hypothesisRow?.version ?? 1,
+    cycleNumber: progress?.cycle_number ?? 1,
   };
+}
+
+/** Die Nummer des laufenden Durchlaufs — der Filterwert jedes Werte-Reads. */
+async function readCycleNumber(ctx: ActionContext): Promise<number> {
+  const { data } = await ctx.supabase
+    .from("user_recipe_progress")
+    .select("cycle_number")
+    .eq("user_id", ctx.user.id)
+    .eq("recipe_slug", "values")
+    .order("cycle_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return data?.cycle_number ?? 1;
 }
 
 /**
@@ -90,7 +105,7 @@ export async function saveHypothesisAction(
   return withUser(async (ctx) => {
     const { supabase, user } = ctx;
 
-    if (cycleIsComplete(await readCycleStand(ctx))) {
+    if (hypothesisIsLocked(await readCycleStand(ctx))) {
       return failed(HYPOTHESIS_LOCKED);
     }
 
@@ -226,7 +241,7 @@ export async function getHypothesisData(): Promise<HypothesisStand> {
 
     return ok({
       values: (hypothesisRow?.values as string[]) ?? null,
-      locked: cycleIsComplete(stand),
+      locked: hypothesisIsLocked(stand),
     });
   });
 
@@ -309,7 +324,14 @@ type JournalDataPreload = {
 export async function getJournalData(
   preloaded?: JournalDataPreload,
 ): Promise<JournalPageData> {
-  const result = await withUser<JournalPageData>(async ({ supabase, user }) => {
+  const result = await withUser<JournalPageData>(async (ctx) => {
+    const { supabase, user } = ctx;
+
+    // Nur die Einträge des laufenden Durchlaufs: ohne diesen Filter fand ein
+    // zweiter Durchlauf die sieben Tage des ersten vor und stand sofort auf
+    // 7/7 (KAN-20).
+    const cycleNumber = await readCycleNumber(ctx);
+
     // Journal-Einträge werden immer frisch gelesen.
     const entriesQuery = supabase
       .from("journal_entries")
@@ -317,6 +339,7 @@ export async function getJournalData(
       .eq("user_id", user.id)
       .eq("recipe_slug", recipeSlugFor("daily_value"))
       .eq("template_type", "daily_value")
+      .eq("cycle_number", cycleNumber)
       .order("entry_date", { ascending: true });
 
     // Schnellpfad: progress + hypothesis vom Aufrufer übernommen → nur entries.
@@ -388,7 +411,10 @@ export async function getJournalData(
 export async function saveJournalEntryAction(
   formData: FormData,
 ): Promise<ActionResult> {
-  return withUser(async ({ supabase, user }) => {
+  return withUser(async (ctx) => {
+    const { supabase, user } = ctx;
+    const cycleNumber = await readCycleNumber(ctx);
+
     // entry_date serverseitig in der User-Zeitzone bestimmen (nicht dem Client
     // vertrauen) — damit Schreiben und Gating dieselbe Tagesgrenze nutzen.
     const entryDate = await serverTodayKey();
@@ -446,6 +472,7 @@ export async function saveJournalEntryAction(
       .eq("user_id", user.id)
       .eq("entry_date", entryDate)
       .eq("template_type", "daily_value")
+      .eq("cycle_number", cycleNumber)
       .maybeSingle();
 
     if (existingEntry) {
@@ -471,6 +498,7 @@ export async function saveJournalEntryAction(
           recipe_slug: recipeSlugFor("daily_value"),
           template_type: "daily_value",
           entry_date: entryDate,
+          cycle_number: cycleNumber,
           content: { happenings },
         });
 
@@ -485,7 +513,8 @@ export async function saveJournalEntryAction(
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("recipe_slug", recipeSlugFor("daily_value"))
-      .eq("template_type", "daily_value");
+      .eq("template_type", "daily_value")
+      .eq("cycle_number", cycleNumber);
 
     if (count !== null && count >= 7) {
       const { data: progress } = await supabase
@@ -528,7 +557,6 @@ export type ValueEvalEntry = {
 
 export type EvaluationPageData = {
   hypothesis: string[];
-  hypothesisVersion: number;
   entries: JournalEntry[];
   valueEvalEntry: ValueEvalEntry;
   progress: {
@@ -551,49 +579,56 @@ export type EvaluationPageData = {
 export async function getEvaluationData(): Promise<EvaluationPageData> {
   const result = await withUser<EvaluationPageData>(
     async ({ supabase, user }) => {
-      // Die vier unabhängigen Reads parallel statt seriell.
+      // Der Fortschritt zuerst und allein: an seiner `cycle_number` hängen die
+      // Filter der drei folgenden Reads. Vor KAN-20 liefen alle vier parallel,
+      // weil keiner den Durchlauf kannte — und genau das war der Defekt.
+      const { data: progress } = await supabase
+        .from("user_recipe_progress")
+        .select("id, cycle_number, started_at, status")
+        .eq("user_id", user.id)
+        .eq("recipe_slug", "values")
+        .order("cycle_number", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const cycleNumber = progress?.cycle_number ?? 1;
+
+      // Die drei übrigen Reads parallel statt seriell.
       // Hinweis zu den Einträgen: die letzten 7 nach created_at zu zählen hält dies
       // konsistent mit dem Journal-Schritt (der "Zur Auswertung" ab 7 Einträgen
       // freischaltet) und mit der journal-analysis-Route — statt nach
       // entry_date >= started_at zu filtern (was das Test-Backdating in
       // journal-form.tsx bricht).
-      const [
-        { data: progress },
-        { data: hypothesisRow },
-        { data: entries },
-        { data: evalRow },
-      ] = await Promise.all([
-        supabase
-          .from("user_recipe_progress")
-          .select("id, cycle_number, started_at, status")
-          .eq("user_id", user.id)
-          .eq("recipe_slug", "values")
-          .order("cycle_number", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from("values_hypothesis")
-          .select("values, version")
-          .eq("user_id", user.id)
-          .order("version", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from("journal_entries")
-          .select(JOURNAL_ENTRY_SELECT)
-          .eq("user_id", user.id)
-          .eq("recipe_slug", recipeSlugFor("daily_value"))
-          .eq("template_type", "daily_value")
-          .order("created_at", { ascending: false })
-          .limit(7),
-        supabase
-          .from("journal_entries")
-          .select("id, template_type, content, ai_insights")
-          .eq("user_id", user.id)
-          .eq("recipe_slug", recipeSlugFor("value_eval"))
-          .eq("template_type", "value_eval")
-          .maybeSingle(),
-      ]);
+      const [{ data: hypothesisRow }, { data: entries }, { data: evalRow }] =
+        await Promise.all([
+          supabase
+            .from("values_hypothesis")
+            .select("values, version")
+            .eq("user_id", user.id)
+            .order("version", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from("journal_entries")
+            .select(JOURNAL_ENTRY_SELECT)
+            .eq("user_id", user.id)
+            .eq("recipe_slug", recipeSlugFor("daily_value"))
+            .eq("template_type", "daily_value")
+            .eq("cycle_number", cycleNumber)
+            .order("created_at", { ascending: false })
+            .limit(7),
+          // Eine `value_eval`-Zeile JE DURCHLAUF. Ohne den Filter fand der
+          // zweite Durchlauf die Reflexion des ersten — und hätte sie beim
+          // Speichern überschrieben (KAN-20).
+          supabase
+            .from("journal_entries")
+            .select("id, template_type, content, ai_insights")
+            .eq("user_id", user.id)
+            .eq("recipe_slug", recipeSlugFor("value_eval"))
+            .eq("template_type", "value_eval")
+            .eq("cycle_number", cycleNumber)
+            .maybeSingle(),
+        ]);
 
       const hypothesis = (hypothesisRow?.values as string[]) ?? [];
       const hypothesisVersion = hypothesisRow?.version ?? 1;
@@ -621,12 +656,12 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
       const phase = evaluationPhase({
         status: progress?.status ?? null,
         hypothesisVersion,
+        cycleNumber,
         hasEvalEntry: valueEvalEntry !== null,
       });
 
       return ok({
         hypothesis,
-        hypothesisVersion,
         entries: cycleEntries,
         valueEvalEntry,
         progress: progress
@@ -648,7 +683,6 @@ export async function getEvaluationData(): Promise<EvaluationPageData> {
     ? result.data
     : {
         hypothesis: [],
-        hypothesisVersion: 1,
         entries: [],
         valueEvalEntry: null,
         progress: null,
@@ -671,7 +705,9 @@ export async function saveEvalReflectionAction(
   _prevState: ActionResult<SavedEntryId | null>,
   formData: FormData,
 ): Promise<ActionResult<SavedEntryId | null>> {
-  return withUser(async ({ supabase, user }) => {
+  return withUser(async (ctx) => {
+    const { supabase, user } = ctx;
+    const cycleNumber = await readCycleNumber(ctx);
     // Beide Felder sind FREIWILLIG (Bühne A sagt das auch so). Die Zeile wird
     // trotzdem angelegt: sie trägt die Phase der Auswertung UND ist der
     // Speicherort für das KI-Ergebnis.
@@ -696,6 +732,7 @@ export async function saveEvalReflectionAction(
       .eq("user_id", user.id)
       .eq("recipe_slug", recipeSlugFor("value_eval"))
       .eq("template_type", "value_eval")
+      .eq("cycle_number", cycleNumber)
       .maybeSingle();
 
     if (existing) {
@@ -724,6 +761,7 @@ export async function saveEvalReflectionAction(
         user_id: user.id,
         recipe_slug: recipeSlugFor("value_eval"),
         template_type: "value_eval",
+        cycle_number: cycleNumber,
         content: {
           positive_reflection: positiveReflection,
           negative_reflection: negativeReflection,
@@ -752,7 +790,8 @@ export async function saveAdjustedHypothesisAction(
   _prevState: ActionResult<boolean>,
   formData: FormData,
 ): Promise<ActionResult<boolean>> {
-  return withUser(async ({ supabase, user }) => {
+  return withUser(async (ctx) => {
+    const { supabase, user } = ctx;
     // Anders als Schritt 1 traut diese Action dem Client ausdrücklich nicht:
     // die Tausch-Kette in Bühne B (Wert raus, ein anderer rein für ihn, der
     // erste per „Rückgängig“ zurück) kann clientseitig ein Duplikat erzeugen,
@@ -770,12 +809,13 @@ export async function saveAdjustedHypothesisAction(
     }
     const values = selection.values;
 
-    const originalVersionRaw = formData.get("original_version");
-    const originalVersion = parseInt(
-      typeof originalVersionRaw === "string" ? originalVersionRaw : "",
-      10,
-    );
-    const newVersion = isNaN(originalVersion) ? 2 : originalVersion + 1;
+    // Serverseitig abgeleitet statt aus dem Formular gelesen: die neue Fassung
+    // ist immer die nächste nach der jüngsten. Ein Client-Wert könnte auf eine
+    // bestehende Version zeigen und die Historie überschreiben — und weil
+    // `version` seit KAN-20 die Durchlauf-Nummer trägt, ist eine falsche
+    // Version zugleich ein falscher Durchlauf.
+    const { hypothesisVersion } = await readCycleStand(ctx);
+    const newVersion = hypothesisVersion + 1;
 
     // Insert new hypothesis row
     const { error: insertError } = await supabase

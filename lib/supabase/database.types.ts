@@ -170,6 +170,7 @@ export type Database = {
           ai_insights: string | null
           content: Json
           created_at: string | null
+          cycle_number: number
           entry_date: string | null
           id: string
           recipe_slug: string | null
@@ -180,6 +181,7 @@ export type Database = {
           ai_insights?: string | null
           content: Json
           created_at?: string | null
+          cycle_number?: number
           entry_date?: string | null
           id?: string
           recipe_slug?: string | null
@@ -190,6 +192,7 @@ export type Database = {
           ai_insights?: string | null
           content?: Json
           created_at?: string | null
+          cycle_number?: number
           entry_date?: string | null
           id?: string
           recipe_slug?: string | null
