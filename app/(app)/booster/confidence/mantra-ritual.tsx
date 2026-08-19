@@ -32,7 +32,7 @@ import {
   seedDefaultCardsAction,
   updateCardAction,
   type MantraCardData,
-} from "./actions";
+} from "@/lib/recipes/confidence/actions";
 
 /** `data` heißt hier „heute abgehakt" — vom Anfangszustand unterscheidbar. */
 const INITIAL_STATE: ActionResult<boolean> = ok(false);

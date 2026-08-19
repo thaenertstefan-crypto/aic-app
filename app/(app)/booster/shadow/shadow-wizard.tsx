@@ -21,7 +21,7 @@ import { useFormDraft } from "@/lib/hooks/use-form-draft";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { BURN_MS, burnDuration, burnRitual } from "@/lib/recipes/shadow/burn";
 
-import { markShadowDoneAction, saveShadowEntryAction } from "./actions";
+import { markShadowDoneAction, saveShadowEntryAction } from "@/lib/recipes/shadow/actions";
 
 const INTRO_CARDS = getRecipeIntro("shadow") ?? [];
 

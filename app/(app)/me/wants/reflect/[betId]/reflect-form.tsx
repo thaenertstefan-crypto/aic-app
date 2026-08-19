@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 import { ok } from "@/lib/actions/action-result";
 
-import { saveBetReflectionAction } from "../../actions";
+import { saveBetReflectionAction } from "@/lib/recipes/wants/actions";
 
 type Vibe = "energized" | "neutral" | "drained";
 

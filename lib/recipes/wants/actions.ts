@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import {
   dbFailed,
   failed,
@@ -12,9 +14,18 @@ import type {
   TablesInsert,
   TablesUpdate,
 } from "@/lib/supabase/database.types";
-import type { BetItem, WantItem, YinYangContent } from "@/lib/types/db-json";
+import type {
+  BetItem,
+  LittleBetContent,
+  WantItem,
+  YinYangContent,
+} from "@/lib/types/db-json";
 import { serverTodayKey } from "@/lib/server/timezone";
-import { TEXT_MAX_LONG, tooLong } from "@/lib/utils/form-validation";
+import {
+  TEXT_MAX_LONG,
+  TEXT_MAX_SHORT,
+  tooLong,
+} from "@/lib/utils/form-validation";
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
 import { type SavedEntryId, savedEntryId } from "@/lib/recipes/saved-entry";
 import {
@@ -294,4 +305,106 @@ export async function saveYinYangEntryAction(
 
     return ok(savedEntryId(inserted.id));
   });
+}
+
+// ─── Little-Bet-Reflexion speichern ────────────────────────────────────
+
+/**
+ * Reflexion zu einem Little Bet speichern: legt einen Journal-Eintrag
+ * (template_type "little_bet") an und markiert den Bet in der wants-Zeile als
+ * „tried" (mit Verweis auf den Eintrag). Der Bet-Update läuft über die
+ * kanonische saveBetsAction (Reload-vor-Write-Merge), damit parallele
+ * Änderungen auf einem anderen Gerät erhalten bleiben.
+ *
+ * Die Nutzlast ist „ist gespeichert": der Client zeigt danach eine warme
+ * Abschluss-Ansicht statt eines Redirects und braucht dafür ein Signal, das
+ * sich vom Anfangszustand des Formulars unterscheidet.
+ */
+export async function saveBetReflectionAction(
+  _prev: ActionResult<boolean>,
+  formData: FormData,
+): Promise<ActionResult<boolean>> {
+  const betId = (formData.get("betId") as string | null)?.trim() ?? "";
+  const experience = (formData.get("experience") as string | null)?.trim() ?? "";
+  const liked = (formData.get("liked") as string | null)?.trim() ?? "";
+  const disliked = (formData.get("disliked") as string | null)?.trim() ?? "";
+  const vibeRaw = (formData.get("vibe") as string | null)?.trim() ?? "";
+  const changedWants = (formData.get("changed_wants") as string | null)?.trim() ?? "";
+
+  if (!betId) return failed("Das hat gerade nicht geklappt. Versuch es noch einmal.");
+  if (!experience) return failed("Erzähl kurz, wie das Experiment war.");
+
+  const lengthError =
+    tooLong(experience, TEXT_MAX_LONG) ??
+    (liked ? tooLong(liked, TEXT_MAX_LONG) : null) ??
+    (disliked ? tooLong(disliked, TEXT_MAX_LONG) : null) ??
+    (changedWants ? tooLong(changedWants, TEXT_MAX_LONG) : null);
+  if (lengthError) return failed(lengthError);
+
+  const result = await withUser(async ({ supabase, user }) => {
+    const { data: row } = await supabase
+      .from("wants")
+      .select("bets")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const bets = (row?.bets as BetItem[] | null) ?? [];
+    const bet = bets.find((b) => b.id === betId);
+    if (!bet) {
+      return failed("Wir konnten dieses Experiment nicht finden.");
+    }
+
+    const vibe =
+      vibeRaw === "energized" || vibeRaw === "neutral" || vibeRaw === "drained"
+        ? vibeRaw
+        : undefined;
+
+    const content: LittleBetContent = {
+      bet_text: bet.text.slice(0, TEXT_MAX_SHORT),
+      experience,
+      ...(liked ? { liked } : {}),
+      ...(disliked ? { disliked } : {}),
+      ...(vibe ? { vibe } : {}),
+      ...(changedWants ? { changed_wants: changedWants } : {}),
+    };
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("journal_entries")
+      .insert({
+        user_id: user.id,
+        recipe_slug: recipeSlugFor("little_bet"),
+        template_type: "little_bet",
+        content,
+        entry_date: await serverTodayKey(),
+      })
+      .select("id")
+      .single();
+
+    if (insertError || !inserted) {
+      return dbFailed(insertError, "wants");
+    }
+
+    // Bet als ausprobiert markieren (komplettes Array über die kanonische Action
+    // zurückschreiben — alle ids bleiben, also identischer Merge).
+    const updatedBets: BetItem[] = bets.map((b) =>
+      b.id === betId
+        ? { ...b, status: "tried" as const, journalEntryId: inserted.id }
+        : b,
+    );
+
+    const fd = new FormData();
+    fd.set("bets", JSON.stringify(updatedBets));
+    const res = await saveBetsAction(fd);
+    if (res.error !== null) return failed(res.error);
+
+    return ok(true);
+  });
+
+  if (result.error !== null) return result;
+
+  // Kein Server-Redirect: der Client zeigt eine warme Abschluss-Ansicht
+  // (Feier + „Zu deinen Sternen"), wie Journey und Schmiede. revalidatePath
+  // hält /me/wants frisch, sobald dorthin navigiert wird.
+  revalidatePath("/me/wants");
+  return result;
 }

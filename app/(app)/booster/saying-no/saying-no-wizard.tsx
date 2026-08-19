@@ -42,7 +42,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { SAYING_NO_LAYERS, STATIC_SCENARIOS } from "./blueprint";
-import { saveFinalNoAction, saveSayingNoEntryAction } from "./actions";
+import { saveFinalNoAction, saveSayingNoEntryAction } from "@/lib/recipes/saying-no/actions";
 
 const INTRO_CARDS = getRecipeIntro("saying-no") ?? [];
 

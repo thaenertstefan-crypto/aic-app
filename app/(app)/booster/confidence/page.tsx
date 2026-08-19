@@ -6,7 +6,7 @@ import { getSeenCleanserIntros } from "@/app/(app)/cleansers/actions";
 import { BoosterArrive } from "@/components/booster/booster-arrive";
 
 import { ConfidenceBooster } from "./confidence-booster";
-import { getMantraData } from "./actions";
+import { getMantraData } from "@/lib/recipes/confidence/actions";
 
 export default async function ConfidenceBoosterPage() {
   const user = await getCachedUser();

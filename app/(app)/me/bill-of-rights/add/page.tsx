@@ -12,7 +12,7 @@ import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 
 import { ok } from "@/lib/actions/action-result";
 
-import { appendRightAction } from "../actions";
+import { appendRightAction } from "@/lib/recipes/bill-of-rights/actions";
 
 const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
 

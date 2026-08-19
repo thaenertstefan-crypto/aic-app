@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PAGE_TITLES } from "@/lib/content/labels";
 
 import { MantraRitual } from "./mantra-ritual";
-import type { MantraCardData } from "./actions";
+import type { MantraCardData } from "@/lib/recipes/confidence/actions";
 
 // ---------------------------------------------------------------------------
 // Confidence-Boost — Landing: oben der Einstieg in den akuten Moment-Flow

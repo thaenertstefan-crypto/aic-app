@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 import { ok } from "@/lib/actions/action-result";
 
-import { saveGeneratedRightAction } from "../actions";
+import { saveGeneratedRightAction } from "@/lib/recipes/bill-of-rights/actions";
 
 const INTRO_CARDS = getRecipeIntro("bill-of-rights") ?? [];
 

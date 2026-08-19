@@ -29,7 +29,7 @@ import type { SavedEntryId } from "@/lib/recipes/saved-entry";
 import { readRightSuggestion } from "@/lib/recipes/right-suggestion";
 import { advanceMessy, initialMessy } from "@/lib/recipes/things-got-messy/state";
 
-import { saveGuiltFeedbackAction, saveMessyMomentAction } from "./actions";
+import { saveGuiltFeedbackAction, saveMessyMomentAction } from "@/lib/recipes/things-got-messy/actions";
 
 const INTRO_CARDS = getRecipeIntro("things-got-messy") ?? [];
 

@@ -38,7 +38,7 @@ import {
   type StepQuestions,
 } from "@/lib/recipes/overthinking/steps";
 
-import { saveOverthinkingAction } from "./actions";
+import { saveOverthinkingAction } from "@/lib/recipes/overthinking/actions";
 
 const INTRO_CARDS = getRecipeIntro("overthinking") ?? [];
 

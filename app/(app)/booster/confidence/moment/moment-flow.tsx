@@ -11,7 +11,7 @@ import { CompletionCelebration } from "@/components/ui/completion-celebration";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 
 import { BreathingExercise } from "../breathing-exercise";
-import { logMomentFlowCheckin } from "../actions";
+import { logMomentFlowCheckin } from "@/lib/recipes/confidence/actions";
 
 // ---------------------------------------------------------------------------
 // „Gleich bin ich dran" — geführter 5-Minuten-Flow vor einem Auftritt,
