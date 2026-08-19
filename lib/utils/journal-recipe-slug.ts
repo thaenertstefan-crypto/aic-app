@@ -1,20 +1,15 @@
 /**
  * Die Paarung `template_type → recipe_slug` für die Query-Achse — getrennt von
- * `JOURNAL_TEMPLATE_MAP` in `journal.ts`, die dieselbe Paarung für die Anzeige
- * trägt (Icon, Label) und für `free` bewusst `""` statt `null` führt, weil ein
- * Filter-Tab nie auf `""` matcht. `JOURNAL_TEMPLATE_MAP` liest ihren
+ * `JOURNAL_TEMPLATE_MAP` in `journal-chrome.ts`, die dieselbe Paarung für die
+ * Anzeige trägt (Icon, Label) und für `free` bewusst `""` statt `null` führt,
+ * weil ein Filter-Tab nie auf `""` matcht. `JOURNAL_TEMPLATE_MAP` liest ihren
  * `recipeSlug` aus dieser Datei, damit die Paarung selbst nur einmal steht.
  *
  * NICHT jede Stelle, die `journal_entries` filtert, soll `recipe_slug` setzen:
  * `saveJournalEntryAction` filtert das Tages-Gating bewusst nur über
  * `(user_id, entry_date, template_type)`, ohne Slug — das bleibt so.
- *
- * Bewusst ohne Wert-Imports aus `journal.ts`: `TemplateType` kommt als
- * `import type` herein und verschwindet beim Type-Stripping, damit diese
- * Datei nicht das lucide-react von `journal.ts` mitzieht (Vorbild:
- * `journal-content.ts`).
  */
-import type { TemplateType } from "./journal.ts";
+import type { TemplateType } from "./journal-content.ts";
 
 export const RECIPE_SLUG_BY_TEMPLATE = {
   daily_value: "values",

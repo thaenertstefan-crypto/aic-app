@@ -12,12 +12,12 @@ import { Separator } from "@/components/ui/separator";
 import { SectionLabel } from "@/components/ui/section-label";
 import { RichText } from "@/components/ui/rich-text";
 import { getJournalEntryDetail } from "@/app/(app)/journal/actions";
+import { getJournalConfig } from "@/lib/utils/journal-chrome";
 import {
-  getJournalConfig,
   getContentSections,
-  formatDateDE,
   type JournalListItem,
-} from "@/lib/utils/journal";
+} from "@/lib/utils/journal-format";
+import { formatDateDE } from "@/lib/utils/date";
 
 type Props = {
   entry: JournalListItem | null;

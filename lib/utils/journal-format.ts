@@ -1,20 +1,15 @@
-import {
-  AlertTriangle,
-  Brain,
-  Compass,
-  FlaskConical,
-  Heart,
-  Lock,
-  Notebook,
-  NotebookPen,
-  Shield,
-  ShieldOff,
-  type LucideIcon,
-} from "lucide-react";
+/**
+ * Die Textseite des Journals: aus einer Eintragszeile wird eine Vorschau, aus
+ * `template_type` + `content` werden geordnete Sektionen für die Detailansicht.
+ *
+ * Bewusst ohne Wert-Imports aus dem React-Graphen und mit relativen
+ * `.ts`-Pfaden statt `@/`: so lässt sich diese Datei mit purem Node prüfen
+ * (`npm test`), ohne Bundler und ohne Alias-Auflösung. Alles, was Icons oder
+ * Labels braucht, wohnt nebenan in `journal-chrome.ts` — das ist die
+ * Trennlinie, nicht Formatierung gegen Anzeige.
+ */
 
-import { PAGE_TITLES } from "@/lib/content/labels";
-import type { Json } from "@/lib/supabase/database.types";
-import { RECIPE_SLUG_BY_TEMPLATE } from "@/lib/utils/journal-recipe-slug";
+import type { Json } from "../supabase/database.types.ts";
 import type {
   BillOfRightsContent,
   DailyValueContent,
@@ -26,27 +21,15 @@ import type {
   ShadowContent,
   ValueEvalContent,
   YinYangContent,
-} from "@/lib/types/db-json";
+} from "../types/db-json.ts";
 import {
   readJournalContent,
   type KnownJournalContent,
-} from "./journal-content";
+} from "./journal-content.ts";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                             */
 /* ------------------------------------------------------------------ */
-
-export type TemplateType =
-  | "daily_value"
-  | "value_eval"
-  | "yin_yang"
-  | "little_bet"
-  | "bill_of_rights"
-  | "messy_moment"
-  | "overthinking"
-  | "saying_no"
-  | "shadow"
-  | "free";
 
 /**
  * Schlanke Variante für die Journal-Liste: enthält NUR die für Anzeige und
@@ -63,8 +46,10 @@ export type JournalListItem = {
   preview: string;
 };
 
-/** Seitengröße für die paginierte Journal-Liste ("Mehr laden"). */
-export const JOURNAL_PAGE_SIZE = 30;
+export type ContentSection = {
+  label: string;
+  value: string;
+};
 
 /** Mappt eine geladene Eintragszeile auf das schlanke Listen-Item und
  *  berechnet dabei die Vorschau serverseitig (content verlässt den Server nicht). */
@@ -86,102 +71,10 @@ export function toJournalListItem(row: {
   };
 }
 
-export type ContentSection = {
-  label: string;
-  value: string;
-};
-
 /* ------------------------------------------------------------------ */
-/*  Config map: template_type → { icon, label, recipeSlug }          */
+/*  Vorschau                                                          */
 /* ------------------------------------------------------------------ */
 
-type TemplateConfig = {
-  icon: LucideIcon;
-  label: string;
-  recipeSlug: string;
-};
-
-/** `RECIPE_SLUG_BY_TEMPLATE` trägt `null` für `free` (die DB-Wahrheit) — hier
- *  wird daraus `""`, weil `recipeSlug` ein Anzeige-/Filter-Tab-Wert ist und
- *  kein Filter-Tab je auf `""` matcht (siehe journal-recipe-slug.ts). */
-function displaySlug(templateType: keyof typeof RECIPE_SLUG_BY_TEMPLATE) {
-  return RECIPE_SLUG_BY_TEMPLATE[templateType] ?? "";
-}
-
-export const JOURNAL_TEMPLATE_MAP: Record<string, TemplateConfig> = {
-  daily_value: {
-    icon: Heart,
-    label: "Werte-Tagebuch",
-    recipeSlug: displaySlug("daily_value"),
-  },
-  value_eval: {
-    icon: Notebook,
-    label: "Werte-Auswertung",
-    recipeSlug: displaySlug("value_eval"),
-  },
-  yin_yang: {
-    icon: Compass,
-    label: "Yin-&-Yang-Audit",
-    recipeSlug: displaySlug("yin_yang"),
-  },
-  little_bet: {
-    icon: FlaskConical,
-    label: "Little-Bet-Reflexion",
-    recipeSlug: displaySlug("little_bet"),
-  },
-  bill_of_rights: {
-    icon: Shield,
-    label: "Bill of Rights Reflexion",
-    recipeSlug: displaySlug("bill_of_rights"),
-  },
-  messy_moment: {
-    icon: AlertTriangle,
-    label: PAGE_TITLES.thingsGotMessy,
-    recipeSlug: displaySlug("messy_moment"),
-  },
-  overthinking: {
-    icon: Brain,
-    label: "Grübelspirale durchbrochen",
-    recipeSlug: displaySlug("overthinking"),
-  },
-  saying_no: {
-    icon: ShieldOff,
-    label: PAGE_TITLES.sayingNo,
-    recipeSlug: displaySlug("saying_no"),
-  },
-  shadow: {
-    // Schloss statt Rezept-Icon: signalisiert in der Liste "privat".
-    icon: Lock,
-    label: PAGE_TITLES.shadow,
-    recipeSlug: displaySlug("shadow"),
-  },
-  free: {
-    icon: NotebookPen,
-    label: "Freier Eintrag",
-    recipeSlug: displaySlug("free"),
-  },
-};
-
-/* ------------------------------------------------------------------ */
-/*  Helpers                                                           */
-/* ------------------------------------------------------------------ */
-
-/** Look up config for a template type — falls back to a generic entry. */
-export function getJournalConfig(templateType: string): TemplateConfig {
-  return (
-    JOURNAL_TEMPLATE_MAP[templateType] ?? {
-      icon: Notebook,
-      label: templateType,
-      recipeSlug: "unknown",
-    }
-  );
-}
-
-/**
- * Extract a short text preview from an entry's content JSONB.
- * Finds the first non-empty string value (or first element of a string array),
- * then truncates to maxLen characters.
- */
 /** Bevorzugte Erzähl-Felder für die Vorschau. Nötig, weil Postgres-JSONB die
  *  Keys umsortiert (Länge, dann Bytes) — ohne Priorität landet sonst z.B. bei
  *  messy_moment das kurze Enum-Feld guilt_type ("unhealthy") vor messy_when. */
@@ -197,6 +90,11 @@ const PREVIEW_PREFERRED_KEYS = [
   "body",
 ];
 
+/**
+ * Extract a short text preview from an entry's content JSONB.
+ * Finds the first non-empty string value (or first element of a string array),
+ * then truncates to maxLen characters.
+ */
 export function extractPreview(
   content: Record<string, unknown>,
   maxLen = 80,
@@ -235,10 +133,6 @@ function truncate(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
   return text.slice(0, maxLen).trimEnd() + "…";
 }
-
-/** Format a date key "YYYY-MM-DD" to German "DD.MM.YYYY". Re-exported from the
- *  central date helper so existing imports from this module keep working. */
-export { formatDateDE } from "./date";
 
 /* ------------------------------------------------------------------ */
 /*  Per-template-type content formatters                              */
@@ -577,61 +471,6 @@ export function getContentSections(
   }
 
   return formatKnown(entry);
-}
-
-/* ------------------------------------------------------------------ */
-/*  Filter tabs                                                       */
-/* ------------------------------------------------------------------ */
-
-export type FilterTab = {
-  value: string;
-  label: string;
-  icon: LucideIcon;
-};
-
-/**
- * Build filter tabs for the journal hub.
- * The "Alle" tab is always first, followed by one tab per recipe.
- */
-export function getFilterTabs(): FilterTab[] {
-  return [
-    { value: "all", label: "Alle", icon: Notebook },
-    {
-      value: "values",
-      label: "Werte",
-      icon: Heart,
-    },
-    {
-      value: "wants",
-      label: "Wants",
-      icon: Compass,
-    },
-    {
-      value: "bill-of-rights",
-      label: "Bill of Rights",
-      icon: Shield,
-    },
-    {
-      value: "overthinking",
-      label: "Grübelspiralen",
-      icon: Brain,
-    },
-    {
-      value: "things-got-messy",
-      label: PAGE_TITLES.thingsGotMessy,
-      icon: AlertTriangle,
-    },
-    {
-      value: "saying-no",
-      label: PAGE_TITLES.sayingNo,
-      icon: ShieldOff,
-    },
-    {
-      value: "shadow",
-      label: PAGE_TITLES.shadow,
-      icon: Lock,
-    },
-  ];
 }
 
 /* ------------------------------------------------------------------ */

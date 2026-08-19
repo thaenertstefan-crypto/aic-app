@@ -63,7 +63,8 @@ verbindlichen Quellen; hier stehen nur die Regeln, die sich am Code festmachen l
     dann hängt der Zustand wieder an der Aufrufreihenfolge.
 - Server-Actions und Backend-Logik der Übungen liegen in `lib/recipes/**/actions.ts` — nicht im
   Routenbaum; geteilte Bausteine in `components/recipes/`, Journal-Formatierung in
-  `lib/utils/journal.ts`.
+  `lib/utils/journal-format.ts` (rein und testbar), Icons und Filter-Tabs in
+  `lib/utils/journal-chrome.ts`.
 - Eine Server-Action beginnt mit `withUser` aus `lib/actions/` und gibt ein `ActionResult<T>`
   zurück (`ok`/`failed`/`dbFailed`). Eine handgeschriebene `auth.getUser()`-Präambel oder eine eigene
   Rückgabeform ist ein Befund — der Altbestand ist migriert, es gibt keine Ausnahme mehr zu erben.

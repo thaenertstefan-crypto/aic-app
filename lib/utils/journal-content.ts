@@ -24,16 +24,16 @@
  * Wahrheit, und eine Lücke fällt beim Lesen auf statt still weiterzuleben.
  * Genau so sind die drei Alt-Felder von `overthinking` in den Typ gekommen.
  *
- * Nichts in dieser Datei zählt Werte selbst auf. Die zehn `template_type` und
- * jede Enum-Liste werden aus den Typen von `db-json.ts` bzw. `journal.ts`
- * abgeleitet, und die Tabellen sind so getypt, dass ein fehlender Wert den
- * Build bricht. Eine nachgebaute Werteliste würde bei einer Erweiterung
- * weitertypechecken und den neuen Wert still verwerfen — das wäre derselbe
- * lautlose Datenverlust, den dieses Modul verhindern soll.
+ * Außer `TemplateType` selbst zählt nichts in dieser Datei Werte auf. Jede
+ * Enum-Liste wird aus den Typen von `db-json.ts` abgeleitet, und die Tabellen
+ * sind so getypt, dass ein fehlender Wert den Build bricht. Eine nachgebaute
+ * Werteliste würde bei einer Erweiterung weitertypechecken und den neuen Wert
+ * still verwerfen — das wäre derselbe lautlose Datenverlust, den dieses Modul
+ * verhindern soll.
  *
  * Bewusst ohne Wert-Imports: alles kommt als `import type` herein und
  * verschwindet beim Type-Stripping. So bleibt die Datei mit purem Node prüfbar
- * (`npm test`), obwohl `journal.ts` nebenan lucide-react zieht.
+ * (`npm test`), ohne Bundler und ohne Alias-Auflösung.
  *
  * Zwei Richtungen, zwei Regeln:
  * - **Lesen** (`readJournalContent`) prüft und verengt. Was nicht deklariert
@@ -58,7 +58,22 @@ import type {
   ValueEvalContent,
   YinYangContent,
 } from "../types/db-json.ts";
-import type { TemplateType } from "./journal.ts";
+
+/** Die zehn `template_type`-Werte, die dieses Modul kennt. Sie wohnt hier, weil
+ *  die Diskriminante hier definiert und geprüft wird — `KnownJournalContent`
+ *  leitet sich davon ab, und `journal-recipe-slug.ts` deckt seine Paarung
+ *  dagegen ab. */
+export type TemplateType =
+  | "daily_value"
+  | "value_eval"
+  | "yin_yang"
+  | "little_bet"
+  | "bill_of_rights"
+  | "messy_moment"
+  | "overthinking"
+  | "saying_no"
+  | "shadow"
+  | "free";
 
 /** Ein rohes JSON-Objekt aus einer JSONB-Spalte: Schlüssel bekannt, Werte nur
  *  als `Json`. Alles in diesem Modul beginnt hier — und `patchJournalContent`
@@ -221,7 +236,7 @@ type ContentReader<K extends TemplateType> = (
  * Die einzige Liste der zehn Werte im Modul — Tabelle und Wertevorrat in
  * einem. Der Mapped Type bindet jeden Schlüssel an SEINEN Leser: `daily_value`
  * auf `readFree` zu legen ist ein Typfehler, kein stiller Bug. Wächst
- * `TemplateType` in `journal.ts`, scheitert der Build hier.
+ * `TemplateType` oben, scheitert der Build hier.
  */
 const READERS: { [K in TemplateType]: ContentReader<K> } = {
   daily_value: readDailyValue,

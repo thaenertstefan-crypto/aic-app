@@ -13,16 +13,18 @@ import {
 import { withUser } from "@/lib/actions/with-user";
 import { serverTodayKey } from "@/lib/server/timezone";
 import {
-  JOURNAL_PAGE_SIZE,
   toJournalListItem,
   type JournalListItem,
-} from "@/lib/utils/journal";
+} from "@/lib/utils/journal-format";
 import {
   TEXT_MAX_LONG,
   TEXT_MAX_SHORT,
   tooLong,
 } from "@/lib/utils/form-validation";
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
+
+/** Seitengröße für die paginierte Journal-Liste ("Mehr laden"). */
+const JOURNAL_PAGE_SIZE = 30;
 
 /** Spalten für die schlanke Listenansicht. content wird nur zur serverseitigen
  *  Vorschau-Berechnung gelesen und verlässt den Server nicht (ai_insights gar nicht). */

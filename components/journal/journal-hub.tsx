@@ -9,12 +9,9 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { JournalDetailDialog } from "@/components/journal/journal-detail-dialog";
 import { getJournalPage } from "@/app/(app)/journal/actions";
-import {
-  getFilterTabs,
-  getJournalConfig,
-  formatDateDE,
-  type JournalListItem,
-} from "@/lib/utils/journal";
+import { getFilterTabs, getJournalConfig } from "@/lib/utils/journal-chrome";
+import type { JournalListItem } from "@/lib/utils/journal-format";
+import { formatDateDE } from "@/lib/utils/date";
 
 type Props = {
   initialEntries: JournalListItem[];
