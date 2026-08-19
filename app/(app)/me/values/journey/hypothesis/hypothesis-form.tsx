@@ -16,7 +16,7 @@ import { SELECTABLE_VALUES, getValueLabel, CUSTOM_PREFIX } from "@/lib/utils/val
 import { getValueEmoji } from "@/lib/utils/values-emojis";
 import { getValueDescription } from "@/lib/utils/values-descriptions";
 import { saveHypothesisAction } from "@/lib/recipes/values/actions";
-import type { HypothesisStage } from "@/lib/recipes/values/evaluation-phase";
+import type { HypothesisStage } from "@/lib/recipes/values/cycle";
 
 const MAX_VALUES = 5;
 

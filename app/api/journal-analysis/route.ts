@@ -6,6 +6,7 @@ import {
   readJournalContent,
 } from "@/lib/utils/journal-content";
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
+import { cycleJournal, cycleOfEntry } from "@/lib/recipes/values/cycle";
 import { VALUES_BANK, getValueLabel } from "@/lib/utils/values-bank";
 
 // Warm German fallback shown when the AI call fails for any reason.
@@ -73,17 +74,22 @@ export const POST = withAiRoute(
       );
     }
 
+    // Der Durchlauf steht auf der eval-Zeile, nicht am Fortschritt: wer den
+    // Rückblick eines älteren Durchlaufs erneut auswerten lässt, soll dessen
+    // sieben Tage bekommen — nicht die des laufenden.
+    const cycle = cycleOfEntry(evalRow);
+
     // Jetzt die beiden Reads, die vom Durchlauf der eval-Zeile abhängen bzw.
     // unabhängig sind — parallel, bevor der KI-Call startet.
     const [{ data: dailyEntries }, { data: hypothesisRow }] = await Promise.all([
       // Die 7 Tagebuch-Einträge DIESES Durchlaufs.
-      supabase
-        .from("journal_entries")
-        .select("template_type, content")
-        .eq("user_id", user.id)
+      cycleJournal(
+        { supabase, user },
+        cycle,
+        "daily_value",
+        "template_type, content",
+      )
         .eq("recipe_slug", recipeSlugFor("daily_value"))
-        .eq("template_type", "daily_value")
-        .eq("cycle_number", evalRow.cycle_number)
         .order("created_at", { ascending: false })
         .limit(7),
       // Latest values hypothesis.

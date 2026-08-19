@@ -4,7 +4,9 @@ Nur die Begriffe, die heute mehrdeutig sind — hier stehen bewusst nicht alle W
 sondern die, für die im Repo mehrere Namen kursieren. Wer Tickets, Commits oder Code schreibt,
 nimmt das Wort aus der linken Spalte.
 
-Verwandte Entscheidungen: [ADR-0001](docs/adr/0001-kein-gemeinsames-rezept-modul.md).
+Verwandte Entscheidungen: [ADR-0001](docs/adr/0001-kein-gemeinsames-rezept-modul.md),
+[ADR-0002](docs/adr/0002-kein-gebrandeter-durchlauf-typ.md),
+[ADR-0003](docs/adr/0003-hypothesen-version-ist-die-durchlauf-nummer.md).
 
 ## Übung
 
@@ -37,6 +39,22 @@ Die zwei Register, in denen Übungen leben.
 Die Trennung ist inhaltlich, nicht technisch: beide Register nutzen dieselben Bausteine. Ob
 eine neue Übung nach Booster oder nach Me gehört, entscheidet sich daran, ob sie einen Moment
 auffängt oder ein Bild aufbaut.
+
+## Durchlauf
+
+Ein vollständiger Umlauf der Werte-Übung: Hypothese aufstellen, sieben Tage Tagebuch,
+auswerten, Kompass anpassen.
+
+- **In Prosa und Code: „Durchlauf" / `cycle`.** So auch in Funktions- und Variablennamen
+  (`lib/recipes/values/cycle.ts`, `readCycle`, `cycleJournal`).
+- **Der laufende Durchlauf** ist der mit der höchsten Nummer. **Der Durchlauf eines Eintrags**
+  steht auf dem Eintrag selbst (`journal_entries.cycle_number`) und muss nicht der laufende
+  sein — wer den Rückblick eines älteren Durchlaufs erneut auswertet, bekommt dessen sieben
+  Tage.
+- Pro (User, Übung) gibt es **eine Fortschritts-Zeile je Durchlauf**; die mit der höchsten
+  `cycle_number` ist der Stand (`user_recipe_progress`).
+- **`values_hypothesis.version` ist die Durchlauf-Nummer** — keine eigene Spalte, keine zwei
+  Zahlen, die auseinanderlaufen können. Siehe [ADR-0003](docs/adr/0003-hypothesen-version-ist-die-durchlauf-nummer.md).
 
 ## Funke
 
