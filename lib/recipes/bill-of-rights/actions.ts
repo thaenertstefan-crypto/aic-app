@@ -10,7 +10,11 @@ import {
   type ActionResult,
 } from "@/lib/actions/action-result";
 import { withUser, type ActionContext } from "@/lib/actions/with-user";
-import { writeProgress, type ProgressWrite } from "@/lib/recipes/progress";
+import {
+  readIntroSeen,
+  writeProgress,
+  type ProgressWrite,
+} from "@/lib/recipes/progress";
 import { serverTodayKey } from "@/lib/server/timezone";
 import type { BillOfRightsContent, RightItem } from "@/lib/types/db-json";
 import {
@@ -45,7 +49,9 @@ export type RightsData = {
 // ─── Get all data for the page ─────────────────────────────────────────
 
 export async function getBillOfRightsData(): Promise<ActionResult<RightsData>> {
-  return withUser(async ({ supabase, user }) => {
+  return withUser(async (ctx) => {
+    const { supabase, user } = ctx;
+
     // Fetch bill of rights
     const { data: bor } = await supabase
       .from("bill_of_rights")
@@ -53,19 +59,9 @@ export async function getBillOfRightsData(): Promise<ActionResult<RightsData>> {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // Intro "schon gesehen?" — gilt pro Slug, sobald irgendeine Zeile intro_seen=true hat.
-    const { data: introRow } = await supabase
-      .from("user_recipe_progress")
-      .select("intro_seen")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "bill-of-rights")
-      .eq("intro_seen", true)
-      .limit(1)
-      .maybeSingle();
-
     return ok({
       rights: (bor?.rights as RightItem[]) ?? null,
-      introSeen: Boolean(introRow),
+      introSeen: await readIntroSeen(ctx, "bill-of-rights"),
     });
   });
 }

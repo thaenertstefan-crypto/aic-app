@@ -37,7 +37,7 @@ import {
   parseItems,
   parsePreviousIds,
 } from "@/lib/recipes/wants/items";
-import { writeProgress } from "@/lib/recipes/progress";
+import { readIntroSeen, writeProgress } from "@/lib/recipes/progress";
 import {
   nextAuditProgress,
   nextWantsProgress,
@@ -113,27 +113,18 @@ export type WantsData = {
 };
 
 export async function getWantsData(): Promise<ActionResult<WantsData>> {
-  return withUser(async ({ supabase, user }) => {
+  return withUser(async (ctx) => {
+    const { supabase, user } = ctx;
     const { data: row } = await supabase
       .from("wants")
       .select("wants, bets")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // Intro "schon gesehen?" — gilt pro Slug, sobald irgendeine Zeile intro_seen=true hat.
-    const { data: introRow } = await supabase
-      .from("user_recipe_progress")
-      .select("intro_seen")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", "wants")
-      .eq("intro_seen", true)
-      .limit(1)
-      .maybeSingle();
-
     return ok({
       wants: (row?.wants as WantItem[] | null) ?? null,
       bets: (row?.bets as BetItem[] | null) ?? null,
-      introSeen: Boolean(introRow),
+      introSeen: await readIntroSeen(ctx, "wants"),
     });
   });
 }

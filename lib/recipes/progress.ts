@@ -109,6 +109,37 @@ function selectLatest({ supabase, user }: ActionContext, slug: string) {
 }
 
 /**
+ * Ob die Intro-Sequenz eines Rezepts schon gesehen wurde — gilt pro
+ * `recipe_slug`, nicht pro Durchlauf: gesehen, sobald **irgendeine**
+ * Fortschritts-Zeile dieses Slugs `intro_seen = true` trägt.
+ *
+ * Bewusst ohne `order`/`limit` auf `cycle_number`: anders als `readProgress`
+ * fragt diese Funktion nicht nach dem laufenden Durchlauf, sondern über alle
+ * Durchläufe hinweg — die Intro wird pro Übung einmal gezeigt, nicht erneut
+ * bei jedem neuen Zyklus. Ein `order`/`limit` wäre hier der Defekt.
+ *
+ * Verschluckt einen Lesefehler zu `false`, aus demselben Grund wie
+ * `readProgress`: „noch nicht gesehen" ist die sichere Antwort für einen
+ * lesenden Aufrufer — die Intro einmal zu viel zu zeigen ist harmlos, sie zu
+ * Unrecht zu überspringen nicht.
+ */
+export async function readIntroSeen(
+  { supabase, user }: ActionContext,
+  slug: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from(TABLE)
+    .select("intro_seen")
+    .eq("user_id", user.id)
+    .eq("recipe_slug", slug)
+    .eq("intro_seen", true)
+    .limit(1)
+    .maybeSingle();
+
+  return Boolean(data);
+}
+
+/**
  * Alle Fortschritts-Zeilen des Users, über alle Slugs und Durchläufe hinweg —
  * eine Abfrage für die Flächen, die den Gesamtstand zeigen (Dashboard,
  * Einstellungen).

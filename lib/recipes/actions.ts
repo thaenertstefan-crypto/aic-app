@@ -1,36 +1,23 @@
 "use server";
 
-import { failed, ok, type ActionResult } from "@/lib/actions/action-result";
+import { ok, failed, type ActionResult } from "@/lib/actions/action-result";
 import { withUser } from "@/lib/actions/with-user";
-import { writeProgress } from "@/lib/recipes/progress";
+import { readIntroSeen, writeProgress } from "@/lib/recipes/progress";
 import { getRecipeBySlug } from "@/lib/utils/recipes";
 
 // ─── Rezept-Intro "schon gesehen?"-Status (Schritt 6.10) ────────────────
 
 /**
- * Liest, ob der User die Intro-Sequenz dieses Rezepts schon gesehen hat.
- * intro_seen gilt pro recipe_slug (nicht pro Zyklus): gesehen, sobald
- * IRGENDEINE Fortschritts-Zeile dieses Slugs intro_seen = true hat.
+ * Liest, ob der User die Intro-Sequenz dieses Rezepts schon gesehen hat —
+ * die `withUser`-Hülle um `readIntroSeen` für Server-Komponenten, die keinen
+ * `ctx` zur Hand haben.
  *
- * Bewusst **kein** `ActionResult`: der Aufrufer ist eine Server-Komponente, die
- * daraus nur ein `introSeen`-Flag zieht. „Noch nicht gesehen" ist die richtige
- * Antwort auf jeden Fehlerfall — ein Ergebnis zum Auspacken würde jedem
- * Aufrufer einen Zweig aufzwingen, in dem er dasselbe täte.
+ * Bewusst **kein** `ActionResult`: der Aufrufer zieht daraus nur ein
+ * `introSeen`-Flag. Ein Ergebnis zum Auspacken würde ihm einen Zweig
+ * aufzwingen, in dem er dasselbe täte wie bei „nicht angemeldet".
  */
 export async function hasSeenRecipeIntro(slug: string): Promise<boolean> {
-  const result = await withUser(async ({ supabase, user }) => {
-    const { data } = await supabase
-      .from("user_recipe_progress")
-      .select("intro_seen")
-      .eq("user_id", user.id)
-      .eq("recipe_slug", slug)
-      .eq("intro_seen", true)
-      .limit(1)
-      .maybeSingle();
-
-    return ok(Boolean(data));
-  });
-
+  const result = await withUser(async (ctx) => ok(await readIntroSeen(ctx, slug)));
   return result.error === null ? result.data : false;
 }
 
