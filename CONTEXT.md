@@ -6,7 +6,9 @@ nimmt das Wort aus der linken Spalte.
 
 Verwandte Entscheidungen: [ADR-0001](docs/adr/0001-kein-gemeinsames-rezept-modul.md),
 [ADR-0002](docs/adr/0002-kein-gebrandeter-durchlauf-typ.md),
-[ADR-0003](docs/adr/0003-hypothesen-version-ist-die-durchlauf-nummer.md).
+[ADR-0003](docs/adr/0003-hypothesen-version-ist-die-durchlauf-nummer.md),
+[ADR-0004](docs/adr/0004-zustands-module-entstehen-aus-defekten.md),
+[ADR-0005](docs/adr/0005-ferner-stern-geht-an-der-ki-vorbei.md).
 
 ## Übung
 
@@ -61,3 +63,28 @@ auswerten, Kompass anpassen.
 Eine kleine Wette mit sich selbst, entstanden in der Sternschmiede. Abzugrenzen vom **Stern**,
 der für ein bestätigtes Want steht. Ein Funke kann zu einem Stern werden, ist aber zunächst
 unverbindlich — das ist der ganze Punkt des Begriffs.
+
+## Stern
+
+Ein bestätigtes Want. Vom **Funken** abzugrenzen, der noch unverbindlich ist. Sterne gibt es in
+zwei Weiten, und der Unterschied ist nicht die Entfernung des Ziels, sondern die Herkunft des
+Textes:
+
+- **Naher Stern** — destilliert. Sein Text ist die Zusammenfassung, die die KI aus vielen
+  Antworten des Audits zieht; der Wert liegt im Muster, nicht im Wortlaut.
+- **Ferner Stern** — wörtlich. Sein Text ist genau das, was in **einem** Antwortfeld der
+  Tagtraum-Frage steht, unverändert. Die KI steuert nur den Namen bei.
+- **„Fern" heißt: aus einem Antwortfeld der Tagtraum-Frage.** Einen anderen Weg gibt es nicht —
+  selbst geschriebene Sterne sind immer nah. Wer das ändert, nimmt der Weite ihre zweite
+  Bedeutung als Herkunftsmarke, auf die sich andere Flächen verlassen. Siehe
+  [ADR-0005](docs/adr/0005-ferner-stern-geht-an-der-ki-vorbei.md).
+
+## Antwortfeld
+
+Eine einzelne Box in einer Frage der Sternensuche. Der Nutzer beantwortet jede Frage in
+mehreren davon, nicht in einem Fließtext.
+
+- **In Prosa: „Antwortfeld".** Nicht „Zeile", nicht „Box", nicht „Eintrag".
+- Es ist die kleinste Einheit, die als **eine Antwort** gilt — daran hängt die Regel, dass ein
+  Antwortfeld genau einen fernen Stern ergibt. Ein Antwortfeld darf mehrzeilig sein; deshalb
+  sind die Felder einer Frage eine Liste und nicht ein zusammengefügter Text.
