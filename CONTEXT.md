@@ -9,7 +9,8 @@ Verwandte Entscheidungen: [ADR-0001](docs/adr/0001-kein-gemeinsames-rezept-modul
 [ADR-0003](docs/adr/0003-hypothesen-version-ist-die-durchlauf-nummer.md),
 [ADR-0004](docs/adr/0004-zustands-module-entstehen-aus-defekten.md),
 [ADR-0005](docs/adr/0005-ferner-stern-geht-an-der-ki-vorbei.md),
-[ADR-0006](docs/adr/0006-laufender-weg-kommt-aus-den-fortschritts-zeilen.md).
+[ADR-0006](docs/adr/0006-laufender-weg-kommt-aus-den-fortschritts-zeilen.md),
+[ADR-0007](docs/adr/0007-momente-in-eigener-tabelle-ohne-fremdschluessel.md).
 
 ## Übung
 
@@ -112,3 +113,23 @@ mehreren davon, nicht in einem Fließtext.
 - Es ist die kleinste Einheit, die als **eine Antwort** gilt — daran hängt die Regel, dass ein
   Antwortfeld genau einen fernen Stern ergibt. Ein Antwortfeld darf mehrzeilig sein; deshalb
   sind die Felder einer Frage eine Liste und nicht ein zusammengefügter Text.
+
+## Moment
+
+Ein Beleg an einem **Stern**: die Erinnerung daran, dass man diesen Stern schon einmal gelebt
+hat. Momente sammeln sich unter ihrem Stern und wollen wiedergelesen werden, nicht abgehakt.
+
+- **In Prosa: „Moment".** Im Code **`star_moments` / `StarMoment`** — das nackte Wort ist dort
+  schon zweimal vergeben (der **Moment-Flow** des Confidence-Boosters und `messy_moment`, das
+  Journal-Template von Things Got Messy). Derselbe gewollte Bruch wie bei **Übung**/`recipe`.
+- **Ein Moment gehört genau einem Stern.** Dieselbe Erfahrung an zwei Sternen sind zwei
+  Momente — jeder für sich lesbar, jeder für sich änderbar.
+- **Ein naher Stern wird mit seinen ersten Momenten geboren**, ein ferner startet leer. Das ist
+  keine Lücke, sondern die Weite von der anderen Seite gesehen: ein naher Stern gilt schon von
+  dir und hat darum ab Tag eins Belege, ein ferner ist ein Ziel — es gibt noch nichts zu
+  belegen. Rückwirkend entsteht nie ein Moment; Sterne, die es vorher schon gab, bleiben leer.
+- **Abgrenzung zum Funken:** ein Funke ist eine Wette nach vorn, ein Moment ein Beleg nach
+  hinten.
+- **Abgrenzung zum Journal-Eintrag:** ein Journal-Eintrag ist eine Sitzung mit Datum in einer
+  chronologischen Liste. Ein Moment steht neben seinen Geschwistern am Stern und nirgends
+  sonst — es gibt keine Fläche, die Momente über Sterne hinweg auflistet.
