@@ -2,7 +2,7 @@ import { getCachedUser } from "@/lib/supabase/get-user";
 import { createClient } from "@/lib/supabase/server";
 import type { RightItem } from "@/lib/types/db-json";
 
-import { DEFAULT_MANTRA } from "../defaults";
+import { DEFAULT_MANTRA } from "@/lib/recipes/confidence/defaults";
 import { MomentFlow } from "./moment-flow";
 
 /** Tag im Jahr (0-basiert) — für die deterministische Rechte-Rotation. */
