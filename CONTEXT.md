@@ -8,7 +8,8 @@ Verwandte Entscheidungen: [ADR-0001](docs/adr/0001-kein-gemeinsames-rezept-modul
 [ADR-0002](docs/adr/0002-kein-gebrandeter-durchlauf-typ.md),
 [ADR-0003](docs/adr/0003-hypothesen-version-ist-die-durchlauf-nummer.md),
 [ADR-0004](docs/adr/0004-zustands-module-entstehen-aus-defekten.md),
-[ADR-0005](docs/adr/0005-ferner-stern-geht-an-der-ki-vorbei.md).
+[ADR-0005](docs/adr/0005-ferner-stern-geht-an-der-ki-vorbei.md),
+[ADR-0006](docs/adr/0006-laufender-weg-kommt-aus-den-fortschritts-zeilen.md).
 
 ## Übung
 
@@ -41,6 +42,29 @@ Die zwei Register, in denen Übungen leben.
 Die Trennung ist inhaltlich, nicht technisch: beide Register nutzen dieselben Bausteine. Ob
 eine neue Übung nach Booster oder nach Me gehört, entscheidet sich daran, ob sie einen Moment
 auffängt oder ein Bild aufbaut.
+
+## Bild
+
+Das durable Ergebnis einer Me-Übung — die Fläche, die über den Tag hinaus bleibt und mit der
+Zeit voller wird. Es gibt genau drei:
+
+| Bild | Übung | „voll" heißt |
+| --- | --- | --- |
+| **Kompass** | Werte | ein bestätigter Hypothesen-Stand (`values_hypothesis.confirmed`) |
+| **Sternenhimmel** | Wants | mindestens ein Stern |
+| **Bill of Rights** | Bill of Rights | mindestens drei aktive Rechte |
+
+- **In Prosa: „Bild"**, für das einzelne der Eigenname. Nicht „Ergebnis", nicht „Artefakt".
+  Kompass und Sternenhimmel haben einen Namen aus der Bildwelt, das dritte trägt bislang nur
+  den Namen seiner Übung.
+- **Booster bauen kein Bild.** Das ist die Trennlinie aus **Booster · Me**, von der anderen
+  Seite gesehen: ein Nein-Trainer wird nie „voll" und kann darum nie „das nächste Bild" sein.
+  Wer eine Auswahlregel über Bilder schreibt, betrachtet genau diese drei.
+- **„Voll" liest sich aus `user_recipe_progress.status === "completed"`.** Bei allen dreien
+  heißt der Status bereits genau das — es braucht keine Abfrage auf `values_hypothesis`,
+  `wants` oder `bill_of_rights`, um zu wissen, ob ein Bild Inhalt hat.
+- **„In Arbeit" kommt aus derselben Zeile**, nicht aus `profiles.active_recipe_id`. Siehe
+  [ADR-0006](docs/adr/0006-laufender-weg-kommt-aus-den-fortschritts-zeilen.md).
 
 ## Durchlauf
 
