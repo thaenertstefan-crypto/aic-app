@@ -16,7 +16,15 @@
     // Endungen auf, deshalb importieren sie einander mit explizitem ".ts".
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
-    "incremental": true,
+    // Bewusst aus. `next build` legt den Inkrement-Stand unter
+    // `.next/cache/.tsbuildinfo` ab — und genau `.next/cache` stellt Vercel vor
+    // jedem Build als Cache wieder her. Trifft ein wiederhergestellter Stand auf
+    // einen Commit, der Module gelöscht hat (die Refactor-Runde KAN-25 ff.),
+    // frisst der Typcheck den Speicher des Builders auf und stirbt mit SIGKILL:
+    // grün lokal, rot auf Vercel, ohne Fehlermeldung. Der volle Check kostet
+    // rund 10 s — billiger als ein Deploy, der aus einem fremden Cache heraus
+    // kaputtgeht.
+    "incremental": false,
     "plugins": [
       {
         "name": "next"
