@@ -70,6 +70,10 @@ export function BottomNav() {
 
   return (
     <nav
+      // Marke für die Leer-Grammatik: `EmptyState` misst hier die Oberkante der
+      // nutzbaren Fläche ab (lib/utils/empty-state-fit.ts). Nicht entfernen,
+      // ohne dort nachzuziehen.
+      data-bottom-nav
       className="sticky bottom-0 z-50 border-t"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >

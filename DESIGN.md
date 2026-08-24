@@ -229,6 +229,19 @@ The ground itself is not a flat fill but a vertical body gradient (`components/u
 ### The Mascot (signature component)
 A procedural SVG/CSS blob (`components/brand/mascot.tsx`), **not an image** — it has faces, breathes, exhales, sways, and reacts per module (overthinking spirals, values compass, burn ritual). It is the app's warmth made literal. Its motion always has a reduced-motion fallback. Treat it as a character with states, never as a decorative sticker.
 
+### Named Rules
+**The Empty-Grammar Rule.** Eine Fläche, auf der noch nichts ist, spricht in **drei Bändern** — und die Regel dahinter ist nicht ihre Zahl, sondern: *die Fläche zeigt ihr Motiv, sie malt keins dazu.*
+
+1. **Motiv** oben: die Einheit, mit der sich die Fläche füllt, als Glyphe — Goldstern (Sternenhimmel), Rosé-Funke (Schmiede), Gold-Siegel (Bill of Rights), Logbuch (Journal). **Nie das Maskottchen**, und nie ein Icon im grauen Kreis.
+2. **Satz** in der Mitte: nennt die Fläche im Werden, **nie den Mangel** — „Hier wird dein Himmel.“, nicht „Noch keine Sterne“. Eine zweite, ruhigere Zeile darf die Einladung tragen.
+3. **CTA** am Fuß der Spalte: genau dort, wo er im vollen Zustand steht, damit der Übergang leer → voll ihn nicht bewegt.
+
+**Ein Band fällt weg, wo die Fläche es schon erfüllt.** Kein Motiv-Band, wo das Motiv ohnehin über der Spalte hängt (der Fokus-Stern der Belegwand, der Icon-Chip einer Dashboard-Karte). Kein CTA-Band, wo der CTA schon steht (der goldene „Neuer Eintrag“ über den Journal-Tabs). Das obere Band ist eine Zusage, keine Pflicht.
+
+**Ein leerer Zustand scrollt nie.** Er passt auf einen Screen — sonst ist er kein leerer Zustand, sondern eine kurze Seite. Diese Rechnung gehört der geteilten Komponente (`components/ui/empty-state.tsx` über `lib/utils/empty-state-fit.ts`) und wird nirgends nachgebaut: in der Standalone-PWA verhalten sich Viewport-Einheiten anders als in Safari, und diese Rechnung will man nicht viermal haben. Sie misst den Rest zwischen Spalten-Oberkante und Bottom-Nav — **ohne `overflow-hidden`**, das bräche den `sticky` SubPageHeader lautlos.
+
+**Eine Fläche darf mehrere Gründe haben, leer zu sein, und dann verschieden sprechen.** Die Fläche im Werden bekommt die Grammatik; eine **Abfrage ohne Treffer** (ein Filter, eine Suche) bekommt sie nicht — dort war das Vorhaben „ich schaue nach“, nicht „ich fange an“, und die Antwort ist eine ruhige Zeile ohne Motiv, ohne CTA, ohne Gold.
+
 ## 6. Do's and Don'ts
 
 ### Do:

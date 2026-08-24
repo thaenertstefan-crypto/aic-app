@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useTransition } from "react";
-import { Notebook } from "lucide-react";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -154,18 +153,24 @@ export function JournalHub({ initialEntries, initialHasMore }: Props) {
             </Button>
           )}
 
-          {/* ---- Empty state ---- */}
-          {isEmpty && (
+          {/* ---- Das leere Journal ---- */}
+          {/* Kein CTA-Band: der goldene „Neuer Eintrag“ steht schon über den Tabs
+              (KAN-55). Das Motiv-Band — die Logbuch-Glyphe — und die
+              verschwindenden Tabs gehören KAN-63. */}
+          {isEmpty && selectedFilter === "all" && (
             <EmptyState
-              icon={Notebook}
-              title="Noch keine Einträge"
-              description={
-                selectedFilter === "all"
-                  ? "Starte ein Rezept, um deine ersten Reflexionen festzuhalten. Jeder Eintrag ist ein Schritt zu mehr Klarheit."
-                  : `Noch keine Einträge in "${filterLabel}". Starte ein Rezept, um deine ersten Reflexionen zu sammeln.`
-              }
-              action={{ href: "/me", label: "Zu deinen Übungen" }}
+              satz="Dein Logbuch wartet auf seinen ersten Eintrag."
+              nachsatz="Was ist dir heute durch den Kopf gegangen?"
             />
+          )}
+
+          {/* ---- Abfrage ohne Treffer ---- */}
+          {/* Keine Leer-Grammatik: der Nutzer wollte nachsehen, nicht anfangen.
+              Eine ruhige Zeile, ohne Motiv, ohne CTA, ohne Gold (KAN-55). */}
+          {isEmpty && selectedFilter !== "all" && (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              In „{filterLabel}“ liegt noch nichts.
+            </p>
           )}
         </div>
       </Tabs>
