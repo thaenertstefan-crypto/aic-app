@@ -1,56 +1,41 @@
 import { getCachedUser } from "@/lib/supabase/get-user";
 import { createClient } from "@/lib/supabase/server";
-import { computeStreak } from "@/lib/utils/streak";
 import { serverTodayKey } from "@/lib/server/timezone";
+import { rightOfTheDay } from "@/lib/utils/daily-right";
+import type { RightItem } from "@/lib/types/db-json";
 import { getSeenCleanserIntros } from "@/app/(app)/cleansers/actions";
 import { BoosterArrive } from "@/components/booster/booster-arrive";
 
-import { ConfidenceBooster } from "./confidence-booster";
-import { getMantraData } from "@/lib/recipes/confidence/actions";
+import { ConfidenceWizard } from "./confidence-wizard";
 
-export default async function ConfidenceBoosterPage() {
+export default async function ConfidenceWizardPage() {
   const user = await getCachedUser();
   const supabase = await createClient();
 
-  const today = await serverTodayKey();
-
-  let doneToday = false;
-  let streak = 0;
-
-  // Check-ins und Mantra/Karten sind voneinander unabhängig → parallel laden.
-  // Der Ritual-Streak läuft weiter über den Slug "mantra" (Streak-Erhalt nach
-  // dem Merge — siehe Kommentar in actions.ts).
-  const [checkinsResult, { mantra, cards }, seenIntros] = await Promise.all([
+  // Rechte, Kalendertag und Intro-Status sind voneinander unabhängig →
+  // parallel laden.
+  const [{ data: bor }, today, seenIntros] = await Promise.all([
     user
       ? supabase
-          .from("cleanser_checkins")
-          .select("date")
+          .from("bill_of_rights")
+          .select("rights")
           .eq("user_id", user.id)
-          .eq("cleanser_slug", "mantra")
-          .order("date", { ascending: false })
-          .limit(90)
+          .maybeSingle()
       : Promise.resolve({ data: null }),
-    // Mantra + Karten (mit Default-Fallback) zentral über die Action laden.
-    getMantraData(),
+    serverTodayKey(),
     getSeenCleanserIntros(),
   ]);
 
-  if (user) {
-    const dates = new Set(
-      (checkinsResult.data ?? []).map((c) => c.date as string),
-    );
-    doneToday = dates.has(today);
-    streak = computeStreak(dates, today);
-  }
+  // Ein aktives Recht als Power-Erinnerung — dasselbe, das das Dashboard heute
+  // als „Heutiges Recht" zeigt (siehe lib/utils/daily-right.ts).
+  const rights = (bor?.rights as RightItem[] | null) ?? [];
+  const todaysRight = rightOfTheDay(rights, today);
 
   return (
     <>
       <BoosterArrive />
-      <ConfidenceBooster
-        doneToday={doneToday}
-        streak={streak}
-        mantra={mantra}
-        cards={cards}
+      <ConfidenceWizard
+        todaysRight={todaysRight?.text ?? null}
         introSeen={seenIntros.includes("confidence-boost")}
       />
     </>

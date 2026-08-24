@@ -86,6 +86,14 @@ const nextConfig: NextConfig = {
         destination: "/booster/confidence",
         permanent: false,
       },
+      // Der Confidence-Boost IST jetzt der Wizard (KAN-43) — die alte
+      // Zwischenlandung samt Unterroute ist weg, Homescreen-Links darauf
+      // sollen nicht 404en.
+      {
+        source: "/booster/confidence/moment",
+        destination: "/booster/confidence",
+        permanent: false,
+      },
     ];
   },
 };

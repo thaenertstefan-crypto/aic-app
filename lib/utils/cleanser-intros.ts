@@ -17,11 +17,7 @@ export const CLEANSER_INTROS: Record<string, IntroCard[]> = {
     },
     {
       title: "„Gleich bin ich dran“ — dein 5-Minuten-Boost",
-      body: "Auftritt, Meeting, Prüfung, schwieriges Gespräch? Der geführte Flow macht dich in fünf Minuten bereit: Erst beruhigst du mit der 4-7-8-Atmung deinen Fight-or-Flight-Reflex, dann gibst du dem Adrenalin eine stille Aufgabe, wärmst deine Stimme auf — und nimmst dein Mantra mit rein.",
-    },
-    {
-      title: "Dein tägliches Mantra-Ritual",
-      body: "Selbstvertrauen wächst nicht im Ausnahmezustand, sondern nebenbei: einmal am Tag dein Mantra lesen, deine Reframe-Karten durchgehen, abhaken. Mantra und Karten kannst du komplett zu deinen machen — und deine Serie zeigt dir, wie du dranbleibst. Bereit?",
+      body: "Auftritt, Meeting, Prüfung, schwieriges Gespräch? Der geführte Flow macht dich in fünf Minuten bereit: Erst beruhigst du mit der 4-7-8-Atmung deinen Fight-or-Flight-Reflex, dann gibst du dem Adrenalin eine stille Aufgabe, wärmst deine Stimme auf — und nimmst dein Mantra mit rein. Bereit?",
     },
   ],
 };

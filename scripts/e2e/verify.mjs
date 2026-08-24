@@ -68,7 +68,15 @@ const DEFAULT_ROUTES = [
   { path: "/me/wants/schmiede", expect: "funken-sky" },
   { path: "/me/bill-of-rights", reject: "recipe-intro" },
   { path: "/booster", expect: "booster-cells" },
-  { path: "/booster/confidence" },
+  // Der Booster startet seit KAN-43 direkt im Wizard: `expect` sichert zu,
+  // dass wirklich Schritt 1 steht, `reject`, dass es nicht die Erst-Intro ist.
+  // Voraussetzung ist die `cleanser_intro_seen`-Zeile ("confidence-boost") des
+  // E2E-Accounts — fehlt sie, ist der Lauf rot und die Ursache Datendrift.
+  {
+    path: "/booster/confidence",
+    expect: "confidence-wizard",
+    reject: "recipe-intro",
+  },
   { path: "/booster/overthinking" },
   { path: "/booster/saying-no" },
   { path: "/booster/shadow" },

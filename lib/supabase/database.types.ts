@@ -209,33 +209,6 @@ export type Database = {
           },
         ]
       }
-      mantra_cards: {
-        Row: {
-          created_at: string | null
-          id: string
-          reframe: string
-          sort_order: number
-          thought: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          reframe: string
-          sort_order?: number
-          thought: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          reframe?: string
-          sort_order?: number
-          thought?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           active_recipe_id: string | null
@@ -335,27 +308,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      user_mantra: {
-        Row: {
-          id: string
-          text: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          text: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          id?: string
-          text?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
       }
       user_recipe_progress: {
         Row: {

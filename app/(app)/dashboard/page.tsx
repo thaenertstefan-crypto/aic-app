@@ -10,6 +10,7 @@ import {
 } from "@/lib/recipes/progress";
 import { RECIPES, getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
 import { getUserTimeZone, serverTodayKey } from "@/lib/server/timezone";
+import { rightOfTheDay } from "@/lib/utils/daily-right";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DashboardReveal } from "@/components/dashboard/dashboard-reveal";
@@ -20,22 +21,6 @@ import { MoodScoreProvider } from "@/components/dashboard/mood-score-context";
 import type { PrimaryRecommendation } from "@/components/dashboard/daily-focus";
 import type { Tables } from "@/lib/supabase/database.types";
 import type { RightItem } from "@/lib/types/db-json";
-
-/**
- * Day-of-year (1–366), used to pick a stable daily right. Nimmt den
- * Kalendertag-Key "YYYY-MM-DD" in der User-Zeitzone entgegen, damit das
- * "Heutige Recht" um die lokale Mitternacht wechselt (nicht um UTC-Mitternacht).
- */
-function dayOfYear(dateKey: string): number {
-  const date = new Date(`${dateKey}T00:00:00Z`);
-  const start = Date.UTC(date.getUTCFullYear(), 0, 0);
-  const now = Date.UTC(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate(),
-  );
-  return Math.floor((now - start) / 86_400_000);
-}
 
 /** Ensure a right reads as a full affirmation sentence. */
 function asAffirmation(text: string): string {
@@ -133,10 +118,7 @@ export default async function DashboardPage() {
 
   // --- Heutiges Recht ---
   const activeRights = rights.filter((r) => r.active);
-  const todayRight =
-    activeRights.length > 0
-      ? activeRights[dayOfYear(today) % activeRights.length]
-      : null;
+  const todayRight = rightOfTheDay(rights, today);
 
   const greetingName = name?.trim();
 
