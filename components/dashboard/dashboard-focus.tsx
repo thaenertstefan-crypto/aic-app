@@ -1,10 +1,10 @@
 "use client";
 
 import { moodTier } from "@/lib/utils/mood";
+import { DASHBOARD_DESTINATIONS } from "@/lib/content/dashboard-destinations";
 import { MoodCheckin } from "@/app/(app)/dashboard/mood-checkin";
 import {
   DailyFocus,
-  type Destination,
   type PrimaryRecommendation,
 } from "@/components/dashboard/daily-focus";
 import { useMoodScore } from "@/components/dashboard/mood-score-context";
@@ -24,8 +24,6 @@ type DashboardFocusProps = {
   normalPrimary: PrimaryRecommendation | null;
   /** Greift nur, wenn normalPrimary === null. */
   fallbackMessage: string;
-  /** Volle Liste aller Anlaufstellen (ungefiltert). */
-  allDestinations: Destination[];
 };
 
 /**
@@ -37,14 +35,19 @@ export function DashboardFocus({
   initialScore,
   normalPrimary,
   fallbackMessage,
-  allDestinations,
 }: DashboardFocusProps) {
   const { score, setScore } = useMoodScore();
 
   const tier = moodTier(score);
   const primary = tier === "low" ? OVERTHINKING_PRIMARY : normalPrimary;
   const showQuestion = score !== null && primary !== null;
-  const alternatives = allDestinations.filter((d) => d.key !== primary?.key);
+  // Nichts steht doppelt auf der Seite: Was die Empfehlungskarte gerade zeigt,
+  // fällt aus der Liste. Deshalb sind es sieben oder acht Sätze — je nachdem,
+  // ob die Karte ein Ziel empfiehlt, das auch hier steht. Ein Layout, das auf
+  // genau acht baut, wäre falsch.
+  const alternatives = DASHBOARD_DESTINATIONS.filter(
+    (d) => d.key !== primary?.key,
+  );
 
   return (
     <div className="space-y-13" data-e2e="dashboard-focus">

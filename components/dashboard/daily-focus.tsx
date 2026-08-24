@@ -9,13 +9,7 @@ import { FocusQuestion } from "@/components/dashboard/focus-question";
 import { AlternativesDisclosure } from "@/components/dashboard/alternatives-disclosure";
 import { CROSSFADE_MS, useCrossfade } from "@/lib/hooks/use-crossfade";
 import { cn } from "@/lib/utils";
-
-export type Destination = {
-  key: string;
-  sentence: string;
-  href: string;
-  badge?: string;
-};
+import type { Destination } from "@/lib/content/dashboard-destinations";
 
 export type PrimaryRecommendation = {
   key: string;
@@ -170,7 +164,7 @@ export function DailyFocus({
         {view.alternatives.length > 0 && (
           /* Alternativen bewusst zurückgestellt: eingeklappt hinter einem leisen
              Trigger, damit die Gold-Empfehlung oben die einzige offene Handlung
-             bleibt. Erst ein Tap enthüllt die „Vorschlags-Shuffle"-Gruppe. */
+             bleibt. Erst ein Tap enthüllt die volle Liste. */
           <AlternativesDisclosure destinations={view.alternatives} />
         )}
       </div>

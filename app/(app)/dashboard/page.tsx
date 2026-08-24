@@ -17,10 +17,7 @@ import { DashboardFocus } from "@/components/dashboard/dashboard-focus";
 import { DailyReminderScreen } from "@/components/daily-reminder/daily-reminder-screen";
 import { DashboardSky } from "@/components/dashboard/dashboard-sky";
 import { MoodScoreProvider } from "@/components/dashboard/mood-score-context";
-import type {
-  Destination,
-  PrimaryRecommendation,
-} from "@/components/dashboard/daily-focus";
+import type { PrimaryRecommendation } from "@/components/dashboard/daily-focus";
 import type { Tables } from "@/lib/supabase/database.types";
 import type { RightItem } from "@/lib/types/db-json";
 
@@ -150,17 +147,12 @@ export default async function DashboardPage() {
   // Werte-Status (not_started | in_progress | completed) für die dreistufige CTA
   // und die Verlinkung.
   const valuesStatus = latestProgress.get("values")?.status ?? "not_started";
-  const valuesCompleted = valuesStatus === "completed";
 
   // Laufende Entdeckung führt direkt zurück in die Journey (Wiederaufnahme, kein
   // erneutes Intro). Sonst auf die kanonische Werte-Heimat /me/values, die die
   // Intro-Sequenz gated und danach zur "Meine Werte"-Seite (→ Journey) führt.
   const valuesHref =
     valuesStatus === "in_progress" ? "/me/values/journey" : "/me/values";
-
-  // Wants-Status analog: abgeschlossen (Wants bestätigt) → lebende Wants-Seite
-  // mit den Little Bets; sonst der Rezept-Hub, der die Intro gated.
-  const wantsCompleted = latestProgress.get("wants")?.status === "completed";
 
   // "Normale" Empfehlung (recipe-basiert, mood-unabhängig). Der low-Tier-Fall
   // (Mantra-Pause) und die Frage werden client-seitig in DashboardFocus aus der
@@ -192,54 +184,6 @@ export default async function DashboardPage() {
   const fallbackMessage =
     "Schön, dass du dranbleibst! Stöbere durch die Rezepte für deinen nächsten Schritt.";
 
-  // Feste Liste aller sieben Anlaufstellen (handgeschriebene Ich-Sätze, daher
-  // bewusst nicht aus RECIPES generiert). DashboardFocus filtert die aktuelle
-  // Primary-Empfehlung client-seitig heraus.
-  const allDestinations: Destination[] = [
-    {
-      key: "values",
-      sentence: valuesCompleted
-        ? "Ich würde gern meine Werte ansehen"
-        : "Ich würde gern meine Werte reflektieren",
-      href: valuesHref,
-    },
-    {
-      key: "overthinking",
-      sentence: "Ich bin schon wieder am Overthinken",
-      href: "/booster/overthinking",
-    },
-    {
-      key: "wants",
-      sentence: wantsCompleted
-        ? "Ich würde gern an meinen Little Bets arbeiten"
-        : "Ich will rausfinden, was ich wirklich will",
-      href: "/me/wants",
-    },
-    {
-      key: "bor",
-      sentence: "Ich brauch ein Reminder, was ich mir erlauben darf",
-      href: "/me/bill-of-rights",
-    },
-    {
-      // Führt zum täglichen Mantra-Ritual (lebt seit dem Merge auf der
-      // Confidence-Boost-Landing, direkt unter der Hero-Karte).
-      key: "mantra",
-      sentence: "Ich fühl mich grad nicht gut genug",
-      href: "/booster/confidence",
-    },
-    {
-      // Führt direkt in den akuten Moment-Flow „Gleich bin ich dran".
-      key: "confidence",
-      sentence: "Ich brauch 'n schnellen Confidence-Boost",
-      href: "/booster/confidence/moment",
-    },
-    {
-      key: "shadow",
-      sentence: "Ich muss gerade richtig Dampf ablassen",
-      href: "/booster/shadow",
-    },
-  ];
-
   return (
     <div className="space-y-13 p-4">
       <MoodScoreProvider initialScore={todayMood}>
@@ -259,7 +203,6 @@ export default async function DashboardPage() {
           initialScore={todayMood}
           normalPrimary={normalPrimary}
           fallbackMessage={fallbackMessage}
-          allDestinations={allDestinations}
         />
 
         {/* Heutiges Recht */}
