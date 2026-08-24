@@ -29,14 +29,7 @@ const SYSTEMS: WeatherSystem[] = [
   { feeling: "Ich will zu etwas Nein sagen, aber weiß nicht wie", title: PAGE_TITLES.sayingNo, art: <UmbrellaRain />, variant: "sayingNo", href: "/booster/saying-no" },
   { feeling: "Ich fühl mich schuldig, obwohl ich es nicht sollte", title: PAGE_TITLES.thingsGotMessy, art: <CloudStack />, variant: "messy", href: "/booster/things-got-messy" },
   { feeling: "Ich muss Dampf ablassen", title: PAGE_TITLES.shadow, art: <StormCloud />, variant: "shadow", href: "/booster/shadow" },
-  {
-    feeling:
-      "Ich gehe gleich in eine nervenaufreibende Situation und brauche einen schnellen Confidence Boost",
-    title: PAGE_TITLES.confidence,
-    art: <ClearingStar />,
-    variant: "confidence",
-    href: "/booster/confidence",
-  },
+  { feeling: "Ich brauche einen kurzen Confidence Boost", title: PAGE_TITLES.confidence, art: <ClearingStar />, variant: "confidence", href: "/booster/confidence" },
 ];
 
 export function BoosterCells() {
