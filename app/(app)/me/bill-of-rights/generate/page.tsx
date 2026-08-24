@@ -13,6 +13,7 @@ import { FormError } from "@/components/ui/form-error";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
+import { BillOfRightsSeal } from "@/components/recipes/bill-of-rights-seal";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { useScrollTopOnChange } from "@/lib/hooks/use-scroll-top-on-change";
 import { cn } from "@/lib/utils";
@@ -167,6 +168,18 @@ export default function GenerateRightPage() {
           </>
         ) : (
           <>
+            {/* Das Siegel als Kopf der Ergebnisseite — Motiv der Bill of
+                Rights, nicht Quittung für das gespeicherte Recht: hier wird
+                entschieden, und das gilt für beide Wege des Duells (auch „die
+                alte Regel behalten“ ist ein Beschluss). Deshalb hängt es nicht
+                an `chosen` — ein Ornament, das beim Antippen der Karten
+                erscheint und verschwindet, wäre Flackern. Es thront frei über
+                der Glaskarte, ohne sie zu überlappen — dieselbe Haltung wie
+                über der Urkunde in [bill-of-rights-me.tsx]. */}
+            <div className="flex justify-center">
+              <BillOfRightsSeal />
+            </div>
+
             {analysis && (
               <GlassPanel contentClassName="space-y-3">
                 <p className="font-heading text-lg font-semibold text-primary">
