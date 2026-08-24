@@ -56,7 +56,7 @@ export const JOURNAL_TEMPLATE_MAP: Record<string, TemplateConfig> = {
   },
   yin_yang: {
     icon: Compass,
-    label: "Yin-&-Yang-Audit",
+    label: PAGE_TITLES.wants,
     recipeSlug: displaySlug("yin_yang"),
   },
   little_bet: {
