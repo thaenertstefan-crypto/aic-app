@@ -364,8 +364,15 @@ function readYinYang(source: JsonObject): Member<"yin_yang"> | null {
 
   const content: YinYangContent = { yin, yang };
 
+  setIfPresent(content, "yin_answers", readStringArray(source, "yin_answers"));
+  setIfPresent(content, "yang_answers", readStringArray(source, "yang_answers"));
   setIfPresent(content, "principles", readString(source, "principles"));
   setIfPresent(content, "tagtraum", readString(source, "tagtraum"));
+  setIfPresent(
+    content,
+    "tagtraum_answers",
+    readStringArray(source, "tagtraum_answers"),
+  );
   setIfPresent(
     content,
     "ai_wants",

@@ -16,28 +16,59 @@
 
 import type { BetItem, WantItem } from "../../types/db-json.ts";
 import { TEXT_MAX_SHORT, tooLong } from "../../utils/form-validation.ts";
+import { ANSWER_MAX } from "./state.ts";
 
 // Obergrenzen für die JSONB-Arrays: schützt vor manipulierten
 // FormData-Payloads (beliebige Objekte / Riesen-Texte).
 export const MAX_WANTS = 100;
 export const MAX_BETS = 100;
 
-/** Prüft ein einzelnes Element auf die WantItem-Shape (inkl. Text-Cap). */
+/**
+ * Prüft ein einzelnes Element auf die WantItem-Shape (inkl. Text-Cap).
+ *
+ * Der Text-Cap ist `ANSWER_MAX`, nicht `TEXT_MAX_SHORT`: ein ferner Stern
+ * trägt den Wortlaut **eines** Antwortfelds, und ein Antwortfeld darf so lang
+ * sein. Ein engerer Deckel hier wäre nicht bloß ein abgewiesener Stern —
+ * `parseItems` gibt bei einem einzigen Ausreißer `null` zurück, und
+ * `saveWantsAction` wiese damit das ganze Speichern ab. Der Name bleibt bei
+ * `TEXT_MAX_SHORT`: er ist eine Überschrift, kein Satz.
+ */
 export function isWantItem(value: unknown): value is WantItem {
   if (typeof value !== "object" || value === null) return false;
   const v = value as Record<string, unknown>;
   return (
     typeof v.id === "string" &&
     typeof v.text === "string" &&
-    tooLong(v.text, TEXT_MAX_SHORT) === null &&
+    tooLong(v.text, ANSWER_MAX) === null &&
     typeof v.active === "boolean" &&
     (v.title === undefined ||
       v.title === null ||
       (typeof v.title === "string" && tooLong(v.title, TEXT_MAX_SHORT) === null)) &&
+    (v.example === undefined ||
+      v.example === null ||
+      (typeof v.example === "string" &&
+        tooLong(v.example, TEXT_MAX_SHORT) === null)) &&
     (v.distance === undefined || v.distance === "nah" || v.distance === "fern") &&
     (v.valueId === undefined || v.valueId === null || typeof v.valueId === "string") &&
     (v.source === undefined || v.source === "ai" || v.source === "own")
   );
+}
+
+/**
+ * Der angezeigte Satz eines Sterns.
+ *
+ * Das Beispiel steht als eigenes Feld neben dem Satz und wird erst hier
+ * angehängt. Geklebt wird also genau an einer Stelle — und wer den Anker
+ * später weiterverarbeiten will (Momente), findet ihn als Feld statt hinter
+ * einem Geviertstrich.
+ */
+export function wantSentence(want: {
+  text: string;
+  example?: string | null;
+}): string {
+  const text = want.text.trim();
+  const example = want.example?.trim();
+  return example ? `${text} — z. B. ${example}` : text;
 }
 
 /** Prüft ein einzelnes Element auf die BetItem-Shape (inkl. Text-Cap). */

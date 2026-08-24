@@ -1,6 +1,7 @@
 import { withAiRoute } from "@/lib/anthropic/ask-model";
 import { SYSTEM_PROMPT } from "@/lib/anthropic/prompts/sternschmiede";
 import { parseForgeOutput } from "@/lib/anthropic/sternschmiede-result";
+import { wantSentence } from "@/lib/recipes/wants/items";
 import type { WantItem } from "@/lib/types/db-json";
 import { TEXT_MAX_SHORT } from "@/lib/utils/form-validation";
 import { getValueLabel } from "@/lib/utils/values-bank";
@@ -98,7 +99,7 @@ export const POST = withAiRoute(
         : "(keine bestätigten Werte)";
     const sterneText =
       sterne.length > 0
-        ? sterne.map((w) => `<stern>${w.text}</stern>`).join("\n")
+        ? sterne.map((w) => `<stern>${wantSentence(w)}</stern>`).join("\n")
         : "(noch keine Sterne)";
 
     const slots = buildForgeSlots(values, sterne.length, childAnswer.length > 0);

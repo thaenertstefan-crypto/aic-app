@@ -165,6 +165,45 @@ describe("readJournalContent — yin_yang", () => {
     });
   });
 
+  it("liest die Antwortfelder jeder Frage als Liste", () => {
+    // An dieser Liste hängt „ein Antwortfeld = ein ferner Stern": aus dem
+    // zusammengefügten Lesetext sind die Feldgrenzen nicht rekonstruierbar.
+    const result = readJournalContent("yin_yang", {
+      yin: "a\nb",
+      yin_answers: ["a", "b"],
+      yang: "c",
+      yang_answers: ["c"],
+      tagtraum: "Ein Café\nmit Garten\nEin Jahr am Meer",
+      tagtraum_answers: ["Ein Café\nmit Garten", "Ein Jahr am Meer"],
+    });
+
+    assert.deepEqual(result, {
+      template: "yin_yang",
+      content: {
+        yin: "a\nb",
+        yin_answers: ["a", "b"],
+        yang: "c",
+        yang_answers: ["c"],
+        tagtraum: "Ein Café\nmit Garten\nEin Jahr am Meer",
+        tagtraum_answers: ["Ein Café\nmit Garten", "Ein Jahr am Meer"],
+      },
+    });
+  });
+
+  it("trägt einen Alt-Eintrag ohne Listen als Normalfall", () => {
+    // Es gibt keinen Backfill — fehlende Listen sind kein Sonderfall.
+    const result = readJournalContent("yin_yang", {
+      yin: "a",
+      yang: "b",
+      tagtraum: "Ein Café",
+    });
+
+    assert.deepEqual(result, {
+      template: "yin_yang",
+      content: { yin: "a", yang: "b", tagtraum: "Ein Café" },
+    });
+  });
+
   it("setzt ein fehlendes value_id auf null statt die Liste zu verwerfen", () => {
     const result = readJournalContent("yin_yang", {
       yin: "a",

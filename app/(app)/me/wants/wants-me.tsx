@@ -87,15 +87,16 @@ export function WantsMe({
 
   // Speichern aus dem Fokus: den Fehler zurückgeben, damit die (das seitliche
   // FormError-Banner verdeckende) Fokus-Ebene ihn inline zeigen kann.
+  // Die Weite steht nicht im Patch: sie sagt, WOHER der Text kommt (aus einem
+  // Antwortfeld der Tagtraum-Frage oder nicht), und das ändert sich durch
+  // Bearbeiten nicht. Siehe CONTEXT.md (Stern).
   function saveWantEdit(
     id: string,
-    patch: { title: string | null; text: string; distance: "nah" | "fern" },
+    patch: { title: string | null; text: string },
   ): Promise<string | null> {
     return persistWants(
       wants.map((w) =>
-        w.id === id
-          ? { ...w, title: patch.title, text: patch.text, distance: patch.distance }
-          : w,
+        w.id === id ? { ...w, title: patch.title, text: patch.text } : w,
       ),
     );
   }

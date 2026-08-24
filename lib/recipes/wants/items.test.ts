@@ -9,7 +9,9 @@ import {
   mergeItems,
   parseItems,
   parsePreviousIds,
+  wantSentence,
 } from "./items.ts";
+import { ANSWER_MAX } from "./state.ts";
 
 /** Ein Element, das nur trägt, was der Merge überhaupt ansieht. */
 type Item = { id: string; text: string };
@@ -138,14 +140,47 @@ describe("isWantItem — die Schranke vor der JSONB-Spalte", () => {
     assert.equal(isWantItem({ ...want, active: "ja" }), false);
   });
 
-  it("weist ab, was über den Text-Cap hinausgeht", () => {
-    assert.equal(isWantItem({ ...want, text: "x".repeat(301) }), false);
+  it("trägt einen fernen Stern im vollen Wortlaut eines Antwortfelds", () => {
+    // Ein ferner Stern ist wörtlich, sein Antwortfeld darf ANSWER_MAX lang
+    // sein — ein engerer Deckel hier wiese das GANZE Speichern ab.
+    assert.equal(isWantItem({ ...want, text: "x".repeat(ANSWER_MAX) }), true);
+    assert.equal(isWantItem({ ...want, text: "x".repeat(ANSWER_MAX + 1) }), false);
+  });
+
+  it("hält den Namen bei der Länge einer Überschrift", () => {
     assert.equal(isWantItem({ ...want, title: "x".repeat(301) }), false);
+  });
+
+  it("nimmt das Beispiel als eigenes Feld neben dem Satz", () => {
+    assert.equal(isWantItem({ ...want, example: "für einen Marathon" }), true);
+    assert.equal(isWantItem({ ...want, example: null }), true);
+    assert.equal(isWantItem({ ...want, example: 42 }), false);
+    assert.equal(isWantItem({ ...want, example: "x".repeat(301) }), false);
   });
 
   it("weist unbekannte Ausprägungen der Aufzählungen ab", () => {
     assert.equal(isWantItem({ ...want, distance: "mittel" }), false);
     assert.equal(isWantItem({ ...want, source: "import" }), false);
+  });
+});
+
+describe("wantSentence — das Beispiel klebt erst in der Anzeige am Satz", () => {
+  it("hängt das Beispiel an, wenn eines da ist", () => {
+    assert.equal(
+      wantSentence({
+        text: "Ich will mich an meine Grenzen treiben.",
+        example: "einen Marathon",
+      }),
+      "Ich will mich an meine Grenzen treiben. — z. B. einen Marathon",
+    );
+  });
+
+  it("lässt den Satz ohne Beispiel unangetastet", () => {
+    const text = "Ich will mich an meine Grenzen treiben.";
+
+    assert.equal(wantSentence({ text }), text);
+    assert.equal(wantSentence({ text, example: null }), text);
+    assert.equal(wantSentence({ text: ` ${text} `, example: "  " }), text);
   });
 });
 

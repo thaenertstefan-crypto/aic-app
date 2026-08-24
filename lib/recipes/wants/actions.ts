@@ -37,6 +37,7 @@ import {
   parseItems,
   parsePreviousIds,
 } from "@/lib/recipes/wants/items";
+import { ANSWER_MAX, filledAnswers } from "@/lib/recipes/wants/state";
 import { readIntroSeen, writeProgress } from "@/lib/recipes/progress";
 import {
   nextAuditProgress,
@@ -176,6 +177,7 @@ export async function saveWantsAction(
       text: w.text,
       active: w.active,
       title: w.title?.trim() ? w.title.trim() : null,
+      example: w.example?.trim() ? w.example.trim() : null,
       distance: w.distance ?? "nah",
       valueId: w.valueId ?? null,
       source: w.source ?? "own",
@@ -233,6 +235,36 @@ export async function saveBetsAction(
 // ─── Yin-&-Yang-Audit speichern ─────────────────────────────────────────
 
 /**
+ * Ein FormData-Feld mit den Antwortfeldern einer Frage.
+ *
+ * Fehlt oder taugt es nicht, ist die Liste leer — der zusammengefügte Lesetext
+ * steht ja trotzdem. Ein harter Ausfall wäre hier der teurere Fehler: die
+ * Lesefunktion muss fehlende Listen ohnehin tragen (Alt-Einträge).
+ * `filledAnswers` ist dieselbe Rechnung wie im Client, damit die Namen aus dem
+ * Destillat später an den richtigen Sternen sitzen.
+ */
+function parseAnswers(raw: FormDataEntryValue | null): string[] {
+  if (typeof raw !== "string" || !raw) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+  return filledAnswers(parsed.filter((a): a is string => typeof a === "string"));
+}
+
+/** Der Deckel je Antwortfeld — die Client-Textarea hält ihn schon ein. */
+function answersTooLong(answers: string[]): string | null {
+  for (const answer of answers) {
+    const error = tooLong(answer, ANSWER_MAX);
+    if (error) return error;
+  }
+  return null;
+}
+
+/**
  * Speichert das Audit als neuen Journal-Eintrag (jeder Durchlauf ein eigener
  * Eintrag — auch beim Re-Run) und setzt den Fortschritt auf in_progress,
  * ohne einen bereits abgeschlossenen Durchlauf zurückzustufen.
@@ -252,6 +284,12 @@ export async function saveYinYangEntryAction(
       (formData.get("principles") as string | null)?.trim() ?? "";
     const tagtraum = (formData.get("tagtraum") as string | null)?.trim() ?? "";
 
+    // Dieselben Antworten noch einmal als Liste: der zusammengefügte String
+    // bleibt der Lesetext, die Feldgrenzen stehen nur hier.
+    const yinAnswers = parseAnswers(formData.get("yin_answers"));
+    const yangAnswers = parseAnswers(formData.get("yang_answers"));
+    const tagtraumAnswers = parseAnswers(formData.get("tagtraum_answers"));
+
     if (!yin || !yang) {
       return failed(
         "Beide Seiten gehören zum Audit — füll bitte Yin und Yang aus.",
@@ -262,17 +300,29 @@ export async function saveYinYangEntryAction(
       tooLong(yin, TEXT_MAX_LONG) ??
       tooLong(yang, TEXT_MAX_LONG) ??
       (principles ? tooLong(principles, TEXT_MAX_LONG) : null) ??
-      (tagtraum ? tooLong(tagtraum, TEXT_MAX_LONG) : null);
+      (tagtraum ? tooLong(tagtraum, TEXT_MAX_LONG) : null) ??
+      answersTooLong(yinAnswers) ??
+      answersTooLong(yangAnswers) ??
+      answersTooLong(tagtraumAnswers);
     if (lengthError) {
       return failed(lengthError);
     }
 
     const content: YinYangContent = { yin, yang };
+    if (yinAnswers.length > 0) {
+      content.yin_answers = yinAnswers;
+    }
+    if (yangAnswers.length > 0) {
+      content.yang_answers = yangAnswers;
+    }
     if (principles) {
       content.principles = principles;
     }
     if (tagtraum) {
       content.tagtraum = tagtraum;
+    }
+    if (tagtraumAnswers.length > 0) {
+      content.tagtraum_answers = tagtraumAnswers;
     }
 
     const { data: inserted, error: insertError } = await supabase

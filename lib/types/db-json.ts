@@ -31,7 +31,13 @@ export type WantItem = {
   active: boolean;
   /** Sternname (2–3 Worte); null bei Bestandsdaten — Label fällt dann auf den gekürzten Text zurück. */
   title?: string | null;
-  /** Tagtraum-Sterne stehen weiter weg; fehlend = "nah". */
+  /** Der konkrete Anker zum Satz („einen Marathon") — eigenes Feld statt
+   *  „— z. B. …" im Text. `wantSentence` setzt beides für die Anzeige
+   *  zusammen; Bestandsdaten haben ihn im Text stehen. */
+  example?: string | null;
+  /** **Herkunftsmarke, keine Einstellung:** "fern" heißt „aus einem
+   *  Antwortfeld der Tagtraum-Frage", "nah" alles andere. Fehlend = "nah".
+   *  Siehe CONTEXT.md (Stern) und ADR-0005 — nicht aufweichen. */
   distance?: "nah" | "fern";
   /** Verlinkter bestätigter Wert (values-bank-id bzw. "custom:…"); null ohne Passung. */
   valueId?: string | null;
@@ -52,16 +58,31 @@ export type BetItem = {
   source?: "ai" | "own";
 };
 
-/** `journal_entries.content` bei template_type "yin_yang" (Wants-Audit). */
+/** `journal_entries.content` bei template_type "yin_yang" (Wants-Audit).
+ *
+ *  Jede Frage steht zweimal da: als zusammengefügter Lesetext (`yin`, `yang`,
+ *  `tagtraum` — Journal-Anzeige, Bestand) UND als Liste der einzelnen
+ *  Antwortfelder. Die Liste ist der Grund: die Feldgrenzen sind aus dem
+ *  zusammengefügten String nicht rekonstruierbar, ein Antwortfeld darf aber
+ *  selbst mehrzeilig sein. An ihr hängt „ein Antwortfeld = ein ferner Stern".
+ *  **Alt-Einträge haben die Listen nicht** — das ist der Normalfall der
+ *  Lesefunktion, kein Sonderfall; ein Backfill findet nicht statt. */
 export type YinYangContent = {
   /** „Wofür nimmst du Mühsal in Kauf?“ */
   yin: string;
+  /** Die einzelnen Antwortfelder zu `yin`. */
+  yin_answers?: string[];
   /** „Was bringt dich in Flow?“ */
   yang: string;
+  /** Die einzelnen Antwortfelder zu `yang`. */
+  yang_answers?: string[];
   /** Optional: kognitive Prinzipien hinter den Flow-Aktivitäten. */
   principles?: string;
   /** Optional: „Wovon tagträumst du?“ — Quelle der fernen Sterne. */
   tagtraum?: string;
+  /** Die einzelnen Antwortfelder zu `tagtraum` — je eines ergibt genau
+   *  einen fernen Stern. */
+  tagtraum_answers?: string[];
   /** Von /api/wants-distiller nachgetragen: die KI-Hypothesen (Provenienz). */
   ai_wants?: { text: string; value_id: string | null }[];
 };

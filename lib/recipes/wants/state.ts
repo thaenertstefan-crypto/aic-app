@@ -37,11 +37,27 @@ export type AuditField = "yin" | "yang" | "tagtraum";
 /** Vorgeschlagene Antwortfelder je Frage (eines ist Pflicht). */
 export const START_BOXES = 3;
 
+/** Mehr Antwortfelder als so bietet eine Frage nicht an. */
+export const MAX_ANSWER_BOXES = 6;
+
+/** Was ein einzelnes Antwortfeld trägt. Der Deckel, aus dem alles folgt:
+ *  ein ferner Stern ist der Wortlaut eines Antwortfelds, also muss der
+ *  Text-Cap von `WantItem` mitgehen (s. `isWantItem`). */
+export const ANSWER_MAX = 800;
+
+/** Was eine ganze Frage trägt — abgeleitet, nicht frei gesetzt. Vorher stand
+ *  vor dem Modellaufruf eine freie 2000, unter der sechs volle Boxen still
+ *  abgeschnitten wurden. */
+export const ANSWER_LIST_MAX = MAX_ANSWER_BOXES * ANSWER_MAX;
+
 /** Ein Stern-Entwurf im Client-State — die id wird beim Bestätigen zur WantItem-id. */
 export type DraftWant = {
   id: string;
   text: string;
   title: string | null;
+  /** Der konkrete Anker zum Satz („z. B. einen Marathon") — eigenes Feld,
+   *  damit später niemand an einem Geviertstrich parsen muss. */
+  example: string | null;
   distance: "nah" | "fern";
   valueId: string | null;
   valueLabel: string | null;
@@ -54,7 +70,13 @@ export type DraftWant = {
 /** Was die KI aus der Sternensuche herausliest. */
 export type Distillate = {
   comment: string;
+  /** Die destillierten Sterne — ausschließlich NAHE. Ferne kommen nie aus
+   *  dem Modell (ADR-0005). */
   wants: DraftWant[];
+  /** Die Namen für die fernen Sterne, in der Reihenfolge der ausgefüllten
+   *  Antwortfelder der Tagtraum-Frage. Kürzer als die Liste der fernen
+   *  Sterne heißt schlicht: die hinteren bleiben namenlos. */
+  farTitles: (string | null)[];
 };
 
 export type WantsState = {
@@ -104,7 +126,7 @@ export type WantsEvent =
   | { type: "saving" }
   | { type: "savingFailed"; message: string }
   | { type: "saved"; entryId: SavedEntryId }
-  | { type: "distillateRequested" }
+  | { type: "distillateRequested"; farWants: DraftWant[] }
   | { type: "distillateReceived"; phase: Phase; distillate: Distillate }
   | { type: "distillateFailed"; phase: Phase; message: string }
   | { type: "manualStarted" }
@@ -177,19 +199,37 @@ export function advanceWants(state: WantsState, event: WantsEvent): WantsState {
 
     // Hier steht keine Feldliste, sondern was den Anlauf überlebt: die Sterne
     // des ersten Destillats gehören zu ihm und gehen mit ihm.
+    //
+    // Die fernen Sterne sind die eine Ausnahme — sie kommen nicht aus dem
+    // Modell, sondern aus den Antwortfeldern, und stehen deshalb schon da,
+    // bevor gefragt wird. Ein Ausfall kostet sie nur ihren Namen.
     case "distillateRequested":
-      return { ...state, ...noDistillate(), phase: "analyzing" };
+      return {
+        ...state,
+        ...noDistillate(),
+        wants: event.farWants,
+        phase: "analyzing",
+      };
 
-    case "distillateReceived":
+    // Was hier ankommt, tritt neben die fernen Sterne, statt sie zu ersetzen:
+    // die nahen als ganze Sterne, für die fernen nur die Namen.
+    case "distillateReceived": {
+      const far = state.wants.map((want, i) => {
+        const title = event.distillate.farTitles[i];
+        return title && !want.title ? { ...want, title } : want;
+      });
+      const wants = [...event.distillate.wants, ...far];
+
       return {
         ...state,
         comment: event.distillate.comment,
-        wants: event.distillate.wants,
+        wants,
         // Ohne Vorschläge stünde die Bühne leer da — dann formuliert man selbst.
-        manualMode: event.distillate.wants.length === 0,
+        manualMode: wants.length === 0,
         aiError: null,
         phase: event.phase,
       };
+    }
 
     case "distillateFailed":
       return { ...state, aiError: event.message, phase: event.phase };
@@ -210,6 +250,9 @@ export function advanceWants(state: WantsState, event: WantsEvent): WantsState {
             id: event.id,
             text: event.text.trim(),
             title: null,
+            example: null,
+            // Fest „nah": „fern" ist eine Herkunftsmarke (aus einem
+            // Antwortfeld der Tagtraum-Frage), keine Einstellung. CONTEXT.md.
             distance: "nah",
             valueId: null,
             valueLabel: null,
@@ -256,11 +299,17 @@ export function advanceWants(state: WantsState, event: WantsEvent): WantsState {
 
     // Ein Übergang, keine drei: der geschärfte Text steht, die Rückfrage ist
     // beantwortet und die Antwort hat ihren Zweck erfüllt.
+    //
+    // Das Beispiel fällt mit: der Refiner bekommt den ganzen Satz (samt
+    // Beispiel) und gibt einen neuen zurück. Bliebe das alte Feld stehen,
+    // klebte `wantSentence` einen überholten Anker an den neuen Satz.
     case "refineSucceeded":
       return {
         ...state,
         wants: state.wants.map((w) =>
-          w.id === event.id ? { ...w, text: event.text, question: null } : w,
+          w.id === event.id
+            ? { ...w, text: event.text, example: null, question: null }
+            : w,
         ),
         refineAnswers: without(state.refineAnswers, event.id),
         refiningId: null,
@@ -289,9 +338,53 @@ export function keptWants(state: WantsState): DraftWant[] {
   return state.wants.filter((w) => w.text.trim());
 }
 
+/**
+ * Die ausgefüllten Antwortfelder einer Frage — **die eine Rechnung**.
+ *
+ * Client, Action und KI-Route müssen hier zum selben Ergebnis kommen: der
+ * Client baut daraus die fernen Sterne, die Action speichert dieselbe Liste,
+ * die Route schickt sie ans Modell und bekommt Namen in derselben Reihenfolge
+ * zurück. Zwei Filter, die sich auseinanderentwickeln — oder eine Kappung, die
+ * nur an zwei von drei Stellen steht — hängten die Namen an die falschen
+ * Sterne. Deshalb trägt diese Funktion auch den Deckel.
+ */
+export function filledAnswers(answers: string[]): string[] {
+  return answers
+    .map((a) => a.trim())
+    .filter(Boolean)
+    .slice(0, MAX_ANSWER_BOXES);
+}
+
 /** Nicht-leere Antworten zeilenweise zusammenfügen (für die Action). */
 export function joinAnswers(answers: string[]): string {
-  return answers.map((a) => a.trim()).filter(Boolean).join("\n");
+  return filledAnswers(answers).join("\n");
+}
+
+/**
+ * Aus jedem ausgefüllten Antwortfeld der Tagtraum-Frage genau ein ferner
+ * Stern — im unveränderten Wortlaut der Person.
+ *
+ * Das ist der Kern von ADR-0005: der Wortlaut läuft nie durch das Modell,
+ * also kann ihn auch kein Prompt-Regress mehr kürzen, zusammenlegen oder für
+ * unklar halten. Ein mehrzeiliges Antwortfeld bleibt **ein** Stern.
+ *
+ * `newId` kommt herein, damit das Modul rein bleibt (`crypto.randomUUID` im
+ * Client, eine zählbare Quelle im Test).
+ */
+export function farDrafts(answers: string[], newId: () => string): DraftWant[] {
+  return filledAnswers(answers).map((text) => ({
+    id: newId(),
+    text,
+    title: null,
+    example: null,
+    distance: "fern",
+    valueId: null,
+    valueLabel: null,
+    reason: null,
+    question: null,
+    // Der Satz stammt Wort für Wort von der Person, nicht vom Modell.
+    source: "own",
+  }));
 }
 
 function emptyAnswers(): string[] {

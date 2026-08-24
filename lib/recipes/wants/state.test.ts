@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  MAX_ANSWER_BOXES,
   advanceWants,
+  farDrafts,
+  filledAnswers,
   initialWants,
   joinAnswers,
   keptWants,
@@ -18,11 +21,18 @@ import {
  */
 const savedId = (id: string) => id as NonNullable<WantsState["entryId"]>;
 
+/** `farDrafts` bekommt die id-Quelle herein — im Test eine zählbare. */
+function counterIds(): () => string {
+  let n = 0;
+  return () => `far-${++n}`;
+}
+
 function star(id: string, patch: Partial<DraftWant> = {}): DraftWant {
   return {
     id,
     text: `Stern ${id}`,
     title: null,
+    example: null,
     distance: "nah",
     valueId: null,
     valueLabel: null,
@@ -78,7 +88,7 @@ describe("distillateRequested — der zweite Anlauf erbt nichts vom ersten", () 
     const dirty = afterDistillate();
     const fresh = initialWants(true);
 
-    const next = advanceWants(dirty, { type: "distillateRequested" });
+    const next = advanceWants(dirty, { type: "distillateRequested", farWants: [] });
 
     for (const key of Object.keys(fresh) as (keyof WantsState)[]) {
       if (SURVIVES_DISTILLATE.includes(key)) continue;
@@ -94,11 +104,68 @@ describe("distillateRequested — der zweite Anlauf erbt nichts vom ersten", () 
   });
 
   it("lässt die Antworten und den Eintrag stehen — sie sind die Quelle", () => {
-    const next = advanceWants(afterDistillate(), { type: "distillateRequested" });
+    const next = advanceWants(afterDistillate(), { type: "distillateRequested", farWants: [] });
 
     assert.deepEqual(next.yin, ["Nächte vor der Abgabe"]);
     assert.equal(next.entryId, "entry-1");
     assert.equal(next.phase, "analyzing");
+  });
+
+  it("stellt die fernen Sterne schon vor dem Aufruf hin", () => {
+    // Sie kommen nicht aus dem Modell, also warten sie auch nicht auf es —
+    // fällt der Aufruf aus, stehen sie trotzdem da (nur ohne Namen).
+    const far = farDrafts(["Ironman", "Ein Jahr am Meer"], counterIds());
+
+    const next = advanceWants(afterDistillate(), {
+      type: "distillateRequested",
+      farWants: far,
+    });
+
+    assert.deepEqual(
+      next.wants.map((w) => w.text),
+      ["Ironman", "Ein Jahr am Meer"],
+    );
+  });
+});
+
+describe("farDrafts — ein Antwortfeld, ein ferner Stern", () => {
+  it("übernimmt jeden Wortlaut unverändert, auch mehrzeilig", () => {
+    const drafts = farDrafts(
+      ["Ironman", "  ", "Ein Jahr am Meer\nmit dem Hund"],
+      counterIds(),
+    );
+
+    assert.deepEqual(
+      drafts.map((d) => d.text),
+      ["Ironman", "Ein Jahr am Meer\nmit dem Hund"],
+    );
+  });
+
+  it("markiert sie als fern und als eigenen Wortlaut", () => {
+    const [draft] = farDrafts(["Ironman"], counterIds());
+
+    assert.equal(draft.distance, "fern");
+    assert.equal(draft.source, "own");
+    assert.equal(draft.title, null);
+  });
+
+  it("gibt ohne ausgefüllte Antwortfelder nichts zurück", () => {
+    assert.deepEqual(farDrafts(["", "   "], counterIds()), []);
+  });
+});
+
+describe("filledAnswers — Client und Server sehen dieselbe Liste", () => {
+  it("trimmt und wirft Leeres weg", () => {
+    assert.deepEqual(filledAnswers([" a ", "", "  ", "b"]), ["a", "b"]);
+  });
+
+  it("trägt den Deckel selbst, damit ihn niemand vergisst", () => {
+    // Stünde die Kappung nur an zwei von drei Aufrufstellen, säßen die Namen
+    // aus dem Destillat an den falschen Sternen.
+    const many = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+    assert.deepEqual(filledAnswers(many), ["a", "b", "c", "d", "e", "f"]);
+    assert.equal(farDrafts(many, counterIds()).length, MAX_ANSWER_BOXES);
   });
 });
 
@@ -109,7 +176,11 @@ describe("distillateReceived — Übernehmen ist eine Stelle", () => {
       {
         type: "distillateReceived",
         phase: "sterne",
-        distillate: { comment: "Das lese ich heraus.", wants: [star("a"), star("b")] },
+        distillate: {
+          comment: "Das lese ich heraus.",
+          wants: [star("a"), star("b")],
+          farTitles: [],
+        },
       },
     );
 
@@ -125,10 +196,76 @@ describe("distillateReceived — Übernehmen ist eine Stelle", () => {
     const state = advanceWants(initialWants(true), {
       type: "distillateReceived",
       phase: "sterne",
-      distillate: { comment: "", wants: [] },
+      distillate: { comment: "", wants: [], farTitles: [] },
     });
 
     assert.equal(state.manualMode, true);
+  });
+
+  it("gibt den fernen Sternen nur ihren Namen — der Wortlaut bleibt", () => {
+    const waiting = advanceWants(initialWants(true), {
+      type: "distillateRequested",
+      farWants: farDrafts(["Ironman", "Ein Jahr am Meer"], counterIds()),
+    });
+
+    const state = advanceWants(waiting, {
+      type: "distillateReceived",
+      phase: "sterne",
+      distillate: {
+        comment: "",
+        wants: [star("a")],
+        farTitles: ["Der lange Lauf", "Am Meer"],
+      },
+    });
+
+    assert.deepEqual(
+      state.wants.map((w) => [w.text, w.title, w.distance]),
+      [
+        ["Stern a", null, "nah"],
+        ["Ironman", "Der lange Lauf", "fern"],
+        ["Ein Jahr am Meer", "Am Meer", "fern"],
+      ],
+    );
+    assert.equal(state.manualMode, false);
+  });
+
+  it("lässt einen fernen Stern namenlos, wenn kein Titel zurückkam", () => {
+    const waiting = advanceWants(initialWants(true), {
+      type: "distillateRequested",
+      farWants: farDrafts(["Ironman", "Ein Jahr am Meer"], counterIds()),
+    });
+
+    const state = advanceWants(waiting, {
+      type: "distillateReceived",
+      phase: "sterne",
+      distillate: { comment: "", wants: [], farTitles: ["Der lange Lauf"] },
+    });
+
+    assert.deepEqual(
+      state.wants.map((w) => w.title),
+      ["Der lange Lauf", null],
+    );
+  });
+});
+
+describe("distillateFailed — der Ausfall kostet nur die Namen", () => {
+  it("lässt die fernen Sterne stehen", () => {
+    const waiting = advanceWants(initialWants(true), {
+      type: "distillateRequested",
+      farWants: farDrafts(["Ironman"], counterIds()),
+    });
+
+    const state = advanceWants(waiting, {
+      type: "distillateFailed",
+      phase: "sterne",
+      message: "Das Destillieren hat gerade nicht geklappt.",
+    });
+
+    assert.deepEqual(
+      state.wants.map((w) => [w.text, w.title]),
+      [["Ironman", null]],
+    );
+    assert.equal(state.phase, "sterne");
   });
 });
 
@@ -151,6 +288,22 @@ describe("refineSucceeded — Nachschärfen ist ein Übergang, nicht drei", () =
     assert.equal(state.wants[0].question, null);
     assert.equal(state.refineAnswers.a, undefined);
     assert.equal(state.refiningId, null);
+  });
+
+  it("nimmt das alte Beispiel mit — es gehört zum alten Satz", () => {
+    // Sonst klebte `wantSentence` den überholten Anker an den neuen Satz.
+    const before: WantsState = {
+      ...initialWants(true),
+      wants: [star("a", { example: "einen Marathon", question: "Woran denkst du?" })],
+    };
+
+    const state = advanceWants(before, {
+      type: "refineSucceeded",
+      id: "a",
+      text: "Ich will zwei Abende pro Woche für eigene Projekte.",
+    });
+
+    assert.equal(state.wants[0].example, null);
   });
 
   it("lässt die anderen Sterne unberührt", () => {

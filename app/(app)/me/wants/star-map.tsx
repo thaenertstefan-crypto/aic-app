@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mascot } from "@/components/brand/mascot";
 import { STAR_PATH } from "@/components/brand/star-glyph";
 import { useDialogFocus } from "@/lib/hooks/use-dialog-focus";
+import { wantSentence } from "@/lib/recipes/wants/items";
+import { ANSWER_MAX } from "@/lib/recipes/wants/state";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { getValueLabel } from "@/lib/utils/values-bank";
 import { cn } from "@/lib/utils";
@@ -72,22 +74,28 @@ function hash01(seed: string): number {
   return (h % 1000) / 1000;
 }
 
-/** 26-Zeichen-Kürzung mit „…“ — hält Kartenlabels bei jeder Eingabelänge kurz. */
-function clip26(s: string): string {
-  return s.length > 26 ? `${s.slice(0, 25).trimEnd()}…` : s;
+/** Kürzung mit „…“ — hält Namen bei jeder Eingabelänge kurz. */
+function clip(s: string, max: number): string {
+  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s;
 }
 
-/** Voller Name eines Sterns: Titel, sonst die Beschreibung (Bestandsdaten ohne
- *  title). Für die Detailansicht, wo Platz ist — hier NICHT kürzen. */
+/** So lang, wie das Titel-Feld erlaubt — länger ist kein Name mehr. */
+const NAME_MAX = 60;
+
+/** Voller Name eines Sterns: Titel, sonst die Beschreibung (Bestandsdaten
+ *  ohne title, und ferne Sterne, deren Namen der KI-Aufruf nicht mitbrachte).
+ *  Der Ersatz wird auf Titel-Länge gekürzt: ein ferner Stern trägt ein ganzes
+ *  Antwortfeld, und das ist keine Überschrift. Den vollen Satz zeigt die
+ *  Detailansicht ohnehin gleich darunter. */
 export function starName(w: WantItem): string {
   const t = w.title?.trim();
-  return t ? t : w.text.trim();
+  return t ? t : clip(wantSentence(w), NAME_MAX);
 }
 
 /** Kartenlabel: wie starName, aber durch dieselbe 26-Zeichen-Kürzung, damit
  *  lange Titel (Input erlaubt bis zu 60 Zeichen) den engen Slot nicht sprengen. */
 export function starLabel(w: WantItem): string {
-  return clip26(starName(w));
+  return clip(starName(w), 26);
 }
 
 type PlacedStar = { want: WantItem; x: number; y: number; side: "left" | "right" };
@@ -131,9 +139,12 @@ export function StarMap({
   onDelete,
 }: {
   wants: WantItem[];
+  // Kein `distance` im Patch: die Weite ist eine Herkunftsangabe („aus einem
+  // Antwortfeld der Tagtraum-Frage"), keine Nutzer-Einstellung. Sie war hier
+  // mit zwei Taps brechbar — siehe CONTEXT.md (Stern) und ADR-0005.
   onSaveEdit: (
     id: string,
-    patch: { title: string | null; text: string; distance: "nah" | "fern" },
+    patch: { title: string | null; text: string },
   ) => Promise<string | null>;
   onDelete: (id: string) => void;
 }) {
@@ -145,7 +156,6 @@ export function StarMap({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editText, setEditText] = useState("");
-  const [editDistance, setEditDistance] = useState<"nah" | "fern">("nah");
   const [focusError, setFocusError] = useState<string | null>(null);
 
   const mapRef = useRef<HTMLDivElement>(null);
@@ -303,7 +313,6 @@ export function StarMap({
     if (!focused) return;
     setEditTitle(focused.title ?? "");
     setEditText(focused.text);
-    setEditDistance(focused.distance === "fern" ? "fern" : "nah");
     setConfirmDelete(false);
     setFocusError(null);
     setMode("edit");
@@ -316,7 +325,6 @@ export function StarMap({
     const err = await onSaveEdit(focused.id, {
       title: editTitle.trim() ? editTitle.trim() : null,
       text: t,
-      distance: editDistance,
     });
     if (err) {
       setFocusError(err);
@@ -505,8 +513,8 @@ export function StarMap({
                         nährt deinen Wert: {getValueLabel(focused.valueId)}
                       </span>
                     )}
-                    <p className="w-full rounded-xl bg-foreground/5 p-4 text-left text-base leading-relaxed text-foreground backdrop-blur-sm">
-                      {focused.text}
+                    <p className="w-full rounded-xl bg-foreground/5 p-4 text-left text-base leading-relaxed whitespace-pre-wrap text-foreground backdrop-blur-sm">
+                      {wantSentence(focused)}
                     </p>
                     <Button variant="outline" className="mt-1 w-full gap-2" onClick={enterEdit}>
                       <Pencil className="size-4" /> Bearbeiten
@@ -525,44 +533,20 @@ export function StarMap({
                       value={editText}
                       onChange={(e) => setEditText(e.target.value)}
                       rows={4}
-                      maxLength={300}
+                      // Ein ferner Stern trägt ein ganzes Antwortfeld.
+                      maxLength={ANSWER_MAX}
                       autoFocus
                       className="resize-y"
                       aria-label="Beschreibung des Sterns"
                     />
-                    {/* Distanz: die Kern-Grammatik des Himmels selbst setzen. */}
-                    <div className="w-full space-y-1.5">
-                      <span className="block text-left text-xs font-medium text-muted-foreground">
-                        Wie weit weg ist dieser Stern?
-                      </span>
-                      <div className="grid grid-cols-2 gap-2">
-                        {(
-                          [
-                            { value: "nah", label: "Naher Stern", hint: "eine Freude" },
-                            { value: "fern", label: "Ferner Stern", hint: "ein Ziel" },
-                          ] as const
-                        ).map((opt) => {
-                          const active = editDistance === opt.value;
-                          return (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              aria-pressed={active}
-                              onClick={() => setEditDistance(opt.value)}
-                              className={cn(
-                                "flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 text-center transition-colors",
-                                active
-                                  ? "border-primary bg-primary/10 text-primary"
-                                  : "border-border text-muted-foreground hover:bg-muted/40",
-                              )}
-                            >
-                              <span className="text-sm font-medium">{opt.label}</span>
-                              <span className="text-xs opacity-80">{opt.hint}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
+                    {/* Das Beispiel steht als eigenes Feld am Stern — sichtbar,
+                        damit der gelesene Satz und der bearbeitete derselbe
+                        sind. */}
+                    {focused.example && (
+                      <p className="w-full text-left text-sm text-muted-foreground">
+                        z. B. {focused.example}
+                      </p>
+                    )}
                     {focusError && (
                       <p className="w-full text-left text-sm text-destructive">{focusError}</p>
                     )}

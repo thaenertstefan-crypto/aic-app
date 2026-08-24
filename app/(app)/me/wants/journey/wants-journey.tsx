@@ -32,13 +32,17 @@ import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { type AiStepRequest, AI_STEPS, runAiStep } from "@/lib/recipes/ai-step";
 import type { SavedEntryId } from "@/lib/recipes/saved-entry";
 import {
+  ANSWER_MAX,
+  MAX_ANSWER_BOXES,
   advanceWants,
+  farDrafts,
   initialWants,
   joinAnswers,
   keptWants,
   type AuditField,
   type DraftWant,
 } from "@/lib/recipes/wants/state";
+import { wantSentence } from "@/lib/recipes/wants/items";
 import type { WantItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
 
@@ -87,25 +91,21 @@ type AuditDraft = {
   principles: string;
 };
 
-/** Antwort-Shape von /api/wants-distiller. */
+/** Antwort-Shape von /api/wants-distiller. Die Liste trägt nur noch die
+ *  NAHEN Sterne; für die fernen kommen ausschließlich Namen zurück. */
 type DistillerResponse = {
   comment?: string;
   wants?: {
     text?: string;
     title?: string | null;
-    distance?: string;
+    example?: string | null;
     valueId?: string | null;
     valueLabel?: string | null;
     reason?: string | null;
     question?: string | null;
   }[];
+  farTitles?: (string | null)[];
 };
-
-// Multi-Antwort-Audit: bis zu 6 Boxen möglich (Startanzahl siehe START_BOXES
-// im Zustands-Modul).
-const MAX_ANSWER_BOXES = 6;
-// Pro Box gecappt, damit die zusammengefügten Antworten unter TEXT_MAX_LONG (5000) bleiben.
-const ANSWER_MAX = 800;
 
 function AnswerBoxes({
   answers,
@@ -218,7 +218,13 @@ export function WantsJourney({
   // das Rezept bleibt ohne KI vollständig nutzbar (manueller Modus).
 
   async function runDistiller(id: SavedEntryId) {
-    dispatch({ type: "distillateRequested" });
+    // Die fernen Sterne baut der Client, bevor gefragt wird: ein ausgefülltes
+    // Antwortfeld der Tagtraum-Frage ergibt genau einen, im Wortlaut. Fällt
+    // der Aufruf aus, stehen sie trotzdem — ihnen fehlt nur der Name.
+    dispatch({
+      type: "distillateRequested",
+      farWants: farDrafts(state.tagtraum, () => crypto.randomUUID()),
+    });
 
     const step = await runAiStep(AI_STEPS.wants, { entryId: id }, (payload) => {
       const data = payload as DistillerResponse;
@@ -228,7 +234,13 @@ export function WantsJourney({
           id: crypto.randomUUID(),
           text: (w.text as string).trim(),
           title: typeof w.title === "string" && w.title.trim() ? w.title.trim() : null,
-          distance: w.distance === "fern" ? "fern" : "nah",
+          example:
+            typeof w.example === "string" && w.example.trim()
+              ? w.example.trim()
+              : null,
+          // Destilliert heißt nah — „fern" ist eine Herkunftsmarke, und diese
+          // Sätze kommen nicht aus einem Antwortfeld.
+          distance: "nah",
           valueId: typeof w.valueId === "string" ? w.valueId : null,
           valueLabel: typeof w.valueLabel === "string" ? w.valueLabel : null,
           reason: typeof w.reason === "string" ? w.reason : null,
@@ -238,6 +250,7 @@ export function WantsJourney({
       return {
         comment: typeof data.comment === "string" ? data.comment : "",
         wants,
+        farTitles: Array.isArray(data.farTitles) ? data.farTitles : [],
       };
     });
 
@@ -265,10 +278,16 @@ export function WantsJourney({
       return;
     }
 
+    // Jede Frage geht zweimal mit: als Lesetext und als Liste der einzelnen
+    // Antwortfelder. Aus dem zusammengefügten String sind die Feldgrenzen
+    // nicht zurückzugewinnen — ein Antwortfeld darf selbst mehrzeilig sein.
     const formData = new FormData();
     formData.set("yin", joinAnswers(state.yin));
+    formData.set("yin_answers", JSON.stringify(state.yin));
     formData.set("yang", joinAnswers(state.yang));
+    formData.set("yang_answers", JSON.stringify(state.yang));
     formData.set("tagtraum", joinAnswers(state.tagtraum));
+    formData.set("tagtraum_answers", JSON.stringify(state.tagtraum));
     formData.set("principles", state.principles);
 
     try {
@@ -306,6 +325,7 @@ export function WantsJourney({
       text: w.text.trim(),
       active: true,
       title: w.title?.trim() ? w.title.trim() : null,
+      example: w.example?.trim() ? w.example.trim() : null,
       distance: w.distance,
       valueId: w.valueId,
       source: w.source,
@@ -345,7 +365,9 @@ export function WantsJourney({
     // also gilt hier derselbe Zwang.
     const request: AiStepRequest = {
       entryId: state.entryId,
-      text: want.text,
+      // Der ganze Satz, wie ihn die Person liest — sonst schärft der Refiner
+      // an einem Text, dem der Anker fehlt, und das alte Beispiel bliebe.
+      text: wantSentence(want),
       question: want.question ?? "",
       answer,
     };
@@ -486,7 +508,10 @@ export function WantsJourney({
         mascot={null}
         stepKey="sterne"
       >
-        {state.aiError ? (
+        {/* Der Ausfall räumt die Bühne nur, wenn nichts darauf steht. Die
+            fernen Sterne kommen nicht aus der KI — sie bleiben, und ihnen
+            fehlt bloß der Name. */}
+        {state.aiError && state.wants.length === 0 ? (
           <>
             <div className="flex flex-col items-center gap-3 text-center">
               <Mascot expression="sorrowMild" size="md" />
@@ -520,11 +545,27 @@ export function WantsJourney({
             <div className="flex flex-col items-center gap-3 text-center">
               <StarGlyph sizeClass="size-14" glow={18} />
               <p className="text-base leading-relaxed text-muted-foreground">
-                {state.manualMode
-                  ? "Formuliere 3–6 Sätze dazu, was dich antreibt — so, wie es sich für dich richtig anfühlt."
-                  : "Das lese ich aus deiner Sternensuche heraus. Tipp einen Stern an, um ihn zu taufen oder zu ändern — und verwirf, was nicht stimmt."}
+                {state.aiError
+                  ? "Deine fernen Sterne stehen — ihre Namen fehlen noch. Tipp einen an, um ihn zu taufen."
+                  : state.manualMode
+                    ? "Formuliere 3–6 Sätze dazu, was dich antreibt — so, wie es sich für dich richtig anfühlt."
+                    : "Das lese ich aus deiner Sternensuche heraus. Tipp einen Stern an, um ihn zu taufen oder zu ändern — und verwirf, was nicht stimmt."}
               </p>
             </div>
+
+            {/* Ausfall bei stehenden Sternen: Meldung daneben, nicht davor —
+                und bewusst OHNE „Nochmal versuchen". Ein zweiter Anlauf baut
+                die Bühne neu (s. `distillateRequested`) und nähme der Person
+                die Namen, die sie hier gerade selbst vergeben hat. */}
+            {state.aiError && (
+              <Card className="w-full">
+                <CardContent className="pt-(--card-spacing)">
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {state.aiError}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* KI-Einschätzung als Glass-Karte */}
             {state.comment && (
@@ -543,7 +584,8 @@ export function WantsJourney({
             <div className="flex w-full flex-col">
               {state.wants.map((want) => {
                 const open = state.openIds.includes(want.id);
-                const displayName = want.title?.trim() ? want.title.trim() : want.text.trim();
+                const sentence = wantSentence(want);
+                const displayName = want.title?.trim() ? want.title.trim() : sentence;
                 return (
                   <div key={want.id} className="border-b border-foreground/10 last:border-b-0">
                     {/* Kollabierte Zeile */}
@@ -564,7 +606,7 @@ export function WantsJourney({
                         </span>
                         {!open && (
                           <span className="block truncate text-sm text-muted-foreground">
-                            {want.text}
+                            {sentence}
                           </span>
                         )}
                       </span>
@@ -616,7 +658,9 @@ export function WantsJourney({
                                 patch: { text: e.target.value },
                               })
                             }
-                            maxLength={300}
+                            // Ein ferner Stern trägt ein ganzes Antwortfeld —
+                            // hier darf nichts abgeschnitten werden.
+                            maxLength={ANSWER_MAX}
                             rows={2}
                             className="min-h-[60px] resize-y text-base"
                             aria-label="Want bearbeiten"
@@ -630,6 +674,11 @@ export function WantsJourney({
                             <X className="size-4" />
                           </button>
                         </div>
+                        {want.example && (
+                          <p className="text-sm leading-relaxed text-muted-foreground">
+                            z. B. {want.example}
+                          </p>
+                        )}
                         {want.valueLabel && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                             <Sparkles className="size-3" />
