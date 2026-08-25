@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FormError } from "@/components/ui/form-error";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
@@ -47,6 +48,33 @@ function Flourish() {
       <path d="M60 0.5 L63.5 4 L60 7.5 L56.5 4 Z" fill="currentColor" opacity="0.8" />
       <line x1="70" y1="4" x2="120" y2="4" stroke="currentColor" strokeWidth="0.75" opacity="0.5" />
     </svg>
+  );
+}
+
+/**
+ * Die zwei Wege zu einem Recht: Generieren ist die eine Gold-Kerze der Aktion,
+ * Selbst schreiben der ruhige Weg. Eine Reihe, zwei Zustände — im leeren am Fuß
+ * der Spalte (KAN-48), im vollen per `mt-auto` unter der Urkunde und über der
+ * Verzahnungskarte. Dieselbe Reihe an beiden Stellen, damit der Übergang
+ * leer → voll ihr Aussehen nicht ändert.
+ */
+function AddRightActions({ className }: { className?: string }) {
+  return (
+    <div className={cn("flex gap-3", className)}>
+      <Button
+        className="flex-1 gap-2"
+        render={<Link href="/me/bill-of-rights/generate" />}
+      >
+        <Waypoints className="size-4" /> Recht generieren
+      </Button>
+      <Button
+        variant="outline"
+        className="flex-1 gap-2"
+        render={<Link href="/me/bill-of-rights/add" />}
+      >
+        <PenLine className="size-4" /> Selbst schreiben
+      </Button>
+    </div>
   );
 }
 
@@ -135,6 +163,15 @@ export function BillOfRightsMe({
   }
 
   const activeRights = rights.filter((r) => r.active);
+  const isEmpty = activeRights.length === 0;
+
+  // Dieselbe Leere, aber die Seitenhöhe hängt zusätzlich an der Intro: der leere
+  // Zustand rechnet seine Höhe selbst (`EmptyState` misst bis zur Bottom-Nav),
+  // eine erzwungene `min-h-svh` käme oben drauf und die Seite scrollte um die
+  // Höhe der Leiste — genau das, was „ein leerer Zustand scrollt nie“
+  // ausschließt. Solange die Intro-Sequenz läuft, verdeckt sie den leeren
+  // Zustand und ihre Bühne braucht die volle Höhe weiterhin.
+  const emptyStage = introDone && isEmpty;
 
   function startEdit(r: RightItem) {
     setEditingId(r.id);
@@ -154,7 +191,7 @@ export function BillOfRightsMe({
   }
 
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className={cn("flex flex-col", !emptyStage && "min-h-svh")}>
       <BillOfRightsSky />
       <SubPageHeader
         backHref="/me"
@@ -180,56 +217,57 @@ export function BillOfRightsMe({
         onSeen={() => setIntroDone(true)}
       >
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
-          <p className="text-center text-base leading-relaxed text-foreground">
-            Diese Regeln hast du dir selbst gegeben – sie helfen dir beim
-            Navigieren durch deinen Alltag und beim Treffen von Entscheidungen.
-            Komm hierher zurück, wann immer du eine Erinnerung brauchst, was du
-            dir erlauben darfst.
-          </p>
-
-          {/* Die Urkunde: ein zusammenhängendes Dokument statt Einzelkarten,
-              das Siegel sitzt frei darüber. */}
-          <GlassPanel
-            className="rounded-2xl border-primary/25 px-5 pb-8 pt-8"
-            contentClassName="flex flex-col"
-          >
-            {/* Dunkles Papier-Korn — über den Blobs, unter dem Inhalt */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -inset-10"
-              style={{
-                background:
-                  "repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0 1px, transparent 1px 3px)",
-              }}
+          {isEmpty ? (
+            /* Die Bill of Rights, bevor das erste Recht da ist (KAN-48): kein
+               Urkundenrahmen um nichts herum und kein gestricheltes Linienpapier
+               — das sprach dieselbe Sprache wie das Lade-Gerüst, und dann ist
+               leer nicht mehr von lädt zu unterscheiden. Es bleiben die Bänder
+               der Leer-Grammatik: das Gold-Siegel als Kopf (es hängt schon über
+               der Spalte, deshalb kein eigenes `motiv`), der Satz in der Mitte,
+               die Knöpfe am Fuß. Auch die Einleitung und der Hinweis auf Things
+               Got Messy fallen weg — beide sprechen von Regeln, die es noch
+               nicht gibt. */
+            <EmptyState
+              satz="Deine Bill of Rights wartet auf ihr erstes Recht."
+              nachsatz="Was willst du dir erlauben?"
+              cta={<AddRightActions />}
             />
-
-            <div className="space-y-2 text-center">
-              <Flourish />
-              <h2 className="font-heading text-2xl font-semibold tracking-wide text-primary">
-                Bill of Rights
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Verliehen an dich — von dir selbst.
+          ) : (
+            <>
+              <p className="text-center text-base leading-relaxed text-foreground">
+                Diese Regeln hast du dir selbst gegeben – sie helfen dir beim
+                Navigieren durch deinen Alltag und beim Treffen von Entscheidungen.
+                Komm hierher zurück, wann immer du eine Erinnerung brauchst, was du
+                dir erlauben darfst.
               </p>
-            </div>
-            <div className="mt-5 border-t border-primary/15" />
 
-            {activeRights.length === 0 ? (
-              <>
-                {/* Unbeschriebenes Dokument — wartet auf das erste Recht */}
-                <div className="mt-4 space-y-5 px-2">
-                  <div className="h-5 border-b border-dashed border-primary/15" />
-                  <div className="h-5 border-b border-dashed border-primary/15" />
-                  <div className="h-5 border-b border-dashed border-primary/15" />
+              {/* Die Urkunde: ein zusammenhängendes Dokument statt Einzelkarten,
+                  das Siegel sitzt frei darüber. */}
+              <GlassPanel
+                className="rounded-2xl border-primary/25 px-5 pb-8 pt-8"
+                contentClassName="flex flex-col"
+              >
+                {/* Dunkles Papier-Korn — über den Blobs, unter dem Inhalt */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -inset-10"
+                  style={{
+                    background:
+                      "repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0 1px, transparent 1px 3px)",
+                  }}
+                />
+
+                <div className="space-y-2 text-center">
+                  <Flourish />
+                  <h2 className="font-heading text-2xl font-semibold tracking-wide text-primary">
+                    Bill of Rights
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Verliehen an dich — von dir selbst.
+                  </p>
                 </div>
-                <p className="mt-6 text-center text-base leading-relaxed text-muted-foreground">
-                  Dieses Dokument wartet auf dein erstes Recht.
-                  <br />
-                  Was möchtest du dir erlauben?
-                </p>
-              </>
-            ) : (
-              <>
+                <div className="mt-5 border-t border-primary/15" />
+
                 <div className="flex flex-col">
                   {activeRights.map((r, i) => (
                     <div
@@ -261,93 +299,82 @@ export function BillOfRightsMe({
                     </div>
                   ))}
                 </div>
-              </>
-            )}
-          </GlassPanel>
+              </GlassPanel>
 
-          <FormError message={saveError} />
+              {/* Steht bewusst in diesem Zweig: `saveError` wird nur von
+                  `persist()` gesetzt, und das rollt vorher `rights` auf den
+                  Stand vor dem Speichern zurück — beim Löschen des letzten
+                  Rechts ist die Liste im selben Render wieder gefüllt. Es gibt
+                  also keinen Fehler, der im leeren Zustand zu zeigen wäre. */}
+              <FormError message={saveError} />
 
-          {/* Immer sichtbar: zwei Wege, ein Recht hinzuzufügen. Generieren ist
-              die eine Gold-Kerze der Aktion, Selbst schreiben der ruhige Weg. */}
-          <div className="mt-auto flex gap-3 pt-4">
-            <Button
-              className="flex-1 gap-2"
-              render={<Link href="/me/bill-of-rights/generate" />}
-            >
-              <Waypoints className="size-4" /> Recht generieren
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 gap-2"
-              render={<Link href="/me/bill-of-rights/add" />}
-            >
-              <PenLine className="size-4" /> Selbst schreiben
-            </Button>
-          </div>
+              <AddRightActions className="mt-auto pt-4" />
 
-          {/* Verzahnung: Things Got Messy für den akuten Moment. */}
-          <Card className="border-dashed">
-            <CardContent className="space-y-2 pt-(--card-spacing)">
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Kommen beim Leben deiner Regeln Schuldgefühle auf?{" "}
-                <Link
-                  href="/booster/things-got-messy"
-                  className="font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  Things Got Messy
-                </Link>{" "}
-                hilft dir herauszufinden, was sie dir sagen wollen.
-              </p>
-            </CardContent>
-          </Card>
+              {/* Verzahnung: Things Got Messy für den akuten Moment. */}
+              <Card className="border-dashed">
+                <CardContent className="space-y-2 pt-(--card-spacing)">
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Kommen beim Leben deiner Regeln Schuldgefühle auf?{" "}
+                    <Link
+                      href="/booster/things-got-messy"
+                      className="font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      Things Got Messy
+                    </Link>{" "}
+                    hilft dir herauszufinden, was sie dir sagen wollen.
+                  </p>
+                </CardContent>
+              </Card>
 
-          {/* Bearbeiten-Dialog: Recht umformulieren oder löschen */}
-          <Dialog
-            open={editingId !== null}
-            onOpenChange={(open) => {
-              if (!open) {
-                setEditingId(null);
-                setConfirmDelete(false);
-              }
-            }}
-          >
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Recht bearbeiten</DialogTitle>
-              </DialogHeader>
-              <Textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                rows={3}
-                autoFocus
-                className="resize-y"
-                aria-label="Text des Rechts"
-              />
-              <DialogFooter>
-                <Button
-                  variant="destructive"
-                  className="sm:mr-auto"
-                  onClick={() => {
-                    if (!confirmDelete) {
-                      setConfirmDelete(true);
-                      return;
-                    }
-                    if (editingId) deleteRight(editingId);
+              {/* Bearbeiten-Dialog: Recht umformulieren oder löschen */}
+              <Dialog
+                open={editingId !== null}
+                onOpenChange={(open) => {
+                  if (!open) {
                     setEditingId(null);
                     setConfirmDelete(false);
-                  }}
-                >
-                  {confirmDelete ? "Wirklich löschen?" : "Recht löschen"}
-                </Button>
-                <DialogClose render={<Button variant="outline" />}>
-                  Abbrechen
-                </DialogClose>
-                <Button onClick={saveEdit} disabled={!editText.trim()}>
-                  Speichern
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                  }
+                }}
+              >
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Recht bearbeiten</DialogTitle>
+                  </DialogHeader>
+                  <Textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    rows={3}
+                    autoFocus
+                    className="resize-y"
+                    aria-label="Text des Rechts"
+                  />
+                  <DialogFooter>
+                    <Button
+                      variant="destructive"
+                      className="sm:mr-auto"
+                      onClick={() => {
+                        if (!confirmDelete) {
+                          setConfirmDelete(true);
+                          return;
+                        }
+                        if (editingId) deleteRight(editingId);
+                        setEditingId(null);
+                        setConfirmDelete(false);
+                      }}
+                    >
+                      {confirmDelete ? "Wirklich löschen?" : "Recht löschen"}
+                    </Button>
+                    <DialogClose render={<Button variant="outline" />}>
+                      Abbrechen
+                    </DialogClose>
+                    <Button onClick={saveEdit} disabled={!editText.trim()}>
+                      Speichern
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
         </div>
       </RecipeIntroGate>
     </div>
