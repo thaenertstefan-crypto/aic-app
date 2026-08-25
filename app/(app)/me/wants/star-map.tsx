@@ -69,11 +69,25 @@ const MICRO_STARS: { fx: number; fy: number; r: number }[] = [
   { fx: 0.94, fy: 0.72, r: 1.0 }, { fx: 0.55, fy: 0.88, r: 1.1 },
 ];
 
-/** Stabiler Hash 0..1 aus einem String — gleicher Himmel bei jedem Besuch. */
+/** Stabiler Hash 0..1 aus einem String — gleicher Himmel bei jedem Besuch.
+ *  FNV-1a mit Nachmischen (fmix32). Das Nachmischen ist nicht Zierde: die
+ *  Vorgänger-Fassung (`h * 31 + c`, dann `h % 1000`) ließ benachbarte IDs auf
+ *  fast denselben Wert fallen — bei den tatsächlichen Stern-IDs, die sich nur
+ *  im letzten Zeichen unterscheiden, lagen alle Werte innerhalb von 0,001.
+ *  Der Versatz war damit rechnerisch da und sichtbar tot: die Karte stand als
+ *  Zweispalten-Raster statt als Himmel. */
 function hash01(seed: string): number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return (h % 1000) / 1000;
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h ^= h >>> 16;
+  h = Math.imul(h, 2246822507);
+  h ^= h >>> 13;
+  h = Math.imul(h, 3266489909);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
 }
 
 /** Kürzung mit „…“ — hält Namen bei jeder Eingabelänge kurz. */
@@ -94,10 +108,41 @@ export function starName(w: WantItem): string {
   return t ? t : clip(wantSentence(w), NAME_MAX);
 }
 
-/** Kartenlabel: wie starName, aber durch dieselbe 26-Zeichen-Kürzung, damit
- *  lange Titel (Input erlaubt bis zu 60 Zeichen) den engen Slot nicht sprengen. */
-export function starLabel(w: WantItem): string {
-  return clip(starName(w), 26);
+/** Innerste x-Position einer Spalte (viewBox-Einheiten, vom linken Rand;
+ *  rechts gespiegelt). Der Name eines Sterns zeigt nach innen, also ist jede
+ *  Einheit weiter außen eine Einheit mehr Platz für ihn — die Verteilung dient
+ *  dem Namen, nicht umgekehrt. Weil der Versatz unten nur nach außen schiebt,
+ *  ist dieser Wert zugleich der engste Fall, den ein Name je bekommt.
+ *  Nah und fern teilen sich diese Geometrie unverändert: die Weite steckt
+ *  allein in Größe, Deckkraft und Dunst, nie in der Position. */
+const COL_X_INNER = 58;
+/** Wie weit der ID-Hash einen Stern aus seiner Spalte nach außen schiebt —
+ *  stabil je Stern, damit die Karte kein Raster ist. Nur nach außen: nach
+ *  innen läge sein Name. Weiter geht es nicht, ohne dass das 44-px-Tap-Ziel
+ *  über den Kartenrand hinausragt: der äußerste Stern steht bei
+ *  COL_X_INNER - X_JITTER = 30 Einheiten, das sind 8,3 % der Kartenbreite.
+ *  Weil das Tap-Ziel in px misst und die Position in Prozent, wird der Rest je
+ *  schmaler der Bildschirm desto knapper — bei 375 px bleiben ~6 px Luft, bei
+ *  320 px noch ~2. Es ragt nie hinaus, aber viel Reserve ist das nicht. */
+const X_JITTER = 28;
+
+/** Was ein Namenszug an px verliert, bevor er anfängt: halbes Tap-Ziel
+ *  (size-11 = 44 px) + Abstand zum Stern (ml-1.5/mr-1.5 = 6 px) + Luft zum
+ *  Kartenrand. Diese Strecke ist in px festgeschrieben, die Sternposition in
+ *  Prozent der Karte — deshalb rechnet die Breite unten in cqw minus px. */
+const LABEL_GUTTER_PX = 22 + 6 + 4;
+
+/** Der Platz, den ein Name wirklich hat: von seinem Stern bis zum
+ *  gegenüberliegenden Kartenrand. `cqw` misst die Karte (sie trägt dafür
+ *  `@container`), sodass jeder Stern seine eigene Schranke bekommt statt einer
+ *  gemeinsamen, die sich am engsten Fall orientieren müsste. Erst hier kürzt
+ *  `truncate` — und damit so spät wie möglich.
+ *  Kollidieren können zwei Namen dabei nicht: pro Zeile steht genau ein Stern,
+ *  und zwei Zeilen liegen selbst im ungünstigsten Fall noch
+ *  ROW_H - 2 * Y_JITTER_RESERVE auseinander — mehr als die Höhe einer Zeile. */
+function labelMaxWidth(x: number, side: "left" | "right"): string {
+  const room = side === "left" ? VIEW_W - x : x;
+  return `calc(${((room / VIEW_W) * 100).toFixed(2)}cqw - ${LABEL_GUTTER_PX}px)`;
 }
 
 type PlacedStar = { want: WantItem; x: number; y: number; side: "left" | "right" };
@@ -114,14 +159,11 @@ function layoutStars(wants: WantItem[]): { stars: PlacedStar[]; viewH: number } 
   }
   const stars = ordered.map((want, i) => {
     const side: "left" | "right" = i % 2 === 0 ? "left" : "right";
-    // Spalten-Zentren etwas weiter nach außen (±102 statt ±84 um die Mitte 180),
-    // damit sich die Sterne nicht in der Bildmitte sammeln. Labels zeigen nach
-    // innen und gewinnen dadurch Platz.
-    const baseX = side === "left" ? 78 : 282;
+    const outward = hash01(want.id) * X_JITTER;
     return {
       want,
-      x: baseX + (hash01(want.id) - 0.5) * 56,
-      y: TOP_PAD + i * ROW_H + (hash01(`${want.id}y`) - 0.5) * 36,
+      x: side === "left" ? COL_X_INNER - outward : VIEW_W - COL_X_INNER + outward,
+      y: TOP_PAD + i * ROW_H + (hash01(`${want.id}y`) - 0.5) * Y_JITTER_RESERVE * 2,
       side,
     };
   });
@@ -364,8 +406,11 @@ export function StarMap({
   }
 
   return (
+    // `@container`: die Karte ist der Bezug für die cqw-Rechnung in
+    // labelMaxWidth. Sie hat keine `fixed` Nachfahren — die Fokus-Ebene hängt
+    // per Portal an document.body —, also kostet die Containment nichts.
     <div
-      className="relative w-full"
+      className="@container relative w-full"
       style={{ aspectRatio: `${VIEW_W} / ${viewH}` }}
       data-e2e="star-map"
     >
@@ -398,7 +443,7 @@ export function StarMap({
               key={want.id}
               type="button"
               onClick={(e) => zoomIn(want, e.currentTarget)}
-              aria-label={`Stern ansehen: ${starLabel(want)}`}
+              aria-label={`Stern ansehen: ${starName(want)}`}
               className="absolute z-10 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               style={{ left: `${(x / VIEW_W) * 100}%`, top: `${(y / viewH) * 100}%` }}
             >
@@ -422,18 +467,18 @@ export function StarMap({
                 <path d={STAR_PATH} fill="var(--primary)" />
               </svg>
               <span
+                // Die Schranke ist der Kartenrand, nicht eine feste Breite:
+                // gekürzt wird erst, wenn der Name den Rand erreicht.
+                style={{ maxWidth: labelMaxWidth(x, side) }}
                 className={cn(
-                  // max-w + truncate: lange Titel (bis 60 Zeichen erlaubt) können
-                  // sonst über den Kartenrand laufen oder mit dem gegenüberliegenden
-                  // Label kollidieren. „…" statt Overflow.
-                  "absolute top-1/2 block max-w-[8rem] -translate-y-1/2 truncate font-heading",
+                  "absolute top-1/2 block -translate-y-1/2 truncate font-heading",
                   side === "left" ? "left-full ml-1.5" : "right-full mr-1.5",
                   fern
                     ? "text-xs text-muted-foreground"
                     : "text-base font-semibold text-foreground",
                 )}
               >
-                {starLabel(want)}
+                {starName(want)}
               </span>
             </button>
           );
