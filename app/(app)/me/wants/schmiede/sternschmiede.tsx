@@ -12,11 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionLabel } from "@/components/ui/section-label";
 import { FormError } from "@/components/ui/form-error";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { ForgeBackdrop } from "@/components/backdrops/forge-backdrop";
 import { CompassStarsArt } from "@/components/brand/compass-stars-art";
+import { StarGlyph } from "@/components/brand/star-glyph";
 import { useWarp, warpPageClass } from "@/components/wants/warp-transition";
 import { FunkenSky } from "@/components/wants/funken-sky";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
@@ -548,11 +550,43 @@ export function Sternschmiede({
   }
 
   // ── Intro + Funken (Einstieg / Landing) ─────────────────────────
-  const firstVisit = openBets.length === 0 && triedBets.length === 0;
+  // Kein einziger Funke — weder ein glühender noch ein schon gegriffener.
+  const isEmpty = openBets.length === 0 && triedBets.length === 0;
+
+  // Die zwei Knöpfe am Fuß der Spalte: die eine Gold-CTA, darunter die
+  // gedämpfte Rückkehr in den Himmel (ghost, damit „Funken schlagen" die eine
+  // Gold-Kerze bleibt) — derselbe Warp wie beim Herkommen, nur rückwärts.
+  // Eine Reihe, zwei Zustände: im leeren im CTA-Band der Leer-Grammatik, im
+  // vollen per `mt-auto` unter dem Inhalt. Dieselbe Stelle in beiden, damit der
+  // Übergang leer → voll sie nicht verschiebt (KAN-50). Vorher absorbierte ein
+  // `flex-1`-Spacer die Restfläche und setzte die Ghost-Zeile mittig ins Leere
+  // — genau das „schwebt ziellos im Raum" des Tickets.
+  const footActions = (
+    <>
+      <Button className="w-full gap-2" size="lg" onClick={() => setPhase("briefing")}>
+        <Flame className="size-4" />
+        {isEmpty ? "Funken schlagen" : "Neue Funken schlagen"}
+      </Button>
+      <Button
+        variant="ghost"
+        className="w-full gap-2 text-muted-foreground"
+        disabled={warpBusy}
+        onClick={goBackToStars}
+      >
+        <ArrowUp className="size-4" /> Zurück zu meinen Sternen
+      </Button>
+    </>
+  );
+
   return (
     <div
       className={cn(
-        "flex min-h-lvh flex-col",
+        "flex flex-col",
+        // Der leere Zustand rechnet seine Höhe selbst (`EmptyState` misst bis
+        // zur Oberkante der Bottom-Nav). Eine erzwungene `min-h-lvh` käme oben
+        // drauf und die Seite scrollte um die Höhe der Leiste — genau der
+        // Scroll, den dieses Ticket abstellt.
+        !isEmpty && "min-h-lvh",
         warpPageClass("schmiede", warpPhase, direction),
       )}
     >
@@ -564,110 +598,129 @@ export function Sternschmiede({
         default="none"
       >
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-              Willkommen in der Sternschmiede
-            </h1>
-            <p className="text-base leading-relaxed text-muted-foreground">
-              Hier schlägst du Funken — kleine, risikofreie Experimente, mit denen
-              du Neues (oder längst Vergessenes) ausprobierst. Aus manchem Funken
-              wird ein neuer Stern.
-            </p>
-            {!hasSterne && (
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Du hast noch keine Sterne bestätigt — kein Problem, ein Funke kann
-                trotzdem der Anfang sein.
-              </p>
-            )}
-          </div>
+          {isEmpty ? (
+            /* Die Schmiede vor dem ersten Funken (KAN-50): die Bänder der
+               Leer-Grammatik statt der vollen Landing. Oben das Motiv der
+               Fläche — dieselbe Sternglyphe wie im Himmel, aber in Rosé, der
+               Lichtfarbe dieser Subpage: der Funke, aus dem ein Stern wird.
+               Nie das Maskottchen. Der Satz nennt die warme Esse, nicht den
+               Mangel; die Überschrift „Willkommen in der Sternschmiede" samt
+               Erklärabsatz ist für den leeren Zustand zu lang, und das „Warum"
+               lebt ohnehin im Info-Overlay hinter dem (i).
 
-          {/* Offene Funken als schwebende Konstellation über der Esse. */}
-          {openBets.length > 0 && (
-            <FunkenSky
-              funken={openBets}
-              reflectHref={(id) => `/me/wants/reflect/${id}`}
-              onDelete={deleteBet}
+               Weg fällt auch die Zeile für den eigenen Funken: der leere
+               Zustand stellt genau eine Frage, und beantwortet ist sie am Ende
+               des Schmiedens, wo dieselbe Zeile wieder steht. */
+            <EmptyState
+              motiv={
+                /* `fill` steht ausgeschrieben, obwohl die Schmiede-Zone
+                   `--primary` ohnehin auf `--celebrate` legt: den Zonen-Marker
+                   setzt `ZoneTheme` erst nach der Hydration. Ohne die Angabe
+                   erschiene der Funke im ersten Frame gold. */
+                <StarGlyph
+                  sizeClass="size-16"
+                  glow={12}
+                  twinkle={!reduced}
+                  fill="var(--celebrate)"
+                />
+              }
+              satz="Die Esse ist warm."
+              nachsatz="Ein Funke ist ein kleines, risikofreies Experiment. Schlag den ersten."
+              cta={footActions}
             />
-          )}
+          ) : (
+            <>
+              <div className="flex flex-col items-center gap-3 text-center">
+                <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+                  Willkommen in der Sternschmiede
+                </h1>
+                <p className="text-base leading-relaxed text-muted-foreground">
+                  Hier schlägst du Funken — kleine, risikofreie Experimente, mit
+                  denen du Neues (oder längst Vergessenes) ausprobierst. Aus
+                  manchem Funken wird ein neuer Stern.
+                </p>
+                {!hasSterne && (
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Du hast noch keine Sterne bestätigt — kein Problem, ein Funke
+                    kann trotzdem der Anfang sein.
+                  </p>
+                )}
+              </div>
 
-          {/* „Schon gegriffen" — leise Hairline-Zeilen (kein Karten-Kasten). */}
-          {triedBets.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <SectionLabel>Schon gegriffen</SectionLabel>
-              {triedBets.map((bet) => (
-                <div
-                  key={bet.id}
-                  className="flex items-start gap-2 rounded-lg border border-border/60 px-3 py-2"
-                >
-                  <Check className="mt-0.5 size-4 shrink-0 text-primary" />
-                  <span className="flex-1 text-sm leading-relaxed text-muted-foreground">
-                    {bet.text}
-                  </span>
-                  {bet.journalEntryId && (
-                    <Link
-                      href="/journal"
-                      className="shrink-0 text-xs font-medium text-primary underline-offset-4 hover:underline"
+              {/* Offene Funken als schwebende Konstellation über der Esse. */}
+              {openBets.length > 0 && (
+                <FunkenSky
+                  funken={openBets}
+                  reflectHref={(id) => `/me/wants/reflect/${id}`}
+                  onDelete={deleteBet}
+                />
+              )}
+
+              {/* „Schon gegriffen" — leise Hairline-Zeilen (kein Karten-Kasten). */}
+              {triedBets.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <SectionLabel>Schon gegriffen</SectionLabel>
+                  {triedBets.map((bet) => (
+                    <div
+                      key={bet.id}
+                      className="flex items-start gap-2 rounded-lg border border-border/60 px-3 py-2"
                     >
-                      Reflexion
-                    </Link>
-                  )}
+                      <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <span className="flex-1 text-sm leading-relaxed text-muted-foreground">
+                        {bet.text}
+                      </span>
+                      {bet.journalEntryId && (
+                        <Link
+                          href="/journal"
+                          className="shrink-0 text-xs font-medium text-primary underline-offset-4 hover:underline"
+                        >
+                          Reflexion
+                        </Link>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
+
+              {/* Eigenen Funken hinzufügen — sitzt unter der Konstellation. */}
+              <div className="flex items-start gap-2">
+                <Input
+                  value={newBet}
+                  onChange={(e) => setNewBet(e.target.value)}
+                  placeholder="Eigener Funke, z. B. „Einmal zum Bouldern gehen“"
+                  maxLength={300}
+                  aria-label="Eigenen Funken hinzufügen"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addBet();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  aria-label="Funken hinzufügen"
+                  disabled={!newBet.trim()}
+                  onClick={addBet}
+                >
+                  <Plus className="size-4" />
+                </Button>
+              </div>
+
+              <FormError message={betError} />
+              <FormError message={error} />
+
+              {/* Der Fuß der Spalte. `mt-auto` schluckt die Restfläche, sodass
+                  die Reihe an der Unterkante steht — bei einem Funken wie bei
+                  sechs an derselben Stelle, an der sie der leere Zustand zeigt.
+                  Ersetzt den früheren `flex-1`-Spacer, der nur die Ghost-Zeile
+                  mittig ins Leere setzte. */}
+              <div className="mt-auto grid gap-2">{footActions}</div>
+            </>
           )}
-
-          {/* Eigenen Funken hinzufügen — sitzt unter der Konstellation. */}
-          <div className="flex items-start gap-2">
-            <Input
-              value={newBet}
-              onChange={(e) => setNewBet(e.target.value)}
-              placeholder="Eigener Funke, z. B. „Einmal zum Bouldern gehen“"
-              maxLength={300}
-              aria-label="Eigenen Funken hinzufügen"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addBet();
-                }
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="shrink-0"
-              aria-label="Funken hinzufügen"
-              disabled={!newBet.trim()}
-              onClick={addBet}
-            >
-              <Plus className="size-4" />
-            </Button>
-          </div>
-
-          <FormError message={betError} />
-          <FormError message={error} />
-
-          {/* Die eine Gold-CTA. Erstbesuch ohne Funken: schlicht „Funken schlagen". */}
-          <Button className="w-full gap-2" size="lg" onClick={() => setPhase("briefing")}>
-            <Flame className="size-4" />
-            {firstVisit ? "Funken schlagen" : "Neue Funken schlagen"}
-          </Button>
-
-          {/* Zurück in den Sternenhimmel — derselbe Warp, nur rückwärts (Aufstieg).
-              Gedämpft (ghost), damit „Funken schlagen" die eine Gold-CTA bleibt.
-              Sitzt mittig zwischen der Gold-CTA und der Bottom-Nav: der
-              flex-1-Spacer absorbiert den Rest der Seitenhöhe, pt-2 hält einen
-              Mindestabstand nach oben. Ersetzt den früheren harten h-8-Spacer. */}
-          <div className="flex flex-1 flex-col justify-center pt-2">
-            <Button
-              variant="ghost"
-              className="w-full gap-2 text-muted-foreground"
-              disabled={warpBusy}
-              onClick={goBackToStars}
-            >
-              <ArrowUp className="size-4" /> Zurück zu meinen Sternen
-            </Button>
-          </div>
         </div>
       </ViewTransition>
     </div>
