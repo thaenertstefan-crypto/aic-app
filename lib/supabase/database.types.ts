@@ -309,6 +309,41 @@ export type Database = {
           },
         ]
       }
+      star_moments: {
+        Row: {
+          created_at: string
+          id: string
+          origin: string
+          star_id: string
+          text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          origin: string
+          star_id: string
+          text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          origin?: string
+          star_id?: string
+          text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "star_moments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_recipe_progress: {
         Row: {
           completed_at: string | null

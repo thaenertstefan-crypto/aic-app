@@ -8,6 +8,7 @@ import {
   ok,
   type ActionResult,
 } from "@/lib/actions/action-result";
+import { dbError } from "@/lib/utils/db-error";
 import { withUser, type ActionContext } from "@/lib/actions/with-user";
 import type {
   Json,
@@ -37,6 +38,17 @@ import {
   parseItems,
   parsePreviousIds,
 } from "@/lib/recipes/wants/items";
+import {
+  MOMENT_BROKEN_CALL,
+  deletedStarIds,
+  groupMomentsByStar,
+  isMomentOrigin,
+  momentTextError,
+  toStarMoment,
+  type MomentsByStar,
+  type NewMoment,
+  type StarMoment,
+} from "@/lib/recipes/wants/moments";
 import { ANSWER_MAX, filledAnswers } from "@/lib/recipes/wants/state";
 import { readIntroSeen, writeProgress } from "@/lib/recipes/progress";
 import {
@@ -110,6 +122,8 @@ async function mergeIntoColumn<
 export type WantsData = {
   wants: WantItem[] | null;
   bets: BetItem[] | null;
+  /** Momente des Nutzers, nach Stern geschlagen; leeres Verzeichnis, wenn es keine gibt. */
+  moments: MomentsByStar;
   introSeen: boolean;
 };
 
@@ -125,9 +139,199 @@ export async function getWantsData(): Promise<ActionResult<WantsData>> {
     return ok({
       wants: (row?.wants as WantItem[] | null) ?? null,
       bets: (row?.bets as BetItem[] | null) ?? null,
+      moments: await readMoments(ctx),
       introSeen: await readIntroSeen(ctx, "wants"),
     });
   });
+}
+
+// ─── Momente ────────────────────────────────────────────────────────────
+// Ein Moment ist ein Beleg an einem Stern: „das hier habe ich gelebt". Er
+// gehört genau einem Stern und wird nie über Sterne hinweg gelesen — deshalb
+// liegt er in `star_moments` ohne Fremdschlüssel auf den Stern (ADR-0007) und
+// wird hier zusammen mit den Sternen geholt statt über einen eigenen Umweg.
+//
+// Die drei Schreib-Actions nehmen getippte Argumente statt FormData: die
+// Oberfläche entscheidet KAN-37, und die vom Client erzeugte id — an der die
+// Idempotenz hängt — soll nicht erst durch ein String-Feld.
+
+const MOMENTS_TABLE = "star_moments";
+
+/**
+ * Alle Momente des Nutzers, nach Stern geschlagen.
+ *
+ * Eine Abfrage mehr neben den Sternen, dafür hat die Fokus-Ebene sie ohne
+ * eigenen Umweg — und sie ist die einzige Stelle, die sie zeigt.
+ *
+ * Sortiert wird nach `star_id, created_at` — nicht, weil die Reihenfolge der
+ * Sterne jemanden interessiert (die Gruppierung wirft sie ohnehin weg),
+ * sondern weil das genau der Index `(user_id, star_id, created_at)` ist. Damit
+ * *kann* Postgres die Reihenfolge aus dem Index nehmen statt nachzusortieren;
+ * nach `created_at` allein bliebe ihm nur der Sort. Ob er den Index-Scan auch
+ * wählt, entscheidet er nach Zeilenzahl — bei einer noch leeren Tabelle ist
+ * ihm ein Bitmap-Scan mit Sort billiger, und das ist in Ordnung.
+ *
+ * Innerhalb eines Sterns kommen die Momente so oder so in der Reihenfolge, in
+ * der sie entstanden sind — nur darauf kommt es an.
+ *
+ * Waisen (Momente gelöschter Sterne) kommen hier mit durch und landen unter
+ * einem Schlüssel, nach dem niemand fragt. Das ist die erlaubte Seite von
+ * ADR-0007 — kein Defekt, nur unsichtbarer Müll.
+ *
+ * **Kein `ActionResult`:** der Aufrufer reicht das Verzeichnis direkt weiter.
+ * „Noch keine Momente" ist die richtige Antwort auf jeden Fehlerfall — die
+ * Sterne stehen trotzdem am Himmel, und ein Ergebnis zum Auspacken zwänge
+ * `getWantsData` einen Zweig auf, in dem es dasselbe täte.
+ */
+async function readMoments({
+  supabase,
+  user,
+}: ActionContext): Promise<MomentsByStar> {
+  const { data, error } = await supabase
+    .from(MOMENTS_TABLE)
+    .select("id, star_id, text, origin, created_at")
+    .eq("user_id", user.id)
+    .order("star_id", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error || !data) {
+    if (error) dbError(error, MOMENTS_TABLE);
+    return {};
+  }
+
+  return groupMomentsByStar(data.map(toStarMoment));
+}
+
+/**
+ * Die Momente gelöschter Sterne mitnehmen — **best effort**.
+ *
+ * Müllabfuhr, keine Bedingung: Waisen sind nach ADR-0007 ausdrücklich erlaubt,
+ * weil Momente nie über Sterne hinweg gelesen werden. Schlägt das Löschen
+ * fehl, ist der Stern trotzdem weg und der Schreibvorgang erfolgreich — nur
+ * der Server-Log weiß davon. Darum gibt diese Funktion nichts zurück, was ein
+ * Aufrufer prüfen könnte.
+ */
+async function sweepMomentsOfDeletedStars(
+  { supabase, user }: ActionContext,
+  starIds: string[],
+): Promise<void> {
+  if (starIds.length === 0) return;
+
+  const { error } = await supabase
+    .from(MOMENTS_TABLE)
+    .delete()
+    .eq("user_id", user.id)
+    .in("star_id", starIds);
+
+  if (error) dbError(error, `${MOMENTS_TABLE} sweep`);
+}
+
+/**
+ * Einen Moment anlegen.
+ *
+ * **Die id kommt vom Client**, und das Anlegen ist deshalb idempotent: derselbe
+ * Aufruf zweimal erzeugt eine Zeile, keine zwei. Stern und Moment entstehen im
+ * selben Schreibvorgang, aber in zwei Anweisungen — nach einem Teilfehler darf
+ * die Wiederholung nichts verdoppeln.
+ *
+ * Die Nutzlast ist der geschriebene Moment: der Client bekommt `created_at`
+ * vom Server, statt es zu raten.
+ */
+export async function addMomentAction(
+  moment: NewMoment,
+): Promise<ActionResult<StarMoment>> {
+  const text = moment.text.trim();
+  const textError = momentTextError(text);
+  if (textError) return failed(textError);
+  if (!moment.id.trim() || !moment.starId.trim()) {
+    return failed(MOMENT_BROKEN_CALL);
+  }
+  // Der Typ sagt MomentOrigin, aber eine Server-Action ist eine offene
+  // HTTP-Fläche — was ankommt, hat den Typ nie durchlaufen.
+  if (!isMomentOrigin(moment.origin)) {
+    return failed(MOMENT_BROKEN_CALL);
+  }
+
+  const result = await withUser(async ({ supabase, user }) => {
+    const { data, error } = await supabase
+      .from(MOMENTS_TABLE)
+      .upsert(
+        {
+          id: moment.id,
+          user_id: user.id,
+          star_id: moment.starId,
+          text,
+          origin: moment.origin,
+        },
+        { onConflict: "id" },
+      )
+      .select("id, star_id, text, origin, created_at")
+      .single();
+
+    if (error || !data) return dbFailed(error, MOMENTS_TABLE);
+
+    return ok(toStarMoment(data));
+  });
+
+  if (result.error !== null) return result;
+
+  revalidatePath("/me/wants");
+  return result;
+}
+
+/** Den Text eines Moments ändern. `origin` und `created_at` bleiben, wie sie sind. */
+export async function updateMomentAction(
+  id: string,
+  text: string,
+): Promise<ActionResult> {
+  const trimmed = text.trim();
+  const textError = momentTextError(trimmed);
+  if (textError) return failed(textError);
+  if (!id.trim()) {
+    return failed(MOMENT_BROKEN_CALL);
+  }
+
+  const result = await withUser(async ({ supabase, user }) => {
+    const { error } = await supabase
+      .from(MOMENTS_TABLE)
+      .update({ text: trimmed })
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    return error ? dbFailed(error, MOMENTS_TABLE) : ok();
+  });
+
+  if (result.error !== null) return result;
+
+  revalidatePath("/me/wants");
+  return result;
+}
+
+/**
+ * Einen Moment löschen — hart, ohne Zwischenzustand.
+ *
+ * „Loslassen" ist bei den Sternen absichtlich weggefallen; es hier als
+ * `active`-Flag neu einzuführen wäre ein Rückschritt.
+ */
+export async function deleteMomentAction(id: string): Promise<ActionResult> {
+  if (!id.trim()) {
+    return failed(MOMENT_BROKEN_CALL);
+  }
+
+  const result = await withUser(async ({ supabase, user }) => {
+    const { error } = await supabase
+      .from(MOMENTS_TABLE)
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    return error ? dbFailed(error, MOMENTS_TABLE) : ok();
+  });
+
+  if (result.error !== null) return result;
+
+  revalidatePath("/me/wants");
+  return result;
 }
 
 /**
@@ -193,6 +397,17 @@ export async function saveWantsAction(
     );
     if (mergeResult.error !== null) return mergeResult;
     const merged = mergeResult.data;
+
+    // Die Sterne sind geschrieben — was der Client gelöscht hat, ist jetzt weg
+    // und seine Momente sind Müll. Bewusst ohne Prüfung des Ergebnisses: die
+    // Müllabfuhr darf das Speichern nicht scheitern lassen (ADR-0007).
+    await sweepMomentsOfDeletedStars(
+      ctx,
+      deletedStarIds(
+        previousIds,
+        incoming.map((w) => w.id),
+      ),
+    );
 
     // Abgeschlossen, sobald mindestens ein Want existiert. Seit dem Wegfall von
     // „loslassen" kann kein Want mehr erlöschen (active bleibt immer true),
