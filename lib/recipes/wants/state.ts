@@ -61,7 +61,21 @@ export type DraftWant = {
   distance: "nah" | "fern";
   valueId: string | null;
   valueLabel: string | null;
+  /** Die Herleitung aus dem Audit — seit KAN-45 ein kleiner Absatz. */
   reason: string | null;
+  /** Die Antwortfelder, aus denen dieser Stern destilliert ist, im Wortlaut
+   *  der Person (KAN-45). Sie sind der Grund, warum die Auswertung dem
+   *  Aufwand gerecht wird: man liest die eigenen Worte wieder und sieht, dass
+   *  wirklich alles gelesen wurde. Ein ferner Stern hat keine — er IST schon
+   *  der Wortlaut (ADR-0005).
+   *
+   *  Sie heißen hier `quotes` und nicht `moments`, weil sie noch keine sind:
+   *  ein **Moment** ist eine Zeile in `star_moments`, die dem Nutzer gehört
+   *  und die er ändern kann. Diese Sätze sind der Beleg im Entwurf. Sie sind
+   *  aber genau das Futter, aus dem KAN-58 die ersten Momente eines nahen
+   *  Sterns anlegt — die Auflösung der Zeiger, die KAN-36 dafür bestellt hat,
+   *  ist damit schon passiert. */
+  quotes: string[];
   /** Rückfrage der KI, um den Stern zu schärfen — `null`, sobald erledigt. */
   question: string | null;
   source: "ai" | "own";
@@ -257,6 +271,7 @@ export function advanceWants(state: WantsState, event: WantsEvent): WantsState {
             valueId: null,
             valueLabel: null,
             reason: null,
+            quotes: [],
             question: null,
             source: "own",
           },
@@ -308,7 +323,12 @@ export function advanceWants(state: WantsState, event: WantsEvent): WantsState {
         ...state,
         wants: state.wants.map((w) =>
           w.id === event.id
-            ? { ...w, text: event.text, example: null, question: null }
+            ? // `reason` fällt mit: die Herleitung galt dem Satz, der eben
+              // ersetzt wurde. Als ein Satz fiel das kaum auf, als Absatz
+              // (KAN-45) stünde da eine Erklärung für einen Stern, den es
+              // nicht mehr gibt. `quotes` bleibt — welche Antwortfelder
+              // diesen Stern gefüttert haben, ändert das Nachschärfen nicht.
+              { ...w, text: event.text, example: null, reason: null, question: null }
             : w,
         ),
         refineAnswers: without(state.refineAnswers, event.id),
@@ -381,6 +401,9 @@ export function farDrafts(answers: string[], newId: () => string): DraftWant[] {
     valueId: null,
     valueLabel: null,
     reason: null,
+    // Ein ferner Stern IST der Wortlaut — ein Beleg darunter wäre eine Kopie
+    // des Sterns unter dem Stern (ADR-0005, KAN-36).
+    quotes: [],
     question: null,
     // Der Satz stammt Wort für Wort von der Person, nicht vom Modell.
     source: "own",

@@ -37,6 +37,7 @@ function star(id: string, patch: Partial<DraftWant> = {}): DraftWant {
     valueId: null,
     valueLabel: null,
     reason: null,
+    quotes: [],
     question: null,
     source: "ai",
     ...patch,

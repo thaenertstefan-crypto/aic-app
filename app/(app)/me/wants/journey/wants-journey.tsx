@@ -102,6 +102,9 @@ type DistillerResponse = {
     valueId?: string | null;
     valueLabel?: string | null;
     reason?: string | null;
+    /** Die Antwortfelder hinter dem Stern, wörtlich — serverseitig aus den
+     *  Zeigern des Modells aufgelöst, nie vom Modell abgetippt. */
+    quotes?: unknown;
     question?: string | null;
   }[];
   farTitles?: (string | null)[];
@@ -244,6 +247,9 @@ export function WantsJourney({
           valueId: typeof w.valueId === "string" ? w.valueId : null,
           valueLabel: typeof w.valueLabel === "string" ? w.valueLabel : null,
           reason: typeof w.reason === "string" ? w.reason : null,
+          quotes: Array.isArray(w.quotes)
+            ? w.quotes.filter((q): q is string => typeof q === "string")
+            : [],
           question: typeof w.question === "string" ? w.question : null,
           source: "ai",
         }));
@@ -689,6 +695,23 @@ export function WantsJourney({
                           <p className="text-sm leading-relaxed text-muted-foreground">
                             {want.reason}
                           </p>
+                        )}
+                        {/* Die eigenen Worte, aus denen der Stern destilliert
+                            ist — ungekürzt und in Fraunces, damit sie sich von
+                            der Herleitung darüber als andere Stimme abheben.
+                            Die Anführungszeichen tun die Arbeit, die sonst ein
+                            Eyebrow täte. */}
+                        {want.quotes.length > 0 && (
+                          <ul className="space-y-2 border-l border-foreground/15 pl-3">
+                            {want.quotes.map((quote, i) => (
+                              <li
+                                key={i}
+                                className="whitespace-pre-wrap font-heading text-sm leading-relaxed text-foreground"
+                              >
+                                „{quote}“
+                              </li>
+                            ))}
+                          </ul>
                         )}
                         {want.question && (
                           <div className="mt-1 space-y-2 rounded-lg border border-primary/25 bg-primary/5 p-3">
