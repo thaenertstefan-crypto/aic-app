@@ -19,10 +19,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FormError } from "@/components/ui/form-error";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { RecipeIntroGate } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
-import { Mascot } from "@/components/brand/mascot";
+import { StarArt } from "@/components/brand/star-art";
 import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
 import { useWarp, warpPageClass } from "@/components/wants/warp-transition";
 import { cn } from "@/lib/utils";
@@ -66,6 +67,7 @@ export function WantsMe({
   const [addOpen, setAddOpen] = useState(false);
   const [addTitle, setAddTitle] = useState("");
   const [addText, setAddText] = useState("");
+  const [introDone, setIntroDone] = useState(introSeen);
 
   const router = useRouter();
   // Der Warp-Übergang lebt im gemeinsamen me/wants-Layout und überlebt so die
@@ -86,6 +88,14 @@ export function WantsMe({
   }, [arrive]);
 
   const hasSterne = wants.length > 0;
+
+  // Der leere Himmel rechnet seine Höhe selbst (`EmptyState` misst bis zur
+  // Bottom-Nav). Eine erzwungene `min-h-lvh` käme oben drauf und die Seite
+  // scrollte um die Höhe der Leiste — genau das, was „ein leerer Zustand
+  // scrollt nie“ ausschließt (KAN-49). Solange die Intro-Sequenz läuft,
+  // verdeckt sie den leeren Zustand und ihre Bühne braucht die volle Höhe
+  // weiterhin.
+  const emptyStage = introDone && !hasSterne;
 
   async function persistWants(updated: WantItem[]): Promise<string | null> {
     const previous = wants;
@@ -243,7 +253,13 @@ export function WantsMe({
   }
 
   return (
-    <div className={cn("flex min-h-lvh flex-col", warpPageClass("wants", phase, direction))}>
+    <div
+      className={cn(
+        "flex flex-col",
+        !emptyStage && "min-h-lvh",
+        warpPageClass("wants", phase, direction),
+      )}
+    >
       <SkyBackdrop />
       <SubPageHeader
         backHref="/me"
@@ -253,7 +269,11 @@ export function WantsMe({
         }
       />
 
-      <RecipeIntroGate slug="wants" introSeen={introSeen}>
+      <RecipeIntroGate
+        slug="wants"
+        introSeen={introSeen}
+        onSeen={() => setIntroDone(true)}
+      >
         <ViewTransition
           enter={{ "forge-down": "forge-in-up", "forge-up": "forge-in-down", default: "none" }}
           exit={{ "forge-down": "forge-out-up", "forge-up": "forge-out-down", default: "none" }}
@@ -264,25 +284,32 @@ export function WantsMe({
                 kein zweiter lokaler Gold-Schein hier (One-Candle-Rule). */}
             <div className="relative z-10 flex flex-1 flex-col gap-6 px-4 py-6">
               {!hasSterne ? (
-                // ── Leer-Zustand: Sternsuche ODER direkt in die Schmiede ──
-                <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-                  <Mascot expression="curious" size="lg" />
-                  <div className="space-y-2">
-                    <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                      Noch keine Sterne entdeckt
-                    </h2>
-                    <p className="text-base leading-relaxed text-muted-foreground">
-                      Finde mit der Sternensuche heraus, was dich zum Leuchten
-                      bringt und dir echte Freude macht.
-                    </p>
-                  </div>
-                  <div className="flex w-full flex-col gap-2">
-                    <Button className="w-full gap-2" size="lg" render={<Link href="/me/wants/journey" />}>
-                      <Binoculars className="size-4" /> Sternensuche starten
-                    </Button>
-                    {forgeLink()}
-                  </div>
-                </div>
+                /* Der Himmel, bevor der erste Stern entdeckt ist (KAN-49): die
+                   Bänder der Leer-Grammatik statt eines eigenen Blocks. Oben
+                   das Motiv der Fläche — der Goldstern, gedimmt wie ihn der
+                   /me-Hub bei `wantsCount === 0` zeigt; nie mehr das
+                   Maskottchen. Der Satz nennt den Himmel im Werden, nicht den
+                   Mangel. Die Knöpfe stehen am Fuß der Spalte, dieselbe Stelle
+                   wie im vollen Zustand, damit der Übergang leer → voll sie
+                   nicht bewegt. Die Höhe („scrollt nie“) kommt aus
+                   `EmptyState` — siehe `emptyStage` oben. */
+                <EmptyState
+                  motiv={<StarArt animate dim className="size-16" />}
+                  satz="Hier wird dein Himmel."
+                  nachsatz="Jeder Stern, den du entdeckst, bekommt hier seinen Platz. Fang mit einem an."
+                  cta={
+                    <>
+                      <Button
+                        className="w-full gap-2"
+                        size="lg"
+                        render={<Link href="/me/wants/journey" />}
+                      >
+                        <Binoculars className="size-4" /> Sternensuche starten
+                      </Button>
+                      {forgeLink()}
+                    </>
+                  }
+                />
               ) : (
                 <>
                   <Reveal delay={0}>

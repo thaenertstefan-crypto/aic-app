@@ -29,6 +29,22 @@ import { cn } from "@/lib/utils";
  * Nicht darunter: der leere Zustand der Belegwand (KAN-37). Dort hängt der
  * Stern `fixed` bei 26 % — eigene Spalte, sie borgt nur die Satz-Regel.
  */
+/**
+ * Wie weit die Vorfahren der Spalte sie gerade senkrecht verschieben — die
+ * Seitenübergänge dieser App bewegen ganze Seiten per `transform`. Der
+ * gelesene Wert ist der **momentane** Stand einer laufenden Animation, also
+ * genau die Verschiebung, die in dieser Messung steckt. Ohne Transform in der
+ * Kette (der Regelfall) kommt 0 heraus und die Rechnung bleibt, wie sie war.
+ */
+function ancestorTranslateY(el: HTMLElement): number {
+  let shift = 0;
+  for (let a = el.parentElement; a; a = a.parentElement) {
+    const t = getComputedStyle(a).transform;
+    if (t && t !== "none") shift += new DOMMatrixReadOnly(t).m42;
+  }
+  return shift;
+}
+
 type EmptyStateProps = {
   /** Glyphe der Einheit, mit der sich die Fläche füllt. Nie das Maskottchen. */
   motiv?: ReactNode;
@@ -57,8 +73,17 @@ export function EmptyState({
 
     const rect = el.getBoundingClientRect();
 
+    // Die Spalte kann mitten in einem Seitenübergang mounten: der Warp der
+    // Wants-Seite schiebt die ganze Seite eine Bildschirmhöhe nach oben und
+    // fährt sie erst danach herein. `getBoundingClientRect` liefert dann
+    // Koordinaten, die die Spalte gleich wieder verlässt — die Höhe fiele um
+    // die Verschiebung zu groß aus. Sie hier herausrechnen und nicht später
+    // neu messen: eine zweite Messung käme als sichtbarer Sprung an.
+    const shift = ancestorTranslateY(el);
+
     // Oberkante der Bottom-Nav = Ende der nutzbaren Fläche. Fehlt sie (eine
-    // Fläche außerhalb des App-Layouts), endet die Fläche am Viewport.
+    // Fläche außerhalb des App-Layouts), endet die Fläche am Viewport. Die
+    // Leiste liegt außerhalb der Seite und wird nie mitverschoben.
     const nav = document.querySelector("[data-bottom-nav]");
     const navTop = nav
       ? nav.getBoundingClientRect().top
@@ -78,9 +103,9 @@ export function EmptyState({
 
     setHeight(
       fitEmptyStateHeight({
-        top: rect.top,
-        bottom: rect.bottom,
-        pageBottom,
+        top: rect.top - shift,
+        bottom: rect.bottom - shift,
+        pageBottom: pageBottom - shift,
         navTop,
       }),
     );
