@@ -28,21 +28,40 @@ import { useWarp, warpPageClass } from "@/components/wants/warp-transition";
 import { cn } from "@/lib/utils";
 import { getRecipeIntro } from "@/lib/utils/recipe-intros";
 import { PAGE_TITLES } from "@/lib/content/labels";
-import { saveWantsAction } from "@/lib/recipes/wants/actions";
+import {
+  addMomentAction,
+  deleteMomentAction,
+  saveWantsAction,
+  updateMomentAction,
+} from "@/lib/recipes/wants/actions";
+import type { MomentsByStar, StarMoment } from "@/lib/recipes/wants/moments";
 import { StarMap } from "./star-map";
 import type { WantItem } from "@/lib/types/db-json";
 
 const INTRO_CARDS = getRecipeIntro("wants") ?? [];
 const FORGE_HREF = "/me/wants/schmiede";
 
+/** Alle Listen eines Momente-Verzeichnisses durch dieselbe Abbildung schicken. */
+function mapMomentsByStar(
+  byStar: MomentsByStar,
+  fn: (moments: StarMoment[]) => StarMoment[],
+): MomentsByStar {
+  return Object.fromEntries(
+    Object.entries(byStar).map(([starId, list]) => [starId, fn(list)]),
+  );
+}
+
 export function WantsMe({
   initialWants,
+  initialMoments,
   introSeen,
 }: {
   initialWants: WantItem[];
+  initialMoments: MomentsByStar;
   introSeen: boolean;
 }) {
   const [wants, setWants] = useState<WantItem[]>(initialWants);
+  const [moments, setMoments] = useState<MomentsByStar>(initialMoments);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [addTitle, setAddTitle] = useState("");
@@ -123,6 +142,74 @@ export function WantsMe({
 
   function deleteWant(id: string) {
     void persistWants(wants.filter((w) => w.id !== id));
+  }
+
+  // ── Momente ──────────────────────────────────────────────────────────
+  // Alle drei laufen optimistisch: die Fokus-Ebene liegt über der Seite, und
+  // ein Beleg, der erst nach dem Server-Rundlauf erscheint, macht aus einer
+  // ruhigen Wand ein wartendes Formular. Schlägt der Schreibvorgang fehl, geht
+  // die Wand auf den vorigen Stand zurück und die Meldung wandert als
+  // Rückgabewert nach unten — inline neben dem Feld, weil das seitliche
+  // FormError-Banner unter dem Overlay liegt (wie bei `saveWantEdit`).
+
+  async function addMoment(
+    starId: string,
+    text: string,
+  ): Promise<string | null> {
+    // Die id kommt vom Client: daran hängt die Idempotenz des Anlegens
+    // (s. `addMomentAction`).
+    const id = crypto.randomUUID();
+    const optimistic: StarMoment = {
+      id,
+      star_id: starId,
+      text,
+      origin: "own",
+      created_at: new Date().toISOString(),
+    };
+    setMoments((prev) => ({
+      ...prev,
+      [starId]: [...(prev[starId] ?? []), optimistic],
+    }));
+
+    const res = await addMomentAction({ id, starId, text, origin: "own" });
+    if (res.error !== null) {
+      setMoments((prev) =>
+        mapMomentsByStar(prev, (list) => list.filter((m) => m.id !== id)),
+      );
+      return res.error;
+    }
+    // Den geschriebenen Moment übernehmen — `created_at` kommt vom Server,
+    // statt dass die Wand es weiter rät.
+    setMoments((prev) =>
+      mapMomentsByStar(prev, (list) =>
+        list.map((m) => (m.id === id ? res.data : m)),
+      ),
+    );
+    return null;
+  }
+
+  async function updateMoment(id: string, text: string): Promise<string | null> {
+    const previous = moments;
+    setMoments((prev) =>
+      mapMomentsByStar(prev, (list) =>
+        list.map((m) => (m.id === id ? { ...m, text } : m)),
+      ),
+    );
+
+    const res = await updateMomentAction(id, text);
+    if (res.error !== null) setMoments(previous);
+    return res.error;
+  }
+
+  async function deleteMoment(id: string): Promise<string | null> {
+    const previous = moments;
+    setMoments((prev) =>
+      mapMomentsByStar(prev, (list) => list.filter((m) => m.id !== id)),
+    );
+
+    const res = await deleteMomentAction(id);
+    if (res.error !== null) setMoments(previous);
+    return res.error;
   }
 
   // „Der Sturz": das Warp-Overlay startet, stürzt durch die Sterne und navigiert
@@ -214,8 +301,12 @@ export function WantsMe({
                   <StarMap
                     key={wants.length}
                     wants={wants}
+                    moments={moments}
                     onSaveEdit={saveWantEdit}
                     onDelete={deleteWant}
+                    onAddMoment={addMoment}
+                    onUpdateMoment={updateMoment}
+                    onDeleteMoment={deleteMoment}
                   />
 
                   <div className="flex gap-3">

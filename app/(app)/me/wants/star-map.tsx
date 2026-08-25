@@ -17,6 +17,8 @@ import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { getValueLabel } from "@/lib/utils/values-bank";
 import { cn } from "@/lib/utils";
 import { FocusSky } from "./focus-sky";
+import { MomentWall } from "./moment-wall";
+import type { StarMoment } from "@/lib/recipes/wants/moments";
 import type { WantItem } from "@/lib/types/db-json";
 
 /**
@@ -135,10 +137,16 @@ function layoutStars(wants: WantItem[]): { stars: PlacedStar[]; viewH: number } 
 
 export function StarMap({
   wants,
+  moments,
   onSaveEdit,
   onDelete,
+  onAddMoment,
+  onUpdateMoment,
+  onDeleteMoment,
 }: {
   wants: WantItem[];
+  /** Die Momente aller Sterne, nach Stern-ID geschlagen (s. `groupMomentsByStar`). */
+  moments: Record<string, StarMoment[]>;
   // Kein `distance` im Patch: die Weite ist eine Herkunftsangabe („aus einem
   // Antwortfeld der Tagtraum-Frage"), keine Nutzer-Einstellung. Sie war hier
   // mit zwei Taps brechbar — siehe CONTEXT.md (Stern) und ADR-0005.
@@ -147,6 +155,9 @@ export function StarMap({
     patch: { title: string | null; text: string },
   ) => Promise<string | null>;
   onDelete: (id: string) => void;
+  onAddMoment: (starId: string, text: string) => Promise<string | null>;
+  onUpdateMoment: (id: string, text: string) => Promise<string | null>;
+  onDeleteMoment: (id: string) => Promise<string | null>;
 }) {
   const reduced = useReducedMotion();
   const [mounted, setMounted] = useState(false);
@@ -519,6 +530,14 @@ export function StarMap({
                     <Button variant="outline" className="mt-1 w-full gap-2" onClick={enterEdit}>
                       <Pencil className="size-4" /> Bearbeiten
                     </Button>
+                    {/* Die Belegwand — was du an diesem Stern schon gelebt hast. */}
+                    <MomentWall
+                      moments={moments[focused.id] ?? []}
+                      distance={focused.distance === "fern" ? "fern" : "nah"}
+                      onAdd={(text) => onAddMoment(focused.id, text)}
+                      onUpdate={onUpdateMoment}
+                      onDelete={onDeleteMoment}
+                    />
                   </>
                 ) : (
                   <>

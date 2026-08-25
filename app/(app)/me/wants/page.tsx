@@ -8,6 +8,7 @@ export default async function MeWantsPage() {
   return (
     <WantsMe
       initialWants={data?.wants ?? []}
+      initialMoments={data?.moments ?? {}}
       introSeen={data?.introSeen ?? true}
     />
   );
