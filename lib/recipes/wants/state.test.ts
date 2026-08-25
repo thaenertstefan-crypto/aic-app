@@ -64,6 +64,9 @@ function afterDistillate(): WantsState {
     newWantText: "Halb getippt",
     savingWants: true,
     wantsError: "Speichern fehlgeschlagen.",
+    bornMoments: [
+      { id: "m1", starId: "a", text: "Samstags im Wald.", origin: "audit" },
+    ],
     openIds: ["a"],
     refineAnswers: { a: "Meine Antwort" },
     refiningId: "a",
@@ -456,5 +459,67 @@ describe("keptWants — ein Stern ohne Text ist keiner", () => {
       keptWants(state).map((w) => w.id),
       ["a", "c"],
     );
+  });
+});
+
+describe("wantsSaving — die Momente überleben den ersten Anlauf", () => {
+  const moment = (id: string) => ({
+    id,
+    starId: "stern-1",
+    text: "Samstags im Wald.",
+    origin: "audit" as const,
+  });
+
+  it("merkt sich die Momente des ersten Anlaufs", () => {
+    const state = advanceWants(initialWants(true), {
+      type: "wantsSaving",
+      moments: [moment("m1")],
+    });
+
+    assert.equal(state.savingWants, true);
+    assert.deepEqual(state.bornMoments, [moment("m1")]);
+  });
+
+  it("behält die ids des ersten Anlaufs, statt neue zu nehmen", () => {
+    // Der Kern: Stern und Moment entstehen in zwei Anweisungen. Nach einem
+    // Fehlschlag tippt die Person noch einmal — mit frisch gewürfelten ids
+    // stünde danach jeder Beleg zweimal unter seinem Stern.
+    const first = advanceWants(initialWants(true), {
+      type: "wantsSaving",
+      moments: [moment("m1")],
+    });
+    const failed = advanceWants(first, {
+      type: "wantsSaveFailed",
+      message: "Speichern fehlgeschlagen.",
+    });
+    const second = advanceWants(failed, {
+      type: "wantsSaving",
+      moments: [moment("m2")],
+    });
+
+    assert.deepEqual(
+      second.bornMoments?.map((m) => m.id),
+      ["m1"],
+    );
+  });
+
+  it("gibt einem neuen Destillat keine Momente aus dem alten mit", () => {
+    // Dieselbe Aussage wie überall am Destillat: der zweite Anlauf erbt
+    // nichts vom ersten. Ein neues Destillat bringt neue Sterne mit neuen
+    // ids — deren Momente entstehen mit ihnen.
+    const saved = advanceWants(initialWants(true), {
+      type: "wantsSaving",
+      moments: [moment("m1")],
+    });
+    const again = advanceWants(saved, {
+      type: "distillateRequested",
+      farWants: [],
+    });
+
+    assert.equal(again.bornMoments, null);
+  });
+
+  it("hat vor dem ersten Anlauf keine", () => {
+    assert.equal(initialWants(true).bornMoments, null);
   });
 });

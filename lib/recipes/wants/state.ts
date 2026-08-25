@@ -20,6 +20,9 @@
  */
 
 import type { SavedEntryId } from "../saved-entry.ts";
+// Nur der Typ — zur Laufzeit bleibt dieses Modul frei von `moments.ts`, das
+// umgekehrt `ANSWER_MAX` von hier holt.
+import type { NewMoment } from "./moments.ts";
 
 /** Die Bühnen der Übung. */
 export type Phase =
@@ -116,6 +119,21 @@ export type WantsState = {
   newWantText: string;
   savingWants: boolean;
   wantsError: string | null;
+  /**
+   * Die Momente, mit denen die Sterne dieses Anlaufs geboren werden (KAN-58) —
+   * **beim ersten Bestätigen gebaut und danach unverändert**.
+   *
+   * Sie stehen hier und nicht im Aufrufer, weil an ihren ids die Idempotenz
+   * hängt: Stern und Moment entstehen im selben Speichervorgang, aber in zwei
+   * Anweisungen. Scheitert die zweite — oder geht nur die Antwort verloren —,
+   * tippt die Person noch einmal. Würden die ids dabei neu gewürfelt, stünde
+   * unter jedem Stern jeder Beleg zweimal; so trifft die Wiederholung auf
+   * dieselben ids und schreibt keine Zeile mehr.
+   *
+   * `null` heißt „noch kein Anlauf". Ein neues Destillat setzt es zurück, wie
+   * alles andere am Destillat auch.
+   */
+  bornMoments: NewMoment[] | null;
   /** Welche Sterne aufgeklappt sind (Tap-to-Edit) — unabhängig voneinander. */
   openIds: string[];
   refineAnswers: Record<string, string>;
@@ -153,7 +171,7 @@ export type WantsEvent =
   | { type: "refineRequested"; id: string }
   | { type: "refineSucceeded"; id: string; text: string }
   | { type: "refineFailed"; id: string; message: string }
-  | { type: "wantsSaving" }
+  | { type: "wantsSaving"; moments: NewMoment[] }
   | { type: "wantsSaveFailed"; message: string }
   | { type: "wantsSaved" };
 
@@ -342,8 +360,18 @@ export function advanceWants(state: WantsState, event: WantsEvent): WantsState {
         refineErrors: { ...state.refineErrors, [event.id]: event.message },
       };
 
+    // Der zweite Anlauf erbt die Momente des ersten — samt ihrer ids, und
+    // genau die machen ihn idempotent. Was die Person zwischen zwei Anläufen
+    // noch verwirft, fällt nicht hier heraus, sondern beim Schreiben: dort
+    // steht der Stand nach dem Merge, und ein Moment ohne seinen Stern wird
+    // gar nicht erst zur Zeile.
     case "wantsSaving":
-      return { ...state, savingWants: true, wantsError: null };
+      return {
+        ...state,
+        savingWants: true,
+        wantsError: null,
+        bornMoments: state.bornMoments ?? event.moments,
+      };
 
     case "wantsSaveFailed":
       return { ...state, savingWants: false, wantsError: event.message };
@@ -424,6 +452,7 @@ function noDistillate() {
     newWantText: "",
     savingWants: false,
     wantsError: null,
+    bornMoments: null,
     openIds: [],
     refineAnswers: {},
     refiningId: null,

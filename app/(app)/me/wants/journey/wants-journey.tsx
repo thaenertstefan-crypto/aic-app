@@ -43,6 +43,7 @@ import {
   type DraftWant,
 } from "@/lib/recipes/wants/state";
 import { wantSentence } from "@/lib/recipes/wants/items";
+import { momentsForDrafts } from "@/lib/recipes/wants/moments";
 import type { WantItem } from "@/lib/types/db-json";
 import { cn } from "@/lib/utils";
 
@@ -324,7 +325,18 @@ export function WantsJourney({
     const kept = keptWants(state);
     if (kept.length === 0) return;
 
-    dispatch({ type: "wantsSaving" });
+    // Ein naher Stern wird mit seinen Momenten geboren (KAN-58): die Belege,
+    // die unter ihm stehen, werden in derselben Action zu Zeilen. Gerechnet
+    // wird aus `kept` — wer einen Stern hier verworfen hat, verwirft seine
+    // Momente ungeschrieben mit.
+    //
+    // Beim zweiten Anlauf nach einem Fehlschlag stehen die Momente des ersten
+    // schon im Zustand und werden wiederverwendet: neu gewürfelte ids ließen
+    // eine Wiederholung jeden Beleg ein zweites Mal schreiben.
+    const moments =
+      state.bornMoments ?? momentsForDrafts(kept, () => crypto.randomUUID());
+
+    dispatch({ type: "wantsSaving", moments });
 
     const items: WantItem[] = kept.map((w) => ({
       id: w.id,
@@ -342,6 +354,7 @@ export function WantsJourney({
     // Leere Baseline: bestehende Wants (Re-Run) bleiben durch den
     // Server-Merge erhalten — hier werden nur neue bestätigt.
     fd.set("previousIds", "[]");
+    fd.set("moments", JSON.stringify(moments));
 
     try {
       const result = await saveWantsAction(fd);

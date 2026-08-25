@@ -44,6 +44,7 @@ import {
   groupMomentsByStar,
   isMomentOrigin,
   momentTextError,
+  parseBornMoments,
   toStarMoment,
   type MomentsByStar,
   type NewMoment,
@@ -227,6 +228,46 @@ async function sweepMomentsOfDeletedStars(
 }
 
 /**
+ * Die Momente, mit denen neue Sterne geboren werden — **eine** Anweisung.
+ *
+ * **Eine** Anweisung, weil ein Bulk-Insert kein „halb" hat: entweder alle
+ * Zeilen stehen oder keine. Ein `upsert` je Moment hätte genau das — nach
+ * einem Abbruch mittendrin stünde ein Teil der Belege, und niemand wüsste
+ * welcher.
+ *
+ * `onConflict: "id"` ist die zweite Hälfte: die ids kommen vom Client und
+ * überleben dort einen Fehlschlag (`WantsState.bornMoments`). Tippt die Person
+ * nach einem Fehler noch einmal — oder ging nur die Antwort verloren —, trifft
+ * die Wiederholung auf dieselben ids und schreibt keine Zeile mehr. Ohne diese
+ * beiden Hälften stünde jeder Beleg zweimal unter seinem Stern.
+ *
+ * **Kein `ActionResult`:** wie die Müllabfuhr daneben ist das kein Grund, das
+ * Speichern scheitern zu lassen. Der Stern ist geschrieben, und ein Stern ohne
+ * seine ersten Momente ist kein Defekt, sondern ein Stern, den der Nutzer
+ * selbst belegt — die Fokus-Ebene kann beides. Ein Fehlschlag hier gegen den
+ * geglückten Stern einzutauschen wäre der teurere Fehler.
+ */
+async function writeBornMoments(
+  { supabase, user }: ActionContext,
+  moments: NewMoment[],
+): Promise<void> {
+  if (moments.length === 0) return;
+
+  const { error } = await supabase.from(MOMENTS_TABLE).upsert(
+    moments.map((m) => ({
+      id: m.id,
+      user_id: user.id,
+      star_id: m.starId,
+      text: m.text,
+      origin: m.origin,
+    })),
+    { onConflict: "id" },
+  );
+
+  if (error) dbError(error, `${MOMENTS_TABLE} born`);
+}
+
+/**
  * Einen Moment anlegen.
  *
  * **Die id kommt vom Client**, und das Anlegen ist deshalb idempotent: derselbe
@@ -406,6 +447,21 @@ export async function saveWantsAction(
       deletedStarIds(
         previousIds,
         incoming.map((w) => w.id),
+      ),
+    );
+
+    // Und die Momente, mit denen die neuen Sterne geboren werden (KAN-58) —
+    // nach dem Merge, damit sie an Sternen hängen, die es wirklich gibt, und
+    // nach der Müllabfuhr, damit keine Reihenfolge sie wieder abräumt.
+    //
+    // Die Sterne-Bühne der Sternensuche ist der einzige Aufrufer, der hier
+    // etwas mitschickt; ein Speichern aus der Sternenkarte lässt das Feld weg
+    // und schreibt keine.
+    await writeBornMoments(
+      ctx,
+      parseBornMoments(
+        formData.get("moments"),
+        new Set(merged.map((w) => w.id)),
       ),
     );
 

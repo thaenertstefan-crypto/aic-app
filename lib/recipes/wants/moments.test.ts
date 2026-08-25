@@ -7,10 +7,15 @@ import {
   groupMomentsByStar,
   isMomentOrigin,
   momentTextError,
+  momentsForDrafts,
+  parseBornMoments,
+  MAX_BORN_MOMENTS,
   toStarMoment,
   type StarMoment,
 } from "./moments.ts";
-import { ANSWER_MAX } from "./state.ts";
+import { ANSWER_MAX, type DraftWant } from "./state.ts";
+import { MAX_QUOTES_PER_WANT } from "../../anthropic/wants-distiller-result.ts";
+import { MAX_WANTS } from "./items.ts";
 
 const moment = (
   id: string,
@@ -176,5 +181,212 @@ describe("deletedStarIds — die Waisen, die beim Speichern entstehen", () => {
 
   it("nennt jede Waise genau einmal", () => {
     assert.deepEqual(deletedStarIds(["b", "b", "a"], ["a"]), ["b"]);
+  });
+});
+
+describe("momentsForDrafts — ein naher Stern wird mit seinen Momenten geboren", () => {
+  const draft = (over: Partial<DraftWant> = {}): DraftWant => ({
+    id: "stern-1",
+    text: "Ich will mehr draußen sein.",
+    title: null,
+    example: null,
+    distance: "nah",
+    valueId: null,
+    valueLabel: null,
+    reason: null,
+    quotes: [],
+    question: null,
+    source: "ai",
+    ...over,
+  });
+
+  /** Zählbare id-Quelle — dasselbe Muster wie im Test von `farDrafts`. */
+  const ids = () => {
+    let n = 0;
+    return () => `m${++n}`;
+  };
+
+  it("macht aus jedem Beleg einen Moment, im Wortlaut", () => {
+    // Der Kern des Tickets: der Text eines Moments steht wortwörtlich so in
+    // einem der Antwortfelder, die vorher getippt wurden. `quotes` ist bereits
+    // der aufgelöste Wortlaut (KAN-45) — hier wird nichts mehr umformuliert.
+    const out = momentsForDrafts(
+      [draft({ quotes: ["Samstags im Wald.", "Mit dem Rad zur Arbeit."] })],
+      ids(),
+    );
+
+    assert.deepEqual(out, [
+      { id: "m1", starId: "stern-1", text: "Samstags im Wald.", origin: "audit" },
+      {
+        id: "m2",
+        starId: "stern-1",
+        text: "Mit dem Rad zur Arbeit.",
+        origin: "audit",
+      },
+    ]);
+  });
+
+  it("gibt einem fernen Stern nichts", () => {
+    // Kein Mangel, sondern die Weite von der anderen Seite: einen fernen Stern
+    // hast du noch nicht gelebt, es gibt nichts zu belegen (ADR-0005).
+    // `quotes` ist bei ihm ohnehin leer — die Marke ist der zweite Riegel.
+    assert.deepEqual(
+      momentsForDrafts(
+        [draft({ distance: "fern", quotes: ["Ein Jahr am Meer."], example: "Segeln" })],
+        ids(),
+      ),
+      [],
+    );
+  });
+
+  it("fällt auf das Beispiel zurück, wenn es keine Belege gibt", () => {
+    // Die Rückfallebene aus Punkt 2: schlechter als der eigene Wortlaut, aber
+    // nie leer. Der leere `quotes`-Fall ist in `parseQuotes` ausdrücklich
+    // gültig — es gibt ihn also wirklich.
+    assert.deepEqual(momentsForDrafts([draft({ example: "einen Marathon" })], ids()), [
+      { id: "m1", starId: "stern-1", text: "einen Marathon", origin: "audit" },
+    ]);
+  });
+
+  it("nimmt das Beispiel nur als Rückfall, nicht zusätzlich", () => {
+    const out = momentsForDrafts(
+      [draft({ quotes: ["Samstags im Wald."], example: "einen Marathon" })],
+      ids(),
+    );
+    assert.deepEqual(out.map((m) => m.text), ["Samstags im Wald."]);
+  });
+
+  it("lässt einen Stern lieber leer als mit Unsinn stehen", () => {
+    // Weder Beleg noch Beispiel: dann entsteht kein Moment. Der Stern steht
+    // trotzdem — das ist der Fall, den der Nutzer selbst füllt.
+    assert.deepEqual(momentsForDrafts([draft()], ids()), []);
+  });
+
+  it("wirft weg, was als Moment nicht durchginge", () => {
+    // Derselbe Deckel wie in `momentTextError`, und zwar hier statt erst an der
+    // Spalte: ein einziger Ausreißer darf nicht das Anlegen des Sterns
+    // abweisen, an dem er hängt. Leerraum ist kein Beleg.
+    const out = momentsForDrafts(
+      [draft({ quotes: ["   ", "x".repeat(MOMENT_MAX + 1), "Samstags im Wald."] })],
+      ids(),
+    );
+    assert.deepEqual(out.map((m) => m.text), ["Samstags im Wald."]);
+  });
+
+  it("fällt auf das Beispiel zurück, wenn kein Beleg durchgeht", () => {
+    assert.deepEqual(
+      momentsForDrafts(
+        [draft({ quotes: ["   "], example: "einen Marathon" })],
+        ids(),
+      ).map((m) => m.text),
+      ["einen Marathon"],
+    );
+  });
+
+  it("beschneidet den Wortlaut nicht, sondern trimmt nur die Ränder", () => {
+    assert.deepEqual(
+      momentsForDrafts([draft({ quotes: ["  Samstags im Wald.  "] })], ids())[0]?.text,
+      "Samstags im Wald.",
+    );
+  });
+
+  it("hängt jeden Moment an seinen eigenen Stern", () => {
+    const out = momentsForDrafts(
+      [
+        draft({ id: "a", quotes: ["Erstens."] }),
+        draft({ id: "b", quotes: ["Zweitens."] }),
+      ],
+      ids(),
+    );
+    assert.deepEqual(
+      out.map((m) => [m.starId, m.text]),
+      [
+        ["a", "Erstens."],
+        ["b", "Zweitens."],
+      ],
+    );
+  });
+
+  it("gibt jedem Moment eine eigene id", () => {
+    const out = momentsForDrafts(
+      [draft({ quotes: ["Erstens.", "Zweitens.", "Drittens."] })],
+      ids(),
+    );
+    assert.equal(new Set(out.map((m) => m.id)).size, 3);
+  });
+});
+
+describe("parseBornMoments — die Zugabe darf die Nutzlast nicht abweisen", () => {
+  const stars = new Set(["stern-1", "stern-2"]);
+  const born = (over: Record<string, unknown> = {}) => ({
+    id: "m1",
+    starId: "stern-1",
+    text: "Samstags im Wald.",
+    origin: "audit",
+    ...over,
+  });
+
+  it("lässt durch, was ein Moment ist", () => {
+    assert.deepEqual(parseBornMoments(JSON.stringify([born()]), stars), [
+      { id: "m1", starId: "stern-1", text: "Samstags im Wald.", origin: "audit" },
+    ]);
+  });
+
+  it("setzt die Herkunft, statt sie zu glauben", () => {
+    // Eine Server-Action ist eine offene HTTP-Fläche: „own" hieße „selbst
+    // eingetragen", und das ist keine Zeile, die aus einer Sternensuche fällt.
+    assert.equal(
+      parseBornMoments(JSON.stringify([born({ origin: "own" })]), stars)[0]?.origin,
+      "audit",
+    );
+  });
+
+  it("wirft den einen Ausreißer weg, nicht die ganze Liste", () => {
+    // Der Unterschied zu `parseItems`, das hier `null` gäbe und damit das
+    // Speichern der Sterne abwiese.
+    const out = parseBornMoments(
+      JSON.stringify([born({ id: "m1", text: "  " }), born({ id: "m2" })]),
+      stars,
+    );
+    assert.deepEqual(out.map((m) => m.id), ["m2"]);
+  });
+
+  it("erzeugt keine Waise ab der ersten Zeile", () => {
+    assert.deepEqual(
+      parseBornMoments(JSON.stringify([born({ starId: "weg" })]), stars),
+      [],
+    );
+  });
+
+  it("nimmt dieselbe id nur einmal", () => {
+    // Zweimal dieselbe id in einer Anweisung weist Postgres ab — und mit ihr
+    // alle Momente, die sonst durchgegangen wären.
+    const out = parseBornMoments(
+      JSON.stringify([born(), born({ text: "Anders." })]),
+      stars,
+    );
+    assert.equal(out.length, 1);
+  });
+
+  it("nimmt nichts, was gar keine Liste ist", () => {
+    for (const raw of ["", "kein json", "{}", '"text"', null]) {
+      assert.deepEqual(parseBornMoments(raw, stars), []);
+    }
+  });
+
+  it("verschluckt sich nicht an einer entgleisten Nutzlast", () => {
+    const huge = Array.from({ length: MAX_BORN_MOMENTS + 50 }, (_, i) =>
+      born({ id: `m${i}` }),
+    );
+    assert.equal(parseBornMoments(JSON.stringify(huge), stars).length, MAX_BORN_MOMENTS);
+  });
+});
+
+describe("MAX_BORN_MOMENTS — die Zahl steht zweimal", () => {
+  it("ist genau so viel, wie ein ehrlicher Client schicken kann", () => {
+    // Die Rechnung, die im Kommentar der Konstante steht — hier ausgeführt.
+    // Der Test darf importieren, was das Modul selbst nicht darf: er läuft
+    // unter `node --test`, nicht im Bundle.
+    assert.equal(MAX_BORN_MOMENTS, MAX_QUOTES_PER_WANT * MAX_WANTS);
   });
 });
