@@ -1074,111 +1074,69 @@ body[data-zone="schmiede"] {
   .warp-page-above { transform: none; }
 }
 
-/* Kopfwetter-Hub → Sub-Page: Kamera-Push aus dem getippten Icon, dann Reise auf
-   den Landeplatz — EINE Bewegung in zwei Etappen (die Ablaufbeschreibung steht
-   im Kopf von booster-zoom.tsx).
-   Etappe 1: die Bühne skaliert vom Tap-Punkt weg (Umgebung streamt nach außen),
-   der Klon des Wetter-Icons wächst verklebt mit. Etappe 2: der Klon reist auf
-   den Landeplatz oben in der Mitte und deckt dabei die Navigation ab.
-   Der frühere Lilac-Bloom ist entfallen — diese Aufgabe trägt jetzt der Klon.
-   pointer-events: none, bewusst NICHT auto: der Lilac-Bloom deckte den Screen
-   früher komplett ab, das rechtfertigte ein Blocken der Eingaben darunter.
-   Der Klon ist dagegen nur eine kleine fliegende Signatur — der Rest des
-   Screens (inkl. Sub-Page) ist die ganze Flugzeit über sichtbar, und ohne
-   `none` verschluckt das transparente Overlay ~600-900ms lang jeden Tap auf
-   die Sub-Page, ohne jedes Feedback. Der Doppel-Tap-Schutz sitzt ohnehin
-   schon in zoomInto() (phaseRef.current !== "idle" → normal navigieren) und
-   braucht diese Sperre nicht. */
-.booster-zoom-overlay { pointer-events: none; }
+/* „Der Wurf“ — der Flug zwischen Kopfwetter-Hub und Booster-Übung (KAN-60).
+   Ein Gegenstand überlebt die Reise: das Wetter-Motiv der angetippten Zelle
+   reist auf EINER geraden Linie zum Landeplatz unter dem SubPageHeader und
+   wächst dabei GENAU EINMAL von 64 px auf 96 px. Der Rückweg ist dieselbe Bahn
+   rückwärts, schneller. Der Ablauf steht im Kopf von booster-zoom.tsx, die
+   Zahlen in lib/kopfwetter/flug.ts.
 
-/* Warum Animationen mit `animation-delay` statt Transitions, die zum richtigen
-   Moment umgeschaltet werden: der Umschaltpunkt (Push-Ende) liegt kurz nach der
-   Navigation, wo der Main-Thread die RSC-Antwort verarbeitet. Ein dort verspätet
-   feuernder Timer wäre genau der Stillstand, den dieser Übergang loswerden soll.
-   Als Animation mit Delay hängt der Start am Compositor und ist nicht mehr davon
-   abhängig, dass JS rechtzeitig drankommt. Der `both`-Fill trägt außerdem den
-   Wartezustand „landed“ (Sub-Page noch nicht da): der Klon bleibt einfach auf
-   dem Endwert stehen, ganz ohne eigenen CSS-Zweig.
-   Alle Dauern, Ziele und Skalen kommen aus booster-zoom.tsx (Custom
+   Der frühere Kamera-Push ist ersatzlos entfallen — mit ihm die drei
+   geschachtelten Scale-Ebenen, der transform-origin der Bühne und ihr
+   Clip-Wrapper. Eine Ebene mit einer Bewegung und einer Skalierung reicht.
+
+   pointer-events: none, bewusst NICHT auto: der Klon ist nur eine kleine
+   fliegende Signatur — der Rest des Screens ist die ganze Flugzeit über
+   sichtbar, und ohne `none` verschluckt das transparente Overlay den ganzen
+   Flug lang jeden Tap darunter, ohne jedes Feedback. Der Doppel-Tap-Schutz
+   sitzt ohnehin in zoomInto() (Phase != "idle" → normal navigieren). */
+.booster-flug-overlay { pointer-events: none; }
+
+/* Warum eine Animation und keine Transition, die zum richtigen Moment
+   umgeschaltet wird: mitten im Flug liegt die Navigation, wo der Main-Thread
+   die RSC-Antwort verarbeitet. Als Animation hängt der Ablauf am Compositor und
+   nicht daran, dass JS rechtzeitig drankommt. Der `both`-Fill trägt außerdem
+   den Wartezustand „landed“ (Sub-Page noch nicht da): der Klon bleibt einfach
+   auf dem Endwert stehen, ganz ohne eigenen CSS-Zweig.
+
+   Zwei Namen auf EINEM Element, weil eine Animation nur eine Property-Gruppe
+   führt — `translate` trägt die Bahn, `scale` das Wachsen. Beide sind in
+   Tailwind v4 eigenständige CSS-Properties und kollidieren nicht; da `scale`
+   VOR `translate` angewandt wird, wandert der Mittelpunkt genau um dx/dy und
+   wächst um sich selbst.
+
+   Alle Dauern, Ziele und die Kurve kommen aus booster-zoom.tsx (Custom
    Properties), damit die Zahlen nur an einer Stelle stehen; die Fallbacks hier
    sind nur Notnägel.
 
-   Etappe 2 (Reise): EINE gerade, ausklingende Bahn vom Tap-Punkt auf den
-   Landeplatz. Bewusst keine geschachtelte Bogenbahn — zwei Achsen mit
-   verschiedenen Kurven (x ease-out, y ease-in) lassen den Klon erst seitwärts
-   zur Mitte laufen, dort stehen wirken und am Ende hochschießen.
-   Bewegt wird die eigenständige CSS-Property `translate`, nicht `transform`:
-   Tailwind v4 tut dasselbe, und `scale` bleibt so für die Ebenen darunter frei. */
-.booster-zoom-travel {
-  will-change: translate;
-  animation: booster-zoom-fly var(--zoom-travel-ms, 520ms) cubic-bezier(0.22, 0.61, 0.36, 1)
-    var(--zoom-push-ms, 420ms) both;
-}
-@keyframes booster-zoom-fly {
-  from { translate: 0 0; }
-  to   { translate: var(--zoom-dx, 0px) var(--zoom-dy, 0px); }
-}
-
-/* Etappe 1 (Wachsen): teilt Dauer und beschleunigende Kurve mit der Bühne, damit
-   der Klon in der Szene verklebt wirkt.
-   Diese Ebene trägt außerdem die Zentrierung: left/top des Wrappers setzen den
-   Mittelpunkt, das KONSTANTE `translate: -50% -50%` (bezogen auf die eigene Box)
-   rückt die Box darauf. Nicht über Prozent-Margins oder left/top — die bezögen
-   sich auf den Container. `translate` und `scale` sind eigenständige Properties
-   und kollidieren nicht; da `scale` VOR `translate` angewandt wird, bleibt der
-   Mittelpunkt beim Wachsen exakt auf dem Tap-Punkt stehen. */
-.booster-zoom-push {
-  translate: -50% -50%;
-  transform-origin: center;
-  will-change: scale;
-  animation: booster-zoom-grow var(--zoom-push-ms, 420ms) cubic-bezier(0.55, 0.06, 0.68, 0.19) both;
-}
-@keyframes booster-zoom-grow {
-  from { scale: 1; }
-  to   { scale: var(--zoom-push-scale, 2.4); }
-}
-
-/* Etappe 2 (Schrumpfen): eigene Ebene, weil `scale` nur eine Animation trägt —
-   die beiden Ebenen multiplizieren sich zu 1 → PUSH_SCALE → Icon-Größe. Der
-   `backwards`-Fill hält diese Ebene während der Delay-Phase auf 1, der
-   `forwards`-Fill nach der Landung auf dem Endwert.
    Die Opacity bleibt eine Transition: sie wird nicht nach der Uhr geschaltet,
    sondern wenn die Übergabe ans echte Icon beginnt. */
-.booster-zoom-clone {
+.booster-flug-klon {
   transform-origin: center;
-  will-change: scale, opacity;
-  animation: booster-zoom-land var(--zoom-travel-ms, 520ms) cubic-bezier(0.22, 0.61, 0.36, 1)
-    var(--zoom-push-ms, 420ms) both;
-  transition: opacity var(--zoom-settle-ms, 260ms) ease-out;
+  will-change: translate, scale, opacity;
+  animation:
+    booster-flug-bahn var(--flug-ms, 380ms) var(--flug-kurve, ease-out) both,
+    booster-flug-groesse var(--flug-ms, 380ms) var(--flug-kurve, ease-out) both;
+  transition: opacity var(--flug-uebergabe-ms, 220ms) ease-out;
 }
-@keyframes booster-zoom-land {
+@keyframes booster-flug-bahn {
+  from { translate: 0 0; }
+  to   { translate: var(--flug-dx, 0px) var(--flug-dy, 0px); }
+}
+@keyframes booster-flug-groesse {
   from { scale: 1; }
-  to   { scale: var(--zoom-land-scale, 0.52); }
+  to   { scale: var(--flug-scale, 1.5); }
 }
 
-/* Etappe 1 (Kamera-Push): die ganze Hub-Bühne — Titel, Untertitel UND Zellen —
-   skaliert am Tap-Punkt verankert nach außen und fadet dabei aus. Die Opacity
-   ist schon bei 65 % durch, damit die Navigation kurz vor Animationsende
-   (NAVIGATE_AT) unsichtbar bleibt. Dauer und Ziel-Scale kommen aus
-   booster-zoom.tsx (PUSH_MS/PUSH_SCALE, gesetzt von BoosterHubStage). */
-.booster-cells-zoom {
-  animation: booster-cells-push var(--zoom-push-ms, 420ms) ease-in both;
+/* Die Bühne, die der Flug verlässt: ausblenden, reine Opacity — sonst nichts.
+   Gesetzt von BoosterHubStage, und nur beim Hinflug: bei der Heimkehr ist der
+   Hub das Ziel. Der `both`-Fill hält die Opacity auf 0, bis die Navigation
+   (am Ende dieser Blende) den Hub wirklich abräumt. */
+.booster-buehne-aus {
+  animation: booster-buehne-aus var(--buehne-aus-ms, 200ms) ease-out both;
 }
-@keyframes booster-cells-push {
-  from { transform: scale(1); opacity: 1; }
-  65%  { opacity: 0; }
-  to   { transform: scale(var(--zoom-push-scale, 2.4)); opacity: 0; }
-}
-
-/* Ohne diesen Clip auf dem ELTERN-Element der skalierenden Bühne vergrößert der
-   Push den Scroll-Overflow des Dokuments — die Seite bekäme für die Dauer der
-   Animation eine Scrollhöhe. Auf die skalierende Box selbst gehört er nicht:
-   deren eigene Clip-Box skaliert mit und clippt damit nichts.
-   `lvh` statt `svh`/`dvh` wegen der Standalone-PWA (sonst streift der Body-Grund
-   am unteren Rand durch). */
-.booster-stage-clip {
-  overflow: clip;
-  min-height: 100lvh;
+@keyframes booster-buehne-aus {
+  to { opacity: 0; }
 }
 
 /* Einblenden des Sub-Page-Headers (opt-in über SubPageHeader `enterFade`).
@@ -1194,13 +1152,11 @@ body[data-zone="schmiede"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .booster-cells-zoom { animation: none; }
   .booster-header-enter { animation: none; }
-  /* Doppelte Sicherung: zoomInto() navigiert bei reduced motion sofort und
-     rendert das Overlay gar nicht erst. */
-  .booster-zoom-travel,
-  .booster-zoom-push,
-  .booster-zoom-clone {
+  /* Doppelte Sicherung: zoomInto() und flyBack() navigieren bei reduced motion
+     sofort und rendern gar keinen Klon. */
+  .booster-buehne-aus,
+  .booster-flug-klon {
     animation: none;
     transition: none;
   }

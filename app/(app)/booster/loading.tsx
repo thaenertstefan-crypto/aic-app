@@ -15,8 +15,8 @@ import {
  *  das ganze Isobaren-Feld rechnen, für eine Zehntelsekunde, in der es nicht
  *  gezeigt wird.
  *
- *  Die Bühne selbst (`BoosterHubStage`) bleibt draußen: sie meldet dem
- *  Zoom-Übergang ihren Ursprung, und ein Gerüst hat keinen Tap-Punkt zu melden.
+ *  Die Bühne selbst (`BoosterHubStage`) bleibt draußen: sie trägt die Blende
+ *  des Abflugs, und von einem Gerüst fliegt niemand ab.
  *  Der Nachthimmel steht ohnehin schon — er hängt im Layout. */
 export default function BoosterLoading() {
   return (

@@ -17,7 +17,10 @@ describe("traegtEinFlug — welcher Routenwechsel gehört einem Flug", () => {
     assert.equal(traegtEinFlug("/booster", "/booster/things-got-messy"), true);
   });
 
-  test("der Rückweg aus einer Übung fliegt noch nicht (KAN-38)", () => {
+  test("den Rückweg trägt der generische Übergang, nicht diese Tabelle", () => {
+    // Seit KAN-60 fliegt auch der Rückweg — aber der Hub blendet nicht selbst
+    // ein, also bleibt der generische Übergang zuständig. Der Klon hängt im
+    // Portal am `body` und liegt damit nicht unter dessen Blende.
     assert.equal(traegtEinFlug("/booster/shadow", "/booster"), false);
   });
 

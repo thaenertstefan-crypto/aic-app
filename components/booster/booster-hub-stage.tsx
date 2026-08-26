@@ -2,54 +2,44 @@
 
 import type { CSSProperties, ReactNode } from "react";
 
-import {
-  PUSH_MS,
-  PUSH_SCALE,
-  STAGE_ATTR,
-  useBoosterZoom,
-} from "@/components/booster/booster-zoom";
+import { useBoosterFlug } from "@/components/booster/booster-flug";
+import { BUEHNE_AUS_MS } from "@/lib/kopfwetter/flug";
 
 /**
- * Die Bühne des Kopfwetter-Hubs: alles, was beim Zoom-Übergang am Tap-Punkt
- * verankert nach außen strömt — Titel, Untertitel UND Zellen. Vorher trug nur
- * der Zellen-Container den Push, der Seitenkopf blieb während des Übergangs
- * stehen.
+ * Die Bühne des Kopfwetter-Hubs: alles, was beim Abflug zurückbleibt — Titel,
+ * Untertitel UND Zellen. Sie **blendet aus**, sonst nichts (KAN-60).
  *
- * Zwei Ebenen mit verschiedenen Aufgaben: der äußere Wrapper clippt (sonst
- * vergrößert die skalierte Bühne den Scroll-Overflow des Dokuments und die
- * Seite bekommt für die Dauer der Animation eine Scrollhöhe), die innere Box
- * skaliert. Ihren transform-origin bekommt sie fertig aus dem Zoom-Kontext —
- * berechnet in zoomInto(), also schon im selben Render, in dem die Push-Klasse
- * gesetzt wird.
+ * Früher skalierte sie am Tap-Punkt verankert nach außen, als Kamera-Push. Der
+ * war ein Rechenfehler: das Zell-Icon misst 64 px, der Landeplatz 96 px, der
+ * Klon muss **einmal** um 1,5 wachsen — der Push schob 64 → 154 → 96 dazwischen
+ * und machte aus einer Bewegung drei Ereignisse. Mit ihm sind der
+ * transform-origin, der Clip-Wrapper (nichts skaliert mehr, also wächst auch
+ * kein Scroll-Overflow) und die gestapelten Scale-Ebenen entfallen.
+ *
+ * Warum die Blende trotzdem hier hängt und nicht im generischen Übergang
+ * (KAN-53): der blendet nur **ein**. Eine Fläche, die vor der Navigation
+ * verschwinden soll, muss ihr Verschwinden selbst tragen — der Wechsel kommt
+ * erst danach.
+ *
+ * Nur beim Hinflug: bei der Heimkehr ist der Hub das **Ziel**, und ein Ziel,
+ * das beim Landen ausblendet, wäre die Bewegung genau falsch herum.
  */
 export function BoosterHubStage({ children }: { children: ReactNode }) {
-  const { phase, stageOrigin } = useBoosterZoom();
-  // Bewusst jede Phase außer „idle“, nicht nur „pushing“: die Phase wechselt am
-  // Push-Ende weiter, die Navigation kann zu diesem Zeitpunkt aber noch laufen —
-  // der Hub ist dann noch gemountet und würde beim Entfernen der Klasse
-  // schlagartig wieder voll sichtbar aufploppen. Der `both`-Fill der Animation
-  // hält den Endzustand (scale, Opacity 0), bis die Seite wirklich wechselt.
-  const pushing = phase !== "idle";
+  const { buehneAus } = useBoosterFlug();
 
   return (
-    <div className={pushing ? "booster-stage-clip" : undefined}>
-      <div
-        {...{ [STAGE_ATTR]: "" }}
-        className={pushing ? "booster-cells-zoom" : undefined}
-        style={
-          pushing
-            ? ({
-                transformOrigin: stageOrigin
-                  ? `${stageOrigin.x}px ${stageOrigin.y}px`
-                  : undefined,
-                "--zoom-push-ms": `${PUSH_MS}ms`,
-                "--zoom-push-scale": `${PUSH_SCALE}`,
-              } as CSSProperties)
-            : undefined
-        }
-      >
-        {children}
-      </div>
+    <div
+      className={buehneAus ? "booster-buehne-aus" : undefined}
+      // Der `both`-Fill hält den Endzustand (Opacity 0), bis die Seite wirklich
+      // wechselt: die Navigation läuft am Ende der Blende an, der Hub ist bis
+      // dahin noch gemountet und würde sonst schlagartig wieder aufploppen.
+      style={
+        buehneAus
+          ? ({ "--buehne-aus-ms": `${BUEHNE_AUS_MS}ms` } as CSSProperties)
+          : undefined
+      }
+    >
+      {children}
     </div>
   );
 }

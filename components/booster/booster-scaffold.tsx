@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { SubPageHeader } from "@/components/layout/sub-page-header";
+import { BoosterBackHeader } from "@/components/booster/booster-back-header";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -26,7 +26,7 @@ export function BoosterScaffold({
 }) {
   return (
     <div className="flex flex-1 flex-col">
-      <SubPageHeader backHref="/booster" title={title} />
+      <BoosterBackHeader title={title} />
       <div
         className={`mx-auto flex w-full flex-1 flex-col gap-6 px-4 py-6 ${
           maxWidth === "md" ? "max-w-md" : "max-w-lg"

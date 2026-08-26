@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 
 import { BOOSTER_ART, type CellVariant } from "@/components/booster/booster-art";
-import { useBoosterZoom } from "@/components/booster/booster-zoom";
+import { useBoosterFlug } from "@/components/booster/booster-flug";
+import { UEBERGABE_MS } from "@/lib/kopfwetter/flug";
 
 /**
  * Das Modul-Icon der Übung: sitzt auf der ERSTEN Seite jeder Booster-Übung
@@ -18,7 +19,7 @@ import { useBoosterZoom } from "@/components/booster/booster-zoom";
  * Karte, zwei Signaturen auf einer Seite wären zu viel.
  */
 export function ModuleIcon({ variant }: { variant: CellVariant }) {
-  const { arrive, flying } = useBoosterZoom();
+  const { arrive, flying } = useBoosterFlug();
   const ref = useRef<HTMLDivElement>(null);
   const Art = BOOSTER_ART[variant];
 
@@ -36,10 +37,13 @@ export function ModuleIcon({ variant }: { variant: CellVariant }) {
     <div className="flex justify-center pb-2 pt-1">
       <div
         ref={ref}
-        className="transition-opacity duration-200 ease-out"
-        style={{ opacity: flying ? 0 : 1 }}
+        className="transition-opacity ease-out"
+        style={{
+          opacity: flying ? 0 : 1,
+          transitionDuration: `${UEBERGABE_MS}ms`,
+        }}
       >
-        {/* Größe hängt an booster-zoom.tsx (TARGET_SIZE + LANDING_Y) — beim
+        {/* Größe hängt an lib/kopfwetter/flug.ts (ZIEL_PX + LANDE_Y) — beim
             Ändern dort mitziehen, sonst verfehlt der fliegende Klon die Landung. */}
         <Art className="size-24" />
       </div>

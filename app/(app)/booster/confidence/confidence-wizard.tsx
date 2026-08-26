@@ -3,7 +3,7 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import Link from "next/link";
 
-import { SubPageHeader } from "@/components/layout/sub-page-header";
+import { BoosterBackHeader } from "@/components/booster/booster-back-header";
 import { RecipeIntro } from "@/components/recipes/recipe-intro";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { Mascot } from "@/components/brand/mascot";
@@ -93,7 +93,7 @@ export function ConfidenceWizard({
   if (!introSeen && !introDismissed) {
     return (
       <div className="flex min-h-svh flex-col">
-        <SubPageHeader backHref="/booster" title={PAGE_TITLES.confidence} />
+        <BoosterBackHeader title={PAGE_TITLES.confidence} />
         {/* data-e2e: der E2E-Lauf muss unterscheiden können, ob die Route
             ihren Inhalt zeigt oder (noch) die Erst-Intro-Sequenz —
             siehe scripts/e2e/verify.mjs. Ohne Laufzeit-Wirkung. */}
@@ -115,8 +115,7 @@ export function ConfidenceWizard({
   }
 
   const header = (
-    <SubPageHeader
-      backHref="/booster"
+    <BoosterBackHeader
       title={PAGE_TITLES.confidence}
       // Nur Schritt 1 blendet ein — dort steht auch das ModuleIcon, dort
       // endet der Kopfwetter-Zoom.
@@ -149,7 +148,7 @@ export function ConfidenceWizard({
           {/* Icon + Einstiegs-Text als ein zentriertes Paar — dieselbe
               Einstiegs-Grammatik wie overthinking, saying-no und shadow. Der
               Wrapper trägt bewusst kein Padding nach oben: der Landeplatz des
-              Kopfwetter-Zooms (LANDING_Y in booster-zoom.tsx) rechnet damit,
+              Kopfwetter-Flugs (LANDE_Y in lib/kopfwetter/flug.ts) rechnet damit,
               dass das ModuleIcon direkt unter dem Header sitzt. */}
           <div className="flex flex-col items-center gap-1 text-center">
             <ModuleIcon variant="confidence" />

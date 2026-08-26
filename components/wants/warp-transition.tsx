@@ -44,7 +44,7 @@ const DECEL_MS = 350;
  *  nimmt Taps an. Seit jede Route ein `loading.tsx` hat (KAN-53), committet
  *  die Navigation sofort und die Zielseite montiert erst danach — der Tunnel
  *  hält also regulär länger, und diese Grenze ist keine Theorie mehr.
- *  Gegenstück zu HOLD_MAX_MS in booster-zoom.tsx. */
+ *  Gegenstück zu HALTEN_MAX_MS in booster-flug.tsx. */
 const HOLD_MAX_MS = 4000;
 
 type WarpValue = {

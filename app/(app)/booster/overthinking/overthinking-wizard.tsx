@@ -11,7 +11,7 @@ import { SectionLabel } from "@/components/ui/section-label";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
-import { SubPageHeader } from "@/components/layout/sub-page-header";
+import { BoosterBackHeader } from "@/components/booster/booster-back-header";
 import { useRecipeIntro } from "@/components/recipes/recipe-intro-gate";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { ReframeAnimation } from "@/components/auth/reframe-animation";
@@ -614,7 +614,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   // ── Render: Intro-Sequenz (erster Besuch) ───────────────────────
 
   if (intro.pending) {
-    return intro.page(<SubPageHeader backHref="/booster" title="Overthinking" />);
+    return intro.page(<BoosterBackHeader title="Overthinking" />);
   }
 
   // ── Render: Completion screen ───────────────────────────────────
@@ -694,8 +694,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
   return (
     <div className="relative flex min-h-svh flex-col overflow-x-clip">
-      <SubPageHeader
-        backHref="/booster"
+      <BoosterBackHeader
         title="Overthinking"
         // Nur Schritt 1 blendet ein — dort steht auch das ModuleIcon, dort
         // endet der Kopfwetter-Zoom.
@@ -718,7 +717,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
             // Icon + Begrüßung als ein zentriertes Paar — dieselbe Einstiegs-
             // Grammatik wie saying-no, things-got-messy und shadow. Der Wrapper
             // trägt bewusst kein Padding nach oben: der Landeplatz des
-            // Kopfwetter-Zooms (LANDING_Y in booster-zoom.tsx) rechnet damit,
+            // Kopfwetter-Flugs (LANDE_Y in lib/kopfwetter/flug.ts) rechnet damit,
             // dass das ModuleIcon direkt unter dem Header sitzt.
             <div className="flex flex-col items-center gap-1 text-center">
               <ModuleIcon variant="overthinking" />

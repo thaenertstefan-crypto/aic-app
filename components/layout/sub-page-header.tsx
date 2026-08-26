@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
-interface SubPageHeaderProps {
+export interface SubPageHeaderProps {
   backHref: string;
   title: string;
   subtitle?: string;

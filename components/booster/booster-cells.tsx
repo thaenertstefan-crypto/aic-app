@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 
 import type { ReactNode } from "react";
 
 import { Reveal } from "@/components/ui/reveal";
 import { PAGE_TITLES } from "@/lib/content/labels";
 import { BOOSTER_ART, type CellVariant } from "@/components/booster/booster-art";
-import { useBoosterZoom } from "@/components/booster/booster-zoom";
+import { useBoosterFlug } from "@/components/booster/booster-flug";
+import { UEBERGABE_MS } from "@/lib/kopfwetter/flug";
 import {
   ZEILEN_H,
   ZELLEN_H,
@@ -47,8 +48,8 @@ const SYSTEMS: WeatherSystem[] = [
  * Tiefs, das mit der SVG mitgedehnt wird.
  *
  * Kein Drift mehr: driften die Zellen, während das Feld steht, wandern sie aus
- * ihren Augen heraus. Die Bewegung der Bühne ist der Kamera-Push beim Eintauchen
- * (siehe `booster-zoom.tsx`), nicht ein Wackeln im Stand.
+ * ihren Augen heraus. Die einzige Bewegung der Bühne ist das Ausblenden beim
+ * Abflug (siehe `booster-flug.tsx`), nicht ein Wackeln im Stand.
  *
  * Das Druckfeld kommt als **Prop**, nicht als Import: diese Datei ist eine
  * Client-Komponente, und `lib/kopfwetter/druckfeld.ts` rechnet beim Laden das
@@ -58,7 +59,13 @@ const SYSTEMS: WeatherSystem[] = [
  */
 export function BoosterCells({ feld }: { feld: ReactNode }) {
   const router = useRouter();
-  const { zoomInto } = useBoosterZoom();
+  const { starteFlug, heimkehr } = useBoosterFlug();
+  // Kommt gerade ein Rückflug herein, ist der Hub kein Auftritt, sondern eine
+  // Wiederherstellung: `router.back()` bringt ihn samt Scroll-Position zurück,
+  // und ein zweiter Zellen-Auftritt wäre eine Bewegung zu viel unter dem
+  // landenden Klon. Einmal beim Mount entschieden — sonst würde der Wechsel auf
+  // „idle“ die Zellen mitten im Landeanflug neu montieren.
+  const [heimkehrLaeuft] = useState(() => heimkehr !== null);
 
   function handleClick(e: MouseEvent<HTMLAnchorElement>, system: WeatherSystem) {
     // Modifier/Mittelklick → normaler Link (neuer Tab etc.).
@@ -69,7 +76,7 @@ export function BoosterCells({ feld }: { feld: ReactNode }) {
     const link = e.currentTarget;
     const iconEl = (link.querySelector("[data-cell-icon]") as HTMLElement | null) ?? link;
     const r = iconEl.getBoundingClientRect();
-    zoomInto(
+    starteFlug(
       {
         rect: { x: r.left + r.width / 2, y: r.top + r.height / 2, size: r.width },
         variant: system.variant,
@@ -78,9 +85,10 @@ export function BoosterCells({ feld }: { feld: ReactNode }) {
     );
   }
 
-  // Der Kamera-Push sitzt nicht hier, sondern eine Ebene höher auf der ganzen
-  // Hub-Bühne (BoosterHubStage) — sonst bliebe der Seitenkopf während des
-  // Übergangs stehen. Hier bleibt nur der Tap-Punkt-Melder.
+  // Die Blende des Abflugs sitzt nicht hier, sondern eine Ebene höher auf der
+  // ganzen Hub-Bühne (BoosterHubStage) — sonst bliebe der Seitenkopf während des
+  // Übergangs stehen. Hier bleibt der Tap-Punkt-Melder und der Landeplatz der
+  // Heimkehr.
   return (
     <div className="relative" style={{ height: ZELLEN_H }} data-e2e="booster-cells">
       {feld}
@@ -90,7 +98,7 @@ export function BoosterCells({ feld }: { feld: ReactNode }) {
         const Art = BOOSTER_ART[s.variant];
         return (
           <div key={s.href} className="absolute z-10" style={zeilenAnker(i)}>
-            <Reveal delay={i * 0.09}>
+            <Reveal delay={i * 0.09} instant={heimkehrLaeuft}>
               <Link
                 href={s.href}
                 onClick={(e) => handleClick(e, s)}
@@ -108,7 +116,18 @@ export function BoosterCells({ feld }: { feld: ReactNode }) {
                       dunkle Scheibe machte aus dem Motiv wieder einen Planeten.
                       Die Isobaren laufen sichtbar dahinter durch. */}
                   <span aria-hidden className="kw-auge absolute -inset-1 rounded-full" />
-                  <Art className="relative size-16" />
+                  {/* Solange der Klon dieses Motiv nach Hause trägt, bleibt die
+                      Zelle leer — sonst stünde der Gegenstand doppelt im Bild.
+                      Die Übergabe überlappt mit dem Ausblenden des Klons. */}
+                  <span
+                    className="relative flex transition-opacity ease-out"
+                    style={{
+                      opacity: heimkehr === s.variant ? 0 : 1,
+                      transitionDuration: `${UEBERGABE_MS}ms`,
+                    }}
+                  >
+                    <Art className="size-16" />
+                  </span>
                 </span>
                 <span className="kw-legible relative font-heading text-lg font-medium leading-snug text-balance text-foreground">
                   {s.feeling}

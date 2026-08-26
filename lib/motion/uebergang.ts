@@ -40,14 +40,26 @@ const PAARE: ReadonlyArray<readonly [string, string]> = [
 ];
 
 /**
- * Der Kopfwetter-Zoom: das Modul-Icon der angetippten Zelle fliegt vom Hub in
- * die Übung und landet dort unter dem Header
- * (`components/booster/booster-zoom.tsx`). Als Präfix statt als Paar, weil
- * jede der fünf Übungen dieselbe Bewegung erbt.
+ * „Der Wurf": das Wetter-Motiv der angetippten Zelle fliegt vom Hub in die
+ * Übung und landet dort unter dem Header
+ * (`components/booster/booster-flug.tsx`). Als Präfix statt als Paar, weil jede
+ * der fünf Übungen dieselbe Bewegung erbt.
  *
- * Bewusst nur der **Hinweg**: den Rückflug baut KAN-38. Bis dahin blendet der
- * Rückweg ein — lieber der generische Übergang als eine Suppression, hinter
- * der nichts steht.
+ * Warum hier trotzdem nur der **Hinweg** steht, obwohl der Flug seit KAN-60 in
+ * beide Richtungen läuft: diese Tabelle beantwortet nicht „fliegt hier etwas?",
+ * sondern „inszeniert sich dieser Wechsel schon selbst?".
+ *
+ * - **Hinweg:** ja. Die Hub-Bühne blendet aus, die Sub-Page blendet mit ihren
+ *   eigenen `einblenden`-Flächen ein. Käme der generische Übergang dazu, lägen
+ *   auf der Sub-Page zwei Blenden übereinander.
+ * - **Rückweg:** nein. Der Hub hat keine eigene Blende — er ist das Ziel und
+ *   soll stehen, wenn der Klon landet. Den Wechsel der Seite trägt deshalb der
+ *   generische Übergang. Dass er dem Klon nichts anhaben kann, liegt daran,
+ *   dass der Klon im Portal am `body` hängt und nicht in `main`.
+ *
+ * So bleibt auch der Direkt-Load-Fall richtig, ganz ohne Sonderregel: wer ohne
+ * Abflug auf einer Sub-Page steht, fliegt nicht zurück — und bekommt genau den
+ * generischen Übergang, der hier ohnehin läuft.
  */
 const BOOSTER_HUB = "/booster";
 

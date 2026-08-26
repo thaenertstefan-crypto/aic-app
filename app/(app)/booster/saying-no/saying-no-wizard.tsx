@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FormError } from "@/components/ui/form-error";
 import { CompletionCelebration } from "@/components/ui/completion-celebration";
 import { Reveal } from "@/components/ui/reveal";
-import { SubPageHeader } from "@/components/layout/sub-page-header";
+import { BoosterBackHeader } from "@/components/booster/booster-back-header";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { useRecipeIntro } from "@/components/recipes/recipe-intro-gate";
 import { useSuggestedRight } from "@/components/recipes/use-suggested-right";
@@ -312,13 +312,12 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
 
   if (intro.pending) {
     return intro.page(
-      <SubPageHeader backHref="/booster" title={PAGE_TITLES.sayingNo} />,
+      <BoosterBackHeader title={PAGE_TITLES.sayingNo} />,
     );
   }
 
   const header = (
-    <SubPageHeader
-      backHref="/booster"
+    <BoosterBackHeader
       title={PAGE_TITLES.sayingNo}
       // Nur der Einstiegs-Screen blendet ein — er steht am Ende des
       // Kopfwetter-Zooms. An die Phase gehängt, damit die Animation bei einem
@@ -951,10 +950,10 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
       {/* Reine Opacity ist hier nicht nur die Grammatik (KAN-53), sondern
           Bedingung — ModuleIcon misst seinen Rect beim Mount. Warum ein Slide
           die Landung des Zoom-Klons verfehlen ließe, steht einmal im Kopf von
-          components/booster/booster-zoom.tsx. */}
+          components/booster/booster-flug.tsx. */}
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 einblenden">
-        {/* Signatur vor dem Entwurfs-Hinweis: der Zoom-Klon fliegt auf einen
-            vorausberechneten Landeplatz (booster-zoom.tsx → LANDING_Y). Stünde
+        {/* Signatur vor dem Entwurfs-Hinweis: der Flug-Klon fliegt auf einen
+            vorausberechneten Landeplatz (lib/kopfwetter/flug.ts → LANDE_Y). Stünde
             der Banner darüber, säße das Icon bei vorhandenem Entwurf um
             Bannerhöhe + gap-6 tiefer und die Landung ginge daneben. */}
         <div className="flex flex-col items-center gap-3 text-center">

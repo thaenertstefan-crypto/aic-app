@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { useBoosterZoom } from "@/components/booster/booster-zoom";
+import { useBoosterFlug } from "@/components/booster/booster-flug";
 
 /**
  * Von jeder Booster-Sub-Page beim Mount gerendert: löst die Ankunft des
@@ -16,7 +16,7 @@ import { useBoosterZoom } from "@/components/booster/booster-zoom";
  * hat dieses seinen Rect bis dahin abgesetzt und dieser Aufruf ist ein no-op.
  */
 export function BoosterArrive() {
-  const { arrive } = useBoosterZoom();
+  const { arrive } = useBoosterFlug();
   useEffect(() => {
     const raf = requestAnimationFrame(() => arrive(null));
     return () => cancelAnimationFrame(raf);

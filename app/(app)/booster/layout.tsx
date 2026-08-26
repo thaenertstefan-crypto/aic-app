@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
-import { BoosterZoomProvider } from "@/components/booster/booster-zoom";
+import { BoosterFlugProvider } from "@/components/booster/booster-flug";
 
 /**
  * Gemeinsames Layout für den Kopfwetter-Hub UND alle Booster-Sub-Pages. Es
@@ -16,9 +16,9 @@ import { BoosterZoomProvider } from "@/components/booster/booster-zoom";
  */
 export default function BoosterLayout({ children }: { children: ReactNode }) {
   return (
-    <BoosterZoomProvider>
+    <BoosterFlugProvider>
       <SkyBackdrop />
       {children}
-    </BoosterZoomProvider>
+    </BoosterFlugProvider>
   );
 }
