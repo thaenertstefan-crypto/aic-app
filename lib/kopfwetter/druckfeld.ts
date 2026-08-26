@@ -45,9 +45,17 @@ const AMP = [1.0, 0.92, 0.96, 0.88, 1.02];
  *  aus fünf Stempeln liest. */
 const SIGMA = [88, 81, 84, 79, 90];
 
-/** Wie stark die Senke aus dem Kreis gezogen wird: lange Halbachse mal,
- *  kurze geteilt. Die Fläche bleibt dieselbe, nur die Form ändert sich. */
-const STRECKUNG = 1.8;
+/**
+ * Wie stark die Senke aus dem Kreis gezogen wird: lange Halbachse mal, kurze
+ * geteilt. Die Fläche bleibt dieselbe, nur die Form ändert sich.
+ *
+ * Der Wert ist nach oben **durch das Auge begrenzt, nicht durch die Rechnung**.
+ * Ab etwa dem Anderthalbfachen liegen fünf deutlich verzogene Formen in fünf
+ * verschiedenen Winkeln auf dem Blatt, und das liest unruhig — die Karte hat
+ * dann keine Ruherichtung mehr. Hier reicht die lange Achse knapp das Doppelte
+ * der kurzen: sichtbar oval, aber kein eigener Blickfang.
+ */
+const STRECKUNG = 1.35;
 
 /**
  * Wohin die langen Achsen zeigen, in Grad.
