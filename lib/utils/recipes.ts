@@ -1,4 +1,4 @@
-import { PAGE_TITLES } from "@/lib/content/labels";
+import { PAGE_TITLES } from "../content/labels.ts";
 
 export type RecipeSlug =
   | "values"

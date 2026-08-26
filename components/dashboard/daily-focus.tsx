@@ -10,20 +10,15 @@ import { AlternativesDisclosure } from "@/components/dashboard/alternatives-disc
 import { CROSSFADE_MS, useCrossfade } from "@/lib/hooks/use-crossfade";
 import { cn } from "@/lib/utils";
 import type { Destination } from "@/lib/content/dashboard-destinations";
-
-export type PrimaryRecommendation = {
-  key: string;
-  title: string;
-  subtitle: string;
-  cta: string;
-  href: string;
-};
+import type { Recommendation } from "@/lib/dashboard/next-bild";
 
 type DailyFocusProps = {
   tier: "low" | "normal";
-  primary: PrimaryRecommendation | null;
-  /** Nur relevant wenn primary === null. */
-  fallbackMessage?: string;
+  /**
+   * Immer da: seit KAN-56 kennt die Auswahlregel keinen Zustand ohne Karte
+   * mehr — der Endzustand ist selbst eine (der Kompass ohne CTA).
+   */
+  primary: Recommendation;
   showQuestion: boolean;
   alternatives: Destination[];
 };
@@ -31,8 +26,7 @@ type DailyFocusProps = {
 /** Eingefrorener Tier-Zustand für die gemeinsame Überblendung. */
 type FocusSnapshot = {
   question: string | null;
-  primary: PrimaryRecommendation | null;
-  fallbackMessage?: string;
+  primary: Recommendation;
   alternatives: Destination[];
 };
 
@@ -56,7 +50,6 @@ type FocusSnapshot = {
 export function DailyFocus({
   tier,
   primary,
-  fallbackMessage,
   showQuestion,
   alternatives,
 }: DailyFocusProps) {
@@ -73,7 +66,6 @@ export function DailyFocus({
   const snapshot: FocusSnapshot = {
     question: showQuestion ? question : null,
     primary,
-    fallbackMessage,
     alternatives,
   };
 
@@ -119,47 +111,38 @@ export function DailyFocus({
           „Heutiges Recht" zu schweben scheint — der größere Section-Abstand
           darunter trennt die Blöcke. */}
       <div className="space-y-4">
-        {view.primary ? (
-          <Card variant="glass" className="border border-primary">
-            <CardContent className="space-y-3">
-              <div className="space-y-1">
-                <p className="font-heading text-lg font-medium text-foreground">
-                  {view.primary.title}
-                </p>
-                {/* text-foreground/80 statt muted: dieser Text liegt auf der
-                    durchscheinenden Glass-Karte, wo ein heller Blob-Durchschein
-                    Lavendel-Muted unter AA drückt (3.8:1). /80 hält auch dort
-                    ≥4.5:1 und bleibt durch Größe/Gewicht sekundär. */}
-                <p className="text-sm text-foreground/80">
-                  {view.primary.subtitle}
-                </p>
-              </div>
+        {/* Der Gold-Rahmen gehört zur offenen Handlung, nicht zur Karte
+            (One-Candle-Rule). Im Endzustand steht der Kompass ohne CTA da und
+            damit auch ohne Rahmen — dieselbe Ruhe wie die „Heutiges Recht"-
+            Karte darunter, die genau das schon ist: ein Bild ohne Handlung. */}
+        <Card
+          variant="glass"
+          className={cn(view.primary.cta && "border border-primary")}
+        >
+          <CardContent className="space-y-3">
+            <div className="space-y-1">
+              <p className="font-heading text-lg font-medium text-foreground">
+                {view.primary.title}
+              </p>
+              {/* text-foreground/80 statt muted: dieser Text liegt auf der
+                  durchscheinenden Glass-Karte, wo ein heller Blob-Durchschein
+                  Lavendel-Muted unter AA drückt (3.8:1). /80 hält auch dort
+                  ≥4.5:1 und bleibt durch Größe/Gewicht sekundär. */}
+              <p className="text-sm text-foreground/80">
+                {view.primary.subtitle}
+              </p>
+            </div>
+            {view.primary.cta && (
               <Button
                 className="w-full"
-                render={<Link href={view.primary.href} />}
+                render={<Link href={view.primary.cta.href} />}
               >
-                {view.primary.cta}
+                {view.primary.cta.label}
                 <ArrowRight />
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card variant="glass">
-            <CardContent className="space-y-3">
-              {/* /80 statt muted — Glass-Karten-Kontrast, siehe Subtitle oben. */}
-              <p className="text-base text-foreground/80">
-                {view.fallbackMessage}
-              </p>
-              <Button
-                variant="outline"
-                className="w-full"
-                render={<Link href="/me" />}
-              >
-                Zu deinen Übungen
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
 
         {view.alternatives.length > 0 && (
           /* Alternativen bewusst zurückgestellt: eingeklappt hinter einem leisen

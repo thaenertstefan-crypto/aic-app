@@ -3,12 +3,8 @@ import { Quote } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getCachedUser } from "@/lib/supabase/get-user";
-import {
-  everCompletedSlugs,
-  latestPerSlug,
-  readAllProgress,
-} from "@/lib/recipes/progress";
-import { RECIPES, getRecipeBySlug, getRecipeStepPath } from "@/lib/utils/recipes";
+import { readAllProgress } from "@/lib/recipes/progress";
+import { nextRecommendation } from "@/lib/dashboard/next-bild";
 import { getUserTimeZone, serverTodayKey } from "@/lib/server/timezone";
 import { rightOfTheDay } from "@/lib/utils/daily-right";
 import { Button } from "@/components/ui/button";
@@ -18,7 +14,6 @@ import { DashboardFocus } from "@/components/dashboard/dashboard-focus";
 import { DailyReminderScreen } from "@/components/daily-reminder/daily-reminder-screen";
 import { DashboardSky } from "@/components/dashboard/dashboard-sky";
 import { MoodScoreProvider } from "@/components/dashboard/mood-score-context";
-import type { PrimaryRecommendation } from "@/components/dashboard/daily-focus";
 import type { Tables } from "@/lib/supabase/database.types";
 import type { RightItem } from "@/lib/types/db-json";
 
@@ -46,10 +41,8 @@ export default async function DashboardPage() {
   });
 
   let name: string | null = null;
-  let activeRecipeId: string | null = null;
   let todayMood: number | null = null;
-  let latestProgress = new Map<string, Tables<"user_recipe_progress">>();
-  let completedSlugs = new Set<string>();
+  let progress: Tables<"user_recipe_progress">[] = [];
   let rights: RightItem[] = [];
 
   if (user) {
@@ -59,11 +52,10 @@ export default async function DashboardPage() {
       progressRows,
       { data: billOfRights, error: rightsError },
     ] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("name, active_recipe_id")
-        .eq("id", user.id)
-        .single(),
+      // `active_recipe_id` wird hier bewusst nicht mehr gelesen: die Spalte
+      // wird genau einmal geschrieben (Onboarding) und nie gepflegt, taugt also
+      // nicht als "woran arbeitest du gerade". Siehe ADR-0006.
+      supabase.from("profiles").select("name").eq("id", user.id).single(),
       supabase
         .from("daily_checkins")
         .select("mood_score")
@@ -87,34 +79,10 @@ export default async function DashboardPage() {
     }
 
     name = profile?.name ?? null;
-    activeRecipeId = profile?.active_recipe_id ?? null;
     todayMood = moodRow?.mood_score ?? null;
-    // Zwei benannte Fragen an dieselbe gelesene Liste: „wo stehst du gerade"
-    // und „was hast du geschafft". Vorher griff hier ein `.find()` irgendeine
-    // Zeile des Slugs — seit `startNewCycleAction` eine zweite anlegt, konnte
-    // das der abgeschlossene erste Durchlauf sein.
-    latestProgress = latestPerSlug(progressRows);
-    completedSlugs = everCompletedSlugs(progressRows);
+    progress = progressRows;
     rights = (billOfRights?.rights as RightItem[] | null) ?? [];
   }
-
-  // --- Aktuelles Recipe ---
-  const activeRecipe = activeRecipeId ? getRecipeBySlug(activeRecipeId) : undefined;
-  const activeProgress = activeRecipeId
-    ? latestProgress.get(activeRecipeId)
-    : undefined;
-  const hasActiveRecipe =
-    !!activeRecipe &&
-    activeRecipe.available &&
-    !!activeProgress &&
-    activeProgress.status !== "completed";
-
-  // Suggest the onboarding recipe first; otherwise the first unfinished one.
-  const suggestedRecipe = hasActiveRecipe
-    ? undefined
-    : activeRecipe && activeRecipe.available && !completedSlugs.has(activeRecipe.slug)
-      ? activeRecipe
-      : RECIPES.find((r) => r.available && !completedSlugs.has(r.slug));
 
   // --- Heutiges Recht ---
   const activeRights = rights.filter((r) => r.active);
@@ -123,48 +91,12 @@ export default async function DashboardPage() {
   const greetingName = name?.trim();
 
   // --- Stimmungsbasierter Fokus (DailyFocus) ---
-  // Continuity-Empfehlung: das, was die alte RecipeCard gezeigt hätte.
-  const continuityRecipe = hasActiveRecipe ? activeRecipe : suggestedRecipe;
-
-  // Werte-Status (not_started | in_progress | completed) für die dreistufige CTA
-  // und die Verlinkung.
-  const valuesStatus = latestProgress.get("values")?.status ?? "not_started";
-
-  // Laufende Entdeckung führt direkt zurück in die Journey (Wiederaufnahme, kein
-  // erneutes Intro). Sonst auf die kanonische Werte-Heimat /me/values, die die
-  // Intro-Sequenz gated und danach zur "Meine Werte"-Seite (→ Journey) führt.
-  const valuesHref =
-    valuesStatus === "in_progress" ? "/me/values/journey" : "/me/values";
-
-  // "Normale" Empfehlung (recipe-basiert, mood-unabhängig). Der low-Tier-Fall
-  // (Mantra-Pause) und die Frage werden client-seitig in DashboardFocus aus der
-  // live getippten Stimmung abgeleitet — so reagiert die Anzeige sofort.
-  const normalPrimary: PrimaryRecommendation | null = continuityRecipe
-    ? {
-        key: continuityRecipe.slug,
-        title: continuityRecipe.title,
-        subtitle: hasActiveRecipe
-          ? "Du bist mittendrin."
-          : continuityRecipe.description,
-        cta:
-          continuityRecipe.slug === "values"
-            ? valuesStatus === "in_progress"
-              ? "Setze deine Entdeckungsreise fort"
-              : "Starte deine Werteentdeckung"
-            : hasActiveRecipe
-              ? "Weitermachen"
-              : "Jetzt starten",
-        href:
-          continuityRecipe.slug === "values"
-            ? valuesHref
-            : hasActiveRecipe
-              ? getRecipeStepPath(continuityRecipe.slug, activeProgress?.current_step ?? 1)
-              : continuityRecipe.startPath,
-      }
-    : null;
-
-  const fallbackMessage =
-    "Schön, dass du dranbleibst! Stöbere durch die Rezepte für deinen nächsten Schritt.";
+  // Die Auswahlregel ist eine reine Funktion über die schon gelesenen Zeilen
+  // (KAN-56): das erste Bild in Arbeit, sonst das erste leere, sonst der
+  // Kompass ohne CTA. Der low-Tier-Override und die Frage werden client-seitig
+  // in DashboardFocus aus der live getippten Stimmung abgeleitet — so reagiert
+  // die Anzeige sofort.
+  const normalPrimary = nextRecommendation(progress);
 
   return (
     <div className="space-y-13 p-4">
@@ -181,11 +113,7 @@ export default async function DashboardPage() {
         </header>
 
         {/* Mood check-in + stimmungsbasierter Fokus (client-seitig gekoppelt) */}
-        <DashboardFocus
-          initialScore={todayMood}
-          normalPrimary={normalPrimary}
-          fallbackMessage={fallbackMessage}
-        />
+        <DashboardFocus initialScore={todayMood} normalPrimary={normalPrimary} />
 
         {/* Heutiges Recht */}
         <Card>
