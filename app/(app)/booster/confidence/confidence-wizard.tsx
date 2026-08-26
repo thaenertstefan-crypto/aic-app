@@ -145,7 +145,7 @@ export function ConfidenceWizard({
       // scripts/e2e/verify.mjs. Ohne Laufzeit-Wirkung.
       <div className="flex min-h-svh flex-col" data-e2e="confidence-wizard">
         {header}
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-6 einblenden">
           {/* Icon + Einstiegs-Text als ein zentriertes Paar — dieselbe
               Einstiegs-Grammatik wie overthinking, saying-no und shadow. Der
               Wrapper trägt bewusst kein Padding nach oben: der Landeplatz des
@@ -192,7 +192,7 @@ export function ConfidenceWizard({
     return (
       <div className="flex min-h-svh flex-col">
         {header}
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-6 einblenden">
           {progress}
           <div className="space-y-2 text-center">
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
@@ -243,7 +243,7 @@ export function ConfidenceWizard({
     return (
       <div className="flex min-h-svh flex-col">
         {header}
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-6 einblenden">
           {progress}
           <div className="space-y-2 text-center">
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
@@ -291,7 +291,7 @@ export function ConfidenceWizard({
     return (
       <div className="flex min-h-svh flex-col">
         {header}
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-6 einblenden">
           {progress}
           <div className="space-y-2 text-center">
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
@@ -359,7 +359,7 @@ export function ConfidenceWizard({
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center px-4 py-10">
-      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center einblenden">
         <CompletionCelebration />
         <div className="space-y-2">
           <h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">

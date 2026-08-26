@@ -49,7 +49,7 @@ export function ReflectForm({
   if (state.error === null && state.data) {
     return (
       <div className="flex min-h-lvh flex-col items-center px-4 py-10">
-        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center einblenden">
           <CompletionCelebration />
           <div className="space-y-2">
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">

@@ -37,6 +37,15 @@ const ACCEL_MS = 260;
 const TUNNEL_MS = 140;
 // Dauer der Auflösung/Ankunft, bevor das Overlay verschwindet.
 const DECEL_MS = 350;
+/** Notbremse für den Tunnel: ruft die Zielseite nie `arrive()` (Navigation
+ *  hängt oder schlägt fehl — die PWA rechnet mit Offline, siehe
+ *  OfflineBanner), löst sich das Overlay nach dieser Wartezeit trotzdem auf,
+ *  statt den Nutzer im Tunnel sitzen zu lassen; es deckt den ganzen Schirm und
+ *  nimmt Taps an. Seit jede Route ein `loading.tsx` hat (KAN-53), committet
+ *  die Navigation sofort und die Zielseite montiert erst danach — der Tunnel
+ *  hält also regulär länger, und diese Grenze ist keine Theorie mehr.
+ *  Gegenstück zu HOLD_MAX_MS in booster-zoom.tsx. */
+const HOLD_MAX_MS = 4000;
 
 type WarpValue = {
   phase: Phase;
@@ -93,6 +102,20 @@ export function WarpProvider({ children }: { children: ReactNode }) {
     setPhase(p);
   }, []);
 
+  // Die Ankunft: erst den Tunnel-Beat halten (Phase bleibt "diving" → Streifen
+  // loopen, beide Seiten off-screen), dann ankommen und das Overlay auflösen.
+  // Der Phasen-Wächter macht jeden zweiten Aufruf zum No-op — egal, ob die
+  // Zielseite oder die Notbremse zuerst da war.
+  const beginArrival = useCallback(() => {
+    if (phaseRef.current !== "diving") return;
+    const t1 = window.setTimeout(() => {
+      set("arriving");
+      const t2 = window.setTimeout(() => set("idle"), DECEL_MS);
+      timers.current.push(t2);
+    }, TUNNEL_MS);
+    timers.current.push(t1);
+  }, [set]);
+
   // Gemeinsamer Start für beide Richtungen: Phase "diving", nach ACCEL_MS
   // navigieren. Reduced motion → sofort navigieren (kein Warp).
   const start = useCallback(
@@ -105,25 +128,16 @@ export function WarpProvider({ children }: { children: ReactNode }) {
       }
       set("diving");
       const t = window.setTimeout(() => navigate(), ACCEL_MS);
-      timers.current.push(t);
+      const notbremse = window.setTimeout(beginArrival, HOLD_MAX_MS);
+      timers.current.push(t, notbremse);
     },
-    [reduced, set],
+    [reduced, set, beginArrival],
   );
 
   const dive = useCallback((navigate: () => void) => start("down", navigate), [start]);
   const ascend = useCallback((navigate: () => void) => start("up", navigate), [start]);
 
-  const arrive = useCallback(() => {
-    if (phaseRef.current !== "diving") return;
-    // Erst den Tunnel-Beat halten (Phase bleibt "diving" → Streifen loopen,
-    // beide Seiten off-screen), dann ankommen und das Overlay auflösen.
-    const t1 = window.setTimeout(() => {
-      set("arriving");
-      const t2 = window.setTimeout(() => set("idle"), DECEL_MS);
-      timers.current.push(t2);
-    }, TUNNEL_MS);
-    timers.current.push(t1);
-  }, [set]);
+  const arrive = beginArrival;
 
   return (
     <WarpContext.Provider value={{ phase, direction, dive, ascend, arrive }}>

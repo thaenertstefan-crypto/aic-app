@@ -82,7 +82,7 @@ export function RecipeIntro({ cards, onComplete, onSkip, renderMascot }: RecipeI
       {/* Karte */}
       <Card
         key={index}
-        className="border-primary/30 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
+        className="border-primary/30 einblenden"
       >
         <CardContent className="flex flex-col gap-3 pt-(--card-spacing)">
           <h2 className="font-heading text-xl font-semibold text-foreground">

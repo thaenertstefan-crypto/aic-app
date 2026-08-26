@@ -58,38 +58,36 @@ export function BoosterCells() {
   // ganzen Hub-Bühne (BoosterHubStage) — sonst bliebe der Seitenkopf während
   // des Übergangs stehen. Hier bleibt nur der Tap-Punkt-Melder.
   return (
-    <div data-nav-spinner="off">
-      <div className="relative z-10 flex flex-col gap-16 px-4 py-4" data-e2e="booster-cells">
-        {SYSTEMS.map((s, i) => {
-          const left = i % 2 === 0;
-          return (
-            <Reveal key={s.href} delay={i * 0.09} className={left ? "self-start" : "self-end"}>
-              <Link
-                href={s.href}
-                onClick={(e) => handleClick(e, s)}
-                aria-label={`${s.title} — ${s.feeling}`}
-                className="group block w-[min(17rem,82vw)] rounded-xl px-3 py-3 transition-[background-color,scale] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+    <div className="relative z-10 flex flex-col gap-16 px-4 py-4" data-e2e="booster-cells">
+      {SYSTEMS.map((s, i) => {
+        const left = i % 2 === 0;
+        return (
+          <Reveal key={s.href} delay={i * 0.09} className={left ? "self-start" : "self-end"}>
+            <Link
+              href={s.href}
+              onClick={(e) => handleClick(e, s)}
+              aria-label={`${s.title} — ${s.feeling}`}
+              className="group block w-[min(17rem,82vw)] rounded-xl px-3 py-3 transition-[background-color,scale] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              <span
+                className={`kw-cell-drift flex items-center gap-3 ${
+                  left ? "flex-row text-left" : "flex-row-reverse text-right"
+                }`}
+                style={{ animationDelay: `${i * -1.7}s` }}
               >
-                <span
-                  className={`kw-cell-drift flex items-center gap-3 ${
-                    left ? "flex-row text-left" : "flex-row-reverse text-right"
-                  }`}
-                  style={{ animationDelay: `${i * -1.7}s` }}
-                >
-                  <span data-cell-icon className="inline-flex">
-                    <PressureCell art={s.art} side={left ? "left" : "right"} variant={s.variant} />
-                  </span>
-                  <span className="relative z-10 flex flex-col gap-1">
-                    <span className="kw-legible font-heading text-lg font-medium leading-snug text-balance text-foreground">
-                      {s.feeling}
-                    </span>
+                <span data-cell-icon className="inline-flex">
+                  <PressureCell art={s.art} side={left ? "left" : "right"} variant={s.variant} />
+                </span>
+                <span className="relative z-10 flex flex-col gap-1">
+                  <span className="kw-legible font-heading text-lg font-medium leading-snug text-balance text-foreground">
+                    {s.feeling}
                   </span>
                 </span>
-              </Link>
-            </Reveal>
-          );
-        })}
-      </div>
+              </span>
+            </Link>
+          </Reveal>
+        );
+      })}
     </div>
   );
 }

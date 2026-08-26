@@ -9,8 +9,10 @@ import { FocusSky } from "@/app/(app)/me/wants/focus-sky";
 /**
  * Persistente Bühne der Sternensuche: der Nachthimmel und das Eck-Maskottchen
  * bleiben über alle Schritte stehen (kein Re-Mount), nur der Vordergrund
- * (children) wechselt. Der Schrittwechsel spielt eine leise Enter-Animation
- * (fade + rise), key-getrieben über `stepKey`. Reduced motion: kein Enter.
+ * (children) wechselt. Der Schrittwechsel blendet ein — dieselbe Bewegung wie
+ * ein Routenwechsel (KAN-53), key-getrieben über `stepKey`, damit die
+ * Animation bei jedem Schritt neu anläuft. Reduced motion regelt die Klasse
+ * selbst (globals.css): dann fällt der Übergang weg.
  */
 export function JourneyStage({
   backHref,
@@ -40,7 +42,7 @@ export function JourneyStage({
           {/* Nur der Vordergrund animiert beim Schrittwechsel. */}
           <div
             key={stepKey}
-            className="flex flex-1 flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none"
+            className="flex flex-1 flex-col gap-6 einblenden"
           >
             {children}
           </div>

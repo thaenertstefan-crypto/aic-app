@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronUp } from "lucide-react";
 
+import { Einblenden } from "@/components/layout/einblenden";
 import { MascotPeek } from "@/components/brand/mascot-peek";
 import { SkyBackdrop } from "@/components/backdrops/sky-backdrop";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
@@ -90,7 +91,13 @@ export function AuthReveal({ hero, children }: AuthRevealProps) {
       <div className="relative flex min-h-lvh flex-col overflow-hidden">
         <SkyBackdrop />
         <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-8">
-          <div className="w-full max-w-sm">{children}</div>
+          {/* Der Wechsel zwischen Login, Registrieren und den Reset-Seiten ist
+              ein Routenwechsel ohne mitreisenden Gegenstand — also derselbe
+              generische Übergang wie überall (KAN-53). Nur die Karte blendet
+              ein; Himmel und Maskottchen bleiben stehen. */}
+          <Einblenden token={pathname} className="w-full max-w-sm">
+            {children}
+          </Einblenden>
         </div>
         {showCardMascot && (
           <MascotPeek

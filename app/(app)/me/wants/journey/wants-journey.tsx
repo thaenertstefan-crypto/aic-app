@@ -846,7 +846,7 @@ export function WantsJourney({
         }}
       >
         <FocusSky />
-        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center einblenden">
           {n >= 2 ? (
             <div className="relative h-[150px] w-[240px]" aria-hidden="true">
               <svg viewBox="0 0 240 150" className="absolute inset-0 size-full">

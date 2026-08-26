@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ViewTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Binoculars, Flame, Loader2, Plus } from "lucide-react";
@@ -274,129 +273,123 @@ export function WantsMe({
         introSeen={introSeen}
         onSeen={() => setIntroDone(true)}
       >
-        <ViewTransition
-          enter={{ "forge-down": "forge-in-up", "forge-up": "forge-in-down", default: "none" }}
-          exit={{ "forge-down": "forge-out-up", "forge-up": "forge-out-down", default: "none" }}
-          default="none"
-        >
-          <div className="relative mx-auto flex w-full max-w-lg flex-1 flex-col">
-            {/* Der Sternenhimmel (SkyBackdrop) liefert jetzt das Umgebungsglühen —
-                kein zweiter lokaler Gold-Schein hier (One-Candle-Rule). */}
-            <div className="relative z-10 flex flex-1 flex-col gap-6 px-4 py-6">
-              {!hasSterne ? (
-                /* Der Himmel, bevor der erste Stern entdeckt ist (KAN-49): die
-                   Bänder der Leer-Grammatik statt eines eigenen Blocks. Oben
-                   das Motiv der Fläche — der Goldstern, gedimmt wie ihn der
-                   /me-Hub bei `wantsCount === 0` zeigt; nie mehr das
-                   Maskottchen. Der Satz nennt den Himmel im Werden, nicht den
-                   Mangel. Die Knöpfe stehen am Fuß der Spalte, dieselbe Stelle
-                   wie im vollen Zustand, damit der Übergang leer → voll sie
-                   nicht bewegt. Die Höhe („scrollt nie“) kommt aus
-                   `EmptyState` — siehe `emptyStage` oben. */
-                <EmptyState
-                  motiv={<StarArt animate dim className="size-16" />}
-                  satz="Hier wird dein Himmel."
-                  nachsatz="Jeder Stern, den du entdeckst, bekommt hier seinen Platz. Fang mit einem an."
-                  cta={
-                    <>
-                      <Button
-                        className="w-full gap-2"
-                        size="lg"
-                        render={<Link href="/me/wants/journey" />}
-                      >
-                        <Binoculars className="size-4" /> Sternensuche starten
-                      </Button>
-                      {forgeLink()}
-                    </>
-                  }
-                />
-              ) : (
-                <>
-                  <Reveal delay={0}>
-                    <div className="flex flex-col items-center gap-3 text-center">
-                      <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                        {PAGE_TITLES.meWantsHero}
-                      </h2>
-                      <p className="max-w-sm text-base leading-relaxed text-muted-foreground">
-                        Meine Freudenquellen und Ziele, nach denen ich greife.
-                      </p>
-                    </div>
-                  </Reveal>
-
-                  <FormError message={saveError} />
-
-                  <StarMap
-                    key={wants.length}
-                    wants={wants}
-                    moments={moments}
-                    onSaveEdit={saveWantEdit}
-                    onDelete={deleteWant}
-                    onAddMoment={addMoment}
-                    onUpdateMoment={updateMoment}
-                    onDeleteMoment={deleteMoment}
-                  />
-
-                  <div className="flex gap-3">
+        <div className="relative mx-auto flex w-full max-w-lg flex-1 flex-col">
+          {/* Der Sternenhimmel (SkyBackdrop) liefert jetzt das Umgebungsglühen —
+              kein zweiter lokaler Gold-Schein hier (One-Candle-Rule). */}
+          <div className="relative z-10 flex flex-1 flex-col gap-6 px-4 py-6">
+            {!hasSterne ? (
+              /* Der Himmel, bevor der erste Stern entdeckt ist (KAN-49): die
+                 Bänder der Leer-Grammatik statt eines eigenen Blocks. Oben
+                 das Motiv der Fläche — der Goldstern, gedimmt wie ihn der
+                 /me-Hub bei `wantsCount === 0` zeigt; nie mehr das
+                 Maskottchen. Der Satz nennt den Himmel im Werden, nicht den
+                 Mangel. Die Knöpfe stehen am Fuß der Spalte, dieselbe Stelle
+                 wie im vollen Zustand, damit der Übergang leer → voll sie
+                 nicht bewegt. Die Höhe („scrollt nie“) kommt aus
+                 `EmptyState` — siehe `emptyStage` oben. */
+              <EmptyState
+                motiv={<StarArt animate dim className="size-16" />}
+                satz="Hier wird dein Himmel."
+                nachsatz="Jeder Stern, den du entdeckst, bekommt hier seinen Platz. Fang mit einem an."
+                cta={
+                  <>
                     <Button
-                      className="flex-1 gap-2"
+                      className="w-full gap-2"
+                      size="lg"
                       render={<Link href="/me/wants/journey" />}
                     >
-                      <Binoculars className="size-4" /> Sternensuche
+                      <Binoculars className="size-4" /> Sternensuche starten
                     </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1 gap-2"
-                      onClick={() => setAddOpen(true)}
-                    >
-                      <Plus className="size-4" /> Eigener Stern
-                    </Button>
-                  </div>
-
-                  {/* „Lust auf Neues?" sitzt mittig zwischen der Button-Reihe und
-                      der Bottom-Nav — der flex-1-Spacer absorbiert den Rest der
-                      Seitenhöhe (Karte und Buttons haben feste Höhen), pt-2 hält
-                      einen Mindestabstand nach oben, damit der Link bei vielen
-                      Sternen nicht an der Button-Reihe klebt. */}
-                  <div className="flex flex-1 flex-col justify-center pt-2">
                     {forgeLink()}
+                  </>
+                }
+              />
+            ) : (
+              <>
+                <Reveal delay={0}>
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+                      {PAGE_TITLES.meWantsHero}
+                    </h2>
+                    <p className="max-w-sm text-base leading-relaxed text-muted-foreground">
+                      Meine Freudenquellen und Ziele, nach denen ich greife.
+                    </p>
                   </div>
-                </>
-              )}
+                </Reveal>
 
-              {/* Eigener Stern hinzufügen */}
-              <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Eigener Stern</DialogTitle>
-                  </DialogHeader>
-                  <Input
-                    value={addTitle}
-                    onChange={(e) => setAddTitle(e.target.value)}
-                    maxLength={60}
-                    placeholder="Name des Sterns (optional)"
-                    aria-label="Name des Sterns"
-                  />
-                  <Textarea
-                    value={addText}
-                    onChange={(e) => setAddText(e.target.value)}
-                    placeholder="Was zieht dich an? Z. B. „Mir macht … Spaß“ oder „Ich will …“"
-                    maxLength={300}
-                    rows={3}
-                    autoFocus
-                    className="resize-y"
-                    aria-label="Beschreibung des Sterns"
-                  />
-                  <DialogFooter>
-                    <DialogClose render={<Button variant="outline" />}>Abbrechen</DialogClose>
-                    <Button onClick={addOwnStar} disabled={!addText.trim()}>
-                      Stern anzünden
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
+                <FormError message={saveError} />
+
+                <StarMap
+                  key={wants.length}
+                  wants={wants}
+                  moments={moments}
+                  onSaveEdit={saveWantEdit}
+                  onDelete={deleteWant}
+                  onAddMoment={addMoment}
+                  onUpdateMoment={updateMoment}
+                  onDeleteMoment={deleteMoment}
+                />
+
+                <div className="flex gap-3">
+                  <Button
+                    className="flex-1 gap-2"
+                    render={<Link href="/me/wants/journey" />}
+                  >
+                    <Binoculars className="size-4" /> Sternensuche
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 gap-2"
+                    onClick={() => setAddOpen(true)}
+                  >
+                    <Plus className="size-4" /> Eigener Stern
+                  </Button>
+                </div>
+
+                {/* „Lust auf Neues?" sitzt mittig zwischen der Button-Reihe und
+                    der Bottom-Nav — der flex-1-Spacer absorbiert den Rest der
+                    Seitenhöhe (Karte und Buttons haben feste Höhen), pt-2 hält
+                    einen Mindestabstand nach oben, damit der Link bei vielen
+                    Sternen nicht an der Button-Reihe klebt. */}
+                <div className="flex flex-1 flex-col justify-center pt-2">
+                  {forgeLink()}
+                </div>
+              </>
+            )}
+
+            {/* Eigener Stern hinzufügen */}
+            <Dialog open={addOpen} onOpenChange={setAddOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Eigener Stern</DialogTitle>
+                </DialogHeader>
+                <Input
+                  value={addTitle}
+                  onChange={(e) => setAddTitle(e.target.value)}
+                  maxLength={60}
+                  placeholder="Name des Sterns (optional)"
+                  aria-label="Name des Sterns"
+                />
+                <Textarea
+                  value={addText}
+                  onChange={(e) => setAddText(e.target.value)}
+                  placeholder="Was zieht dich an? Z. B. „Mir macht … Spaß“ oder „Ich will …“"
+                  maxLength={300}
+                  rows={3}
+                  autoFocus
+                  className="resize-y"
+                  aria-label="Beschreibung des Sterns"
+                />
+                <DialogFooter>
+                  <DialogClose render={<Button variant="outline" />}>Abbrechen</DialogClose>
+                  <Button onClick={addOwnStar} disabled={!addText.trim()}>
+                    Stern anzünden
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
-        </ViewTransition>
+        </div>
       </RecipeIntroGate>
     </div>
   );

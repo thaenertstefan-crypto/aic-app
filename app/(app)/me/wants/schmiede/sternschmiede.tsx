@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ViewTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowUp, Check, Flame, Plus, Sparkles } from "lucide-react";
@@ -256,7 +255,7 @@ export function Sternschmiede({
       <div className="flex min-h-lvh flex-col">
         <ForgeBackdrop />
         {header}
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 einblenden">
           <div className="flex flex-col items-center gap-3 text-center">
             <CompassStarsArt />
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
@@ -317,7 +316,7 @@ export function Sternschmiede({
       <div className="flex min-h-lvh flex-col">
         <ForgeBackdrop intensity="hot" />
         {header}
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 animate-in fade-in duration-500">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 einblenden">
           {/* Aus der heißen Esse sprühen Funken auf. */}
           <div className="relative h-40 w-full max-w-xs" aria-hidden="true">
             {SPRAY_FUNKEN.map((f, i) => (
@@ -355,7 +354,7 @@ export function Sternschmiede({
       <div className="flex min-h-lvh flex-col">
         <ForgeBackdrop />
         {header}
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 einblenden">
           <div className="flex flex-col items-center gap-3 text-center">
             {/* Held-Funke: großer glühender Rosé-Punkt (Pendant zum StarGlyph-Held
                 der Sternensuche). */}
@@ -501,50 +500,44 @@ export function Sternschmiede({
       <div className="flex min-h-lvh flex-col">
         <ForgeBackdrop />
         {header}
-        <ViewTransition
-          enter={{ "forge-down": "forge-in-up", "forge-up": "forge-in-down", default: "none" }}
-          exit={{ "forge-down": "forge-out-up", "forge-up": "forge-out-down", default: "none" }}
-          default="none"
-        >
-          <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Der aufgestiegene Funken-Schwarm schwebt über dem Feuer. */}
-            <div className="relative h-40 w-full max-w-[240px]" aria-hidden="true">
-              {swarm.map((f, i) => (
-                <span
-                  key={i}
-                  className={cn(
-                    "absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-celebrate",
-                    reduced ? undefined : "funke-rise",
-                  )}
-                  style={{
-                    left: `${f.x + 10}%`,
-                    top: `${f.y}%`,
-                    width: `${f.size}px`,
-                    height: `${f.size}px`,
-                    animationDelay: `${f.delay}s`,
-                    boxShadow: `0 0 ${f.size + 6}px ${Math.round(f.size / 4)}px color-mix(in srgb, var(--celebrate) 70%, transparent)`,
-                  }}
-                />
-              ))}
-            </div>
-            <div className="space-y-2">
-              <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                {openCount <= 1
-                  ? "Der erste Funke ist geschlagen."
-                  : `${openCount} Funken glühen jetzt in deiner Schmiede.`}
-              </h1>
-              <p className="text-muted-foreground">
-                Probier sie aus — und danach reflektierst du kurz, was der Funke dir
-                gezeigt hat.
-              </p>
-            </div>
-            <div className="flex w-full flex-col gap-3 pt-2">
-              <Button className="w-full" size="lg" onClick={() => setPhase("intro")}>
-                Zurück zur Schmiede
-              </Button>
-            </div>
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6 px-4 py-10 text-center einblenden">
+          {/* Der aufgestiegene Funken-Schwarm schwebt über dem Feuer. */}
+          <div className="relative h-40 w-full max-w-[240px]" aria-hidden="true">
+            {swarm.map((f, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-celebrate",
+                  reduced ? undefined : "funke-rise",
+                )}
+                style={{
+                  left: `${f.x + 10}%`,
+                  top: `${f.y}%`,
+                  width: `${f.size}px`,
+                  height: `${f.size}px`,
+                  animationDelay: `${f.delay}s`,
+                  boxShadow: `0 0 ${f.size + 6}px ${Math.round(f.size / 4)}px color-mix(in srgb, var(--celebrate) 70%, transparent)`,
+                }}
+              />
+            ))}
           </div>
-        </ViewTransition>
+          <div className="space-y-2">
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+              {openCount <= 1
+                ? "Der erste Funke ist geschlagen."
+                : `${openCount} Funken glühen jetzt in deiner Schmiede.`}
+            </h1>
+            <p className="text-muted-foreground">
+              Probier sie aus — und danach reflektierst du kurz, was der Funke dir
+              gezeigt hat.
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-3 pt-2">
+            <Button className="w-full" size="lg" onClick={() => setPhase("intro")}>
+              Zurück zur Schmiede
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -592,137 +585,131 @@ export function Sternschmiede({
     >
       <ForgeBackdrop />
       {header}
-      <ViewTransition
-        enter={{ "forge-down": "forge-in-up", "forge-up": "forge-in-down", default: "none" }}
-        exit={{ "forge-down": "forge-out-up", "forge-up": "forge-out-down", default: "none" }}
-        default="none"
-      >
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
-          {isEmpty ? (
-            /* Die Schmiede vor dem ersten Funken (KAN-50): die Bänder der
-               Leer-Grammatik statt der vollen Landing. Oben das Motiv der
-               Fläche — dieselbe Sternglyphe wie im Himmel, aber in Rosé, der
-               Lichtfarbe dieser Subpage: der Funke, aus dem ein Stern wird.
-               Nie das Maskottchen. Der Satz nennt die warme Esse, nicht den
-               Mangel; die Überschrift „Willkommen in der Sternschmiede" samt
-               Erklärabsatz ist für den leeren Zustand zu lang, und das „Warum"
-               lebt ohnehin im Info-Overlay hinter dem (i).
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
+        {isEmpty ? (
+          /* Die Schmiede vor dem ersten Funken (KAN-50): die Bänder der
+             Leer-Grammatik statt der vollen Landing. Oben das Motiv der
+             Fläche — dieselbe Sternglyphe wie im Himmel, aber in Rosé, der
+             Lichtfarbe dieser Subpage: der Funke, aus dem ein Stern wird.
+             Nie das Maskottchen. Der Satz nennt die warme Esse, nicht den
+             Mangel; die Überschrift „Willkommen in der Sternschmiede" samt
+             Erklärabsatz ist für den leeren Zustand zu lang, und das „Warum"
+             lebt ohnehin im Info-Overlay hinter dem (i).
 
-               Weg fällt auch die Zeile für den eigenen Funken: der leere
-               Zustand stellt genau eine Frage, und beantwortet ist sie am Ende
-               des Schmiedens, wo dieselbe Zeile wieder steht. */
-            <EmptyState
-              motiv={
-                /* `fill` steht ausgeschrieben, obwohl die Schmiede-Zone
-                   `--primary` ohnehin auf `--celebrate` legt: den Zonen-Marker
-                   setzt `ZoneTheme` erst nach der Hydration. Ohne die Angabe
-                   erschiene der Funke im ersten Frame gold. */
-                <StarGlyph
-                  sizeClass="size-16"
-                  glow={12}
-                  twinkle={!reduced}
-                  fill="var(--celebrate)"
-                />
-              }
-              satz="Die Esse ist warm."
-              nachsatz="Ein Funke ist ein kleines, risikofreies Experiment. Schlag den ersten."
-              cta={footActions}
-            />
-          ) : (
-            <>
-              <div className="flex flex-col items-center gap-3 text-center">
-                <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                  Willkommen in der Sternschmiede
-                </h1>
-                <p className="text-base leading-relaxed text-muted-foreground">
-                  Hier schlägst du Funken — kleine, risikofreie Experimente, mit
-                  denen du Neues (oder längst Vergessenes) ausprobierst. Aus
-                  manchem Funken wird ein neuer Stern.
+             Weg fällt auch die Zeile für den eigenen Funken: der leere
+             Zustand stellt genau eine Frage, und beantwortet ist sie am Ende
+             des Schmiedens, wo dieselbe Zeile wieder steht. */
+          <EmptyState
+            motiv={
+              /* `fill` steht ausgeschrieben, obwohl die Schmiede-Zone
+                 `--primary` ohnehin auf `--celebrate` legt: den Zonen-Marker
+                 setzt `ZoneTheme` erst nach der Hydration. Ohne die Angabe
+                 erschiene der Funke im ersten Frame gold. */
+              <StarGlyph
+                sizeClass="size-16"
+                glow={12}
+                twinkle={!reduced}
+                fill="var(--celebrate)"
+              />
+            }
+            satz="Die Esse ist warm."
+            nachsatz="Ein Funke ist ein kleines, risikofreies Experiment. Schlag den ersten."
+            cta={footActions}
+          />
+        ) : (
+          <>
+            <div className="flex flex-col items-center gap-3 text-center">
+              <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+                Willkommen in der Sternschmiede
+              </h1>
+              <p className="text-base leading-relaxed text-muted-foreground">
+                Hier schlägst du Funken — kleine, risikofreie Experimente, mit
+                denen du Neues (oder längst Vergessenes) ausprobierst. Aus
+                manchem Funken wird ein neuer Stern.
+              </p>
+              {!hasSterne && (
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Du hast noch keine Sterne bestätigt — kein Problem, ein Funke
+                  kann trotzdem der Anfang sein.
                 </p>
-                {!hasSterne && (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Du hast noch keine Sterne bestätigt — kein Problem, ein Funke
-                    kann trotzdem der Anfang sein.
-                  </p>
-                )}
-              </div>
-
-              {/* Offene Funken als schwebende Konstellation über der Esse. */}
-              {openBets.length > 0 && (
-                <FunkenSky
-                  funken={openBets}
-                  reflectHref={(id) => `/me/wants/reflect/${id}`}
-                  onDelete={deleteBet}
-                />
               )}
+            </div>
 
-              {/* „Schon gegriffen" — leise Hairline-Zeilen (kein Karten-Kasten). */}
-              {triedBets.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <SectionLabel>Schon gegriffen</SectionLabel>
-                  {triedBets.map((bet) => (
-                    <div
-                      key={bet.id}
-                      className="flex items-start gap-2 rounded-lg border border-border/60 px-3 py-2"
-                    >
-                      <Check className="mt-0.5 size-4 shrink-0 text-primary" />
-                      <span className="flex-1 text-sm leading-relaxed text-muted-foreground">
-                        {bet.text}
-                      </span>
-                      {bet.journalEntryId && (
-                        <Link
-                          href="/journal"
-                          className="shrink-0 text-xs font-medium text-primary underline-offset-4 hover:underline"
-                        >
-                          Reflexion
-                        </Link>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+            {/* Offene Funken als schwebende Konstellation über der Esse. */}
+            {openBets.length > 0 && (
+              <FunkenSky
+                funken={openBets}
+                reflectHref={(id) => `/me/wants/reflect/${id}`}
+                onDelete={deleteBet}
+              />
+            )}
 
-              {/* Eigenen Funken hinzufügen — sitzt unter der Konstellation. */}
-              <div className="flex items-start gap-2">
-                <Input
-                  value={newBet}
-                  onChange={(e) => setNewBet(e.target.value)}
-                  placeholder="Eigener Funke, z. B. „Einmal zum Bouldern gehen“"
-                  maxLength={300}
-                  aria-label="Eigenen Funken hinzufügen"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addBet();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                  aria-label="Funken hinzufügen"
-                  disabled={!newBet.trim()}
-                  onClick={addBet}
-                >
-                  <Plus className="size-4" />
-                </Button>
+            {/* „Schon gegriffen" — leise Hairline-Zeilen (kein Karten-Kasten). */}
+            {triedBets.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <SectionLabel>Schon gegriffen</SectionLabel>
+                {triedBets.map((bet) => (
+                  <div
+                    key={bet.id}
+                    className="flex items-start gap-2 rounded-lg border border-border/60 px-3 py-2"
+                  >
+                    <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+                    <span className="flex-1 text-sm leading-relaxed text-muted-foreground">
+                      {bet.text}
+                    </span>
+                    {bet.journalEntryId && (
+                      <Link
+                        href="/journal"
+                        className="shrink-0 text-xs font-medium text-primary underline-offset-4 hover:underline"
+                      >
+                        Reflexion
+                      </Link>
+                    )}
+                  </div>
+                ))}
               </div>
+            )}
 
-              <FormError message={betError} />
-              <FormError message={error} />
+            {/* Eigenen Funken hinzufügen — sitzt unter der Konstellation. */}
+            <div className="flex items-start gap-2">
+              <Input
+                value={newBet}
+                onChange={(e) => setNewBet(e.target.value)}
+                placeholder="Eigener Funke, z. B. „Einmal zum Bouldern gehen“"
+                maxLength={300}
+                aria-label="Eigenen Funken hinzufügen"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addBet();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                aria-label="Funken hinzufügen"
+                disabled={!newBet.trim()}
+                onClick={addBet}
+              >
+                <Plus className="size-4" />
+              </Button>
+            </div>
 
-              {/* Der Fuß der Spalte. `mt-auto` schluckt die Restfläche, sodass
-                  die Reihe an der Unterkante steht — bei einem Funken wie bei
-                  sechs an derselben Stelle, an der sie der leere Zustand zeigt.
-                  Ersetzt den früheren `flex-1`-Spacer, der nur die Ghost-Zeile
-                  mittig ins Leere setzte. */}
-              <div className="mt-auto grid gap-2">{footActions}</div>
-            </>
-          )}
-        </div>
-      </ViewTransition>
+            <FormError message={betError} />
+            <FormError message={error} />
+
+            {/* Der Fuß der Spalte. `mt-auto` schluckt die Restfläche, sodass
+                die Reihe an der Unterkante steht — bei einem Funken wie bei
+                sechs an derselben Stelle, an der sie der leere Zustand zeigt.
+                Ersetzt den früheren `flex-1`-Spacer, der nur die Ghost-Zeile
+                mittig ins Leere setzte. */}
+            <div className="mt-auto grid gap-2">{footActions}</div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

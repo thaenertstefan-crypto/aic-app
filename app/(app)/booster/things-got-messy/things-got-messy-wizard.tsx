@@ -182,7 +182,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
     return (
       <div className="flex min-h-svh flex-col">
         <SubPageHeader backHref="/booster" title={PAGE_TITLES.thingsGotMessy} />
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 animate-in fade-in duration-500">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 einblenden">
           <Mascot expression="curious" size="md" gazeX={0} />
           <p className="text-center text-base text-muted-foreground">
             Ich schau mir das kurz an …
@@ -203,7 +203,7 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
     const { entryId } = state;
     return (
       <div className="flex min-h-svh flex-col items-center px-4 py-10">
-        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 text-center einblenden">
           <CompletionCelebration />
 
           <div className="space-y-2">
@@ -414,12 +414,11 @@ export function ThingsGotMessyWizard({ introSeen }: { introSeen: boolean }) {
           ) : undefined
         }
       />
-      {/* Kein slide-in-from-bottom-4 auf diesem Wrapper: ModuleIcon misst seinen
-          Rect beim Mount, also am ANFANG einer eventuellen Slide-Animation —
-          die 16px-Start-Offset + 500ms-Bewegung würden dem Zoom-Klon ein
-          Ziel melden, das das echte Icon danach noch verlässt (Versatz beim
-          Übergeben). Fade allein hat keine Bewegung, also keine Diskrepanz. */}
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in duration-500">
+      {/* Reine Opacity ist hier nicht nur die Grammatik (KAN-53), sondern
+          Bedingung — ModuleIcon misst seinen Rect beim Mount. Warum ein Slide
+          die Landung des Zoom-Klons verfehlen ließe, steht einmal im Kopf von
+          components/booster/booster-zoom.tsx. */}
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 einblenden">
         {/* Begleiter + Einstieg. Steht vor dem Entwurfs-Hinweis: der Zoom-Klon
             fliegt auf einen vorausberechneten Landeplatz (booster-zoom.tsx →
             LANDING_Y). Stünde der Banner darüber, säße das Icon bei vorhandenem

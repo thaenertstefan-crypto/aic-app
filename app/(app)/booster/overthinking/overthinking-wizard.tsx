@@ -438,7 +438,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
             <CountdownCircle duration={5} onComplete={() => setCountdownDone(true)} />
 
             {countdownDone && (
-              <p className="text-base text-muted-foreground animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <p className="text-base text-muted-foreground einblenden">
                 Gut gemacht. Das Gedankenkarussell ist kurz gestoppt — nutzen wir diesen Moment.
               </p>
             )}
@@ -477,7 +477,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="space-y-3 einblenden">
                 <Label htmlFor={`step-${step}`} className="text-base font-medium leading-relaxed">
                   {label}
                 </Label>
@@ -524,7 +524,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
         }
 
         return (
-          <div className="flex w-full flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="flex w-full flex-col gap-6 einblenden">
             <div className="space-y-2">
               <Label htmlFor="what-if-wrong" className="text-base font-medium leading-relaxed">
                 {CHALLENGE_INTRO}
@@ -772,7 +772,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
           )}
           <div
             key={step}
-            className="flex flex-1 flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out"
+            className="flex flex-1 flex-col items-center justify-center einblenden"
           >
             {renderStepContent()}
           </div>

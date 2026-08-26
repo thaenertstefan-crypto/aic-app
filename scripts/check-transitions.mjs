@@ -53,12 +53,47 @@ for (const file of files) {
   }
 }
 
-if (violations.length === 0) {
+// ── Regel 2: die Bewegungs-Grammatik (KAN-30/KAN-53) ────────────────────
+// Ein Übergang ist entweder ein FLUG (ein Gegenstand überlebt die Reise, das
+// inszeniert ein Overlay) oder ein EINBLENDEN: ~200 ms reine Opacity, kein
+// Slide. Ein Slide behauptet eine Richtung, die es zwischen zwei Nav-Tabs oder
+// zwei Bühnen einer Übung nicht gibt.
+//
+// Geprüft wird der Routenbaum plus die geteilten Übungs-Bausteine. Das ist
+// bewusst NICHT die ganze App: unter components/ liegen auch Widgets, die sich
+// an Ort und Stelle aufdecken (eine Disclosure klappt auf, ein Wort tauscht,
+// der Willkommens-Stagger nach dem Login) — das sind keine Übergänge von A
+// nach B, und die Grammatik regiert sie nicht. Dieses Gate fängt also den
+// Rückfall dort, wo Seiten und Bühnen tatsächlich geschrieben werden; ein
+// Slide, den jemand in eine Widget-Datei schreibt, bleibt Sache des Reviews.
+const GRAMMAR_DIRS = ["app", join("components", "recipes")];
+// Der Slide, den die Grammatik abgeschafft hat — in jeder Distanz und Richtung.
+const SLIDE_UTILITY = /(?:^|[\s"'`{:])(slide-in-from-[^\s"'`}]*)/g;
+
+const grammarFiles = GRAMMAR_DIRS.flatMap((d) => walk(join(ROOT, d)));
+const slides = [];
+
+for (const file of grammarFiles) {
+  const src = readFileSync(file, "utf8");
+  for (const m of src.matchAll(SLIDE_UTILITY)) {
+    slides.push({
+      rel: relative(ROOT, file).replace(/\\/g, "/"),
+      line: lineOf(src, m.index),
+      util: m[1],
+    });
+  }
+}
+
+if (violations.length === 0 && slides.length === 0) {
   console.log(`PASS  Motion-Gate: keine transition-[…transform…]-Footguns in ${files.length} .tsx-Dateien`);
+  console.log(`PASS  Bewegungs-Grammatik: kein Slide auf Seiten und Bühnen in ${grammarFiles.length} .tsx-Dateien`);
   process.exit(0);
 }
 
 for (const v of violations) {
   console.log(`FAIL  ${v.rel}:${v.line}  ${v.transition} neben \`${v.util}\` — Transition muss die bewegte Property (translate/scale/rotate) nennen, nicht \`transform\``);
+}
+for (const s of slides) {
+  console.log(`FAIL  ${s.rel}:${s.line}  \`${s.util}\` — Seiten und Bühnen blenden ein (Klasse \`einblenden\`), sie sliden nicht. Trägt ein Gegenstand die Reise mit, ist es ein Flug und gehört in ein Overlay.`);
 }
 process.exit(1);

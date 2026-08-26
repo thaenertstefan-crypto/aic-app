@@ -183,7 +183,7 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
   if (phase === "done") {
     return (
       <div className="flex min-h-svh flex-col items-center px-4 py-10">
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6 text-center einblenden">
           <Mascot expression="smile" size="md" />
 
           <div className="space-y-2">
@@ -251,7 +251,7 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
     return (
       <div className="flex min-h-svh flex-col">
         {header}
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-4 py-6 animate-in fade-in duration-500">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 px-4 py-6 einblenden">
           <p className="flex items-center justify-center gap-1.5 text-center text-sm text-muted-foreground">
             <Lock className="size-3.5 shrink-0" />
             Niemand liest mit.
@@ -322,7 +322,7 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
     return (
       <div className="flex min-h-svh flex-col">
         {header}
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-8 px-4 py-6 text-center animate-in fade-in duration-500">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-8 px-4 py-6 text-center einblenden">
           <p className="text-base leading-relaxed text-muted-foreground">
             Geh los — draußen oder im Kreis um den Küchentisch. Und sprich
             aus, was raus muss, wo dich niemand hört.
@@ -339,6 +339,10 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
 
               <Card className="w-full">
                 <CardContent className="pt-(--card-spacing)">
+                  {/* Kein `einblenden`: die Bühne wechselt hier nicht, sie
+                      atmet. Der Impuls tauscht sich still aus, während man
+                      weitergeht — 700 ms, langsamer als jeder Übergang, damit
+                      der Wechsel nicht nach „weiter" aussieht. */}
                   <p
                     key={prompt}
                     className="text-base leading-relaxed text-foreground animate-in fade-in duration-700"
@@ -382,7 +386,7 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
     return (
       <div className="flex min-h-svh flex-col">
         {header}
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6 px-4 py-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6 px-4 py-6 text-center einblenden">
           <Mascot expression="happy" size="md" />
           <div className="space-y-2">
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
@@ -424,12 +428,11 @@ export function ShadowWizard({ introSeen }: { introSeen: boolean }) {
   return (
     <div className="flex min-h-svh flex-col">
       {header}
-      {/* Kein slide-in-from-bottom-4 auf diesem Wrapper: ModuleIcon misst seinen
-          Rect beim Mount, also am ANFANG einer eventuellen Slide-Animation —
-          die 16px-Start-Offset + 500ms-Bewegung würden dem Zoom-Klon ein
-          Ziel melden, das das echte Icon danach noch verlässt (Versatz beim
-          Übergeben). Fade allein hat keine Bewegung, also keine Diskrepanz. */}
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 animate-in fade-in duration-500">
+      {/* Reine Opacity ist hier nicht nur die Grammatik (KAN-53), sondern
+          Bedingung — ModuleIcon misst seinen Rect beim Mount. Warum ein Slide
+          die Landung des Zoom-Klons verfehlen ließe, steht einmal im Kopf von
+          components/booster/booster-zoom.tsx. */}
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 einblenden">
         {/* Signatur vor dem Entwurfs-Hinweis: der Zoom-Klon fliegt auf einen
             vorausberechneten Landeplatz (booster-zoom.tsx → LANDING_Y). Stünde
             der Banner darüber, säße das Icon bei vorhandenem Entwurf um

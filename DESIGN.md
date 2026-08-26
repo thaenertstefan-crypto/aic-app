@@ -242,6 +242,18 @@ A procedural SVG/CSS blob (`components/brand/mascot.tsx`), **not an image** — 
 
 **Eine Fläche darf mehrere Gründe haben, leer zu sein, und dann verschieden sprechen.** Die Fläche im Werden bekommt die Grammatik; eine **Abfrage ohne Treffer** (ein Filter, eine Suche) bekommt sie nicht — dort war das Vorhaben „ich schaue nach“, nicht „ich fange an“, und die Antwort ist eine ruhige Zeile ohne Motiv, ohne CTA, ohne Gold.
 
+**The Motion-Grammar Rule.** Bewegung in dieser App ist **zweierlei, mehr nicht** — und was davon gilt, entscheidet eine einzige Frage.
+
+1. **Der Übergang** trägt von A nach B und dauert, was das Design sagt. Die Prüffrage: *Überlebt ein Gegenstand die Reise?*
+   - **Ja → Flug.** Ein Icon, ein Stern, ein Funke reist mit — und dann **in beide Richtungen**: ein Hinflug ohne Rückflug behauptet eine Beziehung, die der Rückweg widerruft. Flüge inszenieren sich selbst über ein Overlay im gemeinsamen Layout, denn die iOS-Standalone-PWA rendert die View-Transitions-API nicht.
+   - **Nein → Einblenden.** ~200 ms reine Opacity (`--einblenden-dur`, Klasse `einblenden`). **Kein Slide** — er behauptete eine Richtung, die es zwischen zwei Nav-Tabs nicht gibt. **Kein Crossfade** — der müsste die alte Seite über den Wechsel halten und wäre der volle Aufwand eines Flugs für einen Übergang, der gerade *nicht* wichtig sein soll.
+   - **Routenwechsel und Bühnenwechsel sind dasselbe Ereignis.** Route-oder-Bühne ist eine Implementierungs-Tatsache; für den Nutzer nicht. Also sehen sie gleich aus. Eine dritte Antwort gibt es nicht, eine Sonderfall-Liste auch nicht.
+2. **Der Wartescreen** überbrückt eine Zeit, die ein Dritter bestimmt (KI, Netz). Genau **einer** in der ganzen App, und er zeigt **Leben, nie Fortschritt**: ein Balken über einer KI-Latenz lügt zwangsläufig. Hinter ihm liegt der Hintergrund seiner Zone, damit die Esse der Sternschmiede überlebt, ohne dass die Regel weich wird.
+
+**Das Gerüst ist kein dritter Zustand**, sondern *die Seite in ihrem ersten Frame*: der Rahmen steht, der Inhalt fehlt. Jede datenabhängige Route hat ihr eigenes `loading.tsx` mit dem Skelett **ihrer selbst** — ohne das wartet der Client auf die Serverantwort, bevor überhaupt etwas passiert, und der Übergang hätte nichts, in das er einblenden könnte. Der Wartescreen ist etwas anderes: dort gibt es keine Seite, dort hängt man an einem Dritten.
+
+**Bei `prefers-reduced-motion`:** Der Übergang fällt weg — er *ist* Bewegung. Der Wartescreen bleibt, ohne Animation — er ist Information, und die bestellt man nicht mit der Bewegung ab.
+
 ## 6. Do's and Don'ts
 
 ### Do:

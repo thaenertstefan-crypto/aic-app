@@ -114,6 +114,18 @@ verbindlichen Quellen; hier stehen nur die Regeln, die sich am Code festmachen l
   fertig.
 - Farben kommen aus den Tokens in `app/globals.css` (`:root`). Hartkodierte Hex-Werte in
   Komponenten umgehen das Kontrast-Gate und sind ein Befund.
+- **Ein Übergang ist ein Flug oder ein Einblenden — nichts drittes.** Die Prüffrage: *überlebt ein
+  Gegenstand die Reise?* Ja → Flug (Overlay im gemeinsamen Layout, in beide Richtungen; die
+  iOS-PWA rendert die View-Transitions-API nicht). Nein → Einblenden: die Klasse `einblenden` auf
+  einer Bühne, die beim Wechsel ohnehin neu montiert wird, sonst `components/layout/einblenden.tsx`.
+  Ein `slide-in-from-*` auf einer Seite oder Bühne ist ein Befund. `check-transitions.mjs` fängt
+  ihn im Routenbaum und in `components/recipes/`; Widgets, die sich an Ort und Stelle aufdecken
+  (Disclosure, tauschender Text, der Willkommens-Stagger), sind keine Übergänge und stehen
+  außerhalb — dort entscheidet das Review. Welcher Routenwechsel einem Flug gehört, steht in
+  `lib/motion/uebergang.ts`; die ganze Regel in DESIGN.md, „The Motion-Grammar Rule“.
+- **Jede datenabhängige Route hat ein `loading.tsx`** mit dem Skelett *ihrer selbst*, nicht einem
+  generischen. Ohne es committet Next die Navigation erst nach der Serverantwort — der Tap geht
+  gefühlt ins Leere, und der Übergang hat nichts, in das er einblenden könnte.
 - **Tailwind v4:** `translate-*`, `scale-*` und `rotate-*` kompilieren zu *eigenen*
   CSS-Properties, nicht zu `transform`. Wer sie animiert, aber `transform` in `transition-[…]`
   listet, bekommt einen Sprung statt einer Bewegung. `scripts/check-transitions.mjs` fängt genau

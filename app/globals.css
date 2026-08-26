@@ -779,18 +779,61 @@ body[data-zone="schmiede"] {
   }
 }
 
-/* ── Sternschmiede-Übergang: verbundener Ganzseiten-Scroll ────────────
-   forge-down (vorwärts): alte + neue Seite scrollen als EINE Fläche nach
-   oben — alte raus über die Oberkante, neue von unten herein. Kein Fade
-   (das ergäbe eine Überblendung), identische Kurve/Dauer/Start für Header
-   UND Inhalt → wirkt wie ein durchgehender Scroll. forge-up: gespiegelt.
-   Reisestrecke in lvh, damit der kurze Header und der hohe Inhalt exakt
-   um dieselbe absolute Distanz wandern (translateY(%) wäre je Snapshot
-   relativ zu dessen Höhe und würde die beiden entkoppeln).
-   Tempo an EINER Stelle justieren: --forge-dur / --forge-ease. */
+/* ── Einblenden: der eine generische Übergang ─────────────────────────
+   Die Bewegungs-Grammatik (KAN-30) kennt genau zwei Übergänge: den FLUG, wenn
+   ein Gegenstand die Reise überlebt, und sonst dieses EINBLENDEN — ~200 ms
+   reine Opacity, kein Slide, kein Crossfade. Ein Slide behauptete eine
+   Richtung, die es zwischen zwei Nav-Tabs nicht gibt; ein echter Crossfade
+   müsste die alte Seite über den Routenwechsel halten und wäre auf iOS (ohne
+   View-Transitions-API) der volle Aufwand eines Flugs für einen Übergang, der
+   gerade NICHT wichtig sein soll.
+
+   Routenwechsel und Bühnenwechsel laufen bewusst über dieselbe Regel: für den
+   Nutzer ist es dasselbe Ereignis.
+
+   Zwei Takte mit identischen Keyframes: `data-einblenden` kippt bei jedem
+   Wechsel zwischen "a" und "b". Damit wechselt der `animation-name`, und die
+   Animation startet neu — ohne dass ein Element neu montiert werden muss (ein
+   `key` risse bei einem Routenwechsel die verschachtelten Layouts mit und
+   damit das Overlay eines laufenden Flugs).
+
+   Wann der Takt kippt, steht in components/layout/einblenden.tsx; welcher
+   Routenwechsel stattdessen einem Flug gehört, in lib/motion/uebergang.ts. */
 
 :root {
-  --forge-dur: 1200ms;      /* Rückweg (Schmiede → Wants) via View-Transitions */
+  --einblenden-dur: 200ms;
+}
+
+[data-einblenden="a"] {
+  animation: einblenden-a var(--einblenden-dur) ease-out both;
+}
+[data-einblenden="b"] {
+  animation: einblenden-b var(--einblenden-dur) ease-out both;
+}
+
+/* Dieselbe Bewegung für alles, was beim Wechsel ohnehin neu montiert wird —
+   die Bühnen der Übungen. Ein frisches DOM-Element startet seine Animation von
+   selbst, es braucht keinen Taktwechsel. Zwei Anhängepunkte, EINE Bewegung:
+   Dauer, Kurve und Keyframe stehen genau einmal. */
+.einblenden {
+  animation: einblenden-a var(--einblenden-dur) ease-out both;
+}
+
+@keyframes einblenden-a { from { opacity: 0; } }
+@keyframes einblenden-b { from { opacity: 0; } }
+
+/* „Bewegung reduzieren": der Übergang fällt weg — er IST Bewegung. Der
+   Wartescreen bleibt (ohne Animation), denn er ist Information, und die
+   bestellt man nicht mit der Bewegung ab. */
+@media (prefers-reduced-motion: reduce) {
+  [data-einblenden],
+  .einblenden {
+    animation: none;
+  }
+}
+
+:root {
+  /* Kurve des Sternschmiede-Sturzes (warp-transition.tsx / .warp-* unten). */
   --forge-ease: cubic-bezier(0.45, 0.05, 0.55, 0.95);
   /* Abdunkel-Wash des Wants-Fokus-Himmels (focus-sky.tsx): ein Schatten nach
      oben, keine Palette-Farbe. Bewusst als benannter Token statt Roh-rgba. */
@@ -803,16 +846,6 @@ body[data-zone="schmiede"] {
     transparent 72%
   );
 }
-
-::view-transition-old(.forge-out-up)   { animation: var(--forge-dur) var(--forge-ease) both forge-scroll-up-out; }
-::view-transition-new(.forge-in-up)    { animation: var(--forge-dur) var(--forge-ease) both forge-scroll-up-in; }
-::view-transition-old(.forge-out-down) { animation: var(--forge-dur) var(--forge-ease) both forge-scroll-down-out; }
-::view-transition-new(.forge-in-down)  { animation: var(--forge-dur) var(--forge-ease) both forge-scroll-down-in; }
-
-@keyframes forge-scroll-up-out   { to   { transform: translateY(-100lvh); } }
-@keyframes forge-scroll-up-in    { from { transform: translateY(100lvh); } }
-@keyframes forge-scroll-down-out { to   { transform: translateY(100lvh); } }
-@keyframes forge-scroll-down-in  { from { transform: translateY(-100lvh); } }
 
 /* ── „Der Sturz": Warp-Übergang Wants → Sternschmiede ─────────────────
    Ein Overlay im gemeinsamen me/wants-Layout überlebt die Navigation (Layouts
@@ -1031,15 +1064,6 @@ body[data-zone="schmiede"] {
   .forge-spark { animation: none !important; }
   .warp-page-below,
   .warp-page-above { transform: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(*),
-  ::view-transition-new(*),
-  ::view-transition-group(*) {
-    animation-duration: 0s !important;
-    animation-delay: 0s !important;
-  }
 }
 
 /* Kopfwetter-Hub → Sub-Page: Kamera-Push aus dem getippten Icon, dann Reise auf
