@@ -20,7 +20,11 @@ export default function NewJournalEntryPage() {
   );
 
   return (
-    <div className="flex min-h-svh flex-col">
+    // `flex-1`, nicht `min-h-svh`: die Höhe kommt von `main` und ist damit
+    // schon um Safe-Area und Bottom-Nav gekürzt (KAN-64). Sonst steht
+    // „Eintrag speichern" unter der Kante einer Seite, die nichts zu scrollen
+    // hat.
+    <div className="flex flex-1 flex-col">
       <SubPageHeader backHref="/journal" title="Neuer Eintrag" />
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
         <form action={formAction} className="flex flex-1 flex-col gap-5">

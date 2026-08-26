@@ -21,6 +21,13 @@
  * statt Textfragmente: die deutsche Copy ändert sich in diesem Projekt
  * ständig, Text-Marker würden bei jeder Copy-Runde brechen.
  *
+ * Neben den Markern gibt es `noScroll` — die Zusicherung, dass eine Route in
+ * die Fläche zwischen Safe-Area und Bottom-Nav passt und das Dokument gar
+ * nicht erst höher wird als der Viewport. Ein Marker kann das nicht sagen:
+ * Playwrights `isVisible()` heißt „im DOM und mit Fläche", nicht „im Bild" —
+ * ein Button unter der Kante gilt dort als sichtbar. Genau daran ist KAN-64
+ * vorbeigelaufen.
+ *
  * WICHTIG — was dieser Test NICHT abdeckt: WebKit auf Windows ist nicht
  * iOS Safari. backdrop-filter-Compositing, lvh/svh im Standalone-PWA-Modus
  * und das Fehlen der View-Transitions-API in der iOS-PWA lassen sich hier
@@ -46,7 +53,11 @@ const ROOT = path.resolve(HERE, "..", "..");
  *   rot, auch wenn sie sauber gerendert hat.
  * `reject` — Marker, der NICHT sichtbar sein darf (typisch: die Erst-Intro-
  *   Sequenz, die den eigentlichen Inhalt verdeckt).
- * Ohne `expect` bleibt es beim reinen Smoke-Test (Status + Console-Fehler).
+ * `noScroll` — das Dokument darf nicht höher werden als der Viewport. Nur für
+ *   Routen, die wirklich nichts zu scrollen haben; eine Übung mit langem
+ *   Inhalt scrollt zu Recht.
+ * Ohne eine dieser drei Angaben bleibt es beim reinen Smoke-Test (Status +
+ * Console-Fehler).
  *
  * Die Marker setzen einen bestückten Account voraus: `/me/wants` zeigt die
  * Sternenkarte nur mit Wants, `/me/wants/schmiede` den Funken-Himmel nur mit
@@ -82,6 +93,9 @@ const DEFAULT_ROUTES = [
   { path: "/booster/shadow" },
   { path: "/booster/things-got-messy" },
   { path: "/journal" },
+  // Titel, Textarea und ein Button — die Seite hat nichts zu scrollen, und
+  // „Eintrag speichern" muss ohne Scrollen erreichbar sein (KAN-64).
+  { path: "/journal/new", noScroll: true },
   { path: "/profile" },
   { path: "/settings" },
 ];
@@ -167,12 +181,19 @@ async function main() {
     return page.locator(`[data-e2e="${marker}"]`).first().isVisible();
   }
 
-  async function visit({ path: route, expect, reject }) {
+  /** Wie viele px das Dokument höher ist als der Viewport (0 = kein Scroll). */
+  async function scrollOverflow() {
+    return page.evaluate(
+      () => document.documentElement.scrollHeight - window.innerHeight,
+    );
+  }
+
+  async function visit({ path: route, expect, reject, noScroll }) {
     errors = [];
     const name = route.replace(/^\//, "").replace(/\//g, "_") || "root";
     let status = "ok";
     // null = Route trägt keine Zusicherung, zählt also nicht als abgesichert.
-    let asserted = expect || reject ? true : null;
+    let asserted = expect || reject || noScroll ? true : null;
     try {
       const res = await page.goto(`${base}${route}`, {
         waitUntil: "networkidle",
@@ -190,6 +211,16 @@ async function main() {
       if (status === "ok" && expect && !(await markerVisible(expect))) {
         status = `ZUSTAND: „${expect}" fehlt`;
         asserted = false;
+      }
+      if (status === "ok" && noScroll) {
+        // 1 px Toleranz gegen subpixel-Rundung an den Rahmen. Die Zahl ist die
+        // Untergrenze, nicht das Maß: `env(safe-area-inset-*)` ist in diesem
+        // WebKit 0, am Notch kommt der obere Inset noch obendrauf.
+        const overflow = await scrollOverflow();
+        if (overflow > 1) {
+          status = `ZUSTAND: Seite ist ${overflow}px zu hoch und scrollt`;
+          asserted = false;
+        }
       }
       // Zwei Aufnahmen pro Route. Der Viewport-Shot zeigt, was auf dem Gerät
       // wirklich zu sehen ist — bei fullPage wandert die fixe Bottom-Nav ans
