@@ -27,11 +27,18 @@ export default function BoosterPage() {
         {/* Die Karte läuft bis an den Schirmrand (`-mx-4`) — eine Wetterkarte
             mit Seitenrand wäre wieder ein Kasten auf der Seite.
 
+            **Kein `overflow-x-clip` hier.** Das Feld reicht bewusst über die
+            Oberkante dieses Kastens hinaus, hinter den Seitenkopf. Ein Clip auf
+            der einen Achse schneidet auf iOS auch die andere ab — und das Feld
+            begann dann sichtbar erst hier, mit einer harten Kante quer über die
+            Seite. Waagerecht clippt ohnehin schon `main`; das Feld selbst hält
+            seine Ränder mit eigenem `overflow-hidden`.
+
             `Druckfeld` wird hier gerendert und hineingereicht, statt in
             `BoosterCells` importiert zu werden: die Zellen sind eine
             Client-Komponente, das Feld ist eine spürbare Rechnung. So läuft sie
             auf dem Server und nicht noch einmal im Browser. */}
-        <div className="relative -mx-4 mt-6 overflow-x-clip">
+        <div className="relative -mx-4 mt-6">
           <BoosterCells feld={<Druckfeld />} />
         </div>
       </div>

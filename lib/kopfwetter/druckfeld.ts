@@ -26,34 +26,94 @@ import {
   zeilenSeite,
 } from "./buehne.ts";
 
-type Zentrum = { x: number; y: number; amp: number; sigma: number };
+type Zentrum = {
+  x: number;
+  y: number;
+  amp: number;
+  /** Lange Halbachse der Senke. */
+  lang: number;
+  /** Kurze Halbachse. Die beiden zusammen machen aus dem Kreis eine Ellipse —
+   *  ein rundes Tief liest als Zielscheibe, ein verzogenes als Wetter. */
+  quer: number;
+  /** Drehung der langen Achse, im Bogenmaß. */
+  dreh: number;
+};
 
-/** Die fünf Tiefs. Ihre Augen sind die Motiv-Mitten — dieselbe Quelle, aus der
- *  `zeilenAnker` die Zeilen setzt. Leicht verschiedene Amplituden und Radien,
- *  damit das Feld nicht wie ein Muster aus fünf Stempeln liest. */
 const AMP = [1.0, 0.92, 0.96, 0.88, 1.02];
-const SIGMA = [80, 74, 76, 72, 82];
+
+/** Radius der Senken. Leicht verschieden, damit das Feld nicht wie ein Muster
+ *  aus fünf Stempeln liest. */
+const SIGMA = [88, 81, 84, 79, 90];
+
+/** Wie stark die Senke aus dem Kreis gezogen wird: lange Halbachse mal,
+ *  kurze geteilt. Die Fläche bleibt dieselbe, nur die Form ändert sich. */
+const STRECKUNG = 1.8;
+
+/**
+ * Wohin die langen Achsen zeigen, in Grad.
+ *
+ * Nicht beliebig gewählt: die Zeilen zickzacken im Winkel von rund 29° über die
+ * Bühne, jedes Tief hat seinen nächsten Nachbarn also in dieser Richtung.
+ * **Quer** dazu gestreckt (~119°) hält die Senken auseinander — jedes Motiv
+ * behält sein eigenes, geschlossenes Tief. Längs gestreckt liefen sie
+ * ineinander und zwei der fünf Booster säßen auf einem gemeinsamen Trog statt
+ * auf eigenem Wetter. Die Streuung um 119° herum nimmt dem Feld die
+ * Gleichförmigkeit.
+ */
+const DREHUNG = [105, 119, 133, 112, 126];
 
 export const ZENTREN: readonly Zentrum[] = ZEILEN_Y.map((y, i) => ({
   x: zeilenSeite(i) === "left" ? AUGE_CX : BUEHNE_BREITE - AUGE_CX,
   y: FELD_KOPF + y,
   amp: AMP[i],
-  sigma: SIGMA[i],
+  lang: SIGMA[i] * STRECKUNG,
+  quer: SIGMA[i] / STRECKUNG,
+  dreh: (DREHUNG[i] * Math.PI) / 180,
 }));
 
+/** Amplitude und Wellenzahlen der Grundwelle. Sehr langwellig — sie soll das
+ *  Blatt wölben, nicht mustern. */
+const WELLE = 0.1;
+const WELLE_X = 2.4;
+const WELLE_Y = 5.2;
+
 /**
- * Der Druck an einem Punkt: ein sanfter Grundgradient minus fünf Gauß-Senken.
+ * Das Blatt ohne die Tiefs: ein Gefälle nach unten und nach rechts, dem eine
+ * sehr langwellige Welle die Ebenheit nimmt.
+ *
+ * Eigene Funktion, weil sich nur so prüfen lässt, dass die Welle überhaupt
+ * wirkt — in `druckAn` überlagern die fünf Senken sie überall.
+ */
+export function grundlageAn(x: number, y: number): number {
+  return (
+    0.55 * (y / FELD_H) +
+    0.3 * (x / BUEHNE_BREITE) +
+    WELLE * Math.sin((x / BUEHNE_BREITE) * WELLE_X + (y / FELD_H) * WELLE_Y)
+  );
+}
+
+/**
+ * Der Druck an einem Punkt: eine sanft gewellte Grundlage minus fünf
+ * Gauß-Senken.
  *
  * Der Gradient ist der tragende Teil — er kippt das ganze Blatt, sodass die
  * Konturen quer darüber laufen und aus dem Bild herausführen, statt sich um
- * jedes Zentrum zu schließen.
+ * jedes Zentrum zu schließen. Die Welle darauf nimmt ihm die Ebenheit: ohne sie
+ * laufen die Linien zwischen den Tiefs schnurgerade, und gerade Isobaren gibt
+ * es auf keiner Wetterkarte.
  */
 export function druckAn(x: number, y: number): number {
-  let p = 0.55 * (y / FELD_H) + 0.3 * (x / BUEHNE_BREITE);
+  let p = grundlageAn(x, y);
+
   for (const z of ZENTREN) {
     const dx = x - z.x;
     const dy = y - z.y;
-    p -= z.amp * Math.exp(-(dx * dx + dy * dy) / (2 * z.sigma * z.sigma));
+    // In das gedrehte Achsenkreuz der Ellipse hinein …
+    const u = dx * Math.cos(z.dreh) + dy * Math.sin(z.dreh);
+    const v = -dx * Math.sin(z.dreh) + dy * Math.cos(z.dreh);
+    p -=
+      z.amp *
+      Math.exp(-((u * u) / (2 * z.lang * z.lang) + (v * v) / (2 * z.quer * z.quer)));
   }
   return p;
 }
@@ -220,18 +280,22 @@ function isobareAuf(gitter: Gitter, level: number): string {
     .join("");
 }
 
-/** Von tief (nah an den Augen) nach hoch. Das unterste Level liegt knapp unter
- *  dem Minimum des Feldes und bleibt deshalb leer — die Rampe unten zählt
- *  darum die **gezeichneten** Linien, nicht die konfigurierten. Sonst käme der
- *  kräftigste Strich nie vor. */
-const LEVEL_START = -0.86;
-const LEVEL_SCHRITT = 0.12;
-const LEVEL_ANZAHL = 14;
+/**
+ * Abstand zweier Höhenlinien — der Hebel für die Luft auf dem Blatt.
+ *
+ * Er wirkt gleichmäßig: er nimmt dem ganzen Feld Linien, statt sie nur woanders
+ * hinzuschieben. Die naheliegende Alternative — die Senken breiter machen —
+ * zieht die Ringe nur auf einer Achse auseinander und presst sie auf der
+ * anderen zusammen; ab etwa dem Anderthalbfachen verschmelzen außerdem
+ * benachbarte Tiefs, und ein Booster steht ohne eigenes Wetter da.
+ */
+const LEVEL_SCHRITT = 0.18;
 
 /** Die Enden der Rampe: innen (am Zentrum, starker Druckgradient) kräftig,
- *  außen fast nur noch angedeutet. */
-const STRICH_INNEN = { breite: 1.4, deckung: 0.42 };
-const STRICH_AUSSEN = { breite: 0.9, deckung: 0.14 };
+ *  außen fast nur noch angedeutet. Wenige Linien vertragen mehr Gewicht als
+ *  viele — klar gezeichnet liest als Karte, blass als Textur. */
+const STRICH_INNEN = { breite: 1.5, deckung: 0.48 };
+const STRICH_AUSSEN = { breite: 0.9, deckung: 0.16 };
 
 export type Isobare = {
   /** Der Druckwert dieser Höhenlinie — zugleich ihr stabiler Schlüssel. */
@@ -245,13 +309,31 @@ export type Isobare = {
 /**
  * Die fertigen Höhenlinien, von innen nach außen. Nah am Zentrum kräftiger —
  * ein starker Druckgradient zeichnet sich dichter und dunkler.
+ *
+ * Die Level kommen aus dem tatsächlichen Wertebereich des Feldes, nicht aus
+ * einer gesetzten Reihe: an den Parametern oben zu drehen verschiebt diesen
+ * Bereich, und eine feste Reihe hätte dann Linien, die ins Leere fallen. Das
+ * Raster hängt an der Null, damit die Werte rund bleiben.
  */
 export const ISOBAREN: readonly Isobare[] = (() => {
   const gitter = druckGitter();
 
+  let tiefster = Infinity;
+  let hoechster = -Infinity;
+  for (const reihe of gitter.werte) {
+    for (const wert of reihe) {
+      if (wert < tiefster) tiefster = wert;
+      if (wert > hoechster) hoechster = wert;
+    }
+  }
+
   const gezeichnet: { level: number; d: string }[] = [];
-  for (let i = 0; i < LEVEL_ANZAHL; i++) {
-    const level = Number((LEVEL_START + i * LEVEL_SCHRITT).toFixed(2));
+  for (
+    let k = Math.ceil(tiefster / LEVEL_SCHRITT);
+    k * LEVEL_SCHRITT < hoechster;
+    k++
+  ) {
+    const level = Number((k * LEVEL_SCHRITT).toFixed(3));
     const d = isobareAuf(gitter, level);
     if (d) gezeichnet.push({ level, d });
   }
@@ -268,19 +350,4 @@ export const ISOBAREN: readonly Isobare[] = (() => {
       deckung: misch(STRICH_INNEN.deckung, STRICH_AUSSEN.deckung),
     };
   });
-})();
-
-/** Rasterweite des Gradnetzes (gepunktete Haarlinien). */
-export const GRADNETZ = 62;
-
-/** Die Linien des Gradnetzes als `d` — senkrecht und waagerecht, vom Rand aus. */
-export const GRADNETZ_D = (() => {
-  const teile: string[] = [];
-  for (let x = GRADNETZ; x < BUEHNE_BREITE; x += GRADNETZ) {
-    teile.push(`M${x},0V${FELD_H}`);
-  }
-  for (let y = GRADNETZ; y < FELD_H; y += GRADNETZ) {
-    teile.push(`M0,${y}H${BUEHNE_BREITE}`);
-  }
-  return teile.join("");
 })();

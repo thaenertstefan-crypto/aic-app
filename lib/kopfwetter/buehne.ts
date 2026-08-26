@@ -19,7 +19,17 @@ export const BUEHNE_BREITE = 375;
 
 /** Wie weit das Feld über die Zellen-Bühne hinaus nach oben reicht — hinter den
  *  Seitenkopf. Ohne diesen Vorlauf begänne die Karte erst unter der Frage und
- *  hätte eine sichtbare Oberkante. */
+ *  hätte eine sichtbare Oberkante.
+ *
+ *  Der Wert reicht bei 375 px bis knapp über den Titel: die Karte setzt oberhalb
+ *  des Textes an und ist über die Maske (`.kw-karten-grund`) auf Höhe der Frage
+ *  voll da — der Übergang in den Nachthimmel liegt über dem Text, nicht mitten
+ *  in der Seite.
+ *
+ *  Nach oben ist der Wert **begrenzt**, nicht beliebig: `main` trägt selbst
+ *  `overflow-x-clip`. Ragt das Feld über dessen Oberkante hinaus, steht die
+ *  Kante nur woanders — direkt unter der Statusleiste statt in der Seitenmitte.
+ *  Der Kopf ist rund 200 px hoch; mehr Vorlauf als das kauft nichts. */
 export const FELD_KOPF = 200;
 
 /** Kantenlänge des Motivs im Auge (= `size-16`). */

@@ -30,7 +30,7 @@ export default function BoosterLoading() {
         </div>
       </header>
 
-      <div className="relative -mx-4 mt-6 overflow-x-clip">
+      <div className="relative -mx-4 mt-6">
         <div className="relative" style={{ height: ZELLEN_H }}>
           {[0, 1, 2, 3, 4].map((i) => {
             const links = zeilenSeite(i) === "left";

@@ -1,8 +1,8 @@
 import { BUEHNE_BREITE, FELD_H, FELD_KOPF } from "@/lib/kopfwetter/buehne";
-import { GRADNETZ_D, ISOBAREN } from "@/lib/kopfwetter/druckfeld";
+import { ISOBAREN } from "@/lib/kopfwetter/druckfeld";
 
 /**
- * Die Karte, auf der das Kopfwetter liegt: Kartengrund, Gradnetz und ein
+ * Die Karte, auf der das Kopfwetter liegt: ein Kartengrund und ein
  * durchgehendes Isobaren-Feld (KAN-54). Reine Dekoration, deshalb `aria-hidden`
  * und ohne Zeigerereignisse.
  *
@@ -18,7 +18,8 @@ import { GRADNETZ_D, ISOBAREN } from "@/lib/kopfwetter/druckfeld";
  *    ein Objekt auf dem Schirm statt der Fläche, auf der alles liegt.
  * 3. **Der Kopf liegt schon auf der Karte.** Das Feld reicht `FELD_KOPF` über
  *    seinen Kasten hinaus nach oben hinter Titel und Frage — sonst begänne die
- *    Karte erst unter dem Text und hätte eine Oberkante.
+ *    Karte erst unter dem Text und hätte eine Oberkante. Der Kasten darüber darf
+ *    deshalb **nicht** clippen (siehe `page.tsx`).
  *
  * `preserveAspectRatio="none"`: die viewBox ist die Entwurfsbreite (375). Auf
  * breiteren Schirmen dehnt sich das Feld waagerecht — und die Augen wandern über
@@ -32,23 +33,7 @@ export function Druckfeld() {
       className="pointer-events-none absolute inset-x-0 bottom-0 overflow-hidden"
       style={{ top: -FELD_KOPF }}
     >
-      {/* Kartengrund samt Gradnetz — die Maske des Grundes greift auch auf das
-          Netz, sonst hätten die Haarlinien eine harte Ober- und Unterkante. */}
-      <div className="kw-karten-grund absolute inset-0">
-        <svg
-          viewBox={`0 0 ${BUEHNE_BREITE} ${FELD_H}`}
-          preserveAspectRatio="none"
-          className="size-full"
-        >
-          <path
-            d={GRADNETZ_D}
-            className="kw-gradnetz"
-            strokeWidth="1"
-            strokeDasharray="1.5 5"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-      </div>
+      <div className="kw-karten-grund absolute inset-0" />
 
       <svg
         viewBox={`0 0 ${BUEHNE_BREITE} ${FELD_H}`}

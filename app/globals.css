@@ -705,33 +705,31 @@ body[data-zone="schmiede"] {
   /* Kopfwetter-Hub — der Kartengrund (KAN-54): eine Fläche, aber keine
      Karte-als-Box. Halbdurchlässig, damit die Sterne durchscheinen; Ober- und
      Unterkante lösen sich per Maske in den Nachthimmel auf, statt als Kante zu
-     stehen. Die Maske greift auch auf das Gradnetz darin. */
+     stehen.
+
+     Der Anlauf oben (140px) verteilt sich über den Titel: die Fläche setzt
+     oberhalb von ihm an und ist auf Höhe der Frage voll da. Ein kurzer Fade
+     endete am Anfang der Zellen und läse dort als Oberkante. */
   .kw-karten-grund {
-    background: color-mix(in srgb, var(--card) 50%, transparent);
-    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 120px, #000 calc(100% - 70px), transparent 100%);
-    mask-image: linear-gradient(180deg, transparent 0, #000 120px, #000 calc(100% - 70px), transparent 100%);
+    background: color-mix(in srgb, var(--card) 35%, transparent);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 140px, #000 calc(100% - 70px), transparent 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 140px, #000 calc(100% - 70px), transparent 100%);
   }
   /* Die Isobaren laufen weiter hinaus als der Grund — sie sollen aus dem Bild
-     laufen, nicht in einem Feld enden. Nur die letzten Pixel lösen sich auf,
-     damit oben und unten keine harte Schnittkante steht. */
+     laufen, nicht in einem Feld enden. */
   .kw-isobaren {
-    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 70px, #000 calc(100% - 60px), transparent 100%);
-    mask-image: linear-gradient(180deg, transparent 0, #000 70px, #000 calc(100% - 60px), transparent 100%);
-  }
-  /* Das Gradnetz — gepunktete Haarlinien, ein Hauch über dem Grund. Als
-     Klasse und nicht als stroke-Attribut, damit der Wert dort steht, wo dieses
-     Repo Alpha-Weiß hält (vgl. --border). */
-  .kw-gradnetz {
-    fill: none;
-    stroke: rgba(255, 255, 255, 0.05);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 90px, #000 calc(100% - 60px), transparent 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 90px, #000 calc(100% - 60px), transparent 100%);
   }
   /* Kopfwetter-Hub: das Auge des Tiefs wird unter dem Motiv nur freigeräumt —
-     eine satte dunkle Scheibe machte daraus wieder einen Planeten. */
+     eine satte dunkle Scheibe machte daraus wieder einen Planeten. Zurückhaltend
+     dosiert: durch das ausgedünnte Feld läuft unter dem Motiv ohnehin kaum noch
+     eine Linie, die verdeckt werden müsste. */
   .kw-auge {
     background: radial-gradient(
       circle,
-      color-mix(in srgb, var(--background) 82%, transparent) 38%,
-      color-mix(in srgb, var(--background) 40%, transparent) 60%,
+      color-mix(in srgb, var(--background) 45%, transparent) 38%,
+      color-mix(in srgb, var(--background) 22%, transparent) 60%,
       transparent 76%
     );
   }

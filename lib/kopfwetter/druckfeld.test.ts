@@ -9,7 +9,7 @@ import {
   ZEILEN_Y,
   zeilenSeite,
 } from "./buehne.ts";
-import { GRADNETZ_D, ISOBAREN, ZENTREN, druckAn } from "./druckfeld.ts";
+import { ISOBAREN, ZENTREN, druckAn, grundlageAn } from "./druckfeld.ts";
 
 /**
  * Geprüft wird die Aussage des Feldes, nicht seine Zahlen. Drei Dinge können
@@ -43,10 +43,10 @@ test("jedes Zentrum ist ein echtes Tief", () => {
   for (const z of ZENTREN) {
     const kern = druckAn(z.x, z.y);
     for (const [dx, dy] of [
-      [z.sigma, 0],
-      [-z.sigma, 0],
-      [0, z.sigma],
-      [0, -z.sigma],
+      [z.quer, 0],
+      [-z.quer, 0],
+      [0, z.quer],
+      [0, -z.quer],
     ]) {
       assert.ok(kern < druckAn(z.x + dx, z.y + dy), `Zentrum bei ${z.x},${z.y}`);
     }
@@ -62,15 +62,63 @@ test("die Isobaren laufen aus dem Bild heraus", () => {
 });
 
 test("jedes der fünf Tiefs trägt eigene geschlossene Ringe", () => {
-  // Rings um jedes Auge muss mindestens eine Höhenlinie herumlaufen, sonst
-  // sitzt ein Motiv auf einer leeren Stelle der Karte.
-  for (const z of ZENTREN) {
+  // Der Test, der die teuerste Regression fängt: werden die Senken breiter
+  // oder flacher, verschmelzen benachbarte Tiefs zu einem gemeinsamen Trog.
+  // Das Motiv sitzt dann nicht mehr auf eigenem Wetter, sondern auf der Flanke
+  // seines Nachbarn. Geschlossen ist eine Höhenlinie um ein Zentrum genau dann,
+  // wenn ihr Level zwischen dem Kern und dem tiefsten Sattel zu den Nachbarn
+  // liegt — die Näherung „ein Radius weiter" verfehlt das bei Ellipsen.
+  ZENTREN.forEach((z, i) => {
     const kern = druckAn(z.x, z.y);
+    let sattel = Infinity;
+    ZENTREN.forEach((n, j) => {
+      if (i === j) return;
+      let ruecken = -Infinity;
+      for (let t = 0.02; t < 1; t += 0.02) {
+        const hoehe = druckAn(z.x + (n.x - z.x) * t, z.y + (n.y - z.y) * t);
+        if (hoehe > ruecken) ruecken = hoehe;
+      }
+      if (ruecken < sattel) sattel = ruecken;
+    });
     const ringe = ISOBAREN.filter(
-      (iso) => iso.level > kern && iso.level < druckAn(z.x, z.y - z.sigma),
+      (iso) => iso.level > kern && iso.level < sattel,
     );
-    assert.ok(ringe.length >= 2, `Zentrum bei ${z.x},${z.y}: ${ringe.length}`);
+    assert.ok(ringe.length >= 2, `Tief ${i}: nur ${ringe.length} eigene Ringe`);
+  });
+});
+
+test("die Tiefs sind keine Kreise", () => {
+  // Ein rotationssymmetrisches Tief zeichnet konzentrische Ringe, und die lesen
+  // als Zielscheibe statt als Wetter. Die Senke muss auf ihrer langen Achse
+  // spürbar weiter reichen als auf der kurzen.
+  for (const z of ZENTREN) {
+    assert.ok(z.lang > z.quer * 2, `${z.lang} vs. ${z.quer}`);
+    const laengs = [Math.cos(z.dreh), Math.sin(z.dreh)] as const;
+    const quer = [-laengs[1], laengs[0]] as const;
+    const r = 70;
+    assert.ok(
+      druckAn(z.x + laengs[0] * r, z.y + laengs[1] * r) <
+        druckAn(z.x + quer[0] * r, z.y + quer[1] * r),
+      "auf der langen Achse muss es in gleicher Entfernung tiefer sein",
+    );
   }
+});
+
+test("das Blatt ist gewölbt, nicht eben", () => {
+  // Ohne die Grundwelle laufen die Linien zwischen den Tiefs schnurgerade — und
+  // gerade Isobaren gibt es auf keiner Wetterkarte. Läge das Blatt eben, wäre
+  // der mittlere von drei Punkten auf einer Geraden exakt das Mittel der beiden
+  // äußeren. Die Wölbung muss dabei einen sichtbaren Bruchteil des
+  // Höhenlinien-Abstands ausmachen, sonst fällt sie unter die nächste Linie.
+  let groesste = 0;
+  for (let y = 0; y <= FELD_H; y += 20) {
+    const abweichung = Math.abs(
+      grundlageAn(BUEHNE_BREITE / 2, y) -
+        (grundlageAn(0, y) + grundlageAn(BUEHNE_BREITE, y)) / 2,
+    );
+    if (abweichung > groesste) groesste = abweichung;
+  }
+  assert.ok(groesste > 0.03, `Wölbung nur ${groesste.toFixed(3)}`);
 });
 
 // ── 3. Die Linien sind Linienzüge, keine Strichhaufen ─────────────────────
@@ -91,17 +139,17 @@ test("die Segmente sind zu wenigen langen Zügen verkettet", () => {
 test("keine Höhenlinie ist leer", () => {
   // Ein leeres `d` würde als unsichtbarer Pfad mitzählen und die Rampe
   // verschieben — der kräftigste Strich käme dann nie vor.
-  assert.ok(ISOBAREN.length >= 10);
+  assert.ok(ISOBAREN.length >= 8, `nur ${ISOBAREN.length} Höhenlinien`);
   for (const iso of ISOBAREN) assert.ok(iso.d.length > 0);
 });
 
-test("der Strich läuft von innen 1.4/0.42 nach außen 0.9/0.14", () => {
+test("der Strich läuft von innen 1.5/0.48 nach außen 0.9/0.16", () => {
   const innen = ISOBAREN[0];
   const aussen = ISOBAREN[ISOBAREN.length - 1];
-  assert.equal(innen.breite, 1.4);
-  assert.equal(innen.deckung, 0.42);
+  assert.equal(innen.breite, 1.5);
+  assert.equal(innen.deckung, 0.48);
   assert.equal(aussen.breite, 0.9);
-  assert.equal(aussen.deckung, 0.14);
+  assert.equal(aussen.deckung, 0.16);
 });
 
 test("die Level steigen, der Strich wird nach außen schwächer", () => {
@@ -110,9 +158,4 @@ test("die Level steigen, der Strich wird nach außen schwächer", () => {
     assert.ok(ISOBAREN[i].breite < ISOBAREN[i - 1].breite);
     assert.ok(ISOBAREN[i].deckung < ISOBAREN[i - 1].deckung);
   }
-});
-
-test("das Gradnetz spannt sich über das ganze Feld", () => {
-  assert.ok(GRADNETZ_D.includes(`V${FELD_H}`));
-  assert.ok(GRADNETZ_D.includes(`H${BUEHNE_BREITE}`));
 });
