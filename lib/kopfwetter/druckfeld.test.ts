@@ -93,8 +93,8 @@ test("die Tiefs sind keine Kreise", () => {
   // spürbar weiter reichen als auf der kurzen — spürbar, nicht maximal: zu
   // weit gezogen wird die Form selbst zum Blickfang und das Blatt unruhig.
   for (const z of ZENTREN) {
-    assert.ok(z.lang > z.quer * 1.5, `${z.lang} vs. ${z.quer}`);
-    assert.ok(z.lang < z.quer * 2.5, `${z.lang} vs. ${z.quer}`);
+    assert.ok(z.lang > z.quer * 1.4, `${z.lang} vs. ${z.quer}`);
+    assert.ok(z.lang < z.quer * 2.0, `${z.lang} vs. ${z.quer}`);
     const laengs = [Math.cos(z.dreh), Math.sin(z.dreh)] as const;
     const quer = [-laengs[1], laengs[0]] as const;
     const r = 70;
