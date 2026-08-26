@@ -4,35 +4,59 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type MouseEvent } from "react";
 
+import type { ReactNode } from "react";
+
 import { Reveal } from "@/components/ui/reveal";
 import { PAGE_TITLES } from "@/lib/content/labels";
-import { PressureCell, type CellVariant } from "@/app/(app)/booster/pressure-cell";
-import {
-  ClearingStar,
-  CloudStack,
-  StormCloud,
-  UmbrellaRain,
-  WindSwirl,
-} from "@/app/(app)/booster/weather-art";
+import { BOOSTER_ART, type CellVariant } from "@/components/booster/booster-art";
 import { useBoosterZoom } from "@/components/booster/booster-zoom";
+import {
+  ZEILEN_H,
+  ZELLEN_H,
+  zeilenAnker,
+  zeilenSeite,
+} from "@/lib/kopfwetter/buehne";
 
 type WeatherSystem = {
   feeling: string;
   title: string;
-  art: React.ReactNode;
   variant: CellVariant;
   href: string;
 };
 
 const SYSTEMS: WeatherSystem[] = [
-  { feeling: "Ich bin am overthinken", title: "Overthinking", art: <WindSwirl />, variant: "overthinking", href: "/booster/overthinking" },
-  { feeling: "Ich will zu etwas Nein sagen, aber weiß nicht wie", title: PAGE_TITLES.sayingNo, art: <UmbrellaRain />, variant: "sayingNo", href: "/booster/saying-no" },
-  { feeling: "Ich fühl mich schuldig, obwohl ich es nicht sollte", title: PAGE_TITLES.thingsGotMessy, art: <CloudStack />, variant: "messy", href: "/booster/things-got-messy" },
-  { feeling: "Ich muss Dampf ablassen", title: PAGE_TITLES.shadow, art: <StormCloud />, variant: "shadow", href: "/booster/shadow" },
-  { feeling: "Ich brauche einen kurzen Confidence Boost", title: PAGE_TITLES.confidence, art: <ClearingStar />, variant: "confidence", href: "/booster/confidence" },
+  { feeling: "Ich bin am overthinken", title: "Overthinking", variant: "overthinking", href: "/booster/overthinking" },
+  { feeling: "Ich will zu etwas Nein sagen, aber weiß nicht wie", title: PAGE_TITLES.sayingNo, variant: "sayingNo", href: "/booster/saying-no" },
+  { feeling: "Ich fühl mich schuldig, obwohl ich es nicht sollte", title: PAGE_TITLES.thingsGotMessy, variant: "messy", href: "/booster/things-got-messy" },
+  { feeling: "Ich muss Dampf ablassen", title: PAGE_TITLES.shadow, variant: "shadow", href: "/booster/shadow" },
+  { feeling: "Ich brauche einen kurzen Confidence Boost", title: PAGE_TITLES.confidence, variant: "confidence", href: "/booster/confidence" },
 ];
 
-export function BoosterCells() {
+/**
+ * Der Weg über die Kopfwetter-Karte: fünf Systeme, abwechselnd links und rechts,
+ * jedes im Auge seines Tiefs.
+ *
+ * Die Zeilen stehen **nicht** im Fluss, sondern auf den Koordinaten aus
+ * `lib/kopfwetter/buehne.ts` — genau denen, aus denen `druckfeld.ts` auch seine
+ * Zentren rechnet. Das ist der Punkt der ganzen Bühne: Feld und
+ * Motiv kommen aus einer Konstante, nicht aus zwei Zahlenreihen, die man
+ * getrennt nachzieht.
+ *
+ * Waagerecht rechnet `zeilenAnker` in Prozent der Bühnenbreite — dadurch bleibt
+ * die Motiv-Mitte auch auf breiteren Schirmen deckungsgleich mit dem Auge des
+ * Tiefs, das mit der SVG mitgedehnt wird.
+ *
+ * Kein Drift mehr: driften die Zellen, während das Feld steht, wandern sie aus
+ * ihren Augen heraus. Die Bewegung der Bühne ist der Kamera-Push beim Eintauchen
+ * (siehe `booster-zoom.tsx`), nicht ein Wackeln im Stand.
+ *
+ * Das Druckfeld kommt als **Prop**, nicht als Import: diese Datei ist eine
+ * Client-Komponente, und `lib/kopfwetter/druckfeld.ts` rechnet beim Laden das
+ * ganze Isobaren-Feld (~40 ms auf dem Schreibtisch, auf dem Telefon mehr). Als
+ * Prop bleibt diese Rechnung auf dem Server; im Browser landet nur das fertige
+ * Markup, das die Seite ohnehin schon trägt.
+ */
+export function BoosterCells({ feld }: { feld: ReactNode }) {
   const router = useRouter();
   const { zoomInto } = useBoosterZoom();
 
@@ -54,38 +78,44 @@ export function BoosterCells() {
     );
   }
 
-  // Der Kamera-Push sitzt nicht mehr hier, sondern eine Ebene höher auf der
-  // ganzen Hub-Bühne (BoosterHubStage) — sonst bliebe der Seitenkopf während
-  // des Übergangs stehen. Hier bleibt nur der Tap-Punkt-Melder.
+  // Der Kamera-Push sitzt nicht hier, sondern eine Ebene höher auf der ganzen
+  // Hub-Bühne (BoosterHubStage) — sonst bliebe der Seitenkopf während des
+  // Übergangs stehen. Hier bleibt nur der Tap-Punkt-Melder.
   return (
-    <div className="relative z-10 flex flex-col gap-16 px-4 py-4" data-e2e="booster-cells">
+    <div className="relative" style={{ height: ZELLEN_H }} data-e2e="booster-cells">
+      {feld}
+
       {SYSTEMS.map((s, i) => {
-        const left = i % 2 === 0;
+        const links = zeilenSeite(i) === "left";
+        const Art = BOOSTER_ART[s.variant];
         return (
-          <Reveal key={s.href} delay={i * 0.09} className={left ? "self-start" : "self-end"}>
-            <Link
-              href={s.href}
-              onClick={(e) => handleClick(e, s)}
-              aria-label={`${s.title} — ${s.feeling}`}
-              className="group block w-[min(17rem,82vw)] rounded-xl px-3 py-3 transition-[background-color,scale] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-            >
-              <span
-                className={`kw-cell-drift flex items-center gap-3 ${
-                  left ? "flex-row text-left" : "flex-row-reverse text-right"
+          <div key={s.href} className="absolute z-10" style={zeilenAnker(i)}>
+            <Reveal delay={i * 0.09}>
+              <Link
+                href={s.href}
+                onClick={(e) => handleClick(e, s)}
+                aria-label={`${s.title} — ${s.feeling}`}
+                style={{ height: ZEILEN_H }}
+                className={`group flex w-[min(17rem,82vw)] items-center gap-3 rounded-xl px-3 transition-[background-color,scale] duration-150 ease-out hover:bg-muted/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
+                  links ? "flex-row text-left" : "flex-row-reverse text-right"
                 }`}
-                style={{ animationDelay: `${i * -1.7}s` }}
               >
-                <span data-cell-icon className="inline-flex">
-                  <PressureCell art={s.art} side={left ? "left" : "right"} variant={s.variant} />
+                <span
+                  data-cell-icon
+                  className="relative flex size-16 shrink-0 items-center justify-center"
+                >
+                  {/* Das Auge wird nur freigeräumt, nicht zugedeckt: eine satte
+                      dunkle Scheibe machte aus dem Motiv wieder einen Planeten.
+                      Die Isobaren laufen sichtbar dahinter durch. */}
+                  <span aria-hidden className="kw-auge absolute -inset-1 rounded-full" />
+                  <Art className="relative size-16" />
                 </span>
-                <span className="relative z-10 flex flex-col gap-1">
-                  <span className="kw-legible font-heading text-lg font-medium leading-snug text-balance text-foreground">
-                    {s.feeling}
-                  </span>
+                <span className="kw-legible relative font-heading text-lg font-medium leading-snug text-balance text-foreground">
+                  {s.feeling}
                 </span>
-              </span>
-            </Link>
-          </Reveal>
+              </Link>
+            </Reveal>
+          </div>
         );
       })}
     </div>

@@ -702,36 +702,46 @@ body[data-zone="schmiede"] {
     50%      { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--scene-glow, var(--primary)) 65%, transparent)); }
   }
   .bs-glow { animation: bs-glow 5s ease-in-out infinite; }
-  /* Kopfwetter-Hub: statischer Gold-Glow auf den Isobaren (pixelbasiert,
-     daher keine Verzerrung trotz preserveAspectRatio="none"). */
-  .iso-glow {
-    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--primary) 40%, transparent));
+  /* Kopfwetter-Hub — der Kartengrund (KAN-54): eine Fläche, aber keine
+     Karte-als-Box. Halbdurchlässig, damit die Sterne durchscheinen; Ober- und
+     Unterkante lösen sich per Maske in den Nachthimmel auf, statt als Kante zu
+     stehen. Die Maske greift auch auf das Gradnetz darin. */
+  .kw-karten-grund {
+    background: color-mix(in srgb, var(--card) 50%, transparent);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 120px, #000 calc(100% - 70px), transparent 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 120px, #000 calc(100% - 70px), transparent 100%);
   }
-  /* Kopfwetter-Hub: Druckzellen driften langsam seitlich („ziehendes Wetter").
-     Versetzte Phase pro Zelle via inline animation-delay. */
-  @keyframes kw-cell-drift {
-    0%, 100% { transform: translateX(-2px); }
-    50%      { transform: translateX(2px);  }
+  /* Die Isobaren laufen weiter hinaus als der Grund — sie sollen aus dem Bild
+     laufen, nicht in einem Feld enden. Nur die letzten Pixel lösen sich auf,
+     damit oben und unten keine harte Schnittkante steht. */
+  .kw-isobaren {
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 70px, #000 calc(100% - 60px), transparent 100%);
+    mask-image: linear-gradient(180deg, transparent 0, #000 70px, #000 calc(100% - 60px), transparent 100%);
   }
-  .kw-cell-drift {
-    animation: kw-cell-drift 14s ease-in-out infinite;
+  /* Das Gradnetz — gepunktete Haarlinien, ein Hauch über dem Grund. Als
+     Klasse und nicht als stroke-Attribut, damit der Wert dort steht, wo dieses
+     Repo Alpha-Weiß hält (vgl. --border). */
+  .kw-gradnetz {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.05);
+  }
+  /* Kopfwetter-Hub: das Auge des Tiefs wird unter dem Motiv nur freigeräumt —
+     eine satte dunkle Scheibe machte daraus wieder einen Planeten. */
+  .kw-auge {
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--background) 82%, transparent) 38%,
+      color-mix(in srgb, var(--background) 40%, transparent) 60%,
+      transparent 76%
+    );
   }
   /* Kopfwetter-Hub: dunkler Halo, damit Text über den goldenen Isobaren lesbar bleibt. */
   .kw-legible {
     text-shadow: 0 1px 2px var(--background), 0 0 7px var(--background);
   }
-  /* Kopfwetter-Hub: Lilac-Kern hinter jedem Wetter-Symbol (Druckzentrum). */
-  .kw-cell-glow {
-    background: radial-gradient(
-      circle,
-      color-mix(in srgb, var(--cleanser-confidence) 35%, transparent),
-      transparent 70%
-    );
-  }
   @media (prefers-reduced-motion: reduce) {
     .bs-sway, .bs-ember, .bs-ember-2, .bs-glow,
-    .bs-rain, .bs-rain-2, .bs-rain-3,
-    .kw-cell-drift {
+    .bs-rain, .bs-rain-2, .bs-rain-3 {
       animation: none !important;
     }
   }

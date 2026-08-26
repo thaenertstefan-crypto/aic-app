@@ -12,8 +12,7 @@ import {
 } from "react";
 
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
-import { BOOSTER_ART } from "@/components/booster/booster-art";
-import type { CellVariant } from "@/app/(app)/booster/pressure-cell";
+import { BOOSTER_ART, type CellVariant } from "@/components/booster/booster-art";
 
 /**
  * „Kamera-Push in den Booster“ — der Zoom-Übergang vom Kopfwetter-Hub in eine

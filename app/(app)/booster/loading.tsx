@@ -1,15 +1,27 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ZEILEN_H,
+  ZELLEN_H,
+  zeilenAnker,
+  zeilenSeite,
+} from "@/lib/kopfwetter/buehne";
 
-/** Das Gerüst des Kopfwetter-Hubs: Titel, die Frage darunter, und der
- *  mäandernde Weg aus fünf Wetter-Zellen.
+/** Das Gerüst des Kopfwetter-Hubs: Titel, die Frage darunter, und der Weg aus
+ *  fünf Wetter-Systemen — auf denselben Koordinaten wie die fertige Bühne, damit
+ *  beim Wechsel nichts springt.
+ *
+ *  Ohne Druckfeld: die Karte ist der Inhalt, nicht das Gerüst. Deshalb hängt das
+ *  Gerüst nur an `buehne.ts` — `druckfeld.ts` zu importieren würde beim Laden
+ *  das ganze Isobaren-Feld rechnen, für eine Zehntelsekunde, in der es nicht
+ *  gezeigt wird.
  *
  *  Die Bühne selbst (`BoosterHubStage`) bleibt draußen: sie meldet dem
- *  Zoom-Übergang ihren Ursprung, und ein Gerüst hat keinen Tap-Punkt zu
- *  melden. Der Nachthimmel steht ohnehin schon — er hängt im Layout. */
+ *  Zoom-Übergang ihren Ursprung, und ein Gerüst hat keinen Tap-Punkt zu melden.
+ *  Der Nachthimmel steht ohnehin schon — er hängt im Layout. */
 export default function BoosterLoading() {
   return (
-    <div className="space-y-6 p-4">
-      <header className="space-y-3">
+    <div className="p-4">
+      <header className="relative z-10 space-y-3">
         <Skeleton className="h-12 w-56" />
         <div className="space-y-2">
           <Skeleton className="h-3 w-full" />
@@ -18,20 +30,24 @@ export default function BoosterLoading() {
         </div>
       </header>
 
-      <div className="relative -mx-4 overflow-x-clip">
-        <div className="relative z-10 flex flex-col gap-16 px-4 py-4">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className={i % 2 === 0 ? "self-start" : "self-end"}>
-              <div
-                className={`flex w-[min(17rem,82vw)] items-center gap-3 rounded-xl px-3 py-3 ${
-                  i % 2 === 0 ? "flex-row" : "flex-row-reverse"
-                }`}
-              >
-                <Skeleton className="size-16 shrink-0 rounded-full" />
-                <Skeleton className="h-5 flex-1" />
+      <div className="relative -mx-4 mt-6 overflow-x-clip">
+        <div className="relative" style={{ height: ZELLEN_H }}>
+          {[0, 1, 2, 3, 4].map((i) => {
+            const links = zeilenSeite(i) === "left";
+            return (
+              <div key={i} className="absolute" style={zeilenAnker(i)}>
+                <div
+                  style={{ height: ZEILEN_H }}
+                  className={`flex w-[min(17rem,82vw)] items-center gap-3 rounded-xl px-3 ${
+                    links ? "flex-row" : "flex-row-reverse"
+                  }`}
+                >
+                  <Skeleton className="size-16 shrink-0 rounded-full" />
+                  <Skeleton className="h-5 flex-1" />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

@@ -2,9 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
-import { BOOSTER_ART } from "@/components/booster/booster-art";
+import { BOOSTER_ART, type CellVariant } from "@/components/booster/booster-art";
 import { useBoosterZoom } from "@/components/booster/booster-zoom";
-import type { CellVariant } from "@/app/(app)/booster/pressure-cell";
 
 /**
  * Das Modul-Icon der Übung: sitzt auf der ERSTEN Seite jeder Booster-Übung

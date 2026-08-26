@@ -5,22 +5,20 @@ import {
   UmbrellaRain,
   WindSwirl,
 } from "@/app/(app)/booster/weather-art";
-import type { CellVariant } from "@/app/(app)/booster/pressure-cell";
 
 /**
- * Wetter-Motiv je Kopfwetter-System — EINE Quelle für den fliegenden
- * Zoom-Klon und das Modul-Icon auf der Sub-Page (beide seit dem Zoom-Task
- * Konsumenten). Die Hub-Zelle selbst mappt ihre Variante weiterhin separat
- * auf ein Motiv (`weather-art.tsx`) — sie an dieselbe Quelle anzugleichen
- * bleibt eine mögliche Folge-Task, ist aber kein offener Punkt dieses Diffs.
+ * Wetter-Motiv je Kopfwetter-System — EINE Quelle für den Hub, den fliegenden
+ * Zoom-Klon und das Modul-Icon auf der Sub-Page. Wer ein System hinzufügt oder
+ * umbenennt, tut es hier: `CellVariant` ist die Schlüsselmenge dieser Tabelle,
+ * es gibt keine zweite Liste daneben.
  */
-export const BOOSTER_ART: Record<
-  CellVariant,
-  (props: { className?: string }) => React.ReactElement
-> = {
+export const BOOSTER_ART = {
   overthinking: WindSwirl,
   sayingNo: UmbrellaRain,
   messy: CloudStack,
   shadow: StormCloud,
   confidence: ClearingStar,
-};
+} satisfies Record<string, (props: { className?: string }) => React.ReactElement>;
+
+/** Die fünf Kopfwetter-Systeme. */
+export type CellVariant = keyof typeof BOOSTER_ART;
