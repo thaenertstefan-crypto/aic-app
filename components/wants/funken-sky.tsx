@@ -41,17 +41,114 @@ const BOTTOM_PAD = EDGE_PAD + Y_JITTER_RESERVE;
  *  Bis 2 Funken dominiert dieser Boden die Höhe. */
 const MIN_VIEW_H = 200;
 
-/** Stabiler Hash 0..1 aus einem String — gleiche Konstellation bei jedem Besuch. */
+/** Stabiler Hash 0..1 aus einem String — gleiche Konstellation bei jedem Besuch.
+ *  FNV-1a mit Nachmischen (fmix32), wortgleich zur Sternenkarte. Das
+ *  Nachmischen ist nicht Zierde: die Vorgänger-Fassung (`h * 31 + c`, dann
+ *  `h % 1000`) ließ benachbarte IDs auf fast denselben Wert fallen — bei den
+ *  tatsächlichen Funken-IDs, die sich nur im letzten Zeichen unterscheiden,
+ *  lagen alle Werte innerhalb von 0,001. Der Versatz war damit rechnerisch da
+ *  und sichtbar tot: die Konstellation stand als Zweispalten-Raster statt als
+ *  Himmel. */
 function hash01(seed: string): number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return (h % 1000) / 1000;
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h ^= h >>> 16;
+  h = Math.imul(h, 2246822507);
+  h ^= h >>> 13;
+  h = Math.imul(h, 3266489909);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
 }
 
-/** 28-Zeichen-Kürzung mit „…" — hält Konstellations-Labels bei jeder Länge kurz. */
-function clip28(s: string): string {
-  const t = s.trim();
-  return t.length > 28 ? `${t.slice(0, 27).trimEnd()}…` : t;
+/** Innerste x-Position einer Spalte (viewBox-Einheiten, vom linken Rand;
+ *  rechts gespiegelt) — Schwesterwert zur Sternenkarte. Weil der Versatz unten
+ *  nur nach außen schiebt, ist dieser Wert zugleich der engste Fall, den ein
+ *  Label je bekommt.
+ *  Anders als auf der Karte ist das hier **kein** Platzgewinn fürs Label: der
+ *  Deckel LABEL_MAX_PX greift vor dem Kartenrand (s. labelMaxWidthCss), ein
+ *  Funke weiter außen bekommt also keinen längeren Text, sondern nur mehr Himmel
+ *  hinter seinem Label. Die Verteilung dient hier der Optik, nicht der Breite. */
+const COL_X_INNER = 58;
+/** Wie weit der ID-Hash einen Funken aus seiner Spalte nach außen schiebt —
+ *  stabil je Funke, damit die Konstellation kein Raster ist. Nur nach außen:
+ *  nach innen läge sein Label. Weiter geht es nicht, ohne dass das 44-px-
+ *  Tap-Ziel über den Kartenrand hinausragt: der äußerste Funke steht bei
+ *  COL_X_INNER - X_JITTER = 30 Einheiten, das sind 8,3 % der Kartenbreite. */
+const X_JITTER = 28;
+
+/** Halbes Tap-Ziel: der Funke sitzt in einer `size-11`-Fläche (44 px), sein
+ *  Label beginnt an deren Rand. */
+const TAP_RADIUS_PX = 22;
+/** Abstand Label ↔ Funke: `ml-2`/`mr-2`. **Hier liegt der Unterschied zur
+ *  Sternenkarte** — die setzt `ml-1.5`/`mr-1.5` = 6 px. Nicht von dort
+ *  abschreiben. */
+const LABEL_OFFSET_PX = 8;
+/** Luft zwischen Label-Ende und Kartenrand, damit das „…" nicht auf der Kante
+ *  klebt. */
+const EDGE_AIR_PX = 4;
+
+/** Was ein Label an px verliert, bevor es anfängt. Diese Strecke ist in px
+ *  festgeschrieben, die Funken-Position in Prozent der Karte — deshalb rechnet
+ *  die Breite unten in cqw minus px. */
+const LABEL_GUTTER_PX = TAP_RADIUS_PX + LABEL_OFFSET_PX + EDGE_AIR_PX;
+
+/** Deckel auf der Label-Breite, unabhängig vom Platz bis zum Kartenrand.
+ *
+ *  Hier weicht die Konstellation bewusst von der Sternenkarte ab. Auf der
+ *  Karte trägt ein Stern einen **Namen** — eine Überschrift, die meist von
+ *  selbst endet, bevor der Rand kommt; dort ist der Rand die einzige Schranke.
+ *  Ein Funke trägt keinen Namen, sondern seinen **ganzen Wetten-Satz** (ein
+ *  Satz, bis 20 Wörter — s. `lib/anthropic/prompts/sternschmiede.ts`). Der
+ *  reißt jede Schranke, egal wo sie steht. Die Frage ist also nicht „kürzen
+ *  oder nicht", sondern „wie breit darf ein Balken werden, bevor er kein
+ *  Funke mehr ist".
+ *
+ *  Gemessen in WebKit bei 375 px Viewport (Karte 343 px), mit sechs echten
+ *  Funken-Sätzen von 61 bis 92 Zeichen:
+ *
+ *    Deckel      Label-Breite   sichtbar   Himmel bis zum Gegenrand
+ *    128 px alt   37 % / 128     12–15 Z.   136–155 px
+ *    200 px       58 % / 200     20–24 Z.    64– 83 px
+ *    ohne         76–81 %        29–33 Z.     4 px
+ *
+ *  Ohne Deckel bleiben 4 px: jede Zeile ein Balken von Rand zu Rand, die
+ *  Konstellation wird zur Liste. Und sie kauft das teuer — ganze acht Zeichen
+ *  mehr als bei 200 px, weit entfernt davon, den Satz lesbar zu machen. Ein
+ *  Wetten-Satz ist auf dieser Bühne grundsätzlich nicht zu Ende zu lesen; er
+ *  steht einen Tap entfernt in der Fokus-Ebene und im `aria-label` ungekürzt.
+ *
+ *  200 px ist damit gesetzt: gegenüber den alten 128 px werden aus einem
+ *  angerissenen Wort (~14 Zeichen) der erste Halbsatz (~22), und es bleibt
+ *  rund ein Fünftel der Kartenbreite Himmel neben jedem Label stehen.
+ *  Der Wert ist Geschmack, nicht Physik — wer ihn ändert, ändert ihn hier und
+ *  prüft am Gerät, nicht in dieser Tabelle. */
+const LABEL_MAX_PX = 200;
+
+/** Der Platz, den ein Label wirklich hat: von seinem Funken bis zum
+ *  gegenüberliegenden Kartenrand, gedeckelt auf LABEL_MAX_PX. `cqw` misst die
+ *  Karte (sie trägt dafür `@container`), sodass jeder Funke seine eigene
+ *  Schranke bekommt statt einer gemeinsamen, die sich am engsten Fall
+ *  orientieren müsste. Erst hier kürzt `truncate`.
+ *
+ *  Ehrlich gesagt: **beim heutigen LABEL_MAX_PX gewinnt der Deckel überall.**
+ *  Der Rand-Term liegt schon bei 320 px Viewport im engsten Fall bei 208 px,
+ *  also darüber. Er steht trotzdem da, und zwar als Geländer, nicht als
+ *  Zierde — LABEL_MAX_PX ist der Wert, der sich am Gerät noch ändern kann
+ *  (s. dort), und COL_X_INNER/X_JITTER sind es auch. Ohne den Term liefe ein
+ *  angehobener Deckel still über den Kartenrand hinaus; mit ihm kürzt das
+ *  Label spätestens am Rand.
+ *
+ *  Kollidieren können zwei Labels dabei nicht: pro Zeile steht genau ein
+ *  Funke, und zwei Zeilen liegen selbst im ungünstigsten Fall noch
+ *  ROW_H - 2 * Y_JITTER_RESERVE = 46 Einheiten auseinander — deutlich mehr als
+ *  die Höhe einer Zeile. */
+function labelMaxWidthCss(x: number, side: "left" | "right"): string {
+  const room = side === "left" ? VIEW_W - x : x;
+  const toEdge = `${((room / VIEW_W) * 100).toFixed(2)}cqw - ${LABEL_GUTTER_PX}px`;
+  return `min(calc(${toEdge}), ${LABEL_MAX_PX}px)`;
 }
 
 type Placed = { bet: BetItem; x: number; y: number; side: "left" | "right" };
@@ -61,15 +158,11 @@ type Placed = { bet: BetItem; x: number; y: number; side: "left" | "right" };
 function layout(funken: BetItem[]): { placed: Placed[]; viewH: number } {
   const placed = funken.map((bet, i) => {
     const side: "left" | "right" = i % 2 === 0 ? "left" : "right";
-    // Spalten-Zentren wie auf der Sternenkarte (78 / 282 statt 92 / 268), damit
-    // sich die Funken nicht in der Bildmitte sammeln — und damit die beiden
-    // Schwesterseiten dieselbe Sprache sprechen. Labels zeigen nach innen und
-    // bleiben bei max-w-[8rem] (≈134 Einheiten) innerhalb der 360er-Breite.
-    const baseX = side === "left" ? 78 : 282;
+    const outward = hash01(bet.id) * X_JITTER;
     return {
       bet,
-      x: baseX + (hash01(bet.id) - 0.5) * 56,
-      y: TOP_PAD + i * ROW_H + (hash01(`${bet.id}y`) - 0.5) * 30,
+      x: side === "left" ? COL_X_INNER - outward : VIEW_W - COL_X_INNER + outward,
+      y: TOP_PAD + i * ROW_H + (hash01(`${bet.id}y`) - 0.5) * Y_JITTER_RESERVE * 2,
       side,
     };
   });
@@ -163,8 +256,11 @@ export function FunkenSky({
   }
 
   return (
+    // `@container`: die Karte ist der Bezug für die cqw-Rechnung in
+    // labelMaxWidthCss. Sie hat keine `fixed` Nachfahren — die Fokus-Ebene hängt
+    // per Portal an document.body —, also kostet die Containment nichts.
     <div
-      className="relative w-full"
+      className="@container relative w-full"
       style={{ aspectRatio: `${VIEW_W} / ${viewH}` }}
       data-e2e="funken-sky"
     >
@@ -176,7 +272,7 @@ export function FunkenSky({
             key={bet.id}
             type="button"
             onClick={(e) => open(bet, e.currentTarget)}
-            aria-label={`Funken ansehen: ${clip28(bet.text)}`}
+            aria-label={`Funken ansehen: ${bet.text}`}
             className="absolute z-10 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             style={{ left: `${(x / VIEW_W) * 100}%`, top: `${(y / viewH) * 100}%` }}
           >
@@ -195,12 +291,15 @@ export function FunkenSky({
               }}
             />
             <span
+              // Die Schranke ist der Kartenrand bzw. LABEL_MAX_PX, nicht eine
+              // feste Breite: gekürzt wird erst dort.
+              style={{ maxWidth: labelMaxWidthCss(x, side) }}
               className={cn(
-                "absolute top-1/2 block max-w-[8rem] -translate-y-1/2 truncate font-heading text-base font-medium text-foreground",
+                "absolute top-1/2 block -translate-y-1/2 truncate font-heading text-base font-medium text-foreground",
                 side === "left" ? "left-full ml-2" : "right-full mr-2",
               )}
             >
-              {clip28(bet.text)}
+              {bet.text}
             </span>
           </button>
         ))}
