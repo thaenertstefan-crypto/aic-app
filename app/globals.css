@@ -835,7 +835,8 @@ body[data-zone="schmiede"] {
    bestellt man nicht mit der Bewegung ab. */
 @media (prefers-reduced-motion: reduce) {
   [data-einblenden],
-  .einblenden {
+  .einblenden,
+  .funkenflug-aus {
     animation: none;
   }
 }
@@ -1031,22 +1032,56 @@ body[data-zone="schmiede"] {
   .funke-drift { animation: none; }
 }
 
-/* Warte-Screen: Funken sprühen schnell aus der Esse auf (schneller/kräftiger als
-   die dekorativen forge-sparks). Aufsteigen + verblassen, versetzte Delays. */
-@keyframes funke-spray {
+/* „Der Funkenflug“ — der EINE Wartescreen der App (KAN-52/KAN-61). Ein Strom
+   kleiner Teilchen, die aufsteigen und vergehen. Das Bild, die Maßstäbe und die
+   Zonen-Tabelle stehen in components/ui/funkenflug.tsx, die Zeiten (Schwelle,
+   Mindeststandzeit, Blende) in lib/motion/warten.ts.
+
+   Die Auflage, ohne die das Bild kippt: die Funken VERGEHEN, OHNE ANZUKOMMEN.
+   Kein Ziel, an dem sie sich sammeln, und vor allem keine Zunahme von Dichte
+   oder Tempo über die Wartezeit — sobald der Strom „es füllt sich“ sagt, ist er
+   ein Fortschrittsbalken aus Punkten und bricht KAN-30. Deshalb: feste Anzahl,
+   feste, gleichmäßig gestreute Delays, `infinite` ohne jede Rampe.
+
+   Farbe (`--funkenflug-farbe`), Tempo (`--funkenflug-dauer`) und Steighöhe
+   (`--funkenflug-hub`) kommen von außen: die ersten beiden aus der Zone, die
+   dritte aus dem Maßstab. Der Hub steckt im Keyframe als Variable, weil eine
+   wartende Zeile eine andere Bühnenhöhe hat als ein wartender Screen. */
+@keyframes funkenflug {
   0%   { opacity: 0;    transform: translateY(0) scale(1); }
   15%  { opacity: 0.95; }
-  100% { opacity: 0;    transform: translateY(-64px) scale(0.5); }
+  100% { opacity: 0;    transform: translateY(calc(-1 * var(--funkenflug-hub, 4rem))) scale(0.5); }
 }
-.funke-spray {
+.funkenflug-funke {
   position: absolute;
+  bottom: 0;
   border-radius: 50%;
-  background: var(--celebrate);
-  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--celebrate) 65%, transparent);
-  animation: funke-spray 1.8s ease-out infinite;
+  background: var(--funkenflug-farbe, var(--foreground));
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--funkenflug-farbe, var(--foreground)) 60%, transparent);
+  animation: funkenflug var(--funkenflug-dauer, 2.9s) ease-out infinite;
 }
+/* Rückfallebene: die Komponente rendert bei `prefers-reduced-motion` ohnehin
+   die stehende Szene (versetzte Positionen, Opacity 0,55) — useReducedMotion
+   ist aber im ersten Frame noch `false`. */
 @media (prefers-reduced-motion: reduce) {
-  .funke-spray { animation: none; opacity: 0.7; }
+  .funkenflug-funke { animation: none; opacity: 0.55; }
+}
+
+/* Der Flug blendet aus (~200 ms Opacity, KAN-30). Eigener Keyframe statt einer
+   Transition, weil die Szene beim Einblenden `einblenden-a` mit `both` trägt:
+   eine Animation schlägt jede Transition, und ein Klassentausch im selben
+   Frame käme als harter Schnitt heraus. Zwei Animationen tauschen sauber.
+
+   Die Dauer kommt aus `AUSBLENDEN_MS` (lib/motion/warten.ts) und wird inline
+   gesetzt: dieselbe Zahl steuert, wie lange der Zustand `geht` steht. Stünde
+   hier `--einblenden-dur`, wären es zwei Quellen für eine Zahl, und wer eine
+   ändert, löst die Blende von ihrem Timer. Der Wert IST die generische Blende
+   der Bewegungs-Grammatik — nur eben von einer Stelle aus. */
+@keyframes funkenflug-aus {
+  to { opacity: 0; }
+}
+.funkenflug-aus {
+  animation: funkenflug-aus var(--funkenflug-blende) ease-out both;
 }
 
 /* Success-Screen: Funken sind aus der Esse aufgestiegen und schweben als Gruppe

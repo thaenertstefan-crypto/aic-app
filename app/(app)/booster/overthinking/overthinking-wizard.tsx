@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { SectionLabel } from "@/components/ui/section-label";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
+import { Funkenflug, useFunkenflug } from "@/components/ui/funkenflug";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
 import { BoosterBackHeader } from "@/components/booster/booster-back-header";
 import { useRecipeIntro } from "@/components/recipes/recipe-intro-gate";
@@ -208,6 +209,10 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
   const [countdownDone, setCountdownDone] = useState(false);
   // KI-formulierte Fragen der Schritte 3–6 (statischer Fallback: getStepLabel).
   const [questions, setQuestions] = useState<StepQuestions>({});
+  // Die Bühne, auf der ein Flug gelten darf. Wird beim Betreten einer Bühne
+  // gesetzt, nicht beim Beginn des Wartens — so ist ein Flug, der noch aus der
+  // vorigen Bühne nachhängt, auf der neuen sofort ungültig.
+  const [flugStufe, setFlugStufe] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -272,16 +277,31 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
 
   const nextTarget = nextStep(step, answers, countdownDone);
   const questionPending = isQuestionPending(questions, step);
+  // Der eine Wartescreen (KAN-61). EIN Aufruf für beide Stellen, an denen auf
+  // eine KI-Frage gewartet wird (Bühnen 3–5 und Bühne 6) — es steht immer nur
+  // eine davon. Unter 250 ms bleibt der Körper leer und die Frage ist einfach
+  // da; der Moment gehört dann dem gesperrten „Weiter".
+  const flug = useFunkenflug(questionPending);
+  // ZU WELCHER Bühne der Flug gehört. Nach der Antwort steht er noch seine
+  // Mindeststandzeit und blendet aus — „Zurück" ist in diesem Fenster aber
+  // offen, und ohne diese Zuordnung legte sich der Flug über die vorige,
+  // längst beantwortete Bühne und verdächte dort Frage und Antwort.
+  const zeigtFlug = flug !== "aus" && flugStufe === step;
+
+  const gehZu = (target: number) => {
+    setStep(target);
+    setFlugStufe(target);
+  };
 
   const goNext = () => {
     if (nextTarget === null) return;
     setError(null);
-    setStep(nextTarget);
+    gehZu(nextTarget);
   };
 
   const goBack = () => {
     setError(null);
-    if (step > 1) setStep((s) => s - 1);
+    if (step > 1) gehZu(step - 1);
   };
 
   // ── Die KI-Frage der Bühne ──────────────────────────────────────
@@ -465,18 +485,17 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
               </Card>
             )}
 
-            {/* Während die KI-Frage noch unterwegs ist: Schimmer statt Frage. */}
-            {questionPending ? (
-              <div className="space-y-3" aria-busy="true">
-                <div className="space-y-2">
-                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-                  <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Ich überlege, wie ich am besten weiterfrage …
-                </p>
-              </div>
-            ) : (
+            {/* Während die KI-Frage noch unterwegs ist: der Funkenflug. Vorher
+                stand hier ein Schimmer — ein Gerüst an einer Stelle, an der
+                keins sein darf: ein Gerüst ist die Seite in ihrem ersten
+                Frame, hier warten wir aber auf das Modell (KAN-52). */}
+            {zeigtFlug ? (
+              <Funkenflug
+                flug={flug}
+                massstab="region"
+                satz="Ich überlege, wie ich am besten weiterfrage …"
+              />
+            ) : questionPending ? null : (
               <div className="space-y-3 einblenden">
                 <Label htmlFor={`step-${step}`} className="text-base font-medium leading-relaxed">
                   {label}
@@ -508,20 +527,18 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
         // Schritt 6 – Perspektivwechsel: fixe Einleitung + KI-Challenger-Frage.
         const challenger = questions[6];
 
-        if (questionPending) {
+        // Der Funkenflug statt der drei pulsenden Balken von früher — siehe
+        // die Begründung bei den Bühnen 3–5.
+        if (zeigtFlug) {
           return (
-            <div className="flex w-full flex-col gap-3" aria-busy="true">
-              <div className="space-y-2">
-                <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-                <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Einen Moment – ich denke über eine andere Perspektive nach …
-              </p>
-            </div>
+            <Funkenflug
+              flug={flug}
+              massstab="region"
+              satz="Einen Moment – ich denke über eine andere Perspektive nach …"
+            />
           );
         }
+        if (questionPending) return null;
 
         return (
           <div className="flex w-full flex-col gap-6 einblenden">
@@ -795,7 +812,7 @@ export function OverthinkingWizard({ introSeen }: { introSeen: boolean }) {
               onClick={goNext}
               // Zwei Gründe, zwei Ausdrücke: die Bühne ist noch nicht
               // beantwortet — oder ihre KI-Frage ist noch unterwegs.
-              disabled={nextTarget === null || questionPending}
+              disabled={nextTarget === null || questionPending || zeigtFlug}
               className="ml-auto gap-1"
             >
               Weiter

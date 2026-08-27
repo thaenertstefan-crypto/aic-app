@@ -78,6 +78,11 @@ const DEFAULT_ROUTES = [
   { path: "/me/wants", expect: "star-map", reject: "recipe-intro" },
   { path: "/me/wants/schmiede", expect: "funken-sky" },
   { path: "/me/bill-of-rights", reject: "recipe-intro" },
+  // Der Funkenflug (KAN-61) darf im Ruhezustand NICHT stehen: er hat eine
+  // Schwelle von 250 ms und erscheint nur, während wir an der KI hängen. Ein
+  // sichtbarer Marker auf der frisch geladenen Seite hieße, dass ein
+  // Wartezustand in den Ruhezustand geleckt ist.
+  { path: "/me/bill-of-rights/generate", reject: "funkenflug" },
   { path: "/booster", expect: "booster-cells" },
   // Der Booster startet seit KAN-43 direkt im Wizard: `expect` sichert zu,
   // dass wirklich Schritt 1 steht, `reject`, dass es nicht die Erst-Intro ist.

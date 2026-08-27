@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Funkenflug, useFunkenflug } from "@/components/ui/funkenflug";
 import { SectionLabel } from "@/components/ui/section-label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormError } from "@/components/ui/form-error";
@@ -77,6 +78,9 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
   // Der Rechts-Vorschlag samt Übernahme — setzt sich mit jedem neuen
   // Vorschlag von selbst zurück.
   const suggestedRight = useSuggestedRight(state.right);
+
+  // Der eine Wartescreen (KAN-61), während das Modell das Übungsszenario baut.
+  const flug = useFunkenflug(state.scenarioPending);
 
   // Offline draft safety net
   const { pendingDraft, saveDraft, clearDraft, dismissPendingDraft } =
@@ -739,7 +743,13 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
         {header}
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6 einblenden">
           <div className="flex flex-col items-center gap-3 text-center">
-            <Mascot expression={state.scenarioPending ? "curious" : "smile"} size="md" />
+            {/* Das Maskottchen wechselt beim Warten NICHT mehr auf `curious`
+                (offener Punkt aus KAN-52, hier entschieden): der Funkenflug
+                ist der eine Wartezustand, und ein zweites Signal daneben sagt
+                dasselbe noch einmal. Es kam dazu, dass der Ausdruck genau in
+                dem Moment zurücksprang, in dem die Antwort eintraf — ein
+                Zucken oben, während der Flug unten in Ruhe ausblendet. */}
+            <Mascot expression="smile" size="md" />
             <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
               Dein Übungsszenario
             </h1>
@@ -749,26 +759,33 @@ export function SayingNoWizard({ introSeen }: { introSeen: boolean }) {
             </p>
           </div>
 
-          <Card className="w-full">
-            <CardContent className="pt-(--card-spacing)">
-              {state.scenarioPending ? (
-                <div className="flex flex-col items-center gap-4 py-4 text-center">
-                  <p className="text-base text-muted-foreground motion-safe:animate-pulse">
-                    Ich denk mir gerade eine Situation für dich aus …
+          {/* Die Card ist die wartende Fläche — Maßstab „region". Vorher
+              standen hier ein pulsender Satz und drei pulsende Punkte; die
+              Punkte waren der Spinner in seiner Urform, und ein pulsender
+              Satz ist ein Gerüst (KAN-52).
+
+              Unter der Schwelle zeigt die Card, was sie hat: beim ersten Laden
+              nichts (dann steht sie gar nicht erst da, statt als leerer Kasten
+              auf Flughöhe zu springen), beim „Anderes Szenario" noch das alte
+              — das ist der Fall, in dem ein Wegblenden für 250 ms die Seite
+              zusammenfallen liesse. */}
+          {(state.situation !== "" || flug !== "aus") && (
+            <Card className="w-full">
+              <CardContent className="pt-(--card-spacing)">
+                {flug !== "aus" ? (
+                  <Funkenflug
+                    flug={flug}
+                    massstab="region"
+                    satz="Ich denk mir gerade eine Situation für dich aus …"
+                  />
+                ) : (
+                  <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                    {state.situation}
                   </p>
-                  <span className="flex gap-1.5" aria-hidden="true">
-                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-pulse" />
-                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-pulse [animation-delay:150ms]" />
-                    <span className="size-2 rounded-full bg-primary/60 motion-safe:animate-pulse [animation-delay:300ms]" />
-                  </span>
-                </div>
-              ) : (
-                <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                  {state.situation}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           <div className="flex flex-col gap-2">
             <Button

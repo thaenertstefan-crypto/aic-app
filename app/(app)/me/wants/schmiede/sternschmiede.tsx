@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SectionLabel } from "@/components/ui/section-label";
 import { FormError } from "@/components/ui/form-error";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Funkenflug, useFunkenflug } from "@/components/ui/funkenflug";
 import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
@@ -50,17 +51,6 @@ type ForgeResponse = {
 
 const AI_ERROR = "Das Funkenschlagen hat gerade nicht geklappt. Versuch es gleich noch einmal.";
 
-// Warte-Screen: Positionen/Größen/Delays der aufsprühenden Funken (deterministisch,
-// kein Math.random → kein Hydration-Mismatch).
-const SPRAY_FUNKEN: { left: number; size: number; delay: number }[] = [
-  { left: 30, size: 8, delay: 0 },
-  { left: 60, size: 6, delay: 0.3 },
-  { left: 46, size: 9, delay: 0.6 },
-  { left: 74, size: 5, delay: 0.9 },
-  { left: 22, size: 6, delay: 1.2 },
-  { left: 54, size: 7, delay: 1.5 },
-];
-
 // Success-Screen: bis zu 5 Positionen des aufgestiegenen Funken-Schwarms
 // (viewBox-frei, Prozent im 220×150-Feld). Held-Funke in der Mitte etwas größer.
 const SWARM_FUNKEN: { x: number; y: number; size: number; delay: number }[] = [
@@ -79,7 +69,20 @@ export function Sternschmiede({
   initialBets: BetItem[];
 }) {
   const [phase, setPhase] = useState<Phase>("intro");
-  useScrollTopOnChange(phase);
+
+  // Der Funkenflug (KAN-61) entscheidet, ob die Warte-Bühne überhaupt steht:
+  // unter 250 ms erscheint sie nie, einmal da bleibt sie ~400 ms und blendet
+  // dann aus. Weil sie hier eine GANZE Bühne ist, hängt an `flug` nicht nur
+  // ihr Inhalt, sondern ihr Auftritt — siehe die Reihenfolge der Bühnen unten.
+  const flug = useFunkenflug(phase === "forging");
+
+  // Welche Bühne wirklich steht. `forging` bleibt unter der Schwelle beim
+  // Briefing, und nach der Antwort hält der Flug die Zielbühne noch zurück —
+  // der Sprung nach oben gehört deshalb hierhin und nicht an `phase`, sonst
+  // ruckte das Briefing 250 ms vor dem Flug nach oben.
+  const buehne: Phase | "flug" =
+    flug !== "aus" ? "flug" : phase === "forging" ? "briefing" : phase;
+  useScrollTopOnChange(buehne);
 
   const reduced = useReducedMotion();
   const router = useRouter();
@@ -247,10 +250,38 @@ export function Sternschmiede({
     }
   }
 
+  // ── Der Funkenflug (Warte-Bühne) ────────────────────────────────
+  // Steht VOR allen anderen Bühnen, und zwar an `flug` statt an `phase`: die
+  // Antwort setzt `phase` sofort auf „funken", der Flug muss danach aber noch
+  // seine Mindeststandzeit stehen und ausblenden. Hinge die Bühne an `phase`,
+  // risse die Antwort ihm beides weg.
+  if (buehne === "flug") {
+    return (
+      <div className="flex min-h-lvh flex-col">
+        {/* Die Esse überlebt: der Zonen-Hintergrund bleibt unverändert, der
+            Flug legt sich nur darüber. */}
+        <ForgeBackdrop intensity="hot" />
+        {header}
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-4 py-6">
+          <Funkenflug
+            flug={flug}
+            massstab="screen"
+            satz="Ich schlage ein paar Funken für dich …"
+          />
+        </div>
+      </div>
+    );
+  }
+
   // ── Briefing (neuer erster Wizard-Schritt) ──────────────────────
   // Erklärt die Zutaten (Werte + Sterne + Kindheitsfrage) und trägt die
   // Kindheitsfrage — von der Landing hierher gezogen (Spec 2026-07-16, §1.1).
-  if (phase === "briefing") {
+  //
+  // `forging` landet hier mit, solange der Flug noch unter seiner Schwelle
+  // liegt: eine Antwort in 200 ms zeigt nie einen Wartezustand, den Moment
+  // trägt der gedrückte, deaktivierte Button allein.
+  if (buehne === "briefing") {
+    const schlaegt = phase === "forging";
     return (
       <div className="flex min-h-lvh flex-col">
         <ForgeBackdrop />
@@ -287,6 +318,7 @@ export function Sternschmiede({
                 rows={3}
                 maxLength={800}
                 className="min-h-[80px] resize-y"
+                disabled={schlaegt}
                 aria-label="Was dir als Kind Spaß gemacht hat (optional)"
               />
             </CardContent>
@@ -294,54 +326,23 @@ export function Sternschmiede({
 
           <FormError message={error} />
 
-          <Button className="w-full gap-2" size="lg" onClick={() => void forge()}>
+          <Button
+            className="w-full gap-2"
+            size="lg"
+            disabled={schlaegt}
+            onClick={() => void forge()}
+          >
             <Flame className="size-4" /> Funken schlagen
           </Button>
           <Button
             variant="ghost"
             className="w-full text-muted-foreground"
+            disabled={schlaegt}
             onClick={() => setPhase("intro")}
           >
             Zurück
           </Button>
           <div className="h-8" />
-        </div>
-      </div>
-    );
-  }
-
-  // ── Forging (Ladezustand) — Esse-Funkenflug ─────────────────────
-  if (phase === "forging") {
-    return (
-      <div className="flex min-h-lvh flex-col">
-        <ForgeBackdrop intensity="hot" />
-        {header}
-        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-4 py-6 einblenden">
-          {/* Aus der heißen Esse sprühen Funken auf. */}
-          <div className="relative h-40 w-full max-w-xs" aria-hidden="true">
-            {SPRAY_FUNKEN.map((f, i) => (
-              <span
-                key={i}
-                className={reduced ? "absolute rounded-full bg-celebrate" : "funke-spray"}
-                style={{
-                  left: `${f.left}%`,
-                  bottom: "8%",
-                  width: `${f.size}px`,
-                  height: `${f.size}px`,
-                  animationDelay: `${f.delay}s`,
-                  ...(reduced
-                    ? {
-                        boxShadow:
-                          "0 0 8px 1px color-mix(in srgb, var(--celebrate) 65%, transparent)",
-                      }
-                    : {}),
-                }}
-              />
-            ))}
-          </div>
-          <p className="text-center text-base text-muted-foreground">
-            Ich schlage ein paar Funken für dich …
-          </p>
         </div>
       </div>
     );

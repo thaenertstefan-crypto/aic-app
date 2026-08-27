@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/form-error";
 import { GlassPanel } from "@/components/ui/glass-panel";
+import { Funkenflug, useFunkenflug } from "@/components/ui/funkenflug";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { IntroInfoButton } from "@/components/intro/intro-info-button";
 import { BillOfRightsSeal } from "@/components/recipes/bill-of-rights-seal";
@@ -68,7 +69,6 @@ function RuleCard({
 
 export default function GenerateRightPage() {
   const [phase, setPhase] = useState<"reflect" | "duel">("reflect");
-  useScrollTopOnChange(phase);
   const [p1, setP1] = useState("");
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [oldRule, setOldRule] = useState<string | null>(null);
@@ -76,6 +76,18 @@ export default function GenerateRightPage() {
   const [chosen, setChosen] = useState<"old" | "new" | null>(null);
   const [loading, setLoading] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
+
+  // Der eine Wartescreen (KAN-61) — hier zum ersten Mal: bis dahin trug
+  // „Wird erstellt …" am Button das Warten allein. Maßstab „region", die
+  // wartende Fläche ist der Körper unter der Frage.
+  const flug = useFunkenflug(loading);
+
+  // Welche Bühne wirklich steht. Die Antwort setzt `phase` sofort auf „duel",
+  // der Flug muss danach aber noch seine Mindeststandzeit stehen und
+  // ausblenden — bis dahin bleibt die Reflexion. Und weil das Duell erst
+  // danach auftaucht, hängt auch der Sprung nach oben hieran statt an `phase`.
+  const buehne = flug !== "aus" ? "reflect" : phase;
+  useScrollTopOnChange(buehne);
 
   const [state, formAction, pending] = useActionState(
     saveGeneratedRightAction,
@@ -133,7 +145,7 @@ export default function GenerateRightPage() {
         }
       />
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-6">
-        {phase === "reflect" ? (
+        {buehne === "reflect" ? (
           <>
             <p className="text-sm leading-relaxed text-muted-foreground">
               Hier baust du in Ruhe an deiner Bill of Rights. Beschreib kurz
@@ -154,7 +166,9 @@ export default function GenerateRightPage() {
               />
             </div>
 
-            <FormError message={genError} />
+            {/* Der Fehler wartet, bis der Flug weg ist — sonst stünde bis zu
+                600 ms lang „Ich schaue …" über einer Absage. */}
+            <FormError message={flug === "aus" ? genError : null} />
 
             <Button
               type="button"
@@ -165,6 +179,16 @@ export default function GenerateRightPage() {
             >
               {loading ? "Wird erstellt …" : "Recht generieren"}
             </Button>
+
+            {/* Der Flug steht unter dem gedrückten Knopf, dort, wo der Blick
+                nach dem Tippen ohnehin liegt. Unter 250 ms erscheint er nicht
+                — dann trägt der deaktivierte Button den Moment allein, so wie
+                bisher immer. `Funkenflug` prüft das selbst und rendert nichts. */}
+            <Funkenflug
+              flug={flug}
+              massstab="region"
+              satz="Ich schaue, welche zwei Regeln da gekämpft haben …"
+            />
           </>
         ) : (
           <>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import Link from "next/link";
 import {
   ChevronDown,
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/ui/form-error";
+import { Funkenflug, useFunkenflug } from "@/components/ui/funkenflug";
 import { Reveal } from "@/components/ui/reveal";
 import { SubPageHeader } from "@/components/layout/sub-page-header";
 import { DraftRestoreBanner } from "@/components/offline/draft-restore-banner";
@@ -185,6 +186,14 @@ export function WantsJourney({
   );
   useScrollTopOnChange(state.phase);
   const reduced = useReducedMotion();
+
+  // Der eine Wartescreen (KAN-61) beim Nachschaerfen — hier zum ersten Mal:
+  // bis dahin trug „Schärfe …“ am Button das Warten allein. Massstab „zeile“:
+  // die wartende Karte selbst wird die Bühne, statt die ganze Liste für das
+  // Nachschärfen EINES Satzes wegzureissen.
+  const [flugStern, setFlugStern] = useState<string | null>(null);
+  const flug = useFunkenflug(state.refiningId !== null);
+  const flugAufStern = flug !== "aus" ? flugStern : null;
 
   const setAnswers = (field: AuditField) => (answers: string[]) =>
     dispatch({ type: "answersEdited", field, answers });
@@ -376,6 +385,13 @@ export function WantsJourney({
   async function refineWant(want: DraftWant) {
     const answer = (state.refineAnswers[want.id] ?? "").trim();
     if (!answer || !state.entryId) return;
+    // Welcher Stern gerade geschärft wird — eigener Zustand und nicht aus
+    // `state.refiningId` gelesen, weil der beim Eintreffen der Antwort sofort
+    // wieder null ist, der Flug aber noch seine Mindeststandzeit steht. Ohne
+    // das Gedächtnis risse die Antwort ihm die Bühne unter den Füßen weg.
+    // Ein stehengebliebener Wert schadet nicht: er zählt nur, solange der Flug
+    // nicht `aus` ist.
+    setFlugStern(want.id);
     dispatch({ type: "refineRequested", id: want.id });
 
     // Kein runAiStep: das Nachschärfen wechselt keine Bühne, sondern trifft
@@ -726,44 +742,64 @@ export function WantsJourney({
                             ))}
                           </ul>
                         )}
-                        {want.question && (
-                          <div className="mt-1 space-y-2 rounded-lg border border-primary/25 bg-primary/5 p-3">
-                            <p className="text-sm leading-relaxed text-foreground">
-                              {want.question}
-                            </p>
-                            <Textarea
-                              value={state.refineAnswers[want.id] ?? ""}
-                              onChange={(e) =>
-                                dispatch({
-                                  type: "refineAnswerEdited",
-                                  id: want.id,
-                                  text: e.target.value,
-                                })
-                              }
-                              rows={2}
-                              maxLength={300}
-                              placeholder="Deine Antwort — dann mach ich es konkreter."
-                              className="min-h-[52px] resize-y bg-background text-sm"
-                              aria-label="Antwort zum Konkretisieren"
+                        {/* Der Flug steht VOR der Rückfrage-Box und nicht in
+                            ihr: `refineSucceeded` setzt `question` auf null,
+                            die Box verschwindet also im selben Commit wie die
+                            Antwort. Stünde er darin, verlöre er genau dabei
+                            seine Mindeststandzeit und seine Blende. */}
+                        {flugAufStern === want.id ? (
+                          /* Die wartende Karte IST die Bühne: die Funken
+                             steigen über ihre volle Höhe auf, der Satz steht
+                             daneben. Kein vollflächiger Screen — der risse die
+                             ganze Liste weg, um EINEN Satz nachzuschärfen
+                             (KAN-52). */
+                          <div className="mt-1 rounded-lg border border-primary/25 bg-primary/5 p-3">
+                            <Funkenflug
+                              flug={flug}
+                              massstab="zeile"
+                              satz="Ich schärfe deinen Stern …"
                             />
-                            {state.refineErrors[want.id] && (
-                              <p className="text-xs text-destructive">
-                                {state.refineErrors[want.id]}
-                              </p>
-                            )}
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={
-                                state.refiningId === want.id ||
-                                !(state.refineAnswers[want.id] ?? "").trim()
-                              }
-                              onClick={() => void refineWant(want)}
-                            >
-                              {state.refiningId === want.id ? "Schärfe …" : "Konkreter machen"}
-                            </Button>
                           </div>
+                        ) : (
+                          want.question && (
+                            <div className="mt-1 space-y-2 rounded-lg border border-primary/25 bg-primary/5 p-3">
+                              <p className="text-sm leading-relaxed text-foreground">
+                                {want.question}
+                              </p>
+                              <Textarea
+                                value={state.refineAnswers[want.id] ?? ""}
+                                onChange={(e) =>
+                                  dispatch({
+                                    type: "refineAnswerEdited",
+                                    id: want.id,
+                                    text: e.target.value,
+                                  })
+                                }
+                                rows={2}
+                                maxLength={300}
+                                placeholder="Deine Antwort — dann mach ich es konkreter."
+                                className="min-h-[52px] resize-y bg-background text-sm"
+                                aria-label="Antwort zum Konkretisieren"
+                              />
+                              {state.refineErrors[want.id] && (
+                                <p className="text-xs text-destructive">
+                                  {state.refineErrors[want.id]}
+                                </p>
+                              )}
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={
+                                  state.refiningId === want.id ||
+                                  !(state.refineAnswers[want.id] ?? "").trim()
+                                }
+                                onClick={() => void refineWant(want)}
+                              >
+                                {state.refiningId === want.id ? "Schärfe …" : "Konkreter machen"}
+                              </Button>
+                            </div>
+                          )
                         )}
                       </div>
                       </div>
