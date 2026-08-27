@@ -125,6 +125,14 @@ export type FilterTab = {
  * Bewusst nicht mit `JOURNAL_TEMPLATE_MAP` zusammengelegt: die Labels sind echt
  * verschieden („Werte-Tagebuch" vs. „Werte"), eine gemeinsame Map mit zwei
  * Label-Feldern wäre breiter, ohne etwas zu entscheiden.
+ *
+ * Verschieden heißt aber nicht beliebig. Ein Tab trägt den Titel des Rezepts
+ * aus `RECIPES`, nur ohne Füllwort: „Deine Werte entdecken" → „Werte",
+ * „Grübelspiralen durchbrechen" → „Grübelspiralen". Gestrichen wird ein ganzes
+ * Wort, nie ein Wortteil — und nie ein Wort eingesetzt, das im Rezept-Titel
+ * nicht vorkommt. Wo nichts zu streichen ist, steht der Titel ganz da
+ * („Sternensuche", „Nein-Trainer"). Die Reihe scrollt waagerecht, Länge ist
+ * also kein Argument gegen den richtigen Namen (KAN-66).
  */
 export function getFilterTabs(): FilterTab[] {
   return [
@@ -136,7 +144,7 @@ export function getFilterTabs(): FilterTab[] {
     },
     {
       value: "wants",
-      label: "Wants",
+      label: PAGE_TITLES.wants,
       icon: Compass,
     },
     {
