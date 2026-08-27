@@ -97,7 +97,11 @@ const DEFAULT_ROUTES = [
   { path: "/booster/saying-no" },
   { path: "/booster/shadow" },
   { path: "/booster/things-got-messy" },
-  { path: "/journal" },
+  // Die Filter-Tabs verschwinden, solange nichts zu filtern ist (KAN-63). Der
+  // E2E-Account hat Einträge, also sichern die beiden Marker dieselbe Bedingung
+  // von beiden Seiten: die Tabs müssen stehen, und das Logbuch darf nicht
+  // erscheinen. Den leeren Zustand selbst sieht dieser Lauf naturgemäß nie.
+  { path: "/journal", expect: "journal-tabs", reject: "journal-logbuch" },
   // Titel, Textarea und ein Button — die Seite hat nichts zu scrollen, und
   // „Eintrag speichern" muss ohne Scrollen erreichbar sein (KAN-64).
   { path: "/journal/new", noScroll: true },

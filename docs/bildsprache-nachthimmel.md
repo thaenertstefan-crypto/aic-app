@@ -22,6 +22,7 @@ Die Bildwelt erfindet nichts Neues, sondern erzählt die vorhandene Design-Welt 
 - Der **Kompass** (Werte) zeigt die Richtung — Kompass + Sterne ist die klassische Navigation bei Nacht.
 - Die **Sterne** (Wants) sind das, was dich leuchten lässt und wonach du greifst; in der **Sternschmiede** entstehen neue.
 - Die **Bill of Rights** (innere Regeln) sind die Regeln, nach denen du navigierst.
+- Das **Journal** ist das **Logbuch**, das du auf der Passage führst: du schreibst auf, was unterwegs war, um es später zu lesen. Es ist das einzige Motiv, das nicht die Einheit zeigt, mit der sich seine Fläche füllt, sondern die Sammlung — ein einzelner Eintrag hat keine eigene Gestalt (KAN-55).
 - Selbstzweifel, Overthinking, messy Momente sind **Wetter**: real, manchmal heftig, aber vorüberziehend — und sie sagen nichts über deinen Himmel aus. Die Akut-Hilfen (**Kopfwetter**, vorher Kopf-Apotheke) ändern nicht deinen Himmel, sie helfen durchs Wetter, bis du deine Sterne wieder siehst.
 
 Damit wird die bisherige Schwachstelle zur tragenden Idee: Die Hilfsübungen sind nicht mehr angehängt, sondern im Bild *notwendig*.
@@ -49,6 +50,7 @@ Bewusst „leuchten weiter" statt „ändert sich nicht": Der Himmel darf wachse
 | Werte | Kompass — zeigt die Richtung | **Kompass** | bleibt |
 | Wants | Deine Sterne — leuchten & greifbar | **Sterne / Sternschmiede** | bleibt |
 | Innere Regeln | Regeln, nach denen du navigierst | **Bill of Rights** | bleibt (geduldeter Eigenname) |
+| Journal | Das Buch, das du auf der Passage führst | **Logbuch** | **neu** (KAN-55, nur im Bild — der Seitentitel bleibt „Journal") |
 | Akut-Hilfen (Booster) | Wetter, das vorbeizieht | **Kopfwetter** | **neu** (ersetzt „Kopf-Apotheke") |
 | Stimmungs-Check-in | Wetterbericht („Wie ist dein Kopfwetter heute?") | — | Umdeutung |
 | Die App selbst | Der geschützte Raum, aus dem du in deinen Himmel schaust | — | Umdeutung (deckt sich mit Design-North-Star) |

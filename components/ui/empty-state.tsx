@@ -46,7 +46,16 @@ function ancestorTranslateY(el: HTMLElement): number {
 }
 
 type EmptyStateProps = {
-  /** Glyphe der Einheit, mit der sich die Fläche füllt. Nie das Maskottchen. */
+  /**
+   * Glyphe der Einheit, mit der sich die Fläche füllt — Goldstern, Rosé-Funke,
+   * Gold-Siegel. Nie das Maskottchen.
+   *
+   * Hat eine Fläche keine solche Einheit, greift **die Sammlung statt der
+   * Einheit**: das Journal zeigt das Logbuch, weil ein einzelner Eintrag keine
+   * eigene Gestalt hat (KAN-55, `components/brand/logbook-art.tsx`). Das ist
+   * die Ausnahme, nicht die Regel — sie gilt, wo die Einheit nichts sagt, was
+   * der Seitentitel nicht schon sagt.
+   */
   motiv?: ReactNode;
   /** Nennt die Fläche im Werden, nie den Mangel. */
   satz: string;

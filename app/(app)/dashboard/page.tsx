@@ -132,10 +132,18 @@ export default async function DashboardPage() {
                 {asAffirmation(todayRight.text)}
               </p>
             ) : (
+              /* Die eine leere Karte auf einer sonst vollen Fläche. Nicht die
+                 geteilte Spalte (`EmptyState`) — die misst sich bis zur
+                 Bottom-Nav und säße hier mitten im Dashboard —, sondern die
+                 Zwei-Band-Fassung der Leer-Grammatik in der Hand der Karte: das
+                 Motiv-Band trägt der Chip oben, es bleiben Satz und ruhiger
+                 Outline-CTA (KAN-55). Der Satz nennt die Fläche im Werden statt
+                 den Mangel; wörtlich derselbe wie im leeren Zustand von
+                 `/me/bill-of-rights` — wer ihn ändert, ändert beide. */
               <div className="space-y-2">
                 <p className="text-base text-muted-foreground">
-                  Du hast noch keine persönlichen Grundrechte formuliert. Sie
-                  erinnern dich täglich daran, was du dir selbst zugestehst.
+                  Deine Bill of Rights wartet auf ihr erstes Recht. Sie erinnert
+                  dich täglich daran, was du dir selbst zugestehst.
                 </p>
                 <Button
                   variant="outline"

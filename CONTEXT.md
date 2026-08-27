@@ -67,6 +67,21 @@ Zeit voller wird. Es gibt genau drei:
 - **„In Arbeit" kommt aus derselben Zeile**, nicht aus `profiles.active_recipe_id`. Siehe
   [ADR-0006](docs/adr/0006-laufender-weg-kommt-aus-den-fortschritts-zeilen.md).
 
+## Logbuch
+
+Der Name des **Journals** in der Bildwelt: das Buch, das man auf der Passage führt, während
+Kompass und Bill of Rights den Weg weisen.
+
+- **Nur im Bild, nie in der Navigation.** Die Seite heißt weiter „Journal" — Titel, Nav-Label
+  und Routen bleiben unangetastet. Das Wort trägt das Motiv, nicht die Beschriftung: es steht
+  in der Glyphe (`components/brand/logbook-art.tsx`) und im Satz des leeren Zustands.
+- **Das Logbuch ist kein Bild.** Es entsteht nicht aus einer Me-Übung und wird nie „voll" —
+  siehe **Bild**. Es sammelt, was die Übungen unterwegs abwerfen.
+- **Es zeigt die Sammlung, nicht die Einheit.** Die drei Bild-Motive sind die Einheit, mit der
+  sich ihre Fläche füllt (Stern, Funke, Recht); ein einzelner Journal-Eintrag hat keine solche
+  Gestalt. Deshalb steht dort der gebundene Band. Siehe
+  [`docs/bildsprache-nachthimmel.md`](docs/bildsprache-nachthimmel.md).
+
 ## Durchlauf
 
 Ein vollständiger Umlauf der Werte-Übung: Hypothese aufstellen, sieben Tage Tagebuch,

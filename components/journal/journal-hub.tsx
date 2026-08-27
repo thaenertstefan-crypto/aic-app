@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LogbookArt } from "@/components/brand/logbook-art";
 import { JournalDetailDialog } from "@/components/journal/journal-detail-dialog";
 import { getJournalPage } from "@/app/(app)/journal/actions";
 import { getFilterTabs, getJournalConfig } from "@/lib/utils/journal-chrome";
@@ -47,6 +48,12 @@ export function JournalHub({ initialEntries, initialHasMore }: Props) {
 
   const isEmpty = filteredEntries.length === 0;
 
+  // Zwei verschiedene Leeren: „das Logbuch ist noch leer" (kein einziger
+  // Eintrag) und „diese Abfrage hat keine Treffer". `isEmpty` allein
+  // unterscheidet sie nicht — dafür steht hier der Blick auf den ungefilterten
+  // Bestand (KAN-55).
+  const hasEntries = entries.length > 0;
+
   function loadMore() {
     const last = entries[entries.length - 1];
     if (!last) return;
@@ -60,24 +67,43 @@ export function JournalHub({ initialEntries, initialHasMore }: Props) {
   return (
     <div className="mt-6 space-y-4">
       {/* ---- Filter tabs ---- */}
+      {/* Sie verschwinden, solange nichts zu filtern ist (KAN-63): sieben Tabs,
+          die alle ins Leere führen, sind Möbel — und sie sind die vertikale
+          Fracht, an der „ein leerer Zustand scrollt nie" bei 375 px scheitert.
+          Nebenwirkung, und zwar die gewollte: die ruhige Zeile weiter unten ist
+          damit nur noch erreichbar, wenn es Einträge gibt — also genau dann,
+          wenn sie das Richtige sagt. */}
       <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
-        <TabsList
-          variant="line"
-          className="w-full justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [touch-action:pan-x]"
-        >
-          {filterTabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
-                <Icon className="size-3.5" />
-                <span>{tab.label}</span>
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
+        {hasEntries && (
+          <TabsList
+            // data-e2e: der E2E-Account hat Einträge, also müssen die Tabs da
+            // sein. Der Marker fängt die eine Art, wie diese Bedingung kaputt
+            // geht — verdreht —, und die ließe sich sonst nicht von „hat
+            // gerendert" unterscheiden.
+            data-e2e="journal-tabs"
+            variant="line"
+            className="w-full justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [touch-action:pan-x]"
+          >
+            {filterTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="gap-1.5"
+                >
+                  <Icon className="size-3.5" />
+                  <span>{tab.label}</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        )}
 
         {/* Single content panel — we manage rendering ourselves */}
-        <div className="mt-4">
+        {/* Der Abstand gehört den Tabs; ohne sie fällt er weg, sonst schiebt er
+            die Spalte, deren Höhe sich an ihrer Oberkante berechnet. */}
+        <div className={hasEntries ? "mt-4" : undefined}>
           {/* ---- Entry count ---- */}
           {!isEmpty && (
             <p className="mb-3 text-xs text-muted-foreground">
@@ -154,20 +180,31 @@ export function JournalHub({ initialEntries, initialHasMore }: Props) {
           )}
 
           {/* ---- Das leere Journal ---- */}
-          {/* Kein CTA-Band: der goldene „Neuer Eintrag“ steht schon über den Tabs
-              (KAN-55). Das Motiv-Band — die Logbuch-Glyphe — und die
-              verschwindenden Tabs gehören KAN-63. */}
-          {isEmpty && selectedFilter === "all" && (
-            <EmptyState
-              satz="Dein Logbuch wartet auf seinen ersten Eintrag."
-              nachsatz="Was ist dir heute durch den Kopf gegangen?"
-            />
+          {/* Oben das Motiv der Fläche — das Logbuch, die Sammlung statt der
+              Einheit (KAN-55). Kein CTA-Band: der goldene „Neuer Eintrag“ steht
+              schon über den Tabs, das Band ist erfüllt, bevor es gezeichnet
+              wird. Damit lädt das leere Journal zum Schreiben ein, nicht zum
+              Üben — was als Nächstes zu üben wäre, sagt die Empfehlungskarte
+              auf dem Dashboard. */}
+          {!hasEntries && (
+            // data-e2e: der Gegenpol zu `journal-tabs`. Der bestückte
+            // E2E-Account darf das Logbuch NICHT zeigen — zusammen sichern die
+            // beiden Marker beide Richtungen derselben Bedingung ab. Den
+            // leeren Zustand selbst sieht der Lauf naturgemäß nie; dass er
+            // nicht ins volle Journal leckt, sieht er sehr wohl.
+            <div data-e2e="journal-logbuch">
+              <EmptyState
+                motiv={<LogbookArt />}
+                satz="Dein Logbuch wartet auf seinen ersten Eintrag."
+                nachsatz="Was ist dir heute durch den Kopf gegangen?"
+              />
+            </div>
           )}
 
           {/* ---- Abfrage ohne Treffer ---- */}
           {/* Keine Leer-Grammatik: der Nutzer wollte nachsehen, nicht anfangen.
               Eine ruhige Zeile, ohne Motiv, ohne CTA, ohne Gold (KAN-55). */}
-          {isEmpty && selectedFilter !== "all" && (
+          {hasEntries && isEmpty && (
             <p className="py-10 text-center text-sm text-muted-foreground">
               In „{filterLabel}“ liegt noch nichts.
             </p>
