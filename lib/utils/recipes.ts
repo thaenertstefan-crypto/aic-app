@@ -18,12 +18,6 @@ export type Recipe = {
   /** Estimated duration shown on the card, e.g. "7–14 Tage" */
   duration: string;
   /**
-   * Longer introduction shown on the recipe's start page (one entry per
-   * paragraph). Explains the background and idea of the recipe. Optional —
-   * pages fall back to `description` when absent.
-   */
-  intro?: readonly string[];
-  /**
    * True for repeatable recipes that track multiple cycles (e.g. "values").
    * Drives whether the overview badge counts cycles instead of showing a
    * final "Abgeschlossen".
@@ -47,10 +41,6 @@ export const RECIPES: readonly Recipe[] = [
     title: "Deine Werte entdecken",
     description:
       "Finde heraus, was dir wirklich wichtig ist. Ein 7-Tage-Tagebuch, um deine inneren Werte zu erkennen und zu verstehen, was dich antreibt.",
-    intro: [
-      "Deine Werte sind dein innerer Kompass: die Dinge, die dir im Kern wirklich wichtig sind. Sie prägen — oft ganz unbewusst — jede Entscheidung und bestimmen, wie gut du dich mit deinem Leben fühlst. Wer seine Werte kennt, entscheidet leichter und versteht, warum sich manches richtig und manches falsch anfühlt.",
-      "Das Besondere: Deine Werte findest du nicht durch Nachdenken heraus, sondern durch Experimentieren. Du stellst eine erste Vermutung auf, beobachtest dich eine Woche lang im Alltag und passt deine Werte danach an. Test, Auswertung, Verfeinerung — Zyklus für Zyklus wird dein Bild von dir selbst klarer.",
-    ],
     icon: "Heart",
     duration: "7–14 Tage",
     cyclical: true,
@@ -67,10 +57,6 @@ export const RECIPES: readonly Recipe[] = [
     title: PAGE_TITLES.wants,
     description:
       "Lerne deine eigenen Wünsche von fremden Erwartungen zu unterscheiden und herauszufinden, wohin du dich entwickeln möchtest.",
-    intro: [
-      "Was du wirklich willst, entscheidet weit mehr als deine nächste Essensbestellung: Es bestimmt, welche Ziele du dir setzt, mit welchen Menschen du dich umgibst und wer du wirst. Das Problem: Die meisten Menschen jagen unbewusst die Wünsche ihres Umfelds hinterher — von Werbung, Trends und Erwartungen übernommen — statt ihre eigenen.",
-      "Die gute Nachricht: Deine echten, intrinsischen Wants sind längst da. Sie liegen nur begraben unter dem Berg an Erwartungen, den die Welt auf dir abgeladen hat. Mit dem Yin-&-Yang-Audit legst du sie frei — und mit kleinen Experimenten, den „Little Bets“, testest du im echten Leben, ob das, was du zu wollen glaubst, wirklich das ist, was du willst.",
-    ],
     icon: "Compass",
     duration: "20 Min + laufende Experimente",
     available: true,
@@ -92,10 +78,6 @@ export const RECIPES: readonly Recipe[] = [
     title: PAGE_TITLES.sayingNo,
     description:
       "Formuliere dein nächstes Nein — für eine echte Anfrage oder zum Üben am Szenario. Mit Feedback nach dem Saying-'No'-Blueprint.",
-    intro: [
-      "Wenn es kein „Hell yes!“ ist, ist es ein Nein. Klingt hart? Ist es nicht — es bedeutet nur: Dein Ja ist erst dann etwas wert, wenn du auch Nein sagen kannst.",
-      "Im Nein-Trainer formulierst du dein Nein für eine echte Anfrage oder übst an realistischen Szenarien. Dein Entwurf wird nach den vier Schichten eines guten Neins gecheckt — herzlich, ohne Entschuldigung, ohne „aber“ — und du bekommst eine Version, die du direkt verwenden kannst.",
-    ],
     icon: "ShieldOff",
     duration: "5–10 Minuten",
     available: true,
@@ -126,10 +108,6 @@ export const RECIPES: readonly Recipe[] = [
     title: "Deine Schattenseite",
     description:
       "Wut, Groll, dunkle Gedanken — sicher rauslassen statt runterschlucken. Schreib oder sprich dich frei; danach entscheidest du: behalten oder verbrennen.",
-    intro: [
-      "Unterdrückte Wut verschwindet nicht — sie wächst und frisst dich von innen auf. Dieses Ventil gibt deiner Schattenseite einen sicheren Ort: das Shadow Journal (alles rauslassen, was raus muss) oder der Rage Walk (laut aussprechen, wo dich niemand hört).",
-      "Das Wichtigste: Hier liest niemand mit. Die KI bekommt diese Einträge nie zu sehen — und wenn du willst, verbrennst du das Geschriebene einfach, statt es zu speichern.",
-    ],
     icon: "Moon",
     duration: "5–15 Minuten",
     available: true,
