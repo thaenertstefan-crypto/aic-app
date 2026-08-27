@@ -13,6 +13,7 @@ import { STAR_PATH } from "@/components/brand/star-glyph";
 import { useDialogFocus } from "@/lib/hooks/use-dialog-focus";
 import { wantSentence } from "@/lib/recipes/wants/items";
 import { ANSWER_MAX } from "@/lib/recipes/wants/state";
+import { hash01 } from "@/lib/recipes/wants/sky-hash";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { getValueLabel } from "@/lib/utils/values-bank";
 import { cn } from "@/lib/utils";
@@ -68,27 +69,6 @@ const MICRO_STARS: { fx: number; fy: number; r: number }[] = [
   { fx: 0.9, fy: 0.42, r: 1.2 }, { fx: 0.06, fy: 0.62, r: 0.9 },
   { fx: 0.94, fy: 0.72, r: 1.0 }, { fx: 0.55, fy: 0.88, r: 1.1 },
 ];
-
-/** Stabiler Hash 0..1 aus einem String — gleicher Himmel bei jedem Besuch.
- *  FNV-1a mit Nachmischen (fmix32). Das Nachmischen ist nicht Zierde: die
- *  Vorgänger-Fassung (`h * 31 + c`, dann `h % 1000`) ließ benachbarte IDs auf
- *  fast denselben Wert fallen — bei den tatsächlichen Stern-IDs, die sich nur
- *  im letzten Zeichen unterscheiden, lagen alle Werte innerhalb von 0,001.
- *  Der Versatz war damit rechnerisch da und sichtbar tot: die Karte stand als
- *  Zweispalten-Raster statt als Himmel. */
-function hash01(seed: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  h ^= h >>> 16;
-  h = Math.imul(h, 2246822507);
-  h ^= h >>> 13;
-  h = Math.imul(h, 3266489909);
-  h ^= h >>> 16;
-  return (h >>> 0) / 4294967296;
-}
 
 /** Kürzung mit „…“ — hält Namen bei jeder Eingabelänge kurz. */
 function clip(s: string, max: number): string {

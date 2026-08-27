@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useDialogFocus } from "@/lib/hooks/use-dialog-focus";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
+import { hash01 } from "@/lib/recipes/wants/sky-hash";
 import type { BetItem } from "@/lib/types/db-json";
 
 /**
@@ -40,28 +41,6 @@ const BOTTOM_PAD = EDGE_PAD + Y_JITTER_RESERVE;
  *  aber kleiner: hier hängt kein Maskottchen drunter. Rein visuell gesetzt.
  *  Bis 2 Funken dominiert dieser Boden die Höhe. */
 const MIN_VIEW_H = 200;
-
-/** Stabiler Hash 0..1 aus einem String — gleiche Konstellation bei jedem Besuch.
- *  FNV-1a mit Nachmischen (fmix32), wortgleich zur Sternenkarte. Das
- *  Nachmischen ist nicht Zierde: die Vorgänger-Fassung (`h * 31 + c`, dann
- *  `h % 1000`) ließ benachbarte IDs auf fast denselben Wert fallen — bei den
- *  tatsächlichen Funken-IDs, die sich nur im letzten Zeichen unterscheiden,
- *  lagen alle Werte innerhalb von 0,001. Der Versatz war damit rechnerisch da
- *  und sichtbar tot: die Konstellation stand als Zweispalten-Raster statt als
- *  Himmel. */
-function hash01(seed: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  h ^= h >>> 16;
-  h = Math.imul(h, 2246822507);
-  h ^= h >>> 13;
-  h = Math.imul(h, 3266489909);
-  h ^= h >>> 16;
-  return (h >>> 0) / 4294967296;
-}
 
 /** Innerste x-Position einer Spalte (viewBox-Einheiten, vom linken Rand;
  *  rechts gespiegelt) — Schwesterwert zur Sternenkarte. Weil der Versatz unten
