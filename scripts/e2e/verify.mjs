@@ -52,7 +52,8 @@ const ROOT = path.resolve(HERE, "..", "..");
  * `expect` — `data-e2e`-Marker, der sichtbar sein MUSS. Fehlt er, ist die Route
  *   rot, auch wenn sie sauber gerendert hat.
  * `reject` — Marker, der NICHT sichtbar sein darf (typisch: die Erst-Intro-
- *   Sequenz, die den eigentlichen Inhalt verdeckt).
+ *   Sequenz, die den eigentlichen Inhalt verdeckt). Auch eine Liste, wenn eine
+ *   Route mehr als einen Zustand ausschließen muss.
  * `noScroll` — das Dokument darf nicht höher werden als der Viewport. Nur für
  *   Routen, die wirklich nichts zu scrollen haben; eine Übung mit langem
  *   Inhalt scrollt zu Recht.
@@ -101,7 +102,14 @@ const DEFAULT_ROUTES = [
   // E2E-Account hat Einträge, also sichern die beiden Marker dieselbe Bedingung
   // von beiden Seiten: die Tabs müssen stehen, und das Logbuch darf nicht
   // erscheinen. Den leeren Zustand selbst sieht dieser Lauf naturgemäß nie.
-  { path: "/journal", expect: "journal-tabs", reject: "journal-logbuch" },
+  // Der Ladezustand des Tab-Wechsels (KAN-69) gehört so wenig in den
+  // Ruhezustand wie der Funkenflug: steht er auf der frisch geladenen Seite,
+  // ist ein Wartezustand in die fertige Liste geleckt.
+  {
+    path: "/journal",
+    expect: "journal-tabs",
+    reject: ["journal-logbuch", "journal-liste-laedt", "journal-liste-fehler"],
+  },
   // Titel, Textarea und ein Button — die Seite hat nichts zu scrollen, und
   // „Eintrag speichern" muss ohne Scrollen erreichbar sein (KAN-64).
   { path: "/journal/new", noScroll: true },
@@ -213,12 +221,17 @@ async function main() {
 
       // Zustands-Zusicherung VOR den Screenshots: schlägt sie fehl, zeigen die
       // Bilder trotzdem, was stattdessen zu sehen war — das ist die Diagnose.
-      if (status === "ok" && reject && (await markerVisible(reject))) {
-        status = `ZUSTAND: „${reject}" sichtbar — Route zeigt nicht ihren Inhalt`;
-        asserted = false;
+      if (status === "ok" && reject) {
+        for (const marker of [reject].flat()) {
+          if (await markerVisible(marker)) {
+            status = `ZUSTAND: „${marker}“ sichtbar — Route zeigt nicht ihren Inhalt`;
+            asserted = false;
+            break;
+          }
+        }
       }
       if (status === "ok" && expect && !(await markerVisible(expect))) {
-        status = `ZUSTAND: „${expect}" fehlt`;
+        status = `ZUSTAND: „${expect}“ fehlt`;
         asserted = false;
       }
       if (status === "ok" && noScroll) {

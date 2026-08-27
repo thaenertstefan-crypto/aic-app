@@ -9,7 +9,8 @@ import { getJournalPage } from "@/app/(app)/journal/actions";
 export default async function JournalPage() {
   // Nur die erste, schlanke Seite laden (id/typ/datum/vorschau) — content und
   // ai_insights bleiben draußen und werden pro Eintrag beim Öffnen nachgeladen.
-  const { items, hasMore } = await getJournalPage();
+  // Ungefiltert: das ist zugleich die Antwort auf „ist das Logbuch leer?".
+  const initialPage = await getJournalPage();
 
   return (
     <div className="p-4">
@@ -24,7 +25,7 @@ export default async function JournalPage() {
         <Plus className="size-4" />
         Neuer Eintrag
       </Button>
-      <JournalHub initialEntries={items} initialHasMore={hasMore} />
+      <JournalHub initialPage={initialPage} />
     </div>
   );
 }

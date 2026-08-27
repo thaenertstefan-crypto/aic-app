@@ -1,5 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { JournalListSkeleton } from "@/components/journal/journal-list-skeleton";
 
 export default function JournalLoading() {
   return (
@@ -17,23 +17,9 @@ export default function JournalLoading() {
         ))}
       </div>
 
-      {/* Entry cards */}
-      <div className="mt-6 space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Card key={i} size="sm">
-            <CardContent className="flex items-start gap-3 pt-(--card-spacing)">
-              <Skeleton className="size-9 shrink-0 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
-                <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-3 w-4/5" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Entry cards — dieselben Platzhalter wie beim Tab-Wechsel im Hub. */}
+      <div className="mt-6">
+        <JournalListSkeleton />
       </div>
     </div>
   );

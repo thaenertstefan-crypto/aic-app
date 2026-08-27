@@ -11,20 +11,15 @@ import {
   type ActionResult,
 } from "@/lib/actions/action-result";
 import { withUser } from "@/lib/actions/with-user";
+import { JOURNAL_PAGE_SIZE, type JournalPage } from "@/lib/journal/hub-state";
 import { serverTodayKey } from "@/lib/server/timezone";
-import {
-  toJournalListItem,
-  type JournalListItem,
-} from "@/lib/utils/journal-format";
+import { toJournalListItem } from "@/lib/utils/journal-format";
 import {
   TEXT_MAX_LONG,
   TEXT_MAX_SHORT,
   tooLong,
 } from "@/lib/utils/form-validation";
 import { recipeSlugFor } from "@/lib/utils/journal-recipe-slug";
-
-/** Seitengröße für die paginierte Journal-Liste ("Mehr laden"). */
-const JOURNAL_PAGE_SIZE = 30;
 
 /** Spalten für die schlanke Listenansicht. content wird nur zur serverseitigen
  *  Vorschau-Berechnung gelesen und verlässt den Server nicht (ai_insights gar nicht). */
@@ -46,14 +41,31 @@ type JournalListRow = {
  * Keyset-Pagination für "Mehr laden" vom Client.
  * hasMore wird über das (PAGE_SIZE + 1)-Probe-Element ermittelt.
  *
+ * `recipeSlug` ist die Filter-Achse der Tabs — **hier**, nicht im Client
+ * (KAN-69). Ein Nachfilter über die geladene Seite sieht nur, was schon da
+ * ist: er behauptet „nichts da", wo bloß nichts geladen ist, und nimmt dem
+ * Nutzer dabei ausgerechnet den Knopf, mit dem er nachladen könnte. Der Filter
+ * gehört deshalb in die Abfrage, damit die Pagination innerhalb der Treffer
+ * blättert.
+ *
+ * `total` ist die Gesamtzahl **im Bestand** zum selben Filter, nicht die der
+ * geladenen Zeilen. Sie wird auf jeder Seite mitgezählt statt nur auf der
+ * ersten: eine `head`-Zählung neben der Seitenabfrage kostet fast nichts, und
+ * eine Rückgabe, die die Zahl mal trägt und mal nicht, verlagert genau die
+ * Buchhaltung in den Client, aus der dieser Defekt kommt.
+ *
  * Bewusst **kein** `ActionResult`: das ist ein Lesepfad, den beide Aufrufer
  * direkt in ihre Liste destrukturieren. Ein DB-Fehler wirft weiterhin (die
  * Fehlergrenze der Route soll ihn sehen, nicht eine stille leere Liste); die
  * leere Seite bleibt allein die Antwort auf „keine Sitzung mehr".
  */
-export async function getJournalPage(
-  beforeCreatedAt?: string,
-): Promise<{ items: JournalListItem[]; hasMore: boolean }> {
+export async function getJournalPage({
+  recipeSlug,
+  beforeCreatedAt,
+}: {
+  recipeSlug?: string;
+  beforeCreatedAt?: string;
+} = {}): Promise<JournalPage> {
   const result = await withUser(async ({ supabase, user }) => {
     let query = supabase
       .from("journal_entries")
@@ -62,23 +74,45 @@ export async function getJournalPage(
       .order("created_at", { ascending: false })
       .limit(JOURNAL_PAGE_SIZE + 1);
 
+    let counter = supabase
+      .from("journal_entries")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    // Dieselbe Bedingung auf beiden Abfragen — sonst zählt die Zeile etwas
+    // anderes, als die Liste zeigt. `free` trägt bewusst `null` im Slug und
+    // kein Tab hat diesen Wert; freie Einträge bleiben also „Alle" vorbehalten.
+    if (recipeSlug) {
+      query = query.eq("recipe_slug", recipeSlug);
+      counter = counter.eq("recipe_slug", recipeSlug);
+    }
+
     if (beforeCreatedAt) {
       query = query.lt("created_at", beforeCreatedAt);
     }
 
-    const { data, error } = await query;
-    if (error) {
-      throw new Error(`getJournalPage: read failed (${error.code ?? "unknown"})`);
+    const [{ data, error }, { count, error: countError }] = await Promise.all([
+      query,
+      counter,
+    ]);
+    const failure = error ?? countError;
+    if (failure) {
+      throw new Error(
+        `getJournalPage: read failed (${failure.code ?? "unknown"})`,
+      );
     }
 
     const rows = (data as JournalListRow[]) ?? [];
     return ok({
       items: rows.slice(0, JOURNAL_PAGE_SIZE).map(toJournalListItem),
       hasMore: rows.length > JOURNAL_PAGE_SIZE,
+      total: count ?? 0,
     });
   });
 
-  return result.error === null ? result.data : { items: [], hasMore: false };
+  return result.error === null
+    ? result.data
+    : { items: [], hasMore: false, total: 0 };
 }
 
 /**
